@@ -1,0 +1,168 @@
+.dashboardWrapper {
+  max-width: 1000px;
+  margin: var(--space-3xl) auto;
+  padding: 0 var(--space-lg);
+}
+
+.dashboardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-2xl);
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--line);
+}
+
+.dashboardTitle {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 800;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.dashboardDescription {
+  margin: var(--space-md) 0 0;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+.dashboardMeta {
+  margin-top: var(--space-lg);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-family: var(--font-mono);
+}
+
+.dashboardButton {
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  font-weight: 700;
+  color: #fff;
+  background: var(--brass);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: 0 2px 8px rgba(169, 129, 44, 0.15);
+}
+
+.dashboardButton:hover {
+  background: var(--brass-deep);
+  box-shadow: 0 4px 12px rgba(169, 129, 44, 0.25);
+  transform: translateY(-2px);
+}
+
+.dashboardCard {
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-xl);
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboardCard:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.dashboardText {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.dashboardLink {
+  color: var(--brass);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color var(--transition-base);
+}
+
+.dashboardLink:hover {
+  color: var(--brass-deep);
+}
+
+.propertyList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+}
+
+.propertyItem {
+  background: var(--surface);
+  padding: var(--space-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line-soft);
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-sm);
+}
+
+.propertyItem:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--brass);
+}
+
+.propertyInfo {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.propertyInfo strong {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.propertyActions {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.propertyButton {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.propertyButton:hover {
+  border-color: var(--brass);
+  color: var(--brass);
+  background: var(--brass-tint);
+}
+
+.propertyButtonDanger {
+  color: var(--danger);
+  border-color: var(--danger-tint);
+  background: var(--danger-tint);
+}
+
+.propertyButtonDanger:hover {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: #fff;
+}

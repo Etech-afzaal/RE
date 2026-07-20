@@ -1,0 +1,103 @@
+.dashboardWrapper {
+  max-width: 900px;
+  margin: var(--space-3xl) auto;
+  padding: 0 var(--space-lg);
+}
+
+.dashboardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-2xl);
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+.dashboardHeading {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 800;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.logoutButton {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--danger);
+  padding: var(--space-md) var(--space-lg);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.logoutButton:hover {
+  border-color: var(--danger);
+  background: var(--danger-tint);
+}
+
+.dashboardLink {
+  display: inline-flex;
+  margin: var(--space-xl) 0;
+  text-decoration: none;
+}
+
+.dashboardButton {
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--brass);
+  color: #fff;
+  padding: var(--space-md) var(--space-lg);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: 0 2px 8px rgba(169, 129, 44, 0.15);
+}
+
+.dashboardButton:hover {
+  background: var(--brass-deep);
+  box-shadow: 0 4px 12px rgba(169, 129, 44, 0.25);
+  transform: translateY(-2px);
+}
+
+.dashboardList {
+  list-style: none;
+  padding: 0;
+  margin-top: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+}
+
+.dashboardItem {
+  background: var(--surface);
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line-soft);
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboardItem:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--brass);
+}
+
+.dashboardLinkUrl {
+  color: var(--brass);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  transition: color var(--transition-base);
+}
+
+.dashboardLinkUrl:hover {
+  color: var(--brass-deep);
+}

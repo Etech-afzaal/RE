@@ -1,0 +1,164 @@
+.gallerySection {
+  margin-bottom: var(--space-2xl);
+}
+
+.galleryHeader {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-xl);
+  margin-bottom: var(--space-2xl);
+}
+
+.galleryTitle {
+  margin: 0 0 var(--space-md);
+  color: var(--brass-deep);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+.galleryIntro {
+  margin: 0;
+  font-size: clamp(1.7rem, 3vw, 2.2rem);
+  color: var(--ink);
+  font-weight: 800;
+  font-family: var(--font-display);
+}
+
+.galleryText {
+  margin: 0;
+  color: var(--muted);
+  max-width: 500px;
+  line-height: 1.7;
+  font-size: 1rem;
+}
+
+.galleryOuter {
+  position: relative;
+  padding: 0 var(--space-2xl);
+}
+
+.carouselScroll {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(340px, 1fr);
+  gap: var(--space-lg);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding-bottom: 0;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.carouselScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.carouselCard {
+  position: relative;
+  min-height: 380px;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: 1px solid var(--line-soft);
+  background: var(--surface-sunken);
+  scroll-snap-align: center;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-md);
+}
+
+.carouselCard:hover {
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-4px);
+}
+
+.carouselImage {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  transition: transform var(--transition-slow);
+}
+
+.carouselCard:hover .carouselImage {
+  transform: scale(1.05);
+}
+
+.carouselOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(26, 26, 26, 0) 40%, rgba(26, 26, 26, 0.7) 100%);
+  pointer-events: none;
+}
+
+.carouselCaption {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  color: #fff;
+}
+
+.captionLabel {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+
+.captionTitle {
+  margin: 6px 0 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.carouselArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-md);
+  z-index: 10;
+}
+
+.carouselArrow:hover {
+  border-color: var(--brass);
+}
+
+.carouselArrowLeft {
+  left: 18px;
+}
+
+.carouselArrowRight {
+  right: 18px;
+}
+
+.carouselDots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.carouselDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: var(--line);
+  cursor: pointer;
+}
+
+.carouselDotActive {
+  background: var(--brass);
+}

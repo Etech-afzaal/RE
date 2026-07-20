@@ -1,0 +1,72 @@
+.actionsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+  align-items: center;
+}
+
+.actionBtn {
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.actionPrimary {
+  border: none;
+  color: #fff;
+  background: var(--brass);
+  box-shadow: 0 2px 8px rgba(169, 129, 44, 0.15);
+}
+
+.actionPrimary:hover {
+  background: var(--brass-deep);
+  box-shadow: 0 4px 12px rgba(169, 129, 44, 0.25);
+  transform: translateY(-2px);
+}
+
+.actionDanger {
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  background: var(--danger-tint);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
+}
+
+.actionDanger:hover {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+}
+
+.actionSuccess {
+  border: 1px solid var(--sage);
+  color: var(--sage);
+  background: var(--sage-tint);
+  box-shadow: 0 2px 8px rgba(69, 97, 74, 0.1);
+}
+
+.actionSuccess:hover {
+  border-color: var(--sage);
+  background: var(--sage);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(69, 97, 74, 0.2);
+}
+
+.actionMessage {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.errorText {
+  margin: var(--space-lg) 0 0;
+  color: var(--danger);
+  font-size: 0.9rem;
+  background: var(--danger-tint);
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--danger);
+}

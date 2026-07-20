@@ -1,0 +1,148 @@
+.resetPage {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--paper) 0%, var(--surface-secondary) 100%);
+  padding: var(--space-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.resetCard {
+  max-width: 520px;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xl);
+  padding: var(--space-3xl);
+  box-shadow: var(--shadow-2xl);
+}
+
+.resetBadge {
+  display: inline-block;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--brass-tint);
+  color: var(--brass-deep);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-lg);
+}
+
+.resetTitle {
+  margin: 0 0 var(--space-md);
+  color: var(--ink);
+  font-size: clamp(1.75rem, 4vw, 2.2rem);
+  line-height: 1.1;
+  font-weight: 800;
+}
+
+.resetText {
+  margin: 0 0 var(--space-2xl);
+  color: var(--ink-soft);
+  font-size: 1.02rem;
+  line-height: 1.8;
+}
+
+.resetForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.resetInput {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  font-size: 0.95rem;
+  outline: none;
+  box-sizing: border-box;
+  background: var(--surface-secondary);
+  color: var(--ink);
+  font-family: var(--font-body);
+  transition: all var(--transition-base);
+}
+
+.resetInput:focus {
+  border-color: var(--brass);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(169, 129, 44, 0.1);
+}
+
+.resetBtn {
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  background: var(--brass);
+  transition: all var(--transition-base);
+  box-shadow: 0 4px 12px rgba(169, 129, 44, 0.2);
+  margin-top: var(--space-lg);
+}
+
+.resetBtn:hover:not(:disabled) {
+  background: var(--brass-deep);
+  box-shadow: 0 6px 20px rgba(169, 129, 44, 0.3);
+  transform: translateY(-2px);
+}
+
+.resetBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.resetBtnDisabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.resetSuccessCard {
+  max-width: 520px;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xl);
+  padding: var(--space-3xl);
+  text-align: center;
+  box-shadow: var(--shadow-2xl);
+}
+}
+
+.resetSuccessIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--sage-tint);
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.resetError {
+  margin: 0;
+  color: var(--danger);
+  font-size: 14px;
+}
+
+@media (max-width: 700px) {
+  .resetPage {
+    padding: 16px 12px !important;
+  }
+
+  .resetCard,
+  .resetSuccessCard {
+    padding: 24px 20px !important;
+  }
+
+  .resetBtn {
+    width: 100%;
+  }
+}

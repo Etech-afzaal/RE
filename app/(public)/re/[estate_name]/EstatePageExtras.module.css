@@ -1,0 +1,342 @@
+/* ---------- Filters ---------- */
+.sectionShell {
+  margin-bottom: var(--space-3xl);
+}
+
+.sectionFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xl);
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--line);
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  min-width: 240px;
+}
+
+.filterLabel {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.filterInput,
+.filterSelect {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  font-size: 0.95rem;
+  background: var(--surface);
+  color: var(--ink);
+  outline: none;
+  font-family: var(--font-body);
+  transition: all var(--transition-base);
+}
+
+.filterInput:focus,
+.filterSelect:focus {
+  border-color: var(--brass);
+  box-shadow: 0 0 0 3px rgba(169, 129, 44, 0.1);
+}
+
+.sectionSummary {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.emptyText {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.emptyState {
+  border-radius: var(--radius-xl);
+  padding: var(--space-3xl);
+  text-align: center;
+  background: var(--surface);
+  border: 2px dashed var(--line);
+}
+
+/* ---------- Property grid ---------- */
+.propertiesGrid {
+  display: grid;
+  gap: var(--space-lg);
+  background: transparent;
+  border: none;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.propertyCard {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--line-soft);
+}
+
+.propertyCard:hover {
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-4px);
+}
+
+.propertyImageWrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.propertyImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.propertyFallback {
+  width: 100%;
+  height: 100%;
+  background: var(--surface-sunken);
+}
+
+.propertyContent {
+  padding: 18px 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.propertyTag {
+  color: var(--brass-deep);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: var(--font-mono);
+}
+
+.propertyTitle {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.35;
+  font-family: var(--font-display);
+}
+
+.propertyText {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.propertyMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.propertyPrice {
+  font-weight: 600;
+  color: var(--ink);
+  font-family: var(--font-mono);
+}
+
+/* ---------- Contact section ---------- */
+.contactSection {
+  margin-bottom: 40px;
+}
+
+.contactGrid {
+  display: grid;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  grid-template-columns: 1.1fr 0.9fr;
+}
+
+.contactInfo {
+  padding: 40px;
+  background: var(--surface);
+  position: relative;
+}
+
+.contactIntro {
+  margin: 0 0 10px;
+  color: var(--brass-deep);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-family: var(--font-mono);
+}
+
+.contactTitle {
+  margin: 0 0 12px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.contactText {
+  margin: 0 0 24px;
+  color: var(--ink-soft);
+  line-height: 1.7;
+}
+
+.contactForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contactInput {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 15px;
+  outline: none;
+  box-sizing: border-box;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+.contactInput:focus {
+  border-color: var(--brass);
+  background: var(--surface);
+}
+
+.contactTextarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.contactButton {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 13px 18px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  background: var(--brass);
+  margin-top: 4px;
+}
+
+.contactButton:hover {
+  background: var(--brass-deep);
+}
+
+.contactButton:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.contactStatus {
+  margin: 0;
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.contactSuccessText {
+  margin: 0;
+  color: var(--sage);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.contactVisual {
+  position: relative;
+  min-height: 260px;
+}
+
+.contactVisualImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.successOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(26, 30, 26, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.successContent {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  padding: 32px;
+  text-align: center;
+  max-width: 360px;
+}
+
+.successTitle {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.successMessage {
+  margin: 0 0 20px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+  font-size: 0.92rem;
+}
+
+.successButton {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  font-weight: 600;
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.successButton:hover {
+  border-color: var(--ink);
+}
+
+@media (max-width: 860px) {
+  .contactGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .contactVisual {
+    min-height: 200px;
+  }
+}
