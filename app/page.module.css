@@ -7,136 +7,7 @@
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: var(--space-lg) var(--space-lg) var(--space-3xl);
-}
-
-/* ---------- Header ---------- */
-.header {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-lg);
-  padding: var(--space-lg) 0;
-  margin-bottom: var(--space-2xl);
-  border-bottom: 1px solid var(--line);
-}
-
-.logoGroup {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  text-decoration: none;
-  transition: opacity var(--transition-base);
-}
-
-.logoGroup:hover {
-  opacity: 0.8;
-}
-
-.navLinks {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2xl);
-}
-
-.navLink {
-  color: var(--ink-soft);
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.95rem;
-  position: relative;
-  transition: color var(--transition-base);
-}
-
-.navLink::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: var(--brass);
-  transition: width var(--transition-base);
-}
-
-.navLink:hover {
-  color: var(--ink);
-}
-
-.navLink:hover::after {
-  width: 100%;
-}
-
-.headerActions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-lg);
-}
-
-.headerCta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-md);
-  padding: var(--space-md) var(--space-lg);
-  background: var(--ink);
-  color: var(--paper);
-  font-weight: 600;
-  text-decoration: none;
-  font-size: 0.92rem;
-  white-space: nowrap;
-  transition: all var(--transition-base);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.headerCta:hover {
-  background: var(--brass);
-  box-shadow: 0 4px 12px rgba(169, 129, 44, 0.2);
-  transform: translateY(-2px);
-}
-
-/* ---------- Hero ---------- */
-.hero {
-  display: grid;
-  gap: var(--space-2xl);
-  padding: var(--space-lg) 0 var(--space-3xl);
-  grid-template-columns: 1.2fr 0.8fr;
-  align-items: center;
-  border-bottom: 1px solid var(--line);
-  margin-bottom: var(--space-3xl);
-}
-
-.heroKicker {
-  margin: 0 0 var(--space-lg);
-  color: var(--brass-deep);
-  font-weight: 600;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-family: var(--font-mono);
-}
-
-.heroTitle {
-  margin: 0 0 var(--space-lg);
-  font-size: clamp(2.1rem, 4vw, 3.2rem);
-  line-height: 1.1;
-  font-weight: 800;
-  color: var(--ink);
-}
-
-.heroText {
-  margin: 0 0 var(--space-2xl);
-  color: var(--ink-soft);
-  line-height: 1.8;
-  font-size: 1.05rem;
-  max-width: 50ch;
-}
-
-.heroActions {
-  display: flex;
-  gap: var(--space-lg);
-  flex-wrap: wrap;
+  padding: var(--space-2xl) var(--space-lg) var(--space-3xl);
 }
 
 .primaryButton {
@@ -181,68 +52,6 @@
   color: var(--brass);
   background: var(--brass-tint);
   box-shadow: 0 4px 12px rgba(169, 129, 44, 0.1);
-}
-
-.statsRow {
-  display: flex;
-  gap: var(--space-2xl);
-  margin-top: var(--space-2xl);
-  flex-wrap: wrap;
-}
-
-.statItem {
-  display: flex;
-  flex-direction: column;
-  border-left: 3px solid var(--brass);
-  padding-left: var(--space-lg);
-}
-
-.statValue {
-  font-family: var(--font-mono);
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.statLabel {
-  font-size: 0.85rem;
-  color: var(--muted);
-  margin-top: var(--space-xs);
-}
-
-.heroPanel {
-  display: grid;
-  gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  box-shadow: var(--shadow-lg);
-}
-
-.heroPanelCard {
-  padding: var(--space-xl);
-  background: var(--surface);
-  transition: all var(--transition-base);
-}
-
-.heroPanelCard:hover {
-  background: var(--surface-secondary);
-}
-
-.heroPanelTitle {
-  margin: 0 0 var(--space-md);
-  font-weight: 700;
-  font-size: 1rem;
-  color: var(--ink);
-  font-family: var(--font-display);
-}
-
-.heroPanelText {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.9rem;
-  line-height: 1.7;
 }
 
 /* ---------- Section shared ---------- */
@@ -512,7 +321,6 @@
 
 /* ---------- Responsive ---------- */
 @media (max-width: 860px) {
-  .hero,
   .agentCta {
     grid-template-columns: 1fr;
   }

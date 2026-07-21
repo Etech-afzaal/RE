@@ -1,9 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getFeaturedProperties, getPublicStats } from "@/lib/queries";
+import { getFeaturedProperties, getHeroSlides } from "@/lib/queries";
+import SiteHeader from "@/components/SiteHeader";
+import HeroSlider from "@/components/HeroSlider";
 import styles from "./page.module.css";
 
-export const revalidate = 60; // refresh featured listings every minute
+export const revalidate = 60;
 
 const formatPrice = (price) =>
   price ? `PKR ${Number(price).toLocaleString()}` : "Price on request";
@@ -15,111 +17,19 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  const [properties, stats] = await Promise.all([
+  const [properties, heroSlides] = await Promise.all([
     getFeaturedProperties(6),
-    getPublicStats(),
+    getHeroSlides(3),
   ]);
+
+  const inquiryPhone = heroSlides[0]?.agent_phone || null;
 
   return (
     <div className={styles.wrapper}>
+      <SiteHeader phone={inquiryPhone} />
+      <HeroSlider slides={heroSlides} />
+
       <div className={styles.container}>
-        {/* Header */}
-        <header className={styles.header}>
-          <Link href="/" className={styles.logoGroup}>
-            <Image
-              src="/logo.svg"
-              alt="Dhalahore Properties"
-              width={110}
-              height={40}
-            />
-          </Link>
-
-          <nav className={styles.navLinks}>
-            <a href="#listings" className={styles.navLink}>
-              Listings
-            </a>
-            <a href="#why-us" className={styles.navLink}>
-              Why us
-            </a>
-            <Link href="/admin/login" className={styles.navLink}>
-              Admin
-            </Link>
-            <Link href="/agent/signup" className={styles.navLink}>
-              Become an agent
-            </Link>
-          </nav>
-
-          <div className={styles.headerActions}>
-            <Link href="/agent/login" className={styles.headerCta}>
-              Agent Login
-            </Link>
-          </div>
-        </header>
-
-        {/* Hero */}
-        <section className={styles.hero}>
-          <div>
-            <p className={styles.heroKicker}>Lahore property marketplace</p>
-            <h1 className={styles.heroTitle}>
-              Find your next property in Lahore, directly from trusted agents.
-            </h1>
-            <p className={styles.heroText}>
-              Dhalahore Properties connects you with verified estate agents
-              across Lahore. Browse active listings, compare prices, and message
-              an agent directly &mdash; no middlemen, no guesswork.
-            </p>
-            <div className={styles.heroActions}>
-              <a href="#listings" className={styles.primaryButton}>
-                Browse listings
-              </a>
-              <Link href="/agent/signup" className={styles.secondaryButton}>
-                List your properties
-              </Link>
-            </div>
-
-            <div className={styles.statsRow}>
-              <div className={styles.statItem}>
-                <span className={styles.statValue}>
-                  {stats.activeListings}+
-                </span>
-                <span className={styles.statLabel}>Active listings</span>
-              </div>
-              <div className={styles.statItem}>
-                <span className={styles.statValue}>{stats.activeAgents}</span>
-                <span className={styles.statLabel}>Verified agents</span>
-              </div>
-              <div className={styles.statItem}>
-                <span className={styles.statValue}>{stats.locations}</span>
-                <span className={styles.statLabel}>Lahore locations</span>
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.heroPanel}>
-            <div className={styles.heroPanelCard}>
-              <p className={styles.heroPanelTitle}>Verified estate agents</p>
-              <p className={styles.heroPanelText}>
-                Every listing is published by an approved agent, so you know
-                exactly who you&apos;re dealing with.
-              </p>
-            </div>
-            <div className={styles.heroPanelCard}>
-              <p className={styles.heroPanelTitle}>Direct contact</p>
-              <p className={styles.heroPanelText}>
-                Message an agent straight from a listing page and book a viewing
-                without back-and-forth.
-              </p>
-            </div>
-            <div className={styles.heroPanelCard}>
-              <p className={styles.heroPanelTitle}>Transparent pricing</p>
-              <p className={styles.heroPanelText}>
-                See size, location, and price up front on every property card.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Featured listings */}
         <section id="listings" className={styles.section}>
           <div className={styles.sectionHeader}>
             <div>
@@ -182,7 +92,6 @@ export default async function HomePage() {
           )}
         </section>
 
-        {/* Value props */}
         <section id="why-us" className={styles.section}>
           <div className={styles.sectionHeader}>
             <div>
@@ -221,7 +130,6 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Agent CTA */}
         <section className={styles.agentCta}>
           <div>
             <h2 className={styles.agentCtaTitle}>
