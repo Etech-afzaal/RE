@@ -47,7 +47,7 @@ export default async function PropertyDetailPage({ params }) {
             />
             <Link href="/" className={styles.logoLink}>
               <Image
-                src="/logo.svg"
+                src="/logo.png"
                 alt="Dhalahore Properties"
                 width={110}
                 height={40}

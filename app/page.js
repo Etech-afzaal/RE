@@ -183,7 +183,7 @@ export default async function HomePage() {
           <div className={styles.footerInner}>
             <div className={styles.footerBrand}>
               <Image
-                src="/logo.svg"
+                src="/logo.png"
                 alt="Dhalahore Properties"
                 width={120}
                 height={40}

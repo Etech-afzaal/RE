@@ -24,10 +24,10 @@ export default function SiteHeader() {
         <div className={styles.topRow}>
           <Link href="/" className={styles.logoGroup}>
             <Image
-              src="/logo.svg"
+              src="/logo.png"
               alt="Dhalahore Properties"
-              width={130}
-              height={44}
+              width={160}
+              height={56}
               priority
             />
           </Link>
