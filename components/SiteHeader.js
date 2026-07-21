@@ -51,25 +51,8 @@ export default function SiteHeader() {
           </nav>
 
           <div className={styles.actions}>
-            <a href="#listings" className={styles.iconButton} aria-label="Search listings">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-                <path d="M20 20l-3.5-3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </a>
-            <Link href="/agent/signup" className={styles.iconButton} aria-label="Become an agent">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" />
-                <path
-                  d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </Link>
             <Link href="/agent/login" className={styles.agentButton}>
-              Agent Login
+              Become an agent
             </Link>
           </div>
         </div>
