@@ -105,7 +105,7 @@ export default function HeroSlider({ slides = [] }) {
               </svg>
               Find Property
             </Link>
-
+{/* 
             <div className={styles.trust}>
               <span className={styles.trustBrand}>
                 <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
@@ -124,7 +124,7 @@ export default function HeroSlider({ slides = [] }) {
                   ★★★★★
                 </span>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
 

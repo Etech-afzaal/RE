@@ -1,6 +1,11 @@
-.heroWrap {
+/* .heroWrap {
   width: min(1240px, calc(100% - 2rem));
   margin: 0 auto 1.5rem;
+} */
+
+.heroWrap {
+  width: min(1240px, calc(100% - 2rem));
+  margin: 1.5rem auto 2rem;
 }
 
 .hero {
