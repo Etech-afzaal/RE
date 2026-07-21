@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
@@ -49,11 +50,14 @@ export default function LoginPage() {
     <div className={styles.loginPage}>
       <div className={styles.loginShell}>
         <div className={styles.loginCard}>
-          <div className={styles.loginBadge}>Secure access for admins</div>
+          <Link href="/" className={styles.backHome}>
+            ← Back to home
+          </Link>
+          <div className={styles.loginBadge}>Admin access</div>
           <h1 className={styles.loginTitle}>Welcome back</h1>
           <p className={styles.loginText}>
             Sign in to review agent requests, manage approvals, and oversee the
-            admin dashboard.
+            marketplace.
           </p>
 
           <form onSubmit={handleSubmit} className={styles.loginForm}>
@@ -73,7 +77,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               className={styles.loginInput}
             />
-            {error && <p className={styles.errorText}>{error}</p>}
+            {error ? <p className={styles.errorText}>{error}</p> : null}
             <button
               type="submit"
               disabled={loading}
@@ -83,26 +87,27 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className={styles.loginText}>
+          <p className={styles.loginFooter}>
             Are you an agent?{" "}
-            <a href="/agent/login" className={styles.loginLink}>
+            <Link href="/agent/login" className={styles.loginLink}>
               Use agent login
-            </a>
+            </Link>
           </p>
         </div>
 
         <div className={styles.loginVisual}>
           <img
-            src="https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&w=900&q=80"
-            alt="Professional real estate dashboard"
+            src="/hero/2.jpg"
+            alt="Premium real estate"
             className={styles.loginVisualImg}
           />
+          <div className={styles.loginVisualOverlay} aria-hidden="true" />
           <div className={styles.loginVisualText}>
             <h2 className={styles.loginVisualTitle}>Manage with confidence</h2>
             <ul className={styles.loginVisualList}>
-              <li>loreum ipsum .....</li>
-              <li>Review and approve new requests</li>
-              <li>loreum ipsum .....</li>
+              <li>Approve and manage agent requests</li>
+              <li>Oversee marketplace quality</li>
+              <li>Keep buyer trust signals strong</li>
             </ul>
           </div>
         </div>
@@ -110,15 +115,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-const inputStyle = {
-  width: "100%",
-  border: "1px solid #dbe4f0",
-  borderRadius: 14,
-  padding: "12px 14px",
-  fontSize: 15,
-  outline: "none",
-  boxSizing: "border-box",
-  background: "#f8fbff",
-  color: "#0f172a",
-};

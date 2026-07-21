@@ -13,13 +13,11 @@ const NAV_LINKS = [
   { label: "For Sale", href: "#listings" },
   { label: "For Rent", href: "#listings" },
   { label: "Property", href: "#listings" },
-  { label: "Pages", href: "#why-us" },
+  { label: "Areas", href: "#areas" },
   { label: "Contact Us", href: "#why-us" },
 ];
 
-export default function SiteHeader({ phone, phoneLabel = "To More Inquiry" }) {
-  const inquiryPhone = phone || "+990-737 621 432";
-
+export default function SiteHeader() {
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
@@ -41,25 +39,6 @@ export default function SiteHeader({ phone, phoneLabel = "To More Inquiry" }) {
               </a>
             ))}
           </nav>
-
-          <a href={`tel:${inquiryPhone.replace(/\s/g, "")}`} className={styles.phone}>
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1.1-.2 1.2.4 2.5.6 3.8.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C11.4 21 3 12.6 3 2c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.6.6 3.8.1.4 0 .8-.3 1.1L6.6 10.8z"
-                fill="currentColor"
-              />
-            </svg>
-            <span>
-              <span className={styles.phoneLabel}>{phoneLabel}</span>{" "}
-              <strong>{inquiryPhone}</strong>
-            </span>
-          </a>
         </div>
 
         <div className={styles.bottomRow}>
@@ -78,7 +57,7 @@ export default function SiteHeader({ phone, phoneLabel = "To More Inquiry" }) {
                 <path d="M20 20l-3.5-3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </a>
-            <Link href="/agent/login" className={styles.iconButton} aria-label="Agent login">
+            <Link href="/agent/signup" className={styles.iconButton} aria-label="Become an agent">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" />
                 <path
@@ -89,8 +68,8 @@ export default function SiteHeader({ phone, phoneLabel = "To More Inquiry" }) {
                 />
               </svg>
             </Link>
-            <Link href="/agent/signup" className={styles.addProperty}>
-              <span aria-hidden="true">+</span> Add Property
+            <Link href="/agent/login" className={styles.agentButton}>
+              Agent Login
             </Link>
           </div>
         </div>

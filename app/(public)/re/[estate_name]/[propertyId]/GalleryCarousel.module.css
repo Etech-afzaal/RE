@@ -1,55 +1,62 @@
 .gallerySection {
-  margin-bottom: var(--space-2xl);
+  margin-bottom: 2.5rem;
 }
 
 .galleryHeader {
   display: flex;
   justify-content: space-between;
+  align-items: flex-end;
   flex-wrap: wrap;
-  gap: var(--space-xl);
-  margin-bottom: var(--space-2xl);
+  gap: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .galleryTitle {
-  margin: 0 0 var(--space-md);
-  color: var(--brass-deep);
+  margin: 0 0 0.4rem;
+  color: var(--gold-deep);
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-size: 12px;
+  letter-spacing: 0.12em;
+  font-size: 0.75rem;
   font-weight: 700;
-  font-family: var(--font-mono);
 }
 
 .galleryIntro {
   margin: 0;
-  font-size: clamp(1.7rem, 3vw, 2.2rem);
-  color: var(--ink);
+  font-size: clamp(1.45rem, 2.8vw, 1.9rem);
+  color: #1a1a1a;
   font-weight: 800;
-  font-family: var(--font-display);
+  letter-spacing: -0.02em;
 }
 
-.galleryText {
+.galleryCount {
   margin: 0;
-  color: var(--muted);
-  max-width: 500px;
-  line-height: 1.7;
-  font-size: 1rem;
+  color: #737373;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.emptyGallery {
+  padding: 2rem;
+  text-align: center;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px dashed rgba(242, 187, 70, 0.45);
+  color: #737373;
 }
 
 .galleryOuter {
   position: relative;
-  padding: 0 var(--space-2xl);
+  padding: 0 2.5rem;
 }
 
 .carouselScroll {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(340px, 1fr);
-  gap: var(--space-lg);
+  grid-auto-columns: minmax(300px, 1fr);
+  gap: 1rem;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
-  padding-bottom: 0;
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
@@ -60,57 +67,54 @@
 
 .carouselCard {
   position: relative;
-  min-height: 380px;
-  border-radius: var(--radius-xl);
+  min-height: 360px;
+  border-radius: 18px;
   overflow: hidden;
-  border: 1px solid var(--line-soft);
-  background: var(--surface-sunken);
+  border: 1px solid rgba(26, 26, 26, 0.06);
+  background: #f0efed;
   scroll-snap-align: center;
-  transition: all var(--transition-base);
-  box-shadow: var(--shadow-md);
-}
-
-.carouselCard:hover {
-  box-shadow: var(--shadow-xl);
-  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(26, 26, 26, 0.07);
 }
 
 .carouselImage {
   object-fit: cover;
-  width: 100%;
-  height: 100%;
-  transition: transform var(--transition-slow);
+  transition: transform 0.4s ease;
 }
 
 .carouselCard:hover .carouselImage {
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
 .carouselOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(26, 26, 26, 0) 40%, rgba(26, 26, 26, 0.7) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(16, 14, 10, 0) 42%,
+    rgba(16, 14, 10, 0.72) 100%
+  );
   pointer-events: none;
 }
 
 .carouselCaption {
   position: absolute;
-  left: 20px;
-  bottom: 20px;
+  left: 1.1rem;
+  bottom: 1.1rem;
   color: #fff;
 }
 
 .captionLabel {
   margin: 0;
-  font-size: 13px;
+  font-size: 0.72rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  font-family: var(--font-mono);
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
 }
 
 .captionTitle {
-  margin: 6px 0 0;
-  font-size: 17px;
+  margin: 0.3rem 0 0;
+  font-size: 1rem;
   font-weight: 700;
 }
 
@@ -118,47 +122,68 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--line);
-  background: var(--surface);
-  color: var(--ink);
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(242, 187, 70, 0.35);
+  background: #fff;
+  color: #1a1a1a;
   cursor: pointer;
   display: grid;
   place-items: center;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 8px 20px rgba(26, 26, 26, 0.1);
   z-index: 10;
+  font-size: 1.4rem;
+  line-height: 1;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .carouselArrow:hover {
-  border-color: var(--brass);
+  background: var(--gold-tint);
+  border-color: var(--gold);
 }
 
 .carouselArrowLeft {
-  left: 18px;
+  left: 0;
 }
 
 .carouselArrowRight {
-  right: 18px;
+  right: 0;
 }
 
 .carouselDots {
   display: flex;
   justify-content: center;
-  gap: 8px;
-  margin-top: 22px;
+  gap: 0.5rem;
+  margin-top: 1.15rem;
 }
 
 .carouselDot {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
-  border: none;
-  background: var(--line);
+  border: 1.5px solid rgba(26, 26, 26, 0.18);
+  background: transparent;
   cursor: pointer;
+  padding: 0;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .carouselDotActive {
-  background: var(--brass);
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+@media (max-width: 700px) {
+  .galleryOuter {
+    padding: 0 1.75rem;
+  }
+
+  .carouselScroll {
+    grid-auto-columns: minmax(260px, 1fr);
+  }
+
+  .carouselCard {
+    min-height: 300px;
+  }
 }

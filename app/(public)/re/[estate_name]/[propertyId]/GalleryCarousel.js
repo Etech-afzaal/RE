@@ -25,8 +25,7 @@ export default function GalleryCarousel({ images, title, featuredImage }) {
   const scrollToIndex = (index) => {
     const container = carouselRef.current;
     if (!container || cardWidth === 0) return;
-    const left = cardWidth * index;
-    container.scrollTo({ left, behavior: "smooth" });
+    container.scrollTo({ left: cardWidth * index, behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -44,13 +43,12 @@ export default function GalleryCarousel({ images, title, featuredImage }) {
   }, [featuredImage?.id, images]);
 
   useEffect(() => {
-    if (images.length === 0) return;
+    if (images.length <= 1) return undefined;
     const interval = setInterval(() => {
       setCurrentIndex((current) =>
         current >= images.length - 1 ? 0 : current + 1,
       );
-    }, 3600);
-
+    }, 4000);
     return () => clearInterval(interval);
   }, [images.length]);
 
@@ -68,18 +66,25 @@ export default function GalleryCarousel({ images, title, featuredImage }) {
     });
   };
 
+  if (!images?.length) {
+    return (
+      <section className={styles.gallerySection}>
+        <p className={styles.galleryTitle}>Property gallery</p>
+        <h2 className={styles.galleryIntro}>Photos coming soon</h2>
+        <div className={styles.emptyGallery}>No images uploaded yet.</div>
+      </section>
+    );
+  }
+
   return (
     <section className={styles.gallerySection}>
       <div className={styles.galleryHeader}>
         <div>
           <p className={styles.galleryTitle}>Property gallery</p>
-          <h2 className={styles.galleryIntro}>
-            Explore the spaces in this property
-          </h2>
+          <h2 className={styles.galleryIntro}>Explore every space</h2>
         </div>
-        <p className={styles.galleryText}>
-          Browse the main images in a smooth slideshow. Use the arrows or let it
-          autoplay for a relaxed preview.
+        <p className={styles.galleryCount}>
+          {images.length} {images.length === 1 ? "photo" : "photos"}
         </p>
       </div>
 
@@ -93,13 +98,16 @@ export default function GalleryCarousel({ images, title, featuredImage }) {
             >
               <Image
                 src={img.image_url}
-                alt={title}
+                alt={img.image_title || title}
                 fill
+                sizes="(max-width: 768px) 85vw, 420px"
                 className={styles.carouselImage}
               />
               <div className={styles.carouselOverlay} />
               <div className={styles.carouselCaption}>
-                <p className={styles.captionLabel}>Photo tour</p>
+                <p className={styles.captionLabel}>
+                  {index + 1} / {images.length}
+                </p>
                 <p className={styles.captionTitle}>
                   {img.image_title || title}
                 </p>
@@ -108,37 +116,43 @@ export default function GalleryCarousel({ images, title, featuredImage }) {
           ))}
         </div>
 
-        <button
-          type="button"
-          aria-label="Previous image"
-          onClick={() => handleArrow("prev")}
-          className={`${styles.carouselArrow} ${styles.carouselArrowLeft}`}
-        >
-          ‹
-        </button>
-
-        <button
-          type="button"
-          aria-label="Next image"
-          onClick={() => handleArrow("next")}
-          className={`${styles.carouselArrow} ${styles.carouselArrowRight}`}
-        >
-          ›
-        </button>
+        {images.length > 1 ? (
+          <>
+            <button
+              type="button"
+              aria-label="Previous image"
+              onClick={() => handleArrow("prev")}
+              className={`${styles.carouselArrow} ${styles.carouselArrowLeft}`}
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              aria-label="Next image"
+              onClick={() => handleArrow("next")}
+              className={`${styles.carouselArrow} ${styles.carouselArrowRight}`}
+            >
+              ›
+            </button>
+          </>
+        ) : null}
       </div>
 
-      <div className={styles.carouselDots}>
-        {images.map((_, index) => (
-          <button
-            key={index}
-            type="button"
-            onClick={() => setCurrentIndex(index)}
-            className={`${styles.carouselDot} ${
-              index === currentIndex ? styles.carouselDotActive : ""
-            }`}
-          />
-        ))}
-      </div>
+      {images.length > 1 ? (
+        <div className={styles.carouselDots}>
+          {images.map((_, index) => (
+            <button
+              key={index}
+              type="button"
+              aria-label={`Go to photo ${index + 1}`}
+              onClick={() => setCurrentIndex(index)}
+              className={`${styles.carouselDot} ${
+                index === currentIndex ? styles.carouselDotActive : ""
+              }`}
+            />
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }
