@@ -190,6 +190,16 @@ export default async function HomePage() {
                     Reach out to our Lahore team for buying, selling, or investment guidance. We help serious buyers and trusted agents connect quickly.
                   </p>
 
+                  <div className={styles.chooseList}>
+                    <p className={styles.chooseHeading}>Why Choose Dhalahore?</p>
+                    <ul>
+                      <li>Verified Lahore listings from trusted estate agents.</li>
+                      <li>Clear pricing and quick direct contact.</li>
+                      <li>Premium local support for buyers and sellers.</li>
+                      <li>Effortless shortlisting with smart property details.</li>
+                    </ul>
+                  </div>
+
                   <div className={styles.contactDetails}>
                     <div className={styles.contactDetail}>
                       <span className={styles.contactIcon} aria-hidden="true">
