@@ -17,8 +17,13 @@
   padding: 0 0 3.5rem;
 }
 
+/* .section {
+  margin-bottom: 4.5rem;
+} */
+
 .section {
   margin-bottom: 4.5rem;
+  scroll-margin-top: 90px;
 }
 
 .sectionHeader {
