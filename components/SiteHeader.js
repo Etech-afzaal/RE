@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import styles from "./SiteHeader.module.css";
 
 const NAV_LINKS = [
-  { label: "Home", href: "/#properties" },
+  { label: "Home", href: "/" },
   { label: "Sale", href: "/?type=sale#properties" },
   { label: "Rent", href: "/?type=rent#properties" },
   { label: "Plots", href: "/?type=plot#properties" },
@@ -15,12 +16,20 @@ const NAV_LINKS = [
 ];
 
 export default function SiteHeader() {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleHomeClick = async (event) => {
+    event.preventDefault();
+    window.dispatchEvent(new Event("dhalahorePropertiesResetFilters"));
+    await router.replace("/");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
-        <Link href="/" className={styles.logoGroup}>
+        <Link href="/" onClick={handleHomeClick} className={styles.logoGroup}>
           <Image
             src="/logo.svg"
             alt="Dhalahore Properties"
@@ -32,7 +41,12 @@ export default function SiteHeader() {
 
         <nav className={styles.mainNav} aria-label="Main">
           {NAV_LINKS.map((link) => (
-            <Link key={link.label} href={link.href} className={styles.navLink}>
+            <Link
+              key={link.label}
+              href={link.href}
+              className={styles.navLink}
+              onClick={link.label === "Home" ? handleHomeClick : undefined}
+            >
               {link.label}
             </Link>
           ))}
@@ -80,7 +94,12 @@ export default function SiteHeader() {
               key={link.label}
               href={link.href}
               className={styles.mobileLink}
-              onClick={() => setMenuOpen(false)}
+              onClick={(event) => {
+                if (link.label === "Home") {
+                  handleHomeClick(event);
+                }
+                setMenuOpen(false);
+              }}
             >
               {link.label}
             </Link>

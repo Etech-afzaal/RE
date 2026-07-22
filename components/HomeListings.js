@@ -95,11 +95,28 @@ export default function HomeListings({ properties = [], filterType = "" }) {
       }
     };
 
+    const handleResetFilters = () => {
+      setQuery("");
+      setLocation("all");
+      setSort("default");
+    };
+
     document.addEventListener("click", handleLocationCardClick);
+    window.addEventListener("dhalahorePropertiesResetFilters", handleResetFilters);
+
     return () => {
       document.removeEventListener("click", handleLocationCardClick);
+      window.removeEventListener("dhalahorePropertiesResetFilters", handleResetFilters);
     };
   }, []);
+
+  useEffect(() => {
+    if (!filterType) {
+      setQuery("");
+      setLocation("all");
+      setSort("default");
+    }
+  }, [filterType]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
