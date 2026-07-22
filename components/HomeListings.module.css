@@ -1,5 +1,6 @@
 .section {
   margin-bottom: 4.5rem;
+  scroll-margin-top: 110px;
 }
 
 .searchBar {
@@ -131,6 +132,37 @@
   display: grid;
   gap: 1.4rem;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 1.75rem;
+}
+
+.pageButton {
+  min-width: 2.6rem;
+  min-height: 2.6rem;
+  padding: 0 0.8rem;
+  border: 1px solid rgba(26, 26, 26, 0.1);
+  border-radius: 999px;
+  background: #fff;
+  color: #1a1a1a;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.pageButton:hover {
+  border-color: rgba(242, 187, 70, 0.55);
+  background: rgba(255, 244, 214, 0.7);
+}
+
+.pageButtonActive {
+  border-color: var(--gold);
+  background: var(--gold-soft);
 }
 
 .card {

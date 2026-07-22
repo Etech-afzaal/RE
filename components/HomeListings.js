@@ -68,10 +68,190 @@ const SORT_OPTIONS = [
   { value: "newest", label: "Newest first" },
 ];
 
-export default function HomeListings({ properties = [], filterType = "" }) {
+function getCategory(property) {
+  const type =
+    String(property.property_type || property.purpose || property.listing_type || property.category || "")
+      .toLowerCase();
+  const title = String(property.title || "").toLowerCase();
+  const description = String(property.description || "").toLowerCase();
+
+  if (type.includes("plot") || title.includes("plot") || description.includes("plot")) {
+    return "plot";
+  }
+  if (type.includes("rent") || title.includes("rent") || description.includes("rent")) {
+    return "rent";
+  }
+  if (type.includes("sale")) {
+    return "sale";
+  }
+
+  const isExplicitRent = title.includes("rent") || description.includes("rent");
+  const isExplicitPlot = title.includes("plot") || description.includes("plot");
+  if (isExplicitPlot) return "plot";
+  if (isExplicitRent) return "rent";
+  return "sale";
+}
+
+function PropertyCard({ property }) {
+  const sizeLabel = formatSize(property.size_value, property.size_unit);
+  const address = property.location || property.title;
+  const statusLabel =
+    property.status === "sold"
+      ? "Sold"
+      : property.status === "draft"
+      ? "Draft"
+      : "For Sale";
+
+  return (
+    <Link
+      href={`/re/${property.estate_name}/${property.id}`}
+      className={styles.card}
+    >
+      <div className={styles.media}>
+        {property.featuredImage ? (
+          <Image
+            src={property.featuredImage.image_url}
+            alt={property.title}
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className={styles.image}
+          />
+        ) : (
+          <div className={styles.fallback} />
+        )}
+      </div>
+
+      <div className={styles.body}>
+        <h3 className={styles.address}>{address}</h3>
+
+        <div className={styles.attrs}>
+          {sizeLabel ? (
+            <span className={styles.attr}>
+              <SizeIcon />
+              {sizeLabel}
+            </span>
+          ) : null}
+          {property.agent_name ? (
+            <span className={styles.attr}>
+              <AgentIcon />
+              {property.agent_name}
+            </span>
+          ) : null}
+          <span className={styles.attr}>
+            <StatusIcon />
+            {statusLabel}
+          </span>
+        </div>
+
+        <div className={styles.footer}>
+          <div className={styles.footerItem}>
+            <span className={styles.footerLabel}>Price</span>
+            <span className={styles.footerValue}>{formatPrice(property.price)}</span>
+          </div>
+          <div className={`${styles.footerItem} ${styles.footerRight}`}>
+            <span className={styles.footerLabel}>Listed by</span>
+            <span className={styles.footerValueSmall}>
+              {property.agent_name || property.estate_name || "Agent"}
+            </span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function PropertySection({ id, title, kicker, properties, currentPage, onPageChange }) {
+  const totalPages = Math.max(1, Math.ceil(properties.length / 3));
+  const startIndex = (currentPage - 1) * 3;
+  const pageItems = properties.slice(startIndex, startIndex + 3);
+
+  const paginationRange = () => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    let start = Math.max(1, currentPage - 2);
+    let end = start + 4;
+
+    if (end > totalPages) {
+      end = totalPages;
+      start = totalPages - 4;
+    }
+
+    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+  };
+
+  return (
+    <section id={id} className={styles.section}>
+      <div className={styles.sectionHeader}>
+        <div>
+          <p className={styles.kicker}>{kicker}</p>
+          <h2 className={styles.title}>{title}</h2>
+        </div>
+        <p className={styles.count}>
+          {properties.length} {properties.length === 1 ? "home" : "homes"}
+        </p>
+      </div>
+
+      {properties.length === 0 ? (
+        <div className={styles.empty}>
+          No {title.toLowerCase()} match your filters. Try another area or <Link href="/agent/login">list a property</Link>.
+        </div>
+      ) : (
+        <>
+          <div className={styles.grid}>
+            {pageItems.map((property) => (
+              <PropertyCard key={property.id} property={property} />
+            ))}
+          </div>
+
+          {totalPages > 1 ? (
+            <div className={styles.pagination}>
+              {currentPage > 1 ? (
+                <button
+                  type="button"
+                  className={styles.pageButton}
+                  onClick={() => onPageChange(currentPage - 1)}
+                >
+                  &lt;
+                </button>
+              ) : null}
+
+              {paginationRange().map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  className={`${styles.pageButton} ${
+                    page === currentPage ? styles.pageButtonActive : ""
+                  }`}
+                  onClick={() => onPageChange(page)}
+                >
+                  {page}
+                </button>
+              ))}
+
+              {currentPage < totalPages ? (
+                <button
+                  type="button"
+                  className={styles.pageButton}
+                  onClick={() => onPageChange(currentPage + 1)}
+                >
+                  &gt;
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </>
+      )}
+    </section>
+  );
+}
+
+export default function HomeListings({ properties = [] }) {
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("all");
   const [sort, setSort] = useState("default");
+  const [pages, setPages] = useState({ sale: 1, rent: 1, plot: 1 });
 
   const locations = useMemo(() => {
     const set = new Set(properties.map((p) => p.location).filter(Boolean));
@@ -81,7 +261,7 @@ export default function HomeListings({ properties = [], filterType = "" }) {
   useEffect(() => {
     const handleLocationCardClick = (event) => {
       const target = event.target;
-      const card = target.closest("a[data-location][href='#properties']");
+      const card = target.closest("a[data-location][href='#sale']");
       if (!card) return;
 
       event.preventDefault();
@@ -89,7 +269,7 @@ export default function HomeListings({ properties = [], filterType = "" }) {
       if (!selectedLocation) return;
 
       setLocation(selectedLocation);
-      const section = document.getElementById("properties");
+      const section = document.getElementById("sale");
       if (section) {
         section.scrollIntoView({ behavior: "smooth", block: "start" });
       }
@@ -99,6 +279,7 @@ export default function HomeListings({ properties = [], filterType = "" }) {
       setQuery("");
       setLocation("all");
       setSort("default");
+      setPages({ sale: 1, rent: 1, plot: 1 });
     };
 
     document.addEventListener("click", handleLocationCardClick);
@@ -111,71 +292,23 @@ export default function HomeListings({ properties = [], filterType = "" }) {
   }, []);
 
   useEffect(() => {
-    if (!filterType) {
-      setQuery("");
-      setLocation("all");
-      setSort("default");
-    }
-  }, [filterType]);
+    setPages({ sale: 1, rent: 1, plot: 1 });
+  }, [query, location, sort]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const normalizedType = filterType?.toLowerCase()?.trim();
 
-    const typeMatches = (property) => {
-      if (!normalizedType) return true;
-
-      const propertyType =
-        property.property_type ||
-        property.purpose ||
-        property.listing_type ||
-        property.category ||
-        "";
-      const normalizedPropertyType = String(propertyType).toLowerCase();
-      const title = String(property.title || "").toLowerCase();
-      const description = String(property.description || "").toLowerCase();
-
-      if (normalizedType === "sale") {
-        if (normalizedPropertyType) {
-          return normalizedPropertyType.includes("sale");
-        }
-        const isExplicitRent = title.includes("rent") || description.includes("rent");
-        const isExplicitPlot = title.includes("plot") || description.includes("plot");
-        return !isExplicitRent && !isExplicitPlot;
-      }
-
-      if (normalizedType === "rent") {
-        return (
-          normalizedPropertyType.includes("rent") ||
-          title.includes("rent") ||
-          description.includes("rent")
-        );
-      }
-
-      if (normalizedType === "plot") {
-        return (
-          normalizedPropertyType.includes("plot") ||
-          title.includes("plot") ||
-          description.includes("plot")
-        );
-      }
-
-      return true;
-    };
-
-    const result = properties.filter((p) => {
+    const base = properties.filter((p) => {
       const matchesLocation = location === "all" || p.location === location;
-      const haystack =
-        `${p.title} ${p.location || ""} ${p.agent_name || ""}`.toLowerCase();
-      return matchesLocation && (!q || haystack.includes(q)) && typeMatches(p);
+      const haystack = `${p.title} ${p.location || ""} ${p.agent_name || ""}`.toLowerCase();
+      return matchesLocation && (!q || haystack.includes(q));
     });
 
-    // Listings without a price sink to the bottom for price sorts.
     const priceOf = (p) =>
       p.price != null && p.price !== "" ? Number(p.price) : null;
 
     if (sort === "price-asc") {
-      result.sort((a, b) => {
+      base.sort((a, b) => {
         const pa = priceOf(a);
         const pb = priceOf(b);
         if (pa == null && pb == null) return 0;
@@ -184,7 +317,7 @@ export default function HomeListings({ properties = [], filterType = "" }) {
         return pa - pb;
       });
     } else if (sort === "price-desc") {
-      result.sort((a, b) => {
+      base.sort((a, b) => {
         const pa = priceOf(a);
         const pb = priceOf(b);
         if (pa == null && pb == null) return 0;
@@ -193,16 +326,31 @@ export default function HomeListings({ properties = [], filterType = "" }) {
         return pb - pa;
       });
     } else if (sort === "newest") {
-      result.sort(
+      base.sort(
         (a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0),
       );
     }
 
-    return result;
+    return base;
   }, [properties, query, location, sort]);
 
+  const saleProperties = useMemo(
+    () => filtered.filter((property) => getCategory(property) === "sale"),
+    [filtered],
+  );
+
+  const rentProperties = useMemo(
+    () => filtered.filter((property) => getCategory(property) === "rent"),
+    [filtered],
+  );
+
+  const plotProperties = useMemo(
+    () => filtered.filter((property) => getCategory(property) === "plot"),
+    [filtered],
+  );
+
   return (
-    <section id="properties" className={styles.section}>
+    <div>
       <div className={styles.searchBar}>
         <div className={styles.searchField}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -255,103 +403,32 @@ export default function HomeListings({ properties = [], filterType = "" }) {
         </button>
       </div>
 
-      <div className={styles.sectionHeader}>
-        <div>
-          <p className={styles.kicker}>Homes for you</p>
-          <h2 className={styles.title}>
-            {filterType === "sale"
-              ? "For Sale"
-              : filterType === "rent"
-              ? "For Rent"
-              : filterType === "plot"
-              ? "Plots"
-              : "Featured Properties"}
-          </h2>
-        </div>
-        <p className={styles.count}>
-          {filtered.length} {filtered.length === 1 ? "home" : "homes"}
-        </p>
-      </div>
+      <PropertySection
+        id="sale"
+        title="For Sale"
+        kicker="Homes for sale"
+        properties={saleProperties}
+        currentPage={pages.sale}
+        onPageChange={(page) => setPages((prev) => ({ ...prev, sale: page }))}
+      />
 
-      {filtered.length === 0 ? (
-        <div className={styles.empty}>
-          No listings match your filters. Try another area or{" "}
-          <Link href="/agent/login">list a property</Link>.
-        </div>
-      ) : (
-        <div className={styles.grid}>
-          {filtered.map((property) => {
-            const sizeLabel = formatSize(property.size_value, property.size_unit);
-            const address = property.location || property.title;
-            const statusLabel =
-              property.status === "sold"
-                ? "Sold"
-                : property.status === "draft"
-                  ? "Draft"
-                  : "For Sale";
+      <PropertySection
+        id="rent"
+        title="For Rent"
+        kicker="Homes for rent"
+        properties={rentProperties}
+        currentPage={pages.rent}
+        onPageChange={(page) => setPages((prev) => ({ ...prev, rent: page }))}
+      />
 
-            return (
-              <Link
-                key={property.id}
-                href={`/re/${property.estate_name}/${property.id}`}
-                className={styles.card}
-              >
-                <div className={styles.media}>
-                  {property.featuredImage ? (
-                    <Image
-                      src={property.featuredImage.image_url}
-                      alt={property.title}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 33vw"
-                      className={styles.image}
-                    />
-                  ) : (
-                    <div className={styles.fallback} />
-                  )}
-                </div>
-
-                <div className={styles.body}>
-                  <h3 className={styles.address}>{address}</h3>
-
-                  <div className={styles.attrs}>
-                    {sizeLabel ? (
-                      <span className={styles.attr}>
-                        <SizeIcon />
-                        {sizeLabel}
-                      </span>
-                    ) : null}
-                    {property.agent_name ? (
-                      <span className={styles.attr}>
-                        <AgentIcon />
-                        {property.agent_name}
-                      </span>
-                    ) : null}
-                    <span className={styles.attr}>
-                      <StatusIcon />
-                      {statusLabel}
-                    </span>
-                  </div>
-
-                  <div className={styles.footer}>
-                    <div className={styles.footerItem}>
-                      <span className={styles.footerLabel}>Price</span>
-                      <span className={styles.footerValue}>
-                        {formatPrice(property.price)}
-                      </span>
-                    </div>
-                    <div className={`${styles.footerItem} ${styles.footerRight}`}>
-                      <span className={styles.footerLabel}>Listed by</span>
-                      <span className={styles.footerValueSmall}>
-                        {property.agent_name || property.estate_name || "Agent"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      )}
-    </section>
+      <PropertySection
+        id="plots"
+        title="Plots"
+        kicker="Land listings"
+        properties={plotProperties}
+        currentPage={pages.plot}
+        onPageChange={(page) => setPages((prev) => ({ ...prev, plot: page }))}
+      />
+    </div>
   );
 }

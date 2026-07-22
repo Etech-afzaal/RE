@@ -20,14 +20,9 @@ export const metadata = {
     "Browse verified property listings from trusted Lahore estate agents, or list your own properties on Dhalahore Properties.",
 };
 
-export default async function HomePage({ searchParams }) {
-  const type =
-    typeof searchParams?.type === "string"
-      ? searchParams.type.toLowerCase()
-      : "";
-
+export default async function HomePage() {
   const [properties, heroSlides, stats, locations] = await Promise.all([
-    getFeaturedProperties(9),
+    getFeaturedProperties(18),
     getHeroSlides(5),
     getPublicStats(),
     getPopularLocations(4),
@@ -36,7 +31,7 @@ export default async function HomePage({ searchParams }) {
   const inquiryPhone = heroSlides[0]?.agent_phone || null;
   const telHref = inquiryPhone
     ? `tel:${inquiryPhone.replace(/\s/g, "")}`
-    : "#properties";
+    : "#sale";
   const agentCtaImage =
     heroSlides.find((slide) => slide.image_url)?.image_url ||
     properties.find((property) => property.featuredImage?.image_url)
@@ -55,7 +50,7 @@ export default async function HomePage({ searchParams }) {
 
       <main className={styles.main}>
         <div className={styles.container}>
-          <HomeListings properties={properties} filterType={type} />
+          <HomeListings properties={properties} />
 
           <TrustStats stats={stats} backgroundImage={trustBackground} />
 
@@ -66,7 +61,7 @@ export default async function HomePage({ searchParams }) {
                   <p className={styles.kicker}>Explore Lahore</p>
                   <h2 className={styles.sectionTitle}>Browse by location</h2>
                 </div>
-                <a href="#properties" className={styles.textLink}>
+                <a href="#sale" className={styles.textLink}>
                   View all homes
                 </a>
               </div>
@@ -75,7 +70,7 @@ export default async function HomePage({ searchParams }) {
                 {locations.map((loc) => (
                   <a
                     key={loc.name}
-                    href="#properties"
+                    href="#sale"
                     className={styles.locationCard}
                     data-location={loc.name}
                   >
@@ -323,7 +318,7 @@ export default async function HomePage({ searchParams }) {
 
             <div className={styles.footerCol}>
               <h4>Buy</h4>
-              <a href="#properties">Featured homes</a>
+              <a href="#sale">Featured homes</a>
               <a href="#areas">Browse locations</a>
               <a href="#why-us">How it works</a>
             </div>

@@ -8,9 +8,9 @@ import styles from "./SiteHeader.module.css";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
-  { label: "Sale", href: "/?type=sale#properties" },
-  { label: "Rent", href: "/?type=rent#properties" },
-  { label: "Plots", href: "/?type=plot#properties" },
+  { label: "Sale", href: "#sale" },
+  { label: "Rent", href: "#rent" },
+  { label: "Plots", href: "#plots" },
   { label: "Areas", href: "#areas" },
   { label: "Contact Us", href: "#contact" },
 ];
