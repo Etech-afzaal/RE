@@ -68,7 +68,7 @@ const SORT_OPTIONS = [
   { value: "newest", label: "Newest first" },
 ];
 
-export default function HomeListings({ properties = [] }) {
+export default function HomeListings({ properties = [], filterType = "" }) {
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("all");
   const [sort, setSort] = useState("default");
@@ -80,11 +80,54 @@ export default function HomeListings({ properties = [] }) {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const normalizedType = filterType?.toLowerCase()?.trim();
+
+    const typeMatches = (property) => {
+      if (!normalizedType) return true;
+
+      const propertyType =
+        property.property_type ||
+        property.purpose ||
+        property.listing_type ||
+        property.category ||
+        "";
+      const normalizedPropertyType = String(propertyType).toLowerCase();
+      const title = String(property.title || "").toLowerCase();
+      const description = String(property.description || "").toLowerCase();
+
+      if (normalizedType === "sale") {
+        if (normalizedPropertyType) {
+          return normalizedPropertyType.includes("sale");
+        }
+        const isExplicitRent = title.includes("rent") || description.includes("rent");
+        const isExplicitPlot = title.includes("plot") || description.includes("plot");
+        return !isExplicitRent && !isExplicitPlot;
+      }
+
+      if (normalizedType === "rent") {
+        return (
+          normalizedPropertyType.includes("rent") ||
+          title.includes("rent") ||
+          description.includes("rent")
+        );
+      }
+
+      if (normalizedType === "plot") {
+        return (
+          normalizedPropertyType.includes("plot") ||
+          title.includes("plot") ||
+          description.includes("plot")
+        );
+      }
+
+      return true;
+    };
+
     const result = properties.filter((p) => {
       const matchesLocation = location === "all" || p.location === location;
       const haystack =
         `${p.title} ${p.location || ""} ${p.agent_name || ""}`.toLowerCase();
-      return matchesLocation && (!q || haystack.includes(q));
+      return matchesLocation && (!q || haystack.includes(q)) && typeMatches(p);
     });
 
     // Listings without a price sink to the bottom for price sorts.
@@ -119,7 +162,7 @@ export default function HomeListings({ properties = [] }) {
   }, [properties, query, location, sort]);
 
   return (
-    <section id="listings" className={styles.section}>
+    <section id="properties" className={styles.section}>
       <div className={styles.searchBar}>
         <div className={styles.searchField}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -175,7 +218,15 @@ export default function HomeListings({ properties = [] }) {
       <div className={styles.sectionHeader}>
         <div>
           <p className={styles.kicker}>Homes for you</p>
-          <h2 className={styles.title}>Featured listings</h2>
+          <h2 className={styles.title}>
+            {filterType === "sale"
+              ? "For Sale"
+              : filterType === "rent"
+              ? "For Rent"
+              : filterType === "plot"
+              ? "Plots"
+              : "Featured Properties"}
+          </h2>
         </div>
         <p className={styles.count}>
           {filtered.length} {filtered.length === 1 ? "home" : "homes"}

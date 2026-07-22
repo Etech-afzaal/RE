@@ -351,7 +351,7 @@ export default async function PropertyDetailPage({ params }) {
             <a href={viewingHref} className={styles.contactButton}>
               Request a viewing
             </a>
-            <Link href="/#listings" className={styles.closingGhost}>
+            <Link href="/#properties" className={styles.closingGhost}>
               Browse more homes
             </Link>
           </div>

@@ -6,10 +6,10 @@ import Image from "next/image";
 import styles from "./SiteHeader.module.css";
 
 const NAV_LINKS = [
-  { label: "Home", href: "/" },
-  { label: "For Sale", href: "#listings" },
-  { label: "For Rent", href: "#listings" },
-  { label: "Property", href: "#listings" },
+  { label: "Home", href: "/#properties" },
+  { label: "Sale", href: "/?type=sale#properties" },
+  { label: "Rent", href: "/?type=rent#properties" },
+  { label: "Plots", href: "/?type=plot#properties" },
   { label: "Areas", href: "#areas" },
   { label: "Contact Us", href: "#why-us" },
 ];
