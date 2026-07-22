@@ -222,7 +222,7 @@
   overflow: hidden;
   isolation: isolate;
   color: #fff;
-  margin-bottom: 1rem;
+  margin-bottom: 4.5rem;
   border: 1px solid rgba(242, 187, 70, 0.35);
   box-shadow: 0 18px 40px rgba(26, 26, 26, 0.12);
   background: linear-gradient(135deg, #2a2418 0%, #1a1a1a 100%);
@@ -471,14 +471,14 @@
   background: #ffffff;
   border-radius: 28px;
   box-shadow: 0 24px 60px rgba(26, 26, 26, 0.08);
-  padding: 2.5rem;
+  padding: var(--space-3xl);
   border: 1px solid rgba(242, 187, 70, 0.15);
 }
 
 .contactGrid {
   display: grid;
   grid-template-columns: 1.05fr 1fr;
-  gap: 3.5rem;
+  gap: var(--space-3xl);
   align-items: stretch;
 }
 
@@ -626,6 +626,6 @@
 
 @media (max-width: 720px) {
   .contactCard {
-    padding: 5rem;
+    padding: var(--space-2xl);
   }
 }
