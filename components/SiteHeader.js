@@ -12,7 +12,7 @@ const NAV_LINKS = [
   { label: "Rent", href: "/?type=rent#properties" },
   { label: "Plots", href: "/?type=plot#properties" },
   { label: "Areas", href: "#areas" },
-  { label: "Contact Us", href: "#why-us" },
+  { label: "Contact Us", href: "#contact" },
 ];
 
 export default function SiteHeader() {

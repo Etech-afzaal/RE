@@ -182,6 +182,127 @@ export default async function HomePage({ searchParams }) {
               </Link>
             </div>
           </section>
+
+          <section id="contact" className={styles.contactSection}>
+            <div className={styles.contactCard}>
+              <div className={styles.contactGrid}>
+                <div className={styles.contactInfo}>
+                  <p className={styles.contactKicker}>CONTACT US</p>
+                  <h2 className={styles.contactHeading}>
+                    Let's Talk About Your Next Property
+                  </h2>
+                  <p className={styles.contactCopy}>
+                    Reach out to our Lahore team for buying, selling, or investment guidance. We help serious buyers and trusted agents connect quickly.
+                  </p>
+
+                  <div className={styles.contactDetails}>
+                    <div className={styles.contactDetail}>
+                      <span className={styles.contactIcon} aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <path d="M3 5.5C3 4.7 3.7 4 4.5 4H7c.6 0 1 .4 1 1v1.5c0 .8-.7 1.5-1.5 1.5H6c-.3 0-.5.2-.5.5v1.5c0 .3.2.5.5.5h1c.8 0 1.5.7 1.5 1.5V17c0 .6-.4 1-1 1H4.5C3.7 18 3 17.3 3 16.5V5.5Z" stroke="#1A1A1A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M11 8h7.5c.8 0 1.5.7 1.5 1.5v5c0 .8-.7 1.5-1.5 1.5H11" stroke="#1A1A1A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M16 12.5 18.5 14.5" stroke="#1A1A1A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </span>
+                      <div>
+                        <p className={styles.contactDetailLabel}>Phone</p>
+                        <p className={styles.contactDetailValue}>+92 300 123 4567</p>
+                      </div>
+                    </div>
+                    <div className={styles.contactDetail}>
+                      <span className={styles.contactIcon} aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <path d="M3 7.5 12 13.5 21 7.5" stroke="#1A1A1A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M21 7.5v9c0 .8-.7 1.5-1.5 1.5H4.5C3.7 18 3 17.3 3 16.5v-9" stroke="#1A1A1A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </span>
+                      <div>
+                        <p className={styles.contactDetailLabel}>Email</p>
+                        <p className={styles.contactDetailValue}>info@dhalahore.com</p>
+                      </div>
+                    </div>
+                    <div className={styles.contactDetail}>
+                      <span className={styles.contactIcon} aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <path d="M12 20.5s7-3.25 7-8.5c0-3.6-2.9-6.5-7-6.5S5 8.4 5 12c0 5.25 7 8.5 7 8.5Z" stroke="#1A1A1A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="#1A1A1A" strokeWidth="1.8"/>
+                        </svg>
+                      </span>
+                      <div>
+                        <p className={styles.contactDetailLabel}>Office</p>
+                        <p className={styles.contactDetailValue}>12 Garden Town, Lahore</p>
+                      </div>
+                    </div>
+                    <div className={styles.contactDetail}>
+                      <span className={styles.contactIcon} aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z" stroke="#1A1A1A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M8 6h8" stroke="#1A1A1A" strokeWidth="1.8" strokeLinecap="round"/>
+                          <path d="M8 10h8" stroke="#1A1A1A" strokeWidth="1.8" strokeLinecap="round"/>
+                        </svg>
+                      </span>
+                      <div>
+                        <p className={styles.contactDetailLabel}>Hours</p>
+                        <p className={styles.contactDetailValue}>Mon–Fri, 9am–6pm</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.contactFormPanel}>
+                  <p className={styles.contactFormKicker}>Send a message</p>
+                  <h3 className={styles.contactFormHeading}>
+                    Tell us what you need and our team will respond quickly.
+                  </h3>
+                  <form className={styles.contactForm}>
+                    <label className={styles.formField}>
+                      <span className={styles.formLabel}>Full Name</span>
+                      <input
+                        type="text"
+                        placeholder="Full Name"
+                        className={styles.contactInput}
+                      />
+                    </label>
+                    <label className={styles.formField}>
+                      <span className={styles.formLabel}>Email Address</span>
+                      <input
+                        type="email"
+                        placeholder="Email Address"
+                        className={styles.contactInput}
+                      />
+                    </label>
+                    <label className={styles.formField}>
+                      <span className={styles.formLabel}>Phone Number</span>
+                      <input
+                        type="tel"
+                        placeholder="Phone Number"
+                        className={styles.contactInput}
+                      />
+                    </label>
+                    <label className={styles.formField}>
+                      <span className={styles.formLabel}>Subject</span>
+                      <input
+                        type="text"
+                        placeholder="Subject"
+                        className={styles.contactInput}
+                      />
+                    </label>
+                    <label className={styles.formField}>
+                      <span className={styles.formLabel}>Message</span>
+                      <textarea
+                        rows="5"
+                        placeholder="Write your message"
+                        className={styles.contactTextarea}
+                      />
+                    </label>
+                    <button type="button" className={`${styles.btnPrimary} ${styles.contactSubmit}`}>
+                      Send Message
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
 
         <footer className={styles.footer}>
