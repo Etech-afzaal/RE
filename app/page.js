@@ -77,6 +77,7 @@ export default async function HomePage({ searchParams }) {
                     key={loc.name}
                     href="#properties"
                     className={styles.locationCard}
+                    data-location={loc.name}
                   >
                     <div className={styles.locationMedia}>
                       {loc.image_url ? (

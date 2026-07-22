@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./HomeListings.module.css";
@@ -77,6 +77,29 @@ export default function HomeListings({ properties = [], filterType = "" }) {
     const set = new Set(properties.map((p) => p.location).filter(Boolean));
     return ["all", ...Array.from(set)];
   }, [properties]);
+
+  useEffect(() => {
+    const handleLocationCardClick = (event) => {
+      const target = event.target;
+      const card = target.closest("a[data-location][href='#properties']");
+      if (!card) return;
+
+      event.preventDefault();
+      const selectedLocation = card.dataset.location;
+      if (!selectedLocation) return;
+
+      setLocation(selectedLocation);
+      const section = document.getElementById("properties");
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    };
+
+    document.addEventListener("click", handleLocationCardClick);
+    return () => {
+      document.removeEventListener("click", handleLocationCardClick);
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
