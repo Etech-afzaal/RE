@@ -183,10 +183,10 @@ export default async function HomePage() {
           <div className={styles.footerInner}>
             <div className={styles.footerBrand}>
               <Image
-                src="/logo.png"
+                src="/logo.svg"
                 alt="Dhalahore Properties"
-                width={120}
-                height={40}
+                width={155}
+                height={43}
               />
               <p>
                 Lahore&apos;s marketplace for verified agent listings — clear
@@ -224,15 +224,6 @@ export default async function HomePage() {
           </div>
         </footer>
       </main>
-
-      <div className={styles.mobileBar}>
-        <a href="#listings" className={styles.mobileBarSecondary}>
-          Browse homes
-        </a>
-        <a href={telHref} className={styles.mobileBarPrimary}>
-          Call inquiry
-        </a>
-      </div>
     </div>
   );
 }

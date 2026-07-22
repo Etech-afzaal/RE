@@ -61,24 +61,17 @@ function StatusIcon() {
   );
 }
 
-function HeartIcon({ filled }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M12 21s-6.5-4.35-9.3-8.2C.7 10.1 1.4 6.5 4.4 5.1c1.9-.9 4.1-.3 5.4 1.3C11.1 4.8 13.3 4.2 15.2 5.1c3 1.4 3.7 5 1.7 7.7C18.5 16.65 12 21 12 21z"
-        fill={filled ? "#f2bb46" : "none"}
-        stroke={filled ? "#c9961f" : "#9ca3af"}
-        strokeWidth="1.7"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
+const SORT_OPTIONS = [
+  { value: "default", label: "Sort: Featured" },
+  { value: "price-asc", label: "Price: Low to High" },
+  { value: "price-desc", label: "Price: High to Low" },
+  { value: "newest", label: "Newest first" },
+];
 
 export default function HomeListings({ properties = [] }) {
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("all");
-  const [saved, setSaved] = useState(() => new Set());
+  const [sort, setSort] = useState("default");
 
   const locations = useMemo(() => {
     const set = new Set(properties.map((p) => p.location).filter(Boolean));
@@ -87,24 +80,43 @@ export default function HomeListings({ properties = [] }) {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return properties.filter((p) => {
+    const result = properties.filter((p) => {
       const matchesLocation = location === "all" || p.location === location;
       const haystack =
         `${p.title} ${p.location || ""} ${p.agent_name || ""}`.toLowerCase();
       return matchesLocation && (!q || haystack.includes(q));
     });
-  }, [properties, query, location]);
 
-  const toggleSaved = (id, event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setSaved((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
+    // Listings without a price sink to the bottom for price sorts.
+    const priceOf = (p) =>
+      p.price != null && p.price !== "" ? Number(p.price) : null;
+
+    if (sort === "price-asc") {
+      result.sort((a, b) => {
+        const pa = priceOf(a);
+        const pb = priceOf(b);
+        if (pa == null && pb == null) return 0;
+        if (pa == null) return 1;
+        if (pb == null) return -1;
+        return pa - pb;
+      });
+    } else if (sort === "price-desc") {
+      result.sort((a, b) => {
+        const pa = priceOf(a);
+        const pb = priceOf(b);
+        if (pa == null && pb == null) return 0;
+        if (pa == null) return 1;
+        if (pb == null) return -1;
+        return pb - pa;
+      });
+    } else if (sort === "newest") {
+      result.sort(
+        (a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0),
+      );
+    }
+
+    return result;
+  }, [properties, query, location, sort]);
 
   return (
     <section id="listings" className={styles.section}>
@@ -141,6 +153,20 @@ export default function HomeListings({ properties = [] }) {
             ))}
           </select>
         </label>
+        <label className={styles.selectField}>
+          <span className={styles.srOnly}>Sort by price</span>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            aria-label="Sort listings"
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <button type="button" className={styles.searchBtn}>
           Search
         </button>
@@ -172,7 +198,6 @@ export default function HomeListings({ properties = [] }) {
                 : property.status === "draft"
                   ? "Draft"
                   : "For Sale";
-            const isSaved = saved.has(property.id);
 
             return (
               <Link
@@ -192,15 +217,6 @@ export default function HomeListings({ properties = [] }) {
                   ) : (
                     <div className={styles.fallback} />
                   )}
-                  <button
-                    type="button"
-                    className={styles.favBtn}
-                    aria-label={isSaved ? "Remove from saved" : "Save property"}
-                    aria-pressed={isSaved}
-                    onClick={(e) => toggleSaved(property.id, e)}
-                  >
-                    <HeartIcon filled={isSaved} />
-                  </button>
                 </div>
 
                 <div className={styles.body}>

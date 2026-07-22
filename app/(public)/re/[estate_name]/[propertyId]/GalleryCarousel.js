@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import styles from "./GalleryCarousel.module.css";
 
-export default function GalleryCarousel({ images, title, featuredImage }) {
+export default function GalleryCarousel({ slides = [], title }) {
   const carouselRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cardWidth, setCardWidth] = useState(0);
@@ -35,41 +35,33 @@ export default function GalleryCarousel({ images, title, featuredImage }) {
   }, []);
 
   useEffect(() => {
-    if (images.length === 0) return;
-    const initialIndex = images.findIndex(
-      (img) => img.id === featuredImage?.id,
-    );
-    setCurrentIndex(initialIndex >= 0 ? initialIndex : 0);
-  }, [featuredImage?.id, images]);
-
-  useEffect(() => {
-    if (images.length <= 1) return undefined;
+    if (slides.length <= 1) return undefined;
     const interval = setInterval(() => {
       setCurrentIndex((current) =>
-        current >= images.length - 1 ? 0 : current + 1,
+        current >= slides.length - 1 ? 0 : current + 1,
       );
-    }, 4000);
+    }, 4500);
     return () => clearInterval(interval);
-  }, [images.length]);
+  }, [slides.length]);
 
   useEffect(() => {
-    if (images.length === 0 || cardWidth === 0) return;
+    if (slides.length === 0 || cardWidth === 0) return;
     scrollToIndex(currentIndex);
-  }, [currentIndex, images.length, cardWidth]);
+  }, [currentIndex, slides.length, cardWidth]);
 
   const handleArrow = (direction) => {
     setCurrentIndex((current) => {
       if (direction === "prev") {
-        return current === 0 ? Math.max(images.length - 1, 0) : current - 1;
+        return current === 0 ? Math.max(slides.length - 1, 0) : current - 1;
       }
-      return current >= images.length - 1 ? 0 : current + 1;
+      return current >= slides.length - 1 ? 0 : current + 1;
     });
   };
 
-  if (!images?.length) {
+  if (!slides.length) {
     return (
       <section className={styles.gallerySection}>
-        <p className={styles.galleryTitle}>Property gallery</p>
+        <p className={styles.galleryTitle}>Explore the spaces</p>
         <h2 className={styles.galleryIntro}>Photos coming soon</h2>
         <div className={styles.emptyGallery}>No images uploaded yet.</div>
       </section>
@@ -80,25 +72,23 @@ export default function GalleryCarousel({ images, title, featuredImage }) {
     <section className={styles.gallerySection}>
       <div className={styles.galleryHeader}>
         <div>
-          <p className={styles.galleryTitle}>Property gallery</p>
-          <h2 className={styles.galleryIntro}>Explore every space</h2>
+          <p className={styles.galleryTitle}>Explore the spaces</p>
+          <h2 className={styles.galleryIntro}>
+            Swipe through every space
+          </h2>
         </div>
         <p className={styles.galleryCount}>
-          {images.length} {images.length === 1 ? "photo" : "photos"}
+          {slides.length} {slides.length === 1 ? "space" : "spaces"}
         </p>
       </div>
 
       <div className={styles.galleryOuter}>
         <div ref={carouselRef} className={styles.carouselScroll}>
-          {images.map((img, index) => (
-            <div
-              key={img.id || index}
-              data-card
-              className={styles.carouselCard}
-            >
+          {slides.map((slide, index) => (
+            <div key={slide.id || index} data-card className={styles.carouselCard}>
               <Image
-                src={img.image_url}
-                alt={img.image_title || title}
+                src={slide.image}
+                alt={slide.label || title}
                 fill
                 sizes="(max-width: 768px) 85vw, 420px"
                 className={styles.carouselImage}
@@ -106,21 +96,22 @@ export default function GalleryCarousel({ images, title, featuredImage }) {
               <div className={styles.carouselOverlay} />
               <div className={styles.carouselCaption}>
                 <p className={styles.captionLabel}>
-                  {index + 1} / {images.length}
+                  {index + 1} / {slides.length}
                 </p>
-                <p className={styles.captionTitle}>
-                  {img.image_title || title}
-                </p>
+                <p className={styles.captionTitle}>{slide.label || title}</p>
+                {slide.copy ? (
+                  <p className={styles.captionCopy}>{slide.copy}</p>
+                ) : null}
               </div>
             </div>
           ))}
         </div>
 
-        {images.length > 1 ? (
+        {slides.length > 1 ? (
           <>
             <button
               type="button"
-              aria-label="Previous image"
+              aria-label="Previous space"
               onClick={() => handleArrow("prev")}
               className={`${styles.carouselArrow} ${styles.carouselArrowLeft}`}
             >
@@ -128,7 +119,7 @@ export default function GalleryCarousel({ images, title, featuredImage }) {
             </button>
             <button
               type="button"
-              aria-label="Next image"
+              aria-label="Next space"
               onClick={() => handleArrow("next")}
               className={`${styles.carouselArrow} ${styles.carouselArrowRight}`}
             >
@@ -138,13 +129,13 @@ export default function GalleryCarousel({ images, title, featuredImage }) {
         ) : null}
       </div>
 
-      {images.length > 1 ? (
+      {slides.length > 1 ? (
         <div className={styles.carouselDots}>
-          {images.map((_, index) => (
+          {slides.map((_, index) => (
             <button
               key={index}
               type="button"
-              aria-label={`Go to photo ${index + 1}`}
+              aria-label={`Go to space ${index + 1}`}
               onClick={() => setCurrentIndex(index)}
               className={`${styles.carouselDot} ${
                 index === currentIndex ? styles.carouselDotActive : ""

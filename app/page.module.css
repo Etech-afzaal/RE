@@ -399,47 +399,6 @@
   font-size: 0.82rem;
 }
 
-/* Sticky mobile conversion bar */
-.mobileBar {
-  display: none;
-  position: fixed;
-  left: 0.75rem;
-  right: 0.75rem;
-  bottom: 0.75rem;
-  z-index: 45;
-  gap: 0.55rem;
-  padding: 0.55rem;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(242, 187, 70, 0.35);
-  box-shadow: 0 12px 32px rgba(26, 26, 26, 0.14);
-}
-
-.mobileBarPrimary,
-.mobileBarSecondary {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 0.9rem;
-  text-decoration: none;
-}
-
-.mobileBarPrimary {
-  background: var(--gold);
-  color: #1a1a1a;
-}
-
-.mobileBarSecondary {
-  background: #faf8f3;
-  color: #1a1a1a;
-  border: 1px solid rgba(26, 26, 26, 0.08);
-}
-
 @media (max-width: 960px) {
   .locationGrid {
     grid-template-columns: repeat(2, 1fr);
@@ -460,8 +419,8 @@
 }
 
 @media (max-width: 720px) {
-  .mobileBar {
-    display: flex;
+  .section {
+    margin-bottom: 3rem;
   }
 }
 
@@ -476,5 +435,28 @@
 
   .footerBottom {
     flex-direction: column;
+  }
+
+  .sellCta {
+    padding: 2rem 1.25rem;
+  }
+
+  .sellActions {
+    width: 100%;
+    gap: 0.6rem;
+  }
+
+  .btnPrimary,
+  .btnGhost {
+    flex: 1;
+    min-width: 0;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.88rem;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+
+  .locationCard {
+    min-height: 200px;
   }
 }

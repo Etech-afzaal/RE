@@ -25,9 +25,9 @@ export default async function AgentListingsPage({ params }) {
         <header className={styles.pageHeader}>
           <div className={styles.pageHeaderGroup}>
             <Image
-              src="/logo.png"
+              src="/logo.svg"
               alt="Dhalahore Properties"
-              width={110}
+              width={144}
               height={40}
             />
             <div>
