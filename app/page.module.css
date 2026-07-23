@@ -63,15 +63,42 @@
 }
 
 /* Locations */
+.locationCarousel {
+  position: relative;
+}
+
 .locationGrid {
-  display: grid;
+  display: flex;
   gap: 1.1rem;
-  grid-template-columns: repeat(4, 1fr);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  padding: 0.15rem 0.1rem 0.85rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(242, 187, 70, 0.7) transparent;
+}
+
+.locationGrid::-webkit-scrollbar {
+  height: 6px;
+}
+
+.locationGrid::-webkit-scrollbar-thumb {
+  background: rgba(242, 187, 70, 0.7);
+  border-radius: 999px;
+}
+
+.locationGrid::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .locationCard {
   position: relative;
   display: block;
+  flex: 0 0 min(280px, 78vw);
+  width: min(280px, 78vw);
   border-radius: 20px;
   overflow: hidden;
   text-decoration: none;
@@ -80,6 +107,7 @@
   isolation: isolate;
   box-shadow: 0 12px 28px rgba(26, 26, 26, 0.08);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
+  scroll-snap-align: start;
 }
 
 .locationCard:hover {
@@ -152,6 +180,43 @@
   margin: 0.3rem 0 0;
   font-size: 0.86rem;
   color: rgba(255, 255, 255, 0.88);
+}
+
+.locationNavBtn {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  transform: translateY(-60%);
+  width: 2.4rem;
+  height: 2.4rem;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #1a1a1a;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(26, 26, 26, 0.16);
+  display: grid;
+  place-items: center;
+}
+
+.locationNavBtn:hover {
+  background: #fff;
+}
+
+.locationNavPrev {
+  left: 0.35rem;
+}
+
+.locationNavNext {
+  right: 0.35rem;
+}
+
+@media (max-width: 720px) {
+  .locationNavBtn {
+    display: none;
+  }
 }
 
 /* How it works */
@@ -401,10 +466,6 @@
 }
 
 @media (max-width: 960px) {
-  .locationGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .steps {
     grid-template-columns: 1fr;
   }
@@ -434,10 +495,6 @@
 }
 
 @media (max-width: 560px) {
-  .locationGrid {
-    grid-template-columns: 1fr;
-  }
-
   .footerInner {
     grid-template-columns: 1fr;
   }
@@ -471,9 +528,8 @@
 }
 
 .contactSection {
-  margin: 0 auto 4.5rem;
+  margin: 0 0 4.5rem;
   scroll-margin-top: 110px;
-  max-width: 1100px;
 }
 
 .contactCard {

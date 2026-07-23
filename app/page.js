@@ -10,6 +10,7 @@ import SiteHeader from "@/components/SiteHeader";
 import HeroSlider from "@/components/HeroSlider";
 import HomeListings from "@/components/HomeListings";
 import TrustStats from "@/components/TrustStats";
+import LocationCarousel from "@/components/LocationCarousel";
 import styles from "./page.module.css";
 
 export const revalidate = 60;
@@ -22,10 +23,10 @@ export const metadata = {
 
 export default async function HomePage() {
   const [properties, heroSlides, stats, locations] = await Promise.all([
-    getFeaturedProperties(18),
+    getFeaturedProperties(24),
     getHeroSlides(5),
     getPublicStats(),
-    getPopularLocations(4),
+    getPopularLocations(24),
   ]);
 
   const inquiryPhone = heroSlides[0]?.agent_phone || null;
@@ -61,46 +62,16 @@ export default async function HomePage() {
                   <p className={styles.kicker}>Explore Lahore</p>
                   <h2 className={styles.sectionTitle}>Browse by location</h2>
                 </div>
-                <a href="#sale" className={styles.textLink}>
+                <a
+                  href="#sale"
+                  className={styles.textLink}
+                  data-view-all-homes
+                >
                   View all homes
                 </a>
               </div>
 
-              <div className={styles.locationGrid}>
-                {locations.map((loc) => (
-                  <a
-                    key={loc.name}
-                    href="#sale"
-                    className={styles.locationCard}
-                    data-location={loc.name}
-                  >
-                    <div className={styles.locationMedia}>
-                      {loc.image_url ? (
-                        <Image
-                          src={loc.image_url}
-                          alt={loc.name}
-                          fill
-                          sizes="(max-width: 768px) 100vw, 25vw"
-                          className={styles.locationImage}
-                        />
-                      ) : (
-                        <div className={styles.locationFallback} />
-                      )}
-                      <div className={styles.locationOverlay} />
-                    </div>
-                    <div className={styles.locationBody}>
-                      <span className={styles.locationTag}>Neighborhood</span>
-                      <h3>{loc.name}</h3>
-                      <p>
-                        {loc.listingCount}{" "}
-                        {Number(loc.listingCount) === 1
-                          ? "listing"
-                          : "listings"}
-                      </p>
-                    </div>
-                  </a>
-                ))}
-              </div>
+              <LocationCarousel locations={locations} />
             </section>
           ) : null}
 

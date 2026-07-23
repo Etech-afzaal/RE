@@ -72,7 +72,8 @@ export default function HeroSlider({ slides = [] }) {
                 alt={slide.image_title || slide.title || "Property"}
                 fill
                 priority={index === 0}
-                sizes="100vw"
+                quality={90}
+                sizes="(max-width: 1240px) 100vw, 1240px"
                 className={styles.slideImage}
               />
             </div>

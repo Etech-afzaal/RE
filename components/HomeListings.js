@@ -62,7 +62,7 @@ function StatusIcon() {
 }
 
 const SORT_OPTIONS = [
-  { value: "default", label: "Sort: Featured" },
+  { value: "default", label: "Price" },
   { value: "price-asc", label: "Price: Low to High" },
   { value: "price-desc", label: "Price: High to Low" },
   { value: "newest", label: "Newest first" },
@@ -94,12 +94,17 @@ function getCategory(property) {
 
 function PropertyCard({ property }) {
   const sizeLabel = formatSize(property.size_value, property.size_unit);
-  const address = property.location || property.title;
+  const address = property.title || property.location;
+  const category = getCategory(property);
   const statusLabel =
     property.status === "sold"
       ? "Sold"
       : property.status === "draft"
       ? "Draft"
+      : category === "rent"
+      ? "For Rent"
+      : category === "plot"
+      ? "Plot"
       : "For Sale";
 
   return (
@@ -259,8 +264,31 @@ export default function HomeListings({ properties = [] }) {
   }, [properties]);
 
   useEffect(() => {
-    const handleLocationCardClick = (event) => {
+    const scrollToSale = () => {
+      const section = document.getElementById("sale");
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    };
+
+    const resetFilters = () => {
+      setQuery("");
+      setLocation("all");
+      setSort("default");
+      setPages({ sale: 1, rent: 1, plot: 1 });
+    };
+
+    const handleDocumentClick = (event) => {
       const target = event.target;
+
+      const viewAll = target.closest("a[data-view-all-homes]");
+      if (viewAll) {
+        event.preventDefault();
+        resetFilters();
+        scrollToSale();
+        return;
+      }
+
       const card = target.closest("a[data-location][href='#sale']");
       if (!card) return;
 
@@ -269,24 +297,18 @@ export default function HomeListings({ properties = [] }) {
       if (!selectedLocation) return;
 
       setLocation(selectedLocation);
-      const section = document.getElementById("sale");
-      if (section) {
-        section.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+      scrollToSale();
     };
 
     const handleResetFilters = () => {
-      setQuery("");
-      setLocation("all");
-      setSort("default");
-      setPages({ sale: 1, rent: 1, plot: 1 });
+      resetFilters();
     };
 
-    document.addEventListener("click", handleLocationCardClick);
+    document.addEventListener("click", handleDocumentClick);
     window.addEventListener("dhalahorePropertiesResetFilters", handleResetFilters);
 
     return () => {
-      document.removeEventListener("click", handleLocationCardClick);
+      document.removeEventListener("click", handleDocumentClick);
       window.removeEventListener("dhalahorePropertiesResetFilters", handleResetFilters);
     };
   }, []);
