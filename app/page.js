@@ -8,6 +8,7 @@ import {
 } from "@/lib/queries";
 import SiteHeader from "@/components/SiteHeader";
 import HeroSlider from "@/components/HeroSlider";
+import AboutDHALahore from "@/components/AboutDHALahore/AboutDHALahore";
 import HomeListings from "@/components/HomeListings";
 import TrustStats from "@/components/TrustStats";
 import LocationCarousel from "@/components/LocationCarousel";
@@ -48,6 +49,9 @@ export default async function HomePage() {
     <div className={styles.wrapper}>
       <SiteHeader />
       <HeroSlider slides={heroSlides} />
+      <div className={styles.container}>
+        <AboutDHALahore />
+      </div>
 
       <main className={styles.main}>
         <div className={styles.container}>
@@ -259,7 +263,7 @@ export default async function HomePage() {
                       <span className={styles.formLabel}>Subject</span>
                       <input
                         type="text"
-                        placeholder="Subject"
+                        placeholder="e.g. Buying, Selling or Renting a Property"
                         className={styles.contactInput}
                       />
                     </label>
@@ -298,10 +302,11 @@ export default async function HomePage() {
             </div>
 
             <div className={styles.footerCol}>
-              <h4>Buy</h4>
-              <a href="#sale">Featured homes</a>
-              <a href="#areas">Browse locations</a>
-              <a href="#why-us">How it works</a>
+              <h4>Properties</h4>
+              <Link href="/#sale">Sale</Link>
+              <Link href="/#rent">Rent</Link>
+              <Link href="/#plots">Plots</Link>
+              <Link href="/#why-us">How it works</Link>
             </div>
 
             <div className={styles.footerCol}>
