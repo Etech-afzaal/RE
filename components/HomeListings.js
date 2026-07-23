@@ -434,6 +434,8 @@ export default function HomeListings({ properties = [] }) {
         onPageChange={(page) => setPages((prev) => ({ ...prev, sale: page }))}
       />
 
+      <div className={styles.sectionDivider} aria-hidden="true" />
+
       <PropertySection
         id="rent"
         title="For Rent"
@@ -443,6 +445,8 @@ export default function HomeListings({ properties = [] }) {
         onPageChange={(page) => setPages((prev) => ({ ...prev, rent: page }))}
       />
 
+      <div className={styles.sectionDivider} aria-hidden="true" />
+
       <PropertySection
         id="plots"
         title="Plots"
@@ -451,6 +455,8 @@ export default function HomeListings({ properties = [] }) {
         currentPage={pages.plot}
         onPageChange={(page) => setPages((prev) => ({ ...prev, plot: page }))}
       />
+
+      <div className={styles.sectionDivider} aria-hidden="true" />
     </div>
   );
 }

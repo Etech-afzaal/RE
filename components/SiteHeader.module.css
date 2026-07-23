@@ -70,6 +70,10 @@
   width: 100%;
 }
 
+.navLinkActive {
+  color: var(--gold-deep);
+}
+
 .actions {
   display: flex;
   align-items: center;
