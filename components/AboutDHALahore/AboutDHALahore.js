@@ -15,7 +15,7 @@ export default function AboutDHALahore() {
           </p>
           <div className={styles.signatureRow}>
             <div className={styles.signatureMark} aria-hidden="true">
-              <p className={styles.signatureScript}>A. Rahman</p>
+              <p className={styles.signatureScript}>A. Sarmad</p>
               <span className={styles.signatureLine} />
             </div>
             <div>
