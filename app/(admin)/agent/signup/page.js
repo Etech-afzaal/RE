@@ -62,9 +62,6 @@ export default function AgentSignupPage() {
     <div className={styles.signupPage}>
       <div className={styles.signupShell}>
         <div className={styles.signupCard}>
-          <Link href="/" className={styles.backHome}>
-            ← Back to home
-          </Link>
           <div className={styles.signupBadge}>Join as an agent</div>
           <h1 className={styles.signupTitle}>Create an account</h1>
           <p className={styles.signupText}>

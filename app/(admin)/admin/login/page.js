@@ -50,14 +50,11 @@ export default function LoginPage() {
     <div className={styles.loginPage}>
       <div className={styles.loginShell}>
         <div className={styles.loginCard}>
-          <Link href="/" className={styles.backHome}>
-            ← Back to home
-          </Link>
           <div className={styles.loginBadge}>Admin access</div>
           <h1 className={styles.loginTitle}>Welcome back</h1>
           <p className={styles.loginText}>
-            Sign in to review agent requests, manage approvals, and oversee the
-            marketplace.
+            Sign in to review agent requests, manage agents, and oversee listings
+            across the marketplace.
           </p>
 
           <form onSubmit={handleSubmit} className={styles.loginForm}>

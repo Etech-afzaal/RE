@@ -207,22 +207,6 @@
   color: var(--gold);
 }
 
-.backHome {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-bottom: 1.25rem;
-  color: #737373;
-  font-size: 0.88rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.backHome:hover {
-  color: var(--gold-deep);
-}
-
 @media (max-width: 900px) {
   .loginShell {
     grid-template-columns: 1fr;

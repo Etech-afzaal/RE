@@ -30,10 +30,6 @@ export default async function HomePage() {
     getPopularLocations(24),
   ]);
 
-  const inquiryPhone = heroSlides[0]?.agent_phone || null;
-  const telHref = inquiryPhone
-    ? `tel:${inquiryPhone.replace(/\s/g, "")}`
-    : "#sale";
   const agentCtaImage =
     heroSlides.find((slide) => slide.image_url)?.image_url ||
     properties.find((property) => property.featuredImage?.image_url)
@@ -318,12 +314,9 @@ export default async function HomePage() {
 
             <div className={styles.footerCol}>
               <h4>Contact</h4>
-              {inquiryPhone ? (
-                <a href={telHref}>{inquiryPhone}</a>
-              ) : (
-                <span>Inquiries via listing agents</span>
-              )}
-              <Link href="/admin/login">Admin</Link>
+              <a href="tel:+923001234567">+92 300 123 4567</a>
+              <a href="mailto:info@dhalahore.com">info@dhalahore.com</a>
+              <span>12 Garden Town, Lahore</span>
             </div>
           </div>
           <div className={styles.footerBottom}>

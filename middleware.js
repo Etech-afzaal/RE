@@ -6,26 +6,23 @@ export default withAuth(
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
     const isAgentResetPasswordRoute = path === "/agent/reset-password";
-    const isAdminResetPasswordRoute = path === "/admin/reset-password";
-    const isResetPasswordRoute =
-      isAgentResetPasswordRoute || isAdminResetPasswordRoute;
 
     if (token?.role === "agent" && token.isActive === false) {
       return NextResponse.redirect(new URL("/agent/login", req.url));
     }
 
     // Agents who haven't changed their temp password get sent to the
-    // reset-password page no matter which admin page they try to open.
-    if (token?.mustResetPassword && !isResetPasswordRoute) {
+    // reset-password page no matter which protected page they try to open.
+    if (token?.mustResetPassword && !isAgentResetPasswordRoute) {
       return NextResponse.redirect(new URL("/agent/reset-password", req.url));
     }
 
-    if (
-      token?.role === "agent" &&
-      path.startsWith("/admin") &&
-      !isResetPasswordRoute
-    ) {
+    if (token?.role === "agent" && path.startsWith("/admin")) {
       return NextResponse.redirect(new URL("/agent/dashboard", req.url));
+    }
+
+    if (path.startsWith("/admin/dashboard") && token?.role !== "admin") {
+      return NextResponse.redirect(new URL("/admin/login", req.url));
     }
 
     return NextResponse.next();
@@ -37,13 +34,10 @@ export default withAuth(
   },
 );
 
-// Protect everything under /admin/dashboard, /admin/properties, and the
-// reset-password page itself (so it isn't reachable while logged out).
 export const config = {
   matcher: [
+    "/admin/dashboard",
     "/admin/dashboard/:path*",
-    "/admin/properties/:path*",
-    "/admin/reset-password",
     "/agent/reset-password",
     "/agent/dashboard/:path*",
     "/agent/properties/:path*",

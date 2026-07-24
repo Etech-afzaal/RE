@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -15,83 +15,124 @@ const NAV_LINKS = [
   { label: "Contact Us", href: "#contact" },
 ];
 
+function getNavSections() {
+  return NAV_LINKS.filter((link) => link.href.startsWith("#"))
+    .map((link) => {
+      const element = document.getElementById(link.href.slice(1));
+      return element ? { href: link.href, element } : null;
+    })
+    .filter(Boolean);
+}
+
+function getProbeY() {
+  const header = document.querySelector("header");
+  const headerHeight = header?.getBoundingClientRect().height ?? 72;
+  // Must sit at/below scroll-margin landing (110px) so hash jumps activate correctly
+  return Math.max(headerHeight + 8, 120);
+}
+
 export default function SiteHeader() {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeHref, setActiveHref] = useState("/");
+  const lockedHrefRef = useRef(null);
+  const lockTimerRef = useRef(0);
 
   useEffect(() => {
-    const sectionLinks = NAV_LINKS.filter((link) => link.href.startsWith("#"));
-    const sections = sectionLinks
-      .map((link) => ({ href: link.href, element: document.getElementById(link.href.slice(1)) }))
-      .filter((item) => item.element);
-
-    if (sections.length === 0) {
-      return undefined;
-    }
-
-    const sortedSections = sections.sort((a, b) => a.element.offsetTop - b.element.offsetTop);
-    const firstSectionTop = sortedSections[0].element.offsetTop;
-    const homeReleaseThreshold = firstSectionTop - window.innerHeight * 0.4;
-
-    const getBestEntry = (entries) => {
-      const visibleEntries = entries.filter((entry) => entry.isIntersecting);
-      if (visibleEntries.length === 0) {
-        return null;
+    const syncActive = () => {
+      const sections = getNavSections();
+      if (sections.length === 0) {
+        setActiveHref("/");
+        return;
       }
 
-      return visibleEntries.reduce((best, entry) => {
-        if (!best) return entry;
-        return entry.boundingClientRect.top < best.boundingClientRect.top ? entry : best;
-      }, null);
+      const probe = getProbeY();
+      const lockedHref = lockedHrefRef.current;
+
+      if (lockedHref) {
+        const target = sections.find((section) => section.href === lockedHref);
+        const reached = target && target.element.getBoundingClientRect().top <= probe + 2;
+        if (!reached) {
+          setActiveHref(lockedHref);
+          return;
+        }
+        lockedHrefRef.current = null;
+        window.clearTimeout(lockTimerRef.current);
+      }
+
+      const firstTop = sections[0].element.getBoundingClientRect().top;
+      if (firstTop > probe) {
+        setActiveHref("/");
+        return;
+      }
+
+      let nextHref = sections[0].href;
+      for (const section of sections) {
+        if (section.element.getBoundingClientRect().top <= probe) {
+          nextHref = section.href;
+        }
+      }
+
+      setActiveHref(nextHref);
     };
 
-    const sectionState = new Map();
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (window.scrollY < homeReleaseThreshold) {
-          setActiveHref("/");
-          return;
-        }
+    let ticking = false;
+    const onScrollOrResize = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        syncActive();
+        ticking = false;
+      });
+    };
 
-        entries.forEach((entry) => {
-          sectionState.set(entry.target.id, entry);
-        });
+    syncActive();
+    window.addEventListener("scroll", onScrollOrResize, { passive: true });
+    window.addEventListener("resize", onScrollOrResize);
+    window.addEventListener("hashchange", syncActive);
 
-        const bestEntry = getBestEntry(Array.from(sectionState.values()));
-        if (bestEntry) {
-          setActiveHref(`#${bestEntry.target.id}`);
-          return;
-        }
+    const retryIds = [100, 400, 1000].map((ms) => window.setTimeout(syncActive, ms));
 
-        const nextSection = sortedSections.find((section) => section.element.getBoundingClientRect().top >= 0);
-        if (nextSection) {
-          setActiveHref(nextSection.href);
-          return;
-        }
-
-        setActiveHref(sortedSections[sortedSections.length - 1].href);
-      },
-      {
-        root: null,
-        rootMargin: "-40% 0px -40% 0px",
-        threshold: [0, 0.25, 0.5, 0.75, 1],
-      },
-    );
-
-    sections.forEach((section) => observer.observe(section.element));
-
-    return () => observer.disconnect();
+    return () => {
+      window.removeEventListener("scroll", onScrollOrResize);
+      window.removeEventListener("resize", onScrollOrResize);
+      window.removeEventListener("hashchange", syncActive);
+      window.clearTimeout(lockTimerRef.current);
+      retryIds.forEach((id) => window.clearTimeout(id));
+    };
   }, []);
 
   const isActiveLink = (href) => href === activeHref;
 
   const handleHomeClick = async (event) => {
     event.preventDefault();
+    lockedHrefRef.current = null;
+    window.clearTimeout(lockTimerRef.current);
     window.dispatchEvent(new Event("dhalahorePropertiesResetFilters"));
     await router.replace("/");
     window.scrollTo({ top: 0, behavior: "smooth" });
     setActiveHref("/");
+  };
+
+  const handleSectionClick = (event, href) => {
+    event.preventDefault();
+    const element = document.getElementById(href.slice(1));
+    lockedHrefRef.current = href;
+    setActiveHref(href);
+    setMenuOpen(false);
+    window.clearTimeout(lockTimerRef.current);
+    lockTimerRef.current = window.setTimeout(() => {
+      lockedHrefRef.current = null;
+    }, 1200);
+
+    if (!element) {
+      return;
+    }
+
+    element.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (window.location.hash !== href) {
+      window.history.pushState(null, "", href);
+    }
   };
 
   return (
@@ -115,7 +156,11 @@ export default function SiteHeader() {
                 key={link.label}
                 href={link.href}
                 className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`.trim()}
-                onClick={link.label === "Home" ? handleHomeClick : link.href === "#sale" ? () => setActiveHref("#sale") : undefined}
+                onClick={
+                  link.href === "/"
+                    ? handleHomeClick
+                    : (event) => handleSectionClick(event, link.href)
+                }
               >
                 {link.label}
               </Link>
@@ -168,10 +213,12 @@ export default function SiteHeader() {
                 href={link.href}
                 className={`${styles.mobileLink} ${active ? styles.navLinkActive : ""}`.trim()}
                 onClick={(event) => {
-                  if (link.label === "Home") {
+                  if (link.href === "/") {
                     handleHomeClick(event);
+                    setMenuOpen(false);
+                    return;
                   }
-                  setMenuOpen(false);
+                  handleSectionClick(event, link.href);
                 }}
               >
                 {link.label}

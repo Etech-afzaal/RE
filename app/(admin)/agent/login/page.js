@@ -50,9 +50,6 @@ export default function AgentLoginPage() {
     <div className={styles.loginPage}>
       <div className={styles.loginShell}>
         <div className={styles.loginCard}>
-          <Link href="/" className={styles.backHome}>
-            ← Back to home
-          </Link>
           <div className={styles.loginBadge}>Agent access</div>
           <h1 className={styles.loginTitle}>Welcome back</h1>
           <p className={styles.loginText}>
