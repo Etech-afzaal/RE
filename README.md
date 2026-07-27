@@ -98,6 +98,13 @@ This creates the `real_estate` database and tables:
 - `agents`
 - `properties`
 - `property_images`
+- `schema_migrations`
+
+If the database already existed before Phase 1, apply the foundation migration instead of recreating:
+
+```bash
+npm run migrate:phase1
+```
 
 ### 4. Load demo data (recommended)
 
@@ -150,6 +157,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run start` | Run production build |
 | `npm run lint` | ESLint |
 | `npm run seed` | Reset + load demo data from `seed.sql` |
+| `npm run migrate:phase1` | Apply Phase 1 DB foundation (statuses + columns) |
 
 ---
 

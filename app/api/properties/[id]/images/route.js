@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireAgent } from "@/lib/adminAuth";
 import { query } from "@/lib/db";
 import sharp from "sharp";
 import { writeFile, mkdir, rm } from "fs/promises";
@@ -45,16 +44,15 @@ async function ensureImageColumns() {
 }
 
 export async function POST(req, { params }) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "agent") {
-    return NextResponse.json({ error: "Not authorized." }, { status: 403 });
-  }
+  const { session, error } = await requireAgent();
+  if (error) return error;
 
   const propertyId = Number(params.id);
+  const agentId = Number(session.user.agent_id || session.user.id);
 
   const rows = await query(
     "SELECT id FROM properties WHERE id = ? AND agent_id = ?",
-    [propertyId, Number(session.user.id)],
+    [propertyId, agentId],
   );
   if (rows.length === 0) {
     return NextResponse.json({ error: "Property not found." }, { status: 404 });
@@ -128,10 +126,8 @@ export async function POST(req, { params }) {
 }
 
 export async function PUT(req, { params }) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "agent") {
-    return NextResponse.json({ error: "Not authorized." }, { status: 403 });
-  }
+  const { error } = await requireAgent();
+  if (error) return error;
 
   const propertyId = Number(params.id);
   const body = await req.json().catch(() => ({}));
@@ -171,10 +167,8 @@ export async function PUT(req, { params }) {
 }
 
 export async function DELETE(req, { params }) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "agent") {
-    return NextResponse.json({ error: "Not authorized." }, { status: 403 });
-  }
+  const { error } = await requireAgent();
+  if (error) return error;
 
   const propertyId = Number(params.id);
   const body = await req.json().catch(() => ({}));

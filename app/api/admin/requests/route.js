@@ -1,20 +1,15 @@
 import { getSignupRequests } from "@/lib/queries";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireAdmin } from "@/lib/adminAuth";
 
-export async function GET(req) {
+export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-
-    // Only allow admin to access this endpoint
-    if (!session || session.user.role !== "admin") {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { error } = await requireAdmin();
+    if (error) return error;
 
     const requests = await getSignupRequests();
     return Response.json({ requests }, { status: 200 });
-  } catch (error) {
-    console.error("Error fetching requests:", error);
+  } catch (err) {
+    console.error("Error fetching requests:", err);
     return Response.json(
       { error: "Failed to fetch requests" },
       { status: 500 },

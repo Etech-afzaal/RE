@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { requireAdmin } from "@/lib/adminAuth";
+import {
+  AGENT_STATUS_INPUTS,
+  toClientAgentStatus,
+  toDbAgentStatus,
+} from "@/lib/status";
 
 export async function PATCH(req, { params }) {
   const { error } = await requireAdmin();
@@ -18,13 +23,18 @@ export async function PATCH(req, { params }) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const nextStatus = body?.status;
-  if (nextStatus !== "active" && nextStatus !== "disabled") {
+  const requested = body?.status;
+  if (!AGENT_STATUS_INPUTS.has(requested)) {
     return NextResponse.json(
-      { error: "status must be 'active' or 'disabled'." },
+      {
+        error:
+          "status must be active, approved, pending, rejected, or disabled.",
+      },
       { status: 400 },
     );
   }
+
+  const nextStatus = toDbAgentStatus(requested);
 
   try {
     const agents = await query(
@@ -41,16 +51,21 @@ export async function PATCH(req, { params }) {
       agentId,
     ]);
 
-    const requestStatus = nextStatus === "active" ? "approved" : "revoked";
-    await query(
-      `UPDATE signup_requests
-       SET status = ?
-       WHERE email = ?
-         AND status IN ('approved', 'revoked')`,
-      [requestStatus, agent.email],
-    );
+    const requestStatus = nextStatus === "approved" ? "approved" : "revoked";
+    if (nextStatus === "approved" || nextStatus === "disabled") {
+      await query(
+        `UPDATE signup_requests
+         SET status = ?
+         WHERE email = ?
+           AND status IN ('approved', 'revoked')`,
+        [requestStatus, agent.email],
+      );
+    }
 
-    return NextResponse.json({ success: true, status: nextStatus });
+    return NextResponse.json({
+      success: true,
+      status: toClientAgentStatus(nextStatus),
+    });
   } catch (err) {
     console.error("Failed to update agent status:", err);
     return NextResponse.json(

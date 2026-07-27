@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { propertyPublicPath } from "@/lib/propertySlug";
 import styles from "./HomeListings.module.css";
 
 const formatPrice = (price) =>
@@ -109,7 +110,7 @@ function PropertyCard({ property }) {
 
   return (
     <Link
-      href={`/re/${property.estate_name}/${property.id}`}
+      href={propertyPublicPath(null, property)}
       className={styles.card}
     >
       <div className={styles.media}>

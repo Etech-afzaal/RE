@@ -1,16 +1,13 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireAdmin } from "@/lib/adminAuth";
 import { query } from "@/lib/db";
 import { generateTempPassword } from "@/lib/generate";
 import { sendMail, agentCredentialsEmail } from "@/lib/mail";
 
 export async function POST(req) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "admin") {
-    return NextResponse.json({ error: "Not authorized." }, { status: 403 });
-  }
+  const { error } = await requireAdmin();
+  if (error) return error;
 
   const { requestId } = await req.json();
   if (!requestId) {
@@ -49,9 +46,10 @@ export async function POST(req) {
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
     await query(
-      `INSERT INTO agents (estate_name, full_name, email, phone, password_hash, must_reset_password)
-       VALUES (?, ?, ?, ?, ?, TRUE)`,
+      `INSERT INTO agents (estate_name, username, full_name, email, phone, password_hash, must_reset_password, status)
+       VALUES (?, ?, ?, ?, ?, ?, TRUE, 'approved')`,
       [
+        estateName,
         estateName,
         signupRequest.full_name,
         signupRequest.email,

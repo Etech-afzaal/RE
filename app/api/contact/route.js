@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sendMail } from "@/lib/mail";
 import { query } from "@/lib/db";
+import { AGENT_LIVE_STATUS } from "@/lib/status";
 
 export async function POST(req) {
   const body = await req.json();
@@ -14,8 +15,8 @@ export async function POST(req) {
   }
 
   const agents = await query(
-    "SELECT full_name, email, phone FROM agents WHERE estate_name = ? AND status = 'active'",
-    [estate_name],
+    "SELECT full_name, email, phone FROM agents WHERE estate_name = ? AND status = ?",
+    [estate_name, AGENT_LIVE_STATUS],
   );
   const agent = agents[0];
   if (!agent) {

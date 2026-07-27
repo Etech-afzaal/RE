@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { requireAdmin } from "@/lib/adminAuth";
-
-const ALLOWED = new Set(["active", "sold", "draft"]);
+import {
+  PROPERTY_STATUS,
+  PROPERTY_STATUS_INPUTS,
+  toClientPropertyStatus,
+  toDbPropertyStatus,
+} from "@/lib/status";
 
 export async function PATCH(req, { params }) {
   const { error } = await requireAdmin();
@@ -20,13 +24,18 @@ export async function PATCH(req, { params }) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const nextStatus = body?.status;
-  if (!ALLOWED.has(nextStatus)) {
+  const requested = body?.status;
+  if (!PROPERTY_STATUS_INPUTS.has(requested)) {
     return NextResponse.json(
-      { error: "status must be active, sold, or draft." },
+      {
+        error:
+          "status must be draft, pending_approval, approved, rejected, sold, hidden, or active.",
+      },
       { status: 400 },
     );
   }
+
+  const nextStatus = toDbPropertyStatus(requested);
 
   try {
     const rows = await query("SELECT id, status FROM properties WHERE id = ?", [
@@ -36,12 +45,33 @@ export async function PATCH(req, { params }) {
       return NextResponse.json({ error: "Property not found." }, { status: 404 });
     }
 
-    await query("UPDATE properties SET status = ? WHERE id = ?", [
-      nextStatus,
-      propertyId,
-    ]);
+    if (nextStatus === PROPERTY_STATUS.APPROVED) {
+      await query(
+        `UPDATE properties
+         SET status = ?, approved_by = ?, approved_at = NOW(), rejected_reason = NULL
+         WHERE id = ?`,
+        [nextStatus, "admin", propertyId],
+      );
+    } else if (nextStatus === PROPERTY_STATUS.REJECTED) {
+      const reason =
+        typeof body?.rejected_reason === "string" ? body.rejected_reason : null;
+      await query(
+        `UPDATE properties
+         SET status = ?, rejected_reason = ?
+         WHERE id = ?`,
+        [nextStatus, reason, propertyId],
+      );
+    } else {
+      await query("UPDATE properties SET status = ? WHERE id = ?", [
+        nextStatus,
+        propertyId,
+      ]);
+    }
 
-    return NextResponse.json({ success: true, status: nextStatus });
+    return NextResponse.json({
+      success: true,
+      status: toClientPropertyStatus(nextStatus),
+    });
   } catch (err) {
     console.error("Failed to update property status:", err);
     return NextResponse.json(

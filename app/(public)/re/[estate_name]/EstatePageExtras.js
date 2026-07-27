@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { propertyPublicPath } from "@/lib/propertySlug";
 import styles from "./EstatePageExtras.module.css";
 
 const formatPrice = (price) =>
@@ -84,7 +85,7 @@ export function PropertySection({ properties, estateName }) {
           {filteredProperties.map((property) => (
             <Link
               key={property.id}
-              href={`/re/${estateName}/${property.id}`}
+              href={propertyPublicPath(estateName, property)}
               className={styles.propertyCard}
             >
               <div className={styles.propertyImageWrapper}>

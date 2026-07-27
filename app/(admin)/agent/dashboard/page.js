@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
+import { isAgentRole } from "@/lib/roles";
 
 export default function AgentDashboardPage() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function AgentDashboardPage() {
         return;
       }
 
-      if (sessionUser.role !== "agent") {
+      if (!isAgentRole(sessionUser.role)) {
         router.replace("/admin/dashboard");
         return;
       }

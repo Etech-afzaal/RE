@@ -1,5 +1,10 @@
 import { query } from "@/lib/db";
 import { requireAdmin } from "@/lib/adminAuth";
+import {
+  AGENT_LIVE_STATUS,
+  PROPERTY_PUBLIC_STATUS,
+  toClientAgentStatus,
+} from "@/lib/status";
 
 export async function GET() {
   const { error } = await requireAdmin();
@@ -10,13 +15,14 @@ export async function GET() {
       `SELECT
          (SELECT COUNT(*) FROM signup_requests WHERE status = 'pending') AS pendingRequests,
          (SELECT COUNT(*) FROM signup_requests) AS totalRequests,
-         (SELECT COUNT(*) FROM agents WHERE status = 'active') AS activeAgents,
+         (SELECT COUNT(*) FROM agents WHERE status = ?) AS activeAgents,
          (SELECT COUNT(*) FROM agents WHERE status = 'disabled') AS disabledAgents,
          (SELECT COUNT(*) FROM agents) AS totalAgents,
-         (SELECT COUNT(*) FROM properties WHERE status = 'active') AS activeProperties,
+         (SELECT COUNT(*) FROM properties WHERE status = ?) AS activeProperties,
          (SELECT COUNT(*) FROM properties WHERE status = 'sold') AS soldProperties,
          (SELECT COUNT(*) FROM properties WHERE status = 'draft') AS draftProperties,
          (SELECT COUNT(*) FROM properties) AS totalProperties`,
+      [AGENT_LIVE_STATUS, PROPERTY_PUBLIC_STATUS],
     );
 
     const stats = rows[0] || {};
@@ -49,7 +55,11 @@ export async function GET() {
         totalProperties: Number(stats.totalProperties) || 0,
       },
       recentPending,
-      recentAgents,
+      // Map approved → active so existing admin overview badges keep working.
+      recentAgents: recentAgents.map((agent) => ({
+        ...agent,
+        status: toClientAgentStatus(agent.status),
+      })),
     });
   } catch (err) {
     console.error("Failed to fetch admin stats:", err);

@@ -1,13 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireAdmin } from "@/lib/adminAuth";
 import { query } from "@/lib/db";
 
 export async function POST(req) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "admin") {
-    return NextResponse.json({ error: "Not authorized." }, { status: 403 });
-  }
+  const { error } = await requireAdmin();
+  if (error) return error;
 
   const { requestId } = await req.json();
   if (!requestId) {

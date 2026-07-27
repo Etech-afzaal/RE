@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import styles from "./SiteHeader.module.css";
 
-const NAV_LINKS = [
+const DEFAULT_NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Sale", href: "#sale" },
   { label: "Rent", href: "#rent" },
@@ -15,8 +15,9 @@ const NAV_LINKS = [
   { label: "Contact Us", href: "#contact" },
 ];
 
-function getNavSections() {
-  return NAV_LINKS.filter((link) => link.href.startsWith("#"))
+function getNavSections(navLinks) {
+  return navLinks
+    .filter((link) => link.href.startsWith("#"))
     .map((link) => {
       const element = document.getElementById(link.href.slice(1));
       return element ? { href: link.href, element } : null;
@@ -31,7 +32,7 @@ function getProbeY() {
   return Math.max(headerHeight + 8, 120);
 }
 
-export default function SiteHeader() {
+export default function SiteHeader({ navLinks = DEFAULT_NAV_LINKS }) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeHref, setActiveHref] = useState("/");
@@ -40,7 +41,7 @@ export default function SiteHeader() {
 
   useEffect(() => {
     const syncActive = () => {
-      const sections = getNavSections();
+      const sections = getNavSections(navLinks);
       if (sections.length === 0) {
         setActiveHref("/");
         return;
@@ -100,7 +101,7 @@ export default function SiteHeader() {
       window.clearTimeout(lockTimerRef.current);
       retryIds.forEach((id) => window.clearTimeout(id));
     };
-  }, []);
+  }, [navLinks]);
 
   const isActiveLink = (href) => href === activeHref;
 
@@ -149,8 +150,9 @@ export default function SiteHeader() {
         </Link>
 
         <nav className={styles.mainNav} aria-label="Main">
-          {NAV_LINKS.map((link) => {
+          {navLinks.map((link) => {
             const active = isActiveLink(link.href);
+            const isHash = link.href.startsWith("#");
             return (
               <Link
                 key={link.label}
@@ -159,7 +161,9 @@ export default function SiteHeader() {
                 onClick={
                   link.href === "/"
                     ? handleHomeClick
-                    : (event) => handleSectionClick(event, link.href)
+                    : isHash
+                      ? (event) => handleSectionClick(event, link.href)
+                      : () => setMenuOpen(false)
                 }
               >
                 {link.label}
@@ -205,8 +209,9 @@ export default function SiteHeader() {
 
       {menuOpen ? (
         <nav id="mobile-menu" className={styles.mobileMenu} aria-label="Mobile">
-          {NAV_LINKS.map((link) => {
+          {navLinks.map((link) => {
             const active = isActiveLink(link.href);
+            const isHash = link.href.startsWith("#");
             return (
               <Link
                 key={link.label}
@@ -218,7 +223,11 @@ export default function SiteHeader() {
                     setMenuOpen(false);
                     return;
                   }
-                  handleSectionClick(event, link.href);
+                  if (isHash) {
+                    handleSectionClick(event, link.href);
+                    return;
+                  }
+                  setMenuOpen(false);
                 }}
               >
                 {link.label}

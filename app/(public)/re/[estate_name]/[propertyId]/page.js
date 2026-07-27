@@ -2,7 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import GalleryCarousel from "./GalleryCarousel";
-import { getAgentByEstateName, getPropertyById } from "@/lib/queries";
+import {
+  getAgentByUsername,
+  getPropertyByAgentAndSlug,
+} from "@/lib/queries";
+import { agentPublicUsername } from "@/lib/propertySlug";
 import BackButton from "@/components/BackButton";
 import styles from "./page.module.css";
 
@@ -78,11 +82,16 @@ const ASSURANCES = [
 ];
 
 export default async function PropertyDetailPage({ params }) {
-  const agent = await getAgentByEstateName(params.estate_name);
+  const agent = await getAgentByUsername(params.estate_name);
   if (!agent) return notFound();
 
-  const property = await getPropertyById(Number(params.propertyId));
-  if (!property || property.agent_id !== agent.id) return notFound();
+  const agentHandle = agentPublicUsername(agent);
+  // `propertyId` route segment accepts slug (`title-id`) or legacy numeric id.
+  const property = await getPropertyByAgentAndSlug(
+    agent.id,
+    params.propertyId,
+  );
+  if (!property) return notFound();
 
   const sizeLabel = formatSize(property.size_value, property.size_unit);
   const listedDate = formatDate(property.created_at);
@@ -113,7 +122,7 @@ export default async function PropertyDetailPage({ params }) {
         <header className={styles.header}>
           <div className={styles.headerLeft}>
             <BackButton
-              fallbackHref={`/re/${params.estate_name}`}
+              fallbackHref={`/re/${agentHandle}`}
               label="← Back"
               className={styles.backBtn}
             />
@@ -228,7 +237,7 @@ export default async function PropertyDetailPage({ params }) {
               <div>
                 <p className={styles.agentKicker}>Listed by</p>
                 <h2 className={styles.agentName}>{agent.full_name}</h2>
-                <p className={styles.agentRole}>{agent.estate_name}</p>
+                <p className={styles.agentRole}>{agentPublicUsername(agent)}</p>
               </div>
             </div>
 

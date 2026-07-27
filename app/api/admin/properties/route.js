@@ -1,5 +1,9 @@
 import { query } from "@/lib/db";
 import { requireAdmin } from "@/lib/adminAuth";
+import {
+  toClientAgentStatus,
+  toClientPropertyStatus,
+} from "@/lib/status";
 
 export async function GET() {
   const { error } = await requireAdmin();
@@ -15,6 +19,9 @@ export async function GET() {
          p.size_value,
          p.size_unit,
          p.status,
+         p.approved_by,
+         p.approved_at,
+         p.rejected_reason,
          p.created_at,
          p.updated_at,
          a.id AS agent_id,
@@ -33,7 +40,13 @@ export async function GET() {
        ORDER BY p.updated_at DESC, p.id DESC`,
     );
 
-    return Response.json({ properties });
+    return Response.json({
+      properties: properties.map((p) => ({
+        ...p,
+        status: toClientPropertyStatus(p.status),
+        agent_status: toClientAgentStatus(p.agent_status),
+      })),
+    });
   } catch (err) {
     console.error("Failed to fetch admin properties:", err);
     return Response.json(
