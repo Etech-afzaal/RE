@@ -10,7 +10,6 @@ const CUSTOMER_NAV = [
   { label: "Home", href: "/" },
   { label: "Find agents", href: "#agents" },
   { label: "Why us", href: "#why-us" },
-  { label: "Become an agent", href: "/agent/signup" },
   { label: "Contact", href: "#contact" },
 ];
 
