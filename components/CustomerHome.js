@@ -16,21 +16,64 @@ const CUSTOMER_NAV = [
 const WHY_ITEMS = [
   {
     title: "Verified Agents",
+    icon: "shield-check",
     copy: "Every agent is manually approved before they can publish a public estate page.",
   },
   {
     title: "Local Market Experts",
+    icon: "map-pin",
     copy: "Work with specialists who know DHA, Bahria, Gulberg, and Lahore neighbourhoods.",
   },
   {
     title: "Trusted Property Guidance",
+    icon: "home",
     copy: "Clear listing details and direct contact — no middlemen or opaque fees.",
   },
   {
     title: "Direct Agent Contact",
+    icon: "message-circle",
     copy: "Message the listing agent from their branded page and book a viewing fast.",
   },
 ];
+
+function WhyIcon({ name }) {
+  const paths = {
+    "shield-check": (
+      <>
+        <path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V5l8-3 8 3z" />
+        <path d="m9 12 2 2 4-4" />
+      </>
+    ),
+    "map-pin": (
+      <>
+        <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z" />
+        <circle cx="12" cy="10" r="2.5" />
+      </>
+    ),
+    home: <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />,
+    "message-circle": (
+      <>
+        <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8Z" />
+        <path d="M8.5 12h.01M12 12h.01M15.5 12h.01" />
+      </>
+    ),
+  };
+
+  return (
+    <svg
+      className={styles.whyIcon}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {paths[name]}
+    </svg>
+  );
+}
 
 function formatAgency(agent) {
   return String(agent.username || agent.estate_name || "")
@@ -360,7 +403,10 @@ export default function CustomerHome({ agents = [], areas = [] }) {
             <div className={styles.whyGrid}>
               {WHY_ITEMS.map((item) => (
                 <div key={item.title} className={styles.whyCard}>
-                  <h3>{item.title}</h3>
+                  <h3 className={styles.whyHeading}>
+                    <WhyIcon name={item.icon} />
+                    {item.title}
+                  </h3>
                   <p>{item.copy}</p>
                 </div>
               ))}
