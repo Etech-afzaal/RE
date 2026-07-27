@@ -12,6 +12,9 @@ export default function AgentDashboardPage() {
   const [agentName, setAgentName] = useState("");
   const [agentEmail, setAgentEmail] = useState("");
   const [estateName, setEstateName] = useState("");
+  const [profileImage, setProfileImage] = useState(null);
+  const [profileImageError, setProfileImageError] = useState("");
+  const [uploadingProfileImage, setUploadingProfileImage] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const displayEstateName = formatEstateName(estateName);
@@ -36,10 +39,17 @@ export default function AgentDashboardPage() {
       setAgentEmail(sessionUser.email || "");
       setEstateName(sessionUser.estate_name || "");
 
-      const propertiesRes = await fetch("/api/properties");
+      const [propertiesRes, profileImageRes] = await Promise.all([
+        fetch("/api/properties"),
+        fetch("/api/agent/profile-image"),
+      ]);
       if (propertiesRes.ok) {
         const data = await propertiesRes.json();
         setProperties(data.properties || []);
+      }
+      if (profileImageRes.ok) {
+        const data = await profileImageRes.json();
+        setProfileImage(data.profile_image || null);
       }
       setLoading(false);
     }
@@ -63,6 +73,37 @@ export default function AgentDashboardPage() {
     setProperties((prev) =>
       prev.filter((property) => property.id !== propertyId),
     );
+  }
+
+  async function handleProfileImageChange(e) {
+    const image = e.target.files?.[0];
+    if (!image) return;
+
+    setUploadingProfileImage(true);
+    setProfileImageError("");
+
+    const formData = new FormData();
+    formData.append("image", image);
+
+    try {
+      const res = await fetch("/api/agent/profile-image", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setProfileImageError(data.error || "Could not upload your image.");
+        return;
+      }
+
+      setProfileImage(data.profile_image || null);
+    } catch {
+      setProfileImageError("Could not upload your image. Please try again.");
+    } finally {
+      setUploadingProfileImage(false);
+      e.target.value = "";
+    }
   }
 
   if (loading) {
@@ -153,6 +194,85 @@ export default function AgentDashboardPage() {
             /re/{displayEstateName}
           </a>
         </p>
+      </div>
+
+      <div
+        style={{
+          background: "#fff",
+          border: "1px solid #e2e8f0",
+          borderRadius: 16,
+          padding: 18,
+          marginBottom: 20,
+          boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
+        }}
+      >
+        <h2 style={{ margin: "0 0 8px", fontSize: 18 }}>Profile picture</h2>
+        <p style={{ margin: "0 0 14px", color: "#64748b", fontSize: 14 }}>
+          Use a square JPG, PNG, or WebP image up to 5 MB. It appears on your
+          public profile and agent cards.
+        </p>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            flexWrap: "wrap",
+          }}
+        >
+          {profileImage ? (
+            <img
+              src={profileImage}
+              alt="Your profile"
+              width={72}
+              height={72}
+              style={{ borderRadius: "50%", objectFit: "cover" }}
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              style={{
+                width: 72,
+                height: 72,
+                display: "grid",
+                placeItems: "center",
+                borderRadius: "50%",
+                background: "#fef3c7",
+                color: "#92400e",
+                fontSize: 28,
+                fontWeight: 800,
+              }}
+            >
+              {(agentName || "A").charAt(0).toUpperCase()}
+            </div>
+          )}
+          <label
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              borderRadius: 999,
+              padding: "10px 16px",
+              fontWeight: 700,
+              color: "#fff",
+              background: "linear-gradient(135deg, #2563eb 0%, #0f766e 100%)",
+              cursor: uploadingProfileImage ? "wait" : "pointer",
+              opacity: uploadingProfileImage ? 0.7 : 1,
+            }}
+          >
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleProfileImageChange}
+              disabled={uploadingProfileImage}
+              style={{ display: "none" }}
+            />
+            {uploadingProfileImage ? "Uploading..." : "Upload picture"}
+          </label>
+        </div>
+        {profileImageError ? (
+          <p style={{ margin: "12px 0 0", color: "#b91c1c", fontSize: 14 }}>
+            {profileImageError}
+          </p>
+        ) : null}
       </div>
 
       <div
