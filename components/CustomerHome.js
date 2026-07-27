@@ -75,6 +75,42 @@ function WhyIcon({ name }) {
   );
 }
 
+function ContactIcon({ name }) {
+  const paths = {
+    phone: (
+      <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .8 2.9a2 2 0 0 1-.5 2.1L8.1 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.4 1.9.7 2.9.8a2 2 0 0 1 1.6 1.9Z" />
+    ),
+    mail: (
+      <>
+        <rect width="18" height="14" x="3" y="5" rx="2" />
+        <path d="m3 7 9 6 9-6" />
+      </>
+    ),
+    office: (
+      <>
+        <path d="M3 21h18" />
+        <path d="M5 21V7l8-4v18" />
+        <path d="M19 21V11l-6-4" />
+        <path d="M9 9h.01M9 13h.01M9 17h.01" />
+      </>
+    ),
+  };
+
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {paths[name]}
+    </svg>
+  );
+}
+
 function formatAgency(agent) {
   return String(agent.username || agent.estate_name || "")
     .replace(/[-_]+/g, " ")
@@ -216,7 +252,7 @@ export default function CustomerHome({ agents = [], areas = [] }) {
   }
 
   const heroImage =
-    agents.find((a) => a.profile_image)?.profile_image || "/hero/1.jpg";
+    agents.find((a) => a.profile_image)?.profile_image || "/hero/2.jpg";
 
   return (
     <div className={styles.wrapper}>
@@ -436,18 +472,115 @@ export default function CustomerHome({ agents = [], areas = [] }) {
 
           <section id="contact" className={styles.contactSection}>
             <div className={styles.contactCard}>
-              <p className={styles.contactKicker}>CONTACT</p>
-              <h2 className={styles.contactHeading}>
-                Questions about buying or listing?
-              </h2>
-              <p className={styles.contactCopy}>
-                Browse verified agents above, or reach the Dhalahore team for
-                guidance.
-              </p>
-              <div className={styles.contactRow}>
-                <a href="tel:+923001234567">+92 300 123 4567</a>
-                <a href="mailto:info@dhalahore.com">info@dhalahore.com</a>
-                <span>12 Garden Town, Lahore</span>
+              <div className={styles.contactGrid}>
+                <div className={styles.contactInfo}>
+                  <p className={styles.contactKicker}>CONTACT</p>
+                  <h2 className={styles.contactHeading}>
+                    Questions about buying or listing?
+                  </h2>
+                  <p className={styles.contactCopy}>
+                    Browse verified agents above, or reach the Dhalahore team
+                    for guidance.
+                  </p>
+                  <div className={styles.contactDetails}>
+                    <a
+                      href="tel:+923001234567"
+                      className={styles.contactDetail}
+                    >
+                      <span className={styles.contactIcon}>
+                        <ContactIcon name="phone" />
+                      </span>
+                      <span>
+                        <span className={styles.contactDetailLabel}>Phone</span>
+                        <span className={styles.contactDetailValue}>
+                          +92 300 123 4567
+                        </span>
+                      </span>
+                    </a>
+                    <a
+                      href="mailto:info@dhalahore.com"
+                      className={styles.contactDetail}
+                    >
+                      <span className={styles.contactIcon}>
+                        <ContactIcon name="mail" />
+                      </span>
+                      <span>
+                        <span className={styles.contactDetailLabel}>Email</span>
+                        <span className={styles.contactDetailValue}>
+                          info@dhalahore.com
+                        </span>
+                      </span>
+                    </a>
+                    <div className={styles.contactDetail}>
+                      <span className={styles.contactIcon}>
+                        <ContactIcon name="office" />
+                      </span>
+                      <span>
+                        <span className={styles.contactDetailLabel}>Office</span>
+                        <span className={styles.contactDetailValue}>
+                          12 Garden Town, Lahore
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                  <p className={styles.responseNote}>
+                    Response within business hours
+                  </p>
+                </div>
+
+                <div className={styles.contactFormPanel}>
+                  <p className={styles.contactFormKicker}>Send a message</p>
+                  <form className={styles.contactForm}>
+                    <div className={styles.contactFields}>
+                      <label className={styles.formField}>
+                        <span className={styles.formLabel}>Full Name</span>
+                        <input
+                          type="text"
+                          placeholder="Full Name"
+                          className={styles.contactInput}
+                        />
+                      </label>
+                      <label className={styles.formField}>
+                        <span className={styles.formLabel}>Email Address</span>
+                        <input
+                          type="email"
+                          placeholder="Email Address"
+                          className={styles.contactInput}
+                        />
+                      </label>
+                      <label className={styles.formField}>
+                        <span className={styles.formLabel}>Phone Number</span>
+                        <input
+                          type="tel"
+                          placeholder="Phone Number"
+                          className={styles.contactInput}
+                        />
+                      </label>
+                      <label className={styles.formField}>
+                        <span className={styles.formLabel}>Subject</span>
+                        <input
+                          type="text"
+                          placeholder="Buying, selling, or renting"
+                          className={styles.contactInput}
+                        />
+                      </label>
+                      <label className={`${styles.formField} ${styles.messageField}`}>
+                        <span className={styles.formLabel}>Message</span>
+                        <textarea
+                          rows="5"
+                          placeholder="Write your message"
+                          className={styles.contactTextarea}
+                        />
+                      </label>
+                    </div>
+                    <button
+                      type="button"
+                      className={`${styles.btnPrimary} ${styles.contactSubmit}`}
+                    >
+                      Send Message
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
           </section>
