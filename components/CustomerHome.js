@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
@@ -90,36 +90,38 @@ function AgentCard({ agent }) {
 
   return (
     <article className={styles.agentCard}>
-      <div className={styles.agentMedia}>
-        {agent.profile_image ? (
-          <Image
-            src={agent.profile_image}
-            alt=""
-            fill
-            sizes="(max-width: 700px) 100vw, 33vw"
-            className={styles.agentImage}
-          />
-        ) : (
-          <div className={styles.agentFallback} aria-hidden="true">
-            {(agent.full_name || "A").charAt(0).toUpperCase()}
-          </div>
-        )}
+      <div className={styles.agentContent}>
+        <div className={styles.agentBody}>
+          <p className={styles.agentAgency}>{formatAgency(agent)}</p>
+          <h3 className={styles.agentName}>{agent.full_name}</h3>
+          <p className={styles.agentMeta}>
+            {agent.property_count}{" "}
+            {agent.property_count === 1 ? "property" : "properties"}
+          </p>
+          <p className={styles.agentAreas}>
+            <span className={styles.agentAreasLabel}>Areas</span>
+            {areas}
+          </p>
+        </div>
+        <div className={styles.agentMedia}>
+          {agent.profile_image ? (
+            <Image
+              src={agent.profile_image}
+              alt=""
+              fill
+              sizes="(max-width: 640px) 110px, 110px"
+              className={styles.agentImage}
+            />
+          ) : (
+            <div className={styles.agentFallback} aria-hidden="true">
+              {(agent.full_name || "A").charAt(0).toUpperCase()}
+            </div>
+          )}
+        </div>
       </div>
-      <div className={styles.agentBody}>
-        <p className={styles.agentAgency}>{formatAgency(agent)}</p>
-        <h3 className={styles.agentName}>{agent.full_name}</h3>
-        <p className={styles.agentMeta}>
-          {agent.property_count}{" "}
-          {agent.property_count === 1 ? "property" : "properties"}
-        </p>
-        <p className={styles.agentAreas}>
-          <span className={styles.agentAreasLabel}>Areas</span>
-          {areas}
-        </p>
-        <Link href={href} className={styles.viewProfile}>
-          View Profile
-        </Link>
-      </div>
+      <Link href={href} className={styles.viewProfile}>
+        View Listing
+      </Link>
     </article>
   );
 }
@@ -128,6 +130,7 @@ export default function CustomerHome({ agents = [], areas = [] }) {
   const [query, setQuery] = useState("");
   const [area, setArea] = useState("all");
   const [city, setCity] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filtered = useMemo(() => {
     return agents.filter(
@@ -137,6 +140,37 @@ export default function CustomerHome({ agents = [], areas = [] }) {
         agentMatchesCity(agent, city),
     );
   }, [agents, query, area, city]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / 9));
+  const startIndex = (currentPage - 1) * 9;
+  const pageItems = filtered.slice(startIndex, startIndex + 9);
+
+  const paginationRange = () => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    let start = Math.max(1, currentPage - 2);
+    let end = start + 4;
+
+    if (end > totalPages) {
+      end = totalPages;
+      start = totalPages - 4;
+    }
+
+    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+  };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query, area, city]);
+
+  function handlePageChange(page) {
+    setCurrentPage(page);
+    document
+      .getElementById("agents")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   const heroImage =
     agents.find((a) => a.profile_image)?.profile_image || "/hero/1.jpg";
@@ -167,9 +201,6 @@ export default function CustomerHome({ agents = [], areas = [] }) {
             needs.
           </p>
           <div className={styles.heroActions}>
-            <a href="#agents" className={styles.btnPrimary}>
-              Search agents
-            </a>
             <a href="#agents" className={styles.btnGhost}>
               Browse Agents
             </a>
@@ -271,11 +302,49 @@ export default function CustomerHome({ agents = [], areas = [] }) {
                 <Link href="/agent/signup">become an agent</Link>.
               </div>
             ) : (
-              <div id="agent-grid" className={styles.agentGrid}>
-                {filtered.map((agent) => (
-                  <AgentCard key={agent.id} agent={agent} />
-                ))}
-              </div>
+              <>
+                <div id="agent-grid" className={styles.agentGrid}>
+                  {pageItems.map((agent) => (
+                    <AgentCard key={agent.id} agent={agent} />
+                  ))}
+                </div>
+                {totalPages > 1 ? (
+                  <div className={styles.pagination}>
+                    {currentPage > 1 ? (
+                      <button
+                        type="button"
+                        className={styles.pageButton}
+                        onClick={() => handlePageChange(currentPage - 1)}
+                      >
+                        &lt;
+                      </button>
+                    ) : null}
+
+                    {paginationRange().map((page) => (
+                      <button
+                        key={page}
+                        type="button"
+                        className={`${styles.pageButton} ${
+                          page === currentPage ? styles.pageButtonActive : ""
+                        }`}
+                        onClick={() => handlePageChange(page)}
+                      >
+                        {page}
+                      </button>
+                    ))}
+
+                    {currentPage < totalPages ? (
+                      <button
+                        type="button"
+                        className={styles.pageButton}
+                        onClick={() => handlePageChange(currentPage + 1)}
+                      >
+                        &gt;
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+              </>
             )}
           </section>
 

@@ -266,6 +266,37 @@
   gap: 1.25rem;
 }
 
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 1.75rem;
+}
+
+.pageButton {
+  min-width: 2.6rem;
+  min-height: 2.6rem;
+  padding: 0 0.8rem;
+  border: 1px solid rgba(26, 26, 26, 0.1);
+  border-radius: 999px;
+  background: #fff;
+  color: #1a1a1a;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.pageButton:hover {
+  border-color: rgba(242, 187, 70, 0.55);
+  background: rgba(255, 244, 214, 0.7);
+}
+
+.pageButtonActive {
+  border-color: var(--gold);
+  background: var(--gold-soft);
+}
+
 .agentCard {
   display: flex;
   flex-direction: column;
@@ -282,10 +313,23 @@
   box-shadow: var(--shadow-lg);
 }
 
+.agentContent {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px;
+  gap: 1rem;
+  align-items: start;
+  padding: 1.15rem 1.2rem 0.8rem;
+  flex: 1;
+}
+
 .agentMedia {
   position: relative;
-  aspect-ratio: 16 / 11;
+  width: 104px;
+  height: 104px;
   background: var(--surface-sunken);
+  border-radius: 50%;
+  overflow: hidden;
+  justify-self: end;
 }
 
 .agentImage {
@@ -310,8 +354,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  padding: 1.15rem 1.2rem 1.3rem;
-  flex: 1;
 }
 
 .agentAgency {
@@ -340,11 +382,10 @@
 }
 
 .agentAreas {
-  margin: 0.35rem 0 0.85rem;
+  margin: 0.35rem 0 0;
   color: var(--muted);
   font-size: 0.88rem;
   line-height: 1.45;
-  flex: 1;
 }
 
 .agentAreasLabel {
@@ -361,7 +402,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: auto;
+  margin: 0 1.2rem 1.2rem;
   padding: 0.75rem 1rem;
   border-radius: 12px;
   background: var(--gold);
@@ -645,6 +686,15 @@
   .whyGrid,
   .footerInner {
     grid-template-columns: 1fr;
+  }
+
+  .agentContent {
+    grid-template-columns: 1fr;
+  }
+
+  .agentMedia {
+    order: -1;
+    justify-self: start;
   }
 
   .searchBar {
