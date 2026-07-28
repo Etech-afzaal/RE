@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 -- ---------------------------------------------------------------------------
 -- agents: new profile / tenancy-prep columns
 -- ---------------------------------------------------------------------------
--- username, profile_image, description, areas_served, updated_at
+-- username, profile and company branding fields, updated_at
 -- (Skip ADD if already present — runner checks; raw SQL assumes first apply.)
 
 ALTER TABLE agents
@@ -23,10 +23,22 @@ ALTER TABLE agents
   ADD COLUMN profile_image VARCHAR(500) NULL AFTER phone;
 
 ALTER TABLE agents
-  ADD COLUMN description TEXT NULL AFTER profile_image;
+  ADD COLUMN company_logo VARCHAR(500) NULL AFTER profile_image;
+
+ALTER TABLE agents
+  ADD COLUMN company_name VARCHAR(255) NULL AFTER company_logo;
+
+ALTER TABLE agents
+  ADD COLUMN description TEXT NULL AFTER company_name;
 
 ALTER TABLE agents
   ADD COLUMN areas_served VARCHAR(500) NULL AFTER description;
+
+ALTER TABLE agents
+  ADD COLUMN office_address VARCHAR(500) NULL AFTER areas_served;
+
+ALTER TABLE agents
+  ADD COLUMN social_links VARCHAR(1000) NULL AFTER office_address;
 
 ALTER TABLE agents
   ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at;

@@ -75,11 +75,47 @@ async function isApplied(conn) {
   return rows.length > 0;
 }
 
+async function ensureAgentBrandingColumns(conn) {
+  const columns = [
+    [
+      "company_logo",
+      "ALTER TABLE agents ADD COLUMN company_logo VARCHAR(500) NULL AFTER profile_image",
+    ],
+    [
+      "company_name",
+      "ALTER TABLE agents ADD COLUMN company_name VARCHAR(255) NULL AFTER company_logo",
+    ],
+    [
+      "office_address",
+      "ALTER TABLE agents ADD COLUMN office_address VARCHAR(500) NULL AFTER areas_served",
+    ],
+    [
+      "social_links",
+      "ALTER TABLE agents ADD COLUMN social_links VARCHAR(1000) NULL AFTER office_address",
+    ],
+  ];
+
+  let repaired = false;
+  for (const [column, statement] of columns) {
+    if (!(await columnExists(conn, "agents", column))) {
+      await conn.query(statement);
+      console.log(`  + agents.${column}`);
+      repaired = true;
+    }
+  }
+  return repaired;
+}
+
 async function migrateUp(conn) {
   await ensureMigrationsTable(conn);
 
   if (await isApplied(conn)) {
-    console.log(`Migration ${MIGRATION_ID} already applied. Nothing to do.`);
+    const repaired = await ensureAgentBrandingColumns(conn);
+    console.log(
+      repaired
+        ? `Migration ${MIGRATION_ID} repaired missing branding columns.`
+        : `Migration ${MIGRATION_ID} already applied. Nothing to do.`,
+    );
     return;
   }
 
@@ -98,18 +134,7 @@ async function migrateUp(conn) {
     );
     console.log("  + agents.profile_image");
   }
-  if (!(await columnExists(conn, "agents", "company_logo"))) {
-    await conn.query(
-      "ALTER TABLE agents ADD COLUMN company_logo VARCHAR(500) NULL AFTER profile_image",
-    );
-    console.log("  + agents.company_logo");
-  }
-  if (!(await columnExists(conn, "agents", "company_name"))) {
-    await conn.query(
-      "ALTER TABLE agents ADD COLUMN company_name VARCHAR(255) NULL AFTER company_logo",
-    );
-    console.log("  + agents.company_name");
-  }
+  await ensureAgentBrandingColumns(conn);
   if (!(await columnExists(conn, "agents", "description"))) {
     await conn.query(
       "ALTER TABLE agents ADD COLUMN description TEXT NULL AFTER company_name",
@@ -121,18 +146,6 @@ async function migrateUp(conn) {
       "ALTER TABLE agents ADD COLUMN areas_served VARCHAR(500) NULL AFTER description",
     );
     console.log("  + agents.areas_served");
-  }
-  if (!(await columnExists(conn, "agents", "office_address"))) {
-    await conn.query(
-      "ALTER TABLE agents ADD COLUMN office_address VARCHAR(500) NULL AFTER areas_served",
-    );
-    console.log("  + agents.office_address");
-  }
-  if (!(await columnExists(conn, "agents", "social_links"))) {
-    await conn.query(
-      "ALTER TABLE agents ADD COLUMN social_links VARCHAR(1000) NULL AFTER office_address",
-    );
-    console.log("  + agents.social_links");
   }
   if (!(await columnExists(conn, "agents", "updated_at"))) {
     await conn.query(
@@ -305,8 +318,12 @@ async function migrateDown(conn) {
   }
   for (const col of [
     "updated_at",
+    "social_links",
+    "office_address",
     "areas_served",
     "description",
+    "company_name",
+    "company_logo",
     "profile_image",
     "username",
   ]) {

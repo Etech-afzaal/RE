@@ -214,8 +214,8 @@ export default function AgentDashboardPage() {
       >
         <h2 style={{ margin: "0 0 8px", fontSize: 18 }}>Profile picture</h2>
         <p style={{ margin: "0 0 14px", color: "#64748b", fontSize: 14 }}>
-          Use a square JPG, PNG, or WebP image up to 5 MB. It appears on your
-          public profile and agent cards.
+          Use an image up to 5 MB. It appears on your public profile and agent
+          cards.
         </p>
         <div
           style={{

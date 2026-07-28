@@ -47,8 +47,12 @@ ALTER TABLE agents
 
 ALTER TABLE agents DROP INDEX uq_agents_username;
 ALTER TABLE agents DROP COLUMN updated_at;
+ALTER TABLE agents DROP COLUMN social_links;
+ALTER TABLE agents DROP COLUMN office_address;
 ALTER TABLE agents DROP COLUMN areas_served;
 ALTER TABLE agents DROP COLUMN description;
+ALTER TABLE agents DROP COLUMN company_name;
+ALTER TABLE agents DROP COLUMN company_logo;
 ALTER TABLE agents DROP COLUMN profile_image;
 ALTER TABLE agents DROP COLUMN username;
 

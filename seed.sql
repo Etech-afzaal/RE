@@ -33,15 +33,15 @@ INSERT INTO signup_requests (full_name, estate_name, email, phone, message, stat
 -- Agents (estate_name = public URL slug /re/{estate_name})
 -- password for all: demo1234
 -- ---------------------------------------------------------------------------
-INSERT INTO agents (estate_name, username, full_name, email, phone, password_hash, must_reset_password, status) VALUES
-('dha-homes',     'dha-homes',     'Bilal Ahmed',   'bilal@dhahomes.pk',     '+923001234501', '$2a$10$KWiNUkqao2tKODRlMY7lMOKBOUY8Io4wUQeInJ42Lfm8glIVkP9R2', FALSE, 'approved'),
-('bahria-estate', 'bahria-estate', 'Sara Khan',     'sara@bahriaestate.pk',  '+923001234502', '$2a$10$KWiNUkqao2tKODRlMY7lMOKBOUY8Io4wUQeInJ42Lfm8glIVkP9R2', FALSE, 'approved'),
-('gulberg-props', 'gulberg-props', 'Usman Malik',   'usman@gulbergprops.pk', '+923001234503', '$2a$10$KWiNUkqao2tKODRlMY7lMOKBOUY8Io4wUQeInJ42Lfm8glIVkP9R2', FALSE, 'approved'),
-('johar-living',  'johar-living',  'Ayesha Raza',   'ayesha@joharliving.pk', '+923001234504', '$2a$10$KWiNUkqao2tKODRlMY7lMOKBOUY8Io4wUQeInJ42Lfm8glIVkP9R2', FALSE, 'approved'),
-('model-town-re', 'model-town-re', 'Hamza Sheikh',  'hamza@modeltownre.pk',  '+923001234505', '$2a$10$KWiNUkqao2tKODRlMY7lMOKBOUY8Io4wUQeInJ42Lfm8glIVkP9R2', FALSE, 'approved'),
-('cantt-homes',   'cantt-homes',   'Nadia Hussain', 'nadia@cantthomes.pk',   '+923001234506', '$2a$10$KWiNUkqao2tKODRlMY7lMOKBOUY8Io4wUQeInJ42Lfm8glIVkP9R2', FALSE, 'approved'),
-('valencia-re',   'valencia-re',   'Omar Farooq',   'omar@valenciare.pk',    '+923001234507', '$2a$10$KWiNUkqao2tKODRlMY7lMOKBOUY8Io4wUQeInJ42Lfm8glIVkP9R2', FALSE, 'approved'),
-('lake-city-re',  'lake-city-re',  'Fatima Ali',    'fatima@lakecityre.pk',  '+923001234508', '$2a$10$KWiNUkqao2tKODRlMY7lMOKBOUY8Io4wUQeInJ42Lfm8glIVkP9R2', FALSE, 'approved');
+INSERT INTO agents (estate_name, username, full_name, email, phone, profile_image, password_hash, must_reset_password, status) VALUES
+('dha-homes',     'dha-homes',     'Bilal Ahmed',   'bilal@dhahomes.pk',     '+923001234501', '/uploads/agents/1/profile.jpg',  '$2a$10$KWiNUkqao2tKODRlMY7lMOKBOUY8Io4wUQeInJ42Lfm8glIVkP9R2', FALSE, 'approved'),
+('bahria-estate', 'bahria-estate', 'Sara Khan',     'sara@bahriaestate.pk',  '+923001234502', '/uploads/agents/2/profile.jpeg', '$2a$10$KWiNUkqao2tKODRlMY7lMOKBOUY8Io4wUQeInJ42Lfm8glIVkP9R2', FALSE, 'approved'),
+('gulberg-props', 'gulberg-props', 'Usman Malik',   'usman@gulbergprops.pk', '+923001234503', '/uploads/agents/3/profile.jpg',  '$2a$10$KWiNUkqao2tKODRlMY7lMOKBOUY8Io4wUQeInJ42Lfm8glIVkP9R2', FALSE, 'approved'),
+('johar-living',  'johar-living',  'Ayesha Raza',   'ayesha@joharliving.pk', '+923001234504', '/uploads/agents/4/profile.jpg',  '$2a$10$KWiNUkqao2tKODRlMY7lMOKBOUY8Io4wUQeInJ42Lfm8glIVkP9R2', FALSE, 'approved'),
+('model-town-re', 'model-town-re', 'Hamza Sheikh',  'hamza@modeltownre.pk',  '+923001234505', '/uploads/agents/5/profile.jpeg', '$2a$10$KWiNUkqao2tKODRlMY7lMOKBOUY8Io4wUQeInJ42Lfm8glIVkP9R2', FALSE, 'approved'),
+('cantt-homes',   'cantt-homes',   'Nadia Hussain', 'nadia@cantthomes.pk',   '+923001234506', '/uploads/agents/6/profile.jpeg', '$2a$10$KWiNUkqao2tKODRlMY7lMOKBOUY8Io4wUQeInJ42Lfm8glIVkP9R2', FALSE, 'approved'),
+('valencia-re',   'valencia-re',   'Omar Farooq',   'omar@valenciare.pk',    '+923001234507', '/uploads/agents/7/profile.jpeg', '$2a$10$KWiNUkqao2tKODRlMY7lMOKBOUY8Io4wUQeInJ42Lfm8glIVkP9R2', FALSE, 'approved'),
+('lake-city-re',  'lake-city-re',  'Fatima Ali',    'fatima@lakecityre.pk',  '+923001234508', '/uploads/agents/8/profile.jpeg', '$2a$10$KWiNUkqao2tKODRlMY7lMOKBOUY8Io4wUQeInJ42Lfm8glIVkP9R2', FALSE, 'approved');
 
 -- ---------------------------------------------------------------------------
 -- Properties

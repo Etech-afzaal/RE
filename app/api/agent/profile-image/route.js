@@ -73,15 +73,34 @@ export async function POST(req) {
     );
     await mkdir(uploadDir, { recursive: true });
 
-    const filename = `${nanoid(10)}.jpg`;
+    const sourceFilename = path.basename(String(image.name || ""));
+    if (!sourceFilename) {
+      return NextResponse.json(
+        { error: imageFormatErrorMessage() },
+        { status: 400 },
+      );
+    }
+
+    const filename = `${nanoid(10)}-${sourceFilename}`;
     const outputPath = path.join(uploadDir, filename);
     const imageBuffer = Buffer.from(await image.arrayBuffer());
 
-    await sharp(imageBuffer, { failOn: "none" })
-      .rotate()
-      .resize(600, 600, { fit: "cover", position: "attention" })
-      .jpeg({ quality: 88, mozjpeg: true })
-      .toFile(outputPath);
+    const metadata = await sharp(imageBuffer, {
+      animated: true,
+      failOn: "none",
+    }).metadata();
+
+    // Uploaded SVGs are not enabled in the Next.js image configuration.
+    if (!metadata.format || metadata.format === "svg") {
+      return NextResponse.json(
+        { error: imageFormatErrorMessage() },
+        { status: 400 },
+      );
+    }
+
+    // Keep the original file and filename so the URL stored in the database
+    // points to the same image format the agent uploaded.
+    await writeFile(outputPath, imageBuffer);
 
     const profileImage = `/uploads/agents/${agentId}/${filename}`;
     await query("UPDATE agents SET profile_image = ? WHERE id = ?", [
