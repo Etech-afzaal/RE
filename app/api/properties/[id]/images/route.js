@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAgent } from "@/lib/adminAuth";
 import { query } from "@/lib/db";
+import { imageFormatErrorMessage, isImageFile } from "@/lib/imageUpload";
 import sharp from "sharp";
 import { writeFile, mkdir, rm } from "fs/promises";
 import path from "path";
@@ -74,6 +75,11 @@ export async function POST(req, { params }) {
     return NextResponse.json({ error: "No images provided." }, { status: 400 });
   }
 
+  const invalid = files.find((file) => !(file instanceof File) || !isImageFile(file));
+  if (invalid) {
+    return NextResponse.json({ error: imageFormatErrorMessage() }, { status: 400 });
+  }
+
   await ensureImageColumns();
 
   const uploadDir = path.join(
@@ -86,30 +92,39 @@ export async function POST(req, { params }) {
 
   const savedUrls = [];
 
-  for (const file of files) {
-    const arrayBuffer = await file.arrayBuffer();
-    const inputBuffer = Buffer.from(arrayBuffer);
+  try {
+    for (const file of files) {
+      const arrayBuffer = await file.arrayBuffer();
+      const inputBuffer = Buffer.from(arrayBuffer);
 
-    const image = sharp(inputBuffer);
-    const metadata = await image.metadata();
-    const width = metadata.width || 1200;
-    const height = metadata.height || 800;
+      const image = sharp(inputBuffer, { failOn: "none" });
+      const metadata = await image.metadata();
+      const width = metadata.width || 1200;
+      const height = metadata.height || 800;
 
-    const watermarked = await image
-      .composite([
-        {
-          input: watermarkSvg("dhalahoreproperties.com", width, height),
-          gravity: "southeast",
-        },
-      ])
-      .jpeg({ quality: 85 })
-      .toBuffer();
+      const watermarked = await image
+        .rotate()
+        .composite([
+          {
+            input: watermarkSvg("dhalahoreproperties.com", width, height),
+            gravity: "southeast",
+          },
+        ])
+        .jpeg({ quality: 85 })
+        .toBuffer();
 
-    const filename = `${nanoid(10)}.jpg`;
-    await writeFile(path.join(uploadDir, filename), watermarked);
+      const filename = `${nanoid(10)}.jpg`;
+      await writeFile(path.join(uploadDir, filename), watermarked);
 
-    const publicUrl = `/uploads/${propertyId}/${filename}`;
-    savedUrls.push(publicUrl);
+      const publicUrl = `/uploads/${propertyId}/${filename}`;
+      savedUrls.push(publicUrl);
+    }
+  } catch (err) {
+    console.error("Failed to process property images:", err);
+    return NextResponse.json(
+      { error: imageFormatErrorMessage() },
+      { status: 400 },
+    );
   }
 
   for (let i = 0; i < savedUrls.length; i++) {

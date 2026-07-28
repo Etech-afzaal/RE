@@ -3,10 +3,10 @@ import Image from "next/image";
 import SiteHeader from "@/components/SiteHeader";
 import HeroSlider from "@/components/HeroSlider";
 import AboutDHALahore from "@/components/AboutDHALahore/AboutDHALahore";
+import AgentBrandProfile from "@/components/AgentBrandProfile/AgentBrandProfile";
 import HomeListings from "@/components/HomeListings";
 import TrustStats from "@/components/TrustStats";
 import LocationCarousel from "@/components/LocationCarousel";
-import { agentPublicUsername } from "@/lib/propertySlug";
 import styles from "@/app/page.module.css";
 
 /**
@@ -32,10 +32,6 @@ export default function PublicPropertyWebsite({
     heroSlides.find((slide) => slide.image_url)?.image_url ||
     null;
 
-  const agencyLabel = agent
-    ? agentPublicUsername(agent).replace(/[-_]+/g, " ")
-    : null;
-
   const contactPhone = agent?.phone || "+92 300 123 4567";
   const contactEmail = agent?.email || "info@dhalahore.com";
   const contactTelHref = agent?.phone
@@ -47,145 +43,11 @@ export default function PublicPropertyWebsite({
       <SiteHeader />
       <HeroSlider slides={heroSlides} />
       <div className={styles.container}>
-        <AboutDHALahore />
+        {agent ? <AgentBrandProfile agent={agent} /> : <AboutDHALahore />}
       </div>
 
       <main className={styles.main}>
         <div className={styles.container}>
-          {agent ? (
-            <section id="agent" className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <div>
-                  <p className={styles.kicker}>Listing agent</p>
-                  <h2 className={styles.sectionTitle}>{agent.full_name}</h2>
-                </div>
-              </div>
-
-              <div className={styles.contactDetails}>
-                {agent.profile_image ? (
-                  <div className={styles.contactDetail}>
-                    <span className={styles.contactIcon} aria-hidden="true">
-                      <Image
-                        src={agent.profile_image}
-                        alt=""
-                        width={40}
-                        height={40}
-                        style={{ borderRadius: "50%", objectFit: "cover" }}
-                      />
-                    </span>
-                    <div>
-                      <p className={styles.contactDetailLabel}>Agency</p>
-                      <p className={styles.contactDetailValue}>
-                        {agencyLabel || agent.estate_name}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className={styles.contactDetail}>
-                    <span className={styles.contactIcon} aria-hidden="true">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path
-                          d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9.5Z"
-                          stroke="#1A1A1A"
-                          strokeWidth="1.8"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </span>
-                    <div>
-                      <p className={styles.contactDetailLabel}>Agency</p>
-                      <p className={styles.contactDetailValue}>
-                        {agencyLabel || agent.estate_name}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {agent.phone ? (
-                  <div className={styles.contactDetail}>
-                    <span className={styles.contactIcon} aria-hidden="true">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path
-                          d="M3 5.5C3 4.7 3.7 4 4.5 4H7c.6 0 1 .4 1 1v1.5c0 .8-.7 1.5-1.5 1.5H6c-.3 0-.5.2-.5.5v1.5c0 .3.2.5.5.5h1c.8 0 1.5.7 1.5 1.5V17c0 .6-.4 1-1 1H4.5C3.7 18 3 17.3 3 16.5V5.5Z"
-                          stroke="#1A1A1A"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </span>
-                    <div>
-                      <p className={styles.contactDetailLabel}>Phone</p>
-                      <p className={styles.contactDetailValue}>
-                        <a href={contactTelHref}>{agent.phone}</a>
-                      </p>
-                    </div>
-                  </div>
-                ) : null}
-
-                <div className={styles.contactDetail}>
-                  <span className={styles.contactIcon} aria-hidden="true">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M3 7.5 12 13.5 21 7.5"
-                        stroke="#1A1A1A"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M21 7.5v9c0 .8-.7 1.5-1.5 1.5H4.5C3.7 18 3 17.3 3 16.5v-9"
-                        stroke="#1A1A1A"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                  <div>
-                    <p className={styles.contactDetailLabel}>Email</p>
-                    <p className={styles.contactDetailValue}>
-                      <a href={`mailto:${agent.email}`}>{agent.email}</a>
-                    </p>
-                  </div>
-                </div>
-
-                {agent.areas_served ? (
-                  <div className={styles.contactDetail}>
-                    <span className={styles.contactIcon} aria-hidden="true">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path
-                          d="M12 20.5s7-3.25 7-8.5c0-3.6-2.9-6.5-7-6.5S5 8.4 5 12c0 5.25 7 8.5 7 8.5Z"
-                          stroke="#1A1A1A"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"
-                          stroke="#1A1A1A"
-                          strokeWidth="1.8"
-                        />
-                      </svg>
-                    </span>
-                    <div>
-                      <p className={styles.contactDetailLabel}>Areas served</p>
-                      <p className={styles.contactDetailValue}>
-                        {agent.areas_served}
-                      </p>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-
-              {agent.description ? (
-                <p className={styles.contactCopy} style={{ marginTop: "1.25rem" }}>
-                  {agent.description}
-                </p>
-              ) : null}
-            </section>
-          ) : null}
-
           <HomeListings properties={properties} />
 
           <TrustStats stats={stats} backgroundImage={trustBackground} />

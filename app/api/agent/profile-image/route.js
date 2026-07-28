@@ -6,9 +6,9 @@ import sharp from "sharp";
 import { nanoid } from "nanoid";
 import { requireAgent } from "@/lib/adminAuth";
 import { query } from "@/lib/db";
+import { imageFormatErrorMessage, isImageFile } from "@/lib/imageUpload";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 function agentIdFromSession(session) {
   return Number(session.user.agent_id || session.user.id);
@@ -43,11 +43,8 @@ export async function POST(req) {
     return NextResponse.json({ error: "Please select an image." }, { status: 400 });
   }
 
-  if (!ALLOWED_TYPES.has(image.type)) {
-    return NextResponse.json(
-      { error: "Use a JPG, PNG, or WebP image." },
-      { status: 400 },
-    );
+  if (!isImageFile(image)) {
+    return NextResponse.json({ error: imageFormatErrorMessage() }, { status: 400 });
   }
 
   if (image.size > MAX_FILE_SIZE) {
@@ -80,7 +77,7 @@ export async function POST(req) {
     const outputPath = path.join(uploadDir, filename);
     const imageBuffer = Buffer.from(await image.arrayBuffer());
 
-    await sharp(imageBuffer)
+    await sharp(imageBuffer, { failOn: "none" })
       .rotate()
       .resize(600, 600, { fit: "cover", position: "attention" })
       .jpeg({ quality: 88, mozjpeg: true })
@@ -99,7 +96,12 @@ export async function POST(req) {
   } catch (err) {
     console.error("Failed to upload agent profile image:", err);
     return NextResponse.json(
-      { error: "Could not upload profile image. Please try again." },
+      {
+        error:
+          err?.message?.includes("unsupported") || err?.message?.includes("Input")
+            ? imageFormatErrorMessage()
+            : "Could not upload profile image. Please try again.",
+      },
       { status: 500 },
     );
   }

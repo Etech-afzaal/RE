@@ -47,7 +47,15 @@ export default withAuth(
 
     // Agents never access admin surfaces.
     if (isAgent && isAdminArea) {
-      return NextResponse.redirect(new URL("/agent/dashboard", req.url));
+      const handle = token.username || token.estate_name;
+      return NextResponse.redirect(
+        new URL(
+          handle
+            ? `/re/${encodeURIComponent(handle)}/adminarea`
+            : "/agent/dashboard",
+          req.url,
+        ),
+      );
     }
 
     // Admin dashboard: SUPER_ADMIN only (legacy "admin" normalized in JWT).
@@ -70,7 +78,15 @@ export default withAuth(
         token.username || token.estate_name || "",
       ).toLowerCase();
       if (tokenUsername && pathUsername !== tokenUsername) {
-        return NextResponse.redirect(new URL("/agent/dashboard", req.url));
+        const handle = token.username || token.estate_name;
+        return NextResponse.redirect(
+          new URL(
+            handle
+              ? `/re/${encodeURIComponent(handle)}/adminarea`
+              : "/agent/dashboard",
+            req.url,
+          ),
+        );
       }
     }
 

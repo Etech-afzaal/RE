@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import styles from "./SiteHeader.module.css";
@@ -14,6 +14,12 @@ const DEFAULT_NAV_LINKS = [
   { label: "Areas", href: "#areas" },
   { label: "Contact Us", href: "#contact" },
 ];
+
+function getAgentHomeHref(pathname) {
+  const match = String(pathname || "").match(/^\/re\/([^/]+)/);
+  if (!match) return "/";
+  return `/re/${decodeURIComponent(match[1])}`;
+}
 
 function getNavSections(navLinks) {
   return navLinks
@@ -34,16 +40,27 @@ function getProbeY() {
 
 export default function SiteHeader({ navLinks = DEFAULT_NAV_LINKS }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const homeHref = useMemo(() => getAgentHomeHref(pathname), [pathname]);
+  const resolvedNavLinks = useMemo(
+    () =>
+      navLinks.map((link) =>
+        link.label === "Home" || link.href === "/"
+          ? { ...link, href: homeHref }
+          : link,
+      ),
+    [navLinks, homeHref],
+  );
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeHref, setActiveHref] = useState("/");
+  const [activeHref, setActiveHref] = useState(homeHref);
   const lockedHrefRef = useRef(null);
   const lockTimerRef = useRef(0);
 
   useEffect(() => {
     const syncActive = () => {
-      const sections = getNavSections(navLinks);
+      const sections = getNavSections(resolvedNavLinks);
       if (sections.length === 0) {
-        setActiveHref("/");
+        setActiveHref(homeHref);
         return;
       }
 
@@ -52,7 +69,8 @@ export default function SiteHeader({ navLinks = DEFAULT_NAV_LINKS }) {
 
       if (lockedHref) {
         const target = sections.find((section) => section.href === lockedHref);
-        const reached = target && target.element.getBoundingClientRect().top <= probe + 2;
+        const reached =
+          target && target.element.getBoundingClientRect().top <= probe + 2;
         if (!reached) {
           setActiveHref(lockedHref);
           return;
@@ -63,7 +81,7 @@ export default function SiteHeader({ navLinks = DEFAULT_NAV_LINKS }) {
 
       const firstTop = sections[0].element.getBoundingClientRect().top;
       if (firstTop > probe) {
-        setActiveHref("/");
+        setActiveHref(homeHref);
         return;
       }
 
@@ -92,7 +110,9 @@ export default function SiteHeader({ navLinks = DEFAULT_NAV_LINKS }) {
     window.addEventListener("resize", onScrollOrResize);
     window.addEventListener("hashchange", syncActive);
 
-    const retryIds = [100, 400, 1000].map((ms) => window.setTimeout(syncActive, ms));
+    const retryIds = [100, 400, 1000].map((ms) =>
+      window.setTimeout(syncActive, ms),
+    );
 
     return () => {
       window.removeEventListener("scroll", onScrollOrResize);
@@ -101,14 +121,49 @@ export default function SiteHeader({ navLinks = DEFAULT_NAV_LINKS }) {
       window.clearTimeout(lockTimerRef.current);
       retryIds.forEach((id) => window.clearTimeout(id));
     };
-  }, [navLinks]);
+  }, [resolvedNavLinks, homeHref]);
 
   const isActiveLink = (href) => href === activeHref;
+
+  const isHomeLink = (href) => href === homeHref || href === "/";
+
+  const handleLogoClick = async (event) => {
+    event.preventDefault();
+    lockedHrefRef.current = null;
+    window.clearTimeout(lockTimerRef.current);
+    setMenuOpen(false);
+    window.dispatchEvent(new Event("dhalahorePropertiesResetFilters"));
+    await router.replace("/");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setActiveHref("/");
+  };
 
   const handleHomeClick = async (event) => {
     event.preventDefault();
     lockedHrefRef.current = null;
     window.clearTimeout(lockTimerRef.current);
+    setMenuOpen(false);
+
+    if (homeHref.startsWith("/re/")) {
+      window.dispatchEvent(new Event("dhalahorePropertiesResetFilters"));
+      const heroTarget = `${homeHref}#hero`;
+      if (pathname !== homeHref) {
+        await router.push(heroTarget);
+      } else {
+        const hero = document.getElementById("hero");
+        if (hero) {
+          hero.scrollIntoView({ behavior: "smooth", block: "start" });
+          if (window.location.hash !== "#hero") {
+            window.history.pushState(null, "", "#hero");
+          }
+        } else {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      }
+      setActiveHref(homeHref);
+      return;
+    }
+
     window.dispatchEvent(new Event("dhalahorePropertiesResetFilters"));
     await router.replace("/");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -136,10 +191,18 @@ export default function SiteHeader({ navLinks = DEFAULT_NAV_LINKS }) {
     }
   };
 
+  const homeLinkHref = homeHref.startsWith("/re/")
+    ? `${homeHref}#hero`
+    : homeHref;
+
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
-        <Link href="/" onClick={handleHomeClick} className={styles.logoGroup}>
+        <Link
+          href="/"
+          onClick={handleLogoClick}
+          className={styles.logoGroup}
+        >
           <Image
             src="/logo.svg"
             alt="Dhalahore Properties"
@@ -150,16 +213,16 @@ export default function SiteHeader({ navLinks = DEFAULT_NAV_LINKS }) {
         </Link>
 
         <nav className={styles.mainNav} aria-label="Main">
-          {navLinks.map((link) => {
+          {resolvedNavLinks.map((link) => {
             const active = isActiveLink(link.href);
             const isHash = link.href.startsWith("#");
             return (
               <Link
                 key={link.label}
-                href={link.href}
+                href={isHomeLink(link.href) ? homeLinkHref : link.href}
                 className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`.trim()}
                 onClick={
-                  link.href === "/"
+                  isHomeLink(link.href)
                     ? handleHomeClick
                     : isHash
                       ? (event) => handleSectionClick(event, link.href)
@@ -185,7 +248,13 @@ export default function SiteHeader({ navLinks = DEFAULT_NAV_LINKS }) {
             onClick={() => setMenuOpen((open) => !open)}
           >
             {menuOpen ? (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
                 <path
                   d="M6 6l12 12M18 6L6 18"
                   stroke="currentColor"
@@ -194,7 +263,13 @@ export default function SiteHeader({ navLinks = DEFAULT_NAV_LINKS }) {
                 />
               </svg>
             ) : (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
                 <path
                   d="M4 6.5h16M4 12h16M4 17.5h16"
                   stroke="currentColor"
@@ -209,18 +284,17 @@ export default function SiteHeader({ navLinks = DEFAULT_NAV_LINKS }) {
 
       {menuOpen ? (
         <nav id="mobile-menu" className={styles.mobileMenu} aria-label="Mobile">
-          {navLinks.map((link) => {
+          {resolvedNavLinks.map((link) => {
             const active = isActiveLink(link.href);
             const isHash = link.href.startsWith("#");
             return (
               <Link
                 key={link.label}
-                href={link.href}
+                href={isHomeLink(link.href) ? homeLinkHref : link.href}
                 className={`${styles.mobileLink} ${active ? styles.navLinkActive : ""}`.trim()}
                 onClick={(event) => {
-                  if (link.href === "/") {
+                  if (isHomeLink(link.href)) {
                     handleHomeClick(event);
-                    setMenuOpen(false);
                     return;
                   }
                   if (isHash) {

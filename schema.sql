@@ -31,8 +31,12 @@ CREATE TABLE IF NOT EXISTS agents (
   email VARCHAR(255) UNIQUE NOT NULL,
   phone VARCHAR(50),
   profile_image VARCHAR(500) NULL,                 -- Phase 1
+  company_logo VARCHAR(500) NULL,                  -- Agent brand profile company logo
+  company_name VARCHAR(255) NULL,                  -- Public company display name
   description TEXT NULL,                           -- Phase 1
   areas_served VARCHAR(500) NULL,                  -- Phase 1
+  office_address VARCHAR(500) NULL,                -- Company branding
+  social_links VARCHAR(1000) NULL,                 -- Company branding (URLs)
   password_hash VARCHAR(255) NOT NULL,
   must_reset_password BOOLEAN DEFAULT TRUE,
   -- Phase 1: pending | approved | rejected | disabled (was active|disabled)

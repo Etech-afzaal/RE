@@ -1,12 +1,21 @@
 import { NextResponse } from "next/server";
 import { requireAgent } from "@/lib/adminAuth";
 import { query } from "@/lib/db";
+import { PROPERTY_STATUS } from "@/lib/status";
 import { rm } from "fs/promises";
 import path from "path";
 
 function agentIdFrom(session) {
   return Number(session.user.agent_id || session.user.id);
 }
+
+/** Statuses an agent may set on their own listing (never self-approve). */
+const AGENT_SETTABLE_STATUSES = new Set([
+  PROPERTY_STATUS.DRAFT,
+  PROPERTY_STATUS.PENDING_APPROVAL,
+  PROPERTY_STATUS.SOLD,
+  PROPERTY_STATUS.HIDDEN,
+]);
 
 export async function GET(_req, { params }) {
   const { session, error } = await requireAgent();
@@ -37,36 +46,52 @@ export async function PUT(req, { params }) {
 
   const propertyId = Number(params.id);
   const body = await req.json();
-  const { title, description, size_value, size_unit, price, location } = body;
+  const { title, description, size_value, size_unit, price, location, status } =
+    body;
 
-  if (!title) {
+  if (!title || !String(title).trim()) {
     return NextResponse.json({ error: "Title is required." }, { status: 400 });
   }
 
   const agentId = agentIdFrom(session);
   const existing = await query(
-    "SELECT id FROM properties WHERE id = ? AND agent_id = ?",
+    "SELECT id, status FROM properties WHERE id = ? AND agent_id = ?",
     [propertyId, agentId],
   );
   if (existing.length === 0) {
     return NextResponse.json({ error: "Property not found." }, { status: 404 });
   }
 
+  let nextStatus = existing[0].status;
+  if (status != null) {
+    if (!AGENT_SETTABLE_STATUSES.has(status)) {
+      return NextResponse.json(
+        { error: "You cannot set that property status." },
+        { status: 400 },
+      );
+    }
+    nextStatus = status;
+  }
+
   await query(
-    `UPDATE properties SET title = ?, description = ?, size_value = ?, size_unit = ?, price = ?, location = ? WHERE id = ? AND agent_id = ?`,
+    `UPDATE properties
+     SET title = ?, description = ?, size_value = ?, size_unit = ?, price = ?,
+         location = ?, status = ?
+     WHERE id = ? AND agent_id = ?`,
     [
-      title,
+      String(title).trim(),
       description || null,
       size_value || null,
       size_unit || "marla",
       price || null,
       location || null,
+      nextStatus,
       propertyId,
       agentId,
     ],
   );
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, status: nextStatus });
 }
 
 export async function DELETE(_req, { params }) {

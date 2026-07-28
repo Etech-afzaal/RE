@@ -98,9 +98,21 @@ async function migrateUp(conn) {
     );
     console.log("  + agents.profile_image");
   }
+  if (!(await columnExists(conn, "agents", "company_logo"))) {
+    await conn.query(
+      "ALTER TABLE agents ADD COLUMN company_logo VARCHAR(500) NULL AFTER profile_image",
+    );
+    console.log("  + agents.company_logo");
+  }
+  if (!(await columnExists(conn, "agents", "company_name"))) {
+    await conn.query(
+      "ALTER TABLE agents ADD COLUMN company_name VARCHAR(255) NULL AFTER company_logo",
+    );
+    console.log("  + agents.company_name");
+  }
   if (!(await columnExists(conn, "agents", "description"))) {
     await conn.query(
-      "ALTER TABLE agents ADD COLUMN description TEXT NULL AFTER profile_image",
+      "ALTER TABLE agents ADD COLUMN description TEXT NULL AFTER company_name",
     );
     console.log("  + agents.description");
   }
@@ -109,6 +121,18 @@ async function migrateUp(conn) {
       "ALTER TABLE agents ADD COLUMN areas_served VARCHAR(500) NULL AFTER description",
     );
     console.log("  + agents.areas_served");
+  }
+  if (!(await columnExists(conn, "agents", "office_address"))) {
+    await conn.query(
+      "ALTER TABLE agents ADD COLUMN office_address VARCHAR(500) NULL AFTER areas_served",
+    );
+    console.log("  + agents.office_address");
+  }
+  if (!(await columnExists(conn, "agents", "social_links"))) {
+    await conn.query(
+      "ALTER TABLE agents ADD COLUMN social_links VARCHAR(1000) NULL AFTER office_address",
+    );
+    console.log("  + agents.social_links");
   }
   if (!(await columnExists(conn, "agents", "updated_at"))) {
     await conn.query(

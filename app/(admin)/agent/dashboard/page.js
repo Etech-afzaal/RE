@@ -35,6 +35,12 @@ export default function AgentDashboardPage() {
         return;
       }
 
+      const handle = sessionUser.username || sessionUser.estate_name;
+      if (handle) {
+        router.replace(`/re/${encodeURIComponent(handle)}/adminarea`);
+        return;
+      }
+
       setAgentName(sessionUser.name || "");
       setAgentEmail(sessionUser.email || "");
       setEstateName(sessionUser.estate_name || "");
@@ -260,7 +266,7 @@ export default function AgentDashboardPage() {
           >
             <input
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/*"
               onChange={handleProfileImageChange}
               disabled={uploadingProfileImage}
               style={{ display: "none" }}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { signIn } from "next-auth/react";
+import { getSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
 
@@ -25,9 +25,8 @@ export default function AgentLoginPage() {
       redirect: false,
     });
 
-    setLoading(false);
-
     if (res?.error === "ACCOUNT_REVOKED") {
+      setLoading(false);
       const adminEmail =
         process.env.NEXT_PUBLIC_ADMIN_EMAIL ||
         process.env.ADMIN_EMAIL ||
@@ -39,7 +38,18 @@ export default function AgentLoginPage() {
     }
 
     if (res?.error) {
+      setLoading(false);
       setError("Invalid email or password.");
+      return;
+    }
+
+    const session = await getSession();
+    const handle =
+      session?.user?.username || session?.user?.estate_name || null;
+    setLoading(false);
+
+    if (handle) {
+      router.push(`/re/${encodeURIComponent(handle)}/adminarea`);
       return;
     }
 

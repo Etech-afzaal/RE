@@ -57,7 +57,7 @@ export default function HeroSlider({ slides = [] }) {
   if (!current) return null;
 
   return (
-    <section className={styles.heroWrap} aria-label="Featured properties">
+    <section id="hero" className={styles.heroWrap} aria-label="Featured properties">
       <div className={styles.hero}>
         <div className={styles.slides} aria-hidden="true">
           {items.map((slide, index) => (

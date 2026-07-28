@@ -4,11 +4,15 @@
   background:
     radial-gradient(ellipse 80% 50% at 50% -10%, rgba(242, 187, 70, 0.14), transparent 55%),
     linear-gradient(180deg, #ffffff 0%, #faf9f6 28%, #f7f4ec 100%);
-  padding-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .main {
   width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .container {

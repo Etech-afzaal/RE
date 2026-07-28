@@ -75,41 +75,38 @@ function WhyIcon({ name }) {
   );
 }
 
-function ContactIcon({ name }) {
-  const paths = {
-    phone: (
-      <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .8 2.9a2 2 0 0 1-.5 2.1L8.1 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.4 1.9.7 2.9.8a2 2 0 0 1 1.6 1.9Z" />
-    ),
-    mail: (
-      <>
-        <rect width="18" height="14" x="3" y="5" rx="2" />
-        <path d="m3 7 9 6 9-6" />
-      </>
-    ),
-    office: (
-      <>
-        <path d="M3 21h18" />
-        <path d="M5 21V7l8-4v18" />
-        <path d="M19 21V11l-6-4" />
-        <path d="M9 9h.01M9 13h.01M9 17h.01" />
-      </>
-    ),
-  };
-
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {paths[name]}
-    </svg>
-  );
-}
+const CONTACT_FAQS = [
+  {
+    question: "How can I find a trusted real estate agent in Lahore?",
+    answer:
+      "Browse verified agents on DhaLahore.com and explore their profiles, areas of expertise, and available properties.",
+  },
+  {
+    question: "Can I buy, sell, or rent properties through DhaLahore.com?",
+    answer:
+      "Yes. DhaLahore.com connects customers with real estate agents who can help with buying, selling, and rental requirements across Lahore.",
+  },
+  {
+    question: "Are the listed properties verified?",
+    answer:
+      "Properties are reviewed and managed by registered agents. Only approved listings are displayed publicly.",
+  },
+  {
+    question: "Which areas of Lahore do your agents cover?",
+    answer:
+      "Our agents specialize in DHA Lahore, Bahria Town, Gulberg, Model Town, Johar Town, and other major Lahore areas.",
+  },
+  {
+    question: "How do I contact an agent about a property?",
+    answer:
+      "You can visit an agent profile or property page and use the contact option to connect directly with the relevant agent.",
+  },
+  {
+    question: "Can I become a real estate agent on DhaLahore.com?",
+    answer:
+      "Yes. Real estate professionals can register as agents and, after approval, manage their profiles and property listings.",
+  },
+];
 
 function formatAgency(agent) {
   return String(agent.username || agent.estate_name || "")
@@ -210,6 +207,7 @@ export default function CustomerHome({ agents = [], areas = [] }) {
   const [area, setArea] = useState("all");
   const [city, setCity] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [openFaq, setOpenFaq] = useState(null);
 
   const filtered = useMemo(() => {
     return agents.filter(
@@ -251,9 +249,6 @@ export default function CustomerHome({ agents = [], areas = [] }) {
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  const heroImage =
-    agents.find((a) => a.profile_image)?.profile_image || "/hero/2.jpg";
-
   return (
     <div className={styles.wrapper}>
       <SiteHeader navLinks={CUSTOMER_NAV} />
@@ -261,7 +256,7 @@ export default function CustomerHome({ agents = [], areas = [] }) {
       <section className={styles.hero} aria-label="Find agents">
         <div className={styles.heroMedia} aria-hidden="true">
           <Image
-            src={heroImage}
+            src="/hero/2.jpg"
             alt=""
             fill
             priority
@@ -474,58 +469,40 @@ export default function CustomerHome({ agents = [], areas = [] }) {
             <div className={styles.contactCard}>
               <div className={styles.contactGrid}>
                 <div className={styles.contactInfo}>
-                  <p className={styles.contactKicker}>CONTACT</p>
                   <h2 className={styles.contactHeading}>
-                    Questions about buying or listing?
+                    Frequently Asked Questions
                   </h2>
-                  <p className={styles.contactCopy}>
-                    Browse verified agents above, or reach the Dhalahore team
-                    for guidance.
-                  </p>
-                  <div className={styles.contactDetails}>
-                    <a
-                      href="tel:+923001234567"
-                      className={styles.contactDetail}
-                    >
-                      <span className={styles.contactIcon}>
-                        <ContactIcon name="phone" />
-                      </span>
-                      <span>
-                        <span className={styles.contactDetailLabel}>Phone</span>
-                        <span className={styles.contactDetailValue}>
-                          +92 300 123 4567
-                        </span>
-                      </span>
-                    </a>
-                    <a
-                      href="mailto:info@dhalahore.com"
-                      className={styles.contactDetail}
-                    >
-                      <span className={styles.contactIcon}>
-                        <ContactIcon name="mail" />
-                      </span>
-                      <span>
-                        <span className={styles.contactDetailLabel}>Email</span>
-                        <span className={styles.contactDetailValue}>
-                          info@dhalahore.com
-                        </span>
-                      </span>
-                    </a>
-                    <div className={styles.contactDetail}>
-                      <span className={styles.contactIcon}>
-                        <ContactIcon name="office" />
-                      </span>
-                      <span>
-                        <span className={styles.contactDetailLabel}>Office</span>
-                        <span className={styles.contactDetailValue}>
-                          12 Garden Town, Lahore
-                        </span>
-                      </span>
-                    </div>
+                  <div className={styles.faqList}>
+                    {CONTACT_FAQS.map((item, index) => {
+                      const isOpen = openFaq === index;
+                      return (
+                        <div key={item.question} className={styles.faqItem}>
+                          <button
+                            type="button"
+                            className={`${styles.faqQuestion}${isOpen ? ` ${styles.faqQuestionActive}` : ""}`}
+                            aria-expanded={isOpen}
+                            onClick={() =>
+                              setOpenFaq(isOpen ? null : index)
+                            }
+                          >
+                            <span className={styles.faqQuestionText}>
+                              {item.question}
+                            </span>
+                            <span className={styles.faqToggle} aria-hidden="true">
+                              {isOpen ? "−" : "+"}
+                            </span>
+                          </button>
+                          {isOpen ? (
+                            <div className={styles.faqAnswerPanel} key={index}>
+                              <p className={styles.faqAnswerText}>
+                                {item.answer}
+                              </p>
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
                   </div>
-                  <p className={styles.responseNote}>
-                    Response within business hours
-                  </p>
                 </div>
 
                 <div className={styles.contactFormPanel}>
