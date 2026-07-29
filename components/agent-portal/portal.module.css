@@ -360,6 +360,44 @@
   font-size: 0.9rem;
 }
 
+.dialogBackdrop {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(26, 26, 26, 0.44);
+}
+
+.dialog {
+  width: min(100%, 420px);
+  padding: 1.45rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: 0 22px 56px rgba(26, 26, 26, 0.2);
+}
+
+.dialogTitle {
+  margin: 0 0 0.55rem;
+  color: var(--ink);
+  font-size: 1.2rem;
+}
+
+.dialogText {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 1.3rem;
+}
+
 .previewGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));

@@ -99,6 +99,9 @@ export async function DELETE(_req, { params }) {
   if (error) return error;
 
   const propertyId = Number(params.id);
+  if (!Number.isInteger(propertyId) || propertyId <= 0) {
+    return NextResponse.json({ error: "Invalid property id." }, { status: 400 });
+  }
   const agentId = agentIdFrom(session);
   const existing = await query(
     "SELECT id FROM properties WHERE id = ? AND agent_id = ?",
@@ -108,29 +111,37 @@ export async function DELETE(_req, { params }) {
     return NextResponse.json({ error: "Property not found." }, { status: 404 });
   }
 
-  await query("DELETE FROM property_images WHERE property_id = ?", [
-    propertyId,
-  ]);
-  await query("DELETE FROM properties WHERE id = ? AND agent_id = ?", [
-    propertyId,
-    agentId,
-  ]);
+  try {
+    await query("DELETE FROM property_images WHERE property_id = ?", [
+      propertyId,
+    ]);
+    await query("DELETE FROM properties WHERE id = ? AND agent_id = ?", [
+      propertyId,
+      agentId,
+    ]);
 
-  const uploadDir = path.join(
-    process.cwd(),
-    "public",
-    "uploads",
-    String(propertyId),
-  );
-  await rm(uploadDir, { recursive: true, force: true });
-  const videoUploadDir = path.join(
-    process.cwd(),
-    "public",
-    "uploads",
-    "videos",
-    String(propertyId),
-  );
-  await rm(videoUploadDir, { recursive: true, force: true });
+    const uploadDir = path.join(
+      process.cwd(),
+      "public",
+      "uploads",
+      String(propertyId),
+    );
+    await rm(uploadDir, { recursive: true, force: true });
+    const videoUploadDir = path.join(
+      process.cwd(),
+      "public",
+      "uploads",
+      "videos",
+      String(propertyId),
+    );
+    await rm(videoUploadDir, { recursive: true, force: true });
+  } catch (err) {
+    console.error("Failed to delete property:", err);
+    return NextResponse.json(
+      { error: "Could not delete property. Please try again." },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({ success: true, deleted: true });
 }

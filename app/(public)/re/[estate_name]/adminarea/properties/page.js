@@ -46,6 +46,9 @@ export default function AgentPropertiesPage() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
+  const [propertyToDelete, setPropertyToDelete] = useState(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   async function load() {
     setLoading(true);
@@ -87,12 +90,27 @@ export default function AgentPropertiesPage() {
     setBusyId(null);
   }
 
-  async function deleteProperty(id) {
-    if (!window.confirm("Delete this property? This cannot be undone.")) return;
+  async function deleteProperty() {
+    if (!propertyToDelete) return;
+
+    const id = propertyToDelete.id;
     setBusyId(id);
-    await fetch(`/api/properties/${id}`, { method: "DELETE" });
-    await load();
-    setBusyId(null);
+    setError("");
+    try {
+      const res = await fetch(`/api/properties/${id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Could not delete this property.");
+      }
+
+      setProperties((current) => current.filter((property) => property.id !== id));
+      setPropertyToDelete(null);
+      setSuccess("Property deleted successfully.");
+    } catch (err) {
+      setError(err.message || "Could not delete this property.");
+    } finally {
+      setBusyId(null);
+    }
   }
 
   return (
@@ -121,6 +139,8 @@ export default function AgentPropertiesPage() {
       </div>
 
       <div className={ui.panel}>
+        {error ? <p className={ui.error}>{error}</p> : null}
+        {success ? <p className={ui.success}>{success}</p> : null}
         {loading ? (
           <p className={ui.empty}>Loading…</p>
         ) : filtered.length === 0 ? (
@@ -202,16 +222,18 @@ export default function AgentPropertiesPage() {
                               Submit
                             </button>
                           ) : null}
-                          {property.status === "draft" ? (
-                            <button
-                              type="button"
-                              className={ui.btnDanger}
-                              disabled={busyId === property.id}
-                              onClick={() => deleteProperty(property.id)}
-                            >
-                              Delete
-                            </button>
-                          ) : null}
+                          <button
+                            type="button"
+                            className={ui.btnDanger}
+                            disabled={busyId === property.id}
+                            onClick={() => {
+                              setError("");
+                              setSuccess("");
+                              setPropertyToDelete(property);
+                            }}
+                          >
+                            Delete
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -222,6 +244,43 @@ export default function AgentPropertiesPage() {
           </div>
         )}
       </div>
+      {propertyToDelete ? (
+        <div className={ui.dialogBackdrop} role="presentation">
+          <div
+            className={ui.dialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-property-title"
+            aria-describedby="delete-property-description"
+          >
+            <h2 id="delete-property-title" className={ui.dialogTitle}>
+              Delete Property?
+            </h2>
+            <p id="delete-property-description" className={ui.dialogText}>
+              This action cannot be undone. This will permanently delete
+              &ldquo;{propertyToDelete.title}&rdquo; and all associated data.
+            </p>
+            <div className={ui.dialogActions}>
+              <button
+                type="button"
+                className={ui.btnGhost}
+                disabled={busyId === propertyToDelete.id}
+                onClick={() => setPropertyToDelete(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={ui.btnDanger}
+                disabled={busyId === propertyToDelete.id}
+                onClick={deleteProperty}
+              >
+                {busyId === propertyToDelete.id ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </AgentPortalShell>
   );
 }
