@@ -305,10 +305,19 @@ export default async function PropertyDetailPage({ params }) {
           title={property.title}
         />
 
-        {/* Video tour placeholder */}
+        {/* Uploaded video replaces the existing walkthrough placeholder. */}
         <section className={styles.videoSection}>
           <div className={styles.videoFrame}>
-            {heroImage ? (
+            {property.video_url ? (
+              <video
+                className={styles.videoPlayer}
+                controls
+                preload="metadata"
+                src={property.video_url}
+              >
+                Your browser does not support this video format.
+              </video>
+            ) : heroImage ? (
               <Image
                 src={heroImage.image_url}
                 alt=""
@@ -318,8 +327,8 @@ export default async function PropertyDetailPage({ params }) {
                 aria-hidden="true"
               />
             ) : null}
-            <div className={styles.videoScrim} />
-            <div className={styles.videoContent}>
+            {!property.video_url ? <div className={styles.videoScrim} /> : null}
+            {!property.video_url ? <div className={styles.videoContent}>
               <span className={styles.videoPlay} aria-hidden="true">
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
                   <path d="M8 5.5v13l11-6.5-11-6.5z" fill="currentColor" />
@@ -334,7 +343,7 @@ export default async function PropertyDetailPage({ params }) {
               <a href={viewingHref} className={styles.videoCta}>
                 Book a live tour
               </a>
-            </div>
+            </div> : null}
           </div>
         </section>
 

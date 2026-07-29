@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS properties (
   size_unit ENUM('marla','kanal','sqft') DEFAULT 'marla',
   price DECIMAL(15,2),
   location VARCHAR(255),
+  video_url VARCHAR(500) NULL,                     -- optional property walkthrough video
   -- Phase 1 workflow: draft → pending_approval → approved | rejected; plus sold | hidden
   -- Default approved so existing agent create flow stays publicly visible until Phase 2.
   status ENUM('draft','pending_approval','approved','rejected','sold','hidden') DEFAULT 'approved',

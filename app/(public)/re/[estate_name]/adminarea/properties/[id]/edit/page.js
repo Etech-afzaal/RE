@@ -28,6 +28,9 @@ export default function EditPropertyPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [newImages, setNewImages] = useState([]);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState("");
+  const [newVideo, setNewVideo] = useState(null);
+  const [removeVideo, setRemoveVideo] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -54,6 +57,7 @@ export default function EditPropertyPage() {
         location: p.location || "",
         status: p.status || "draft",
       });
+      setCurrentVideoUrl(p.video_url || "");
       setLoading(false);
     })();
   }, [status, propertyId, router]);
@@ -94,6 +98,37 @@ export default function EditPropertyPage() {
       setNewImages([]);
     }
 
+    if (removeVideo && currentVideoUrl) {
+      const removeRes = await fetch(`/api/properties/${propertyId}/video`, {
+        method: "DELETE",
+      });
+      const removeData = await removeRes.json().catch(() => ({}));
+      if (!removeRes.ok) {
+        setError(removeData.error || "Could not remove property video.");
+        setSaving(false);
+        return;
+      }
+      setCurrentVideoUrl("");
+      setRemoveVideo(false);
+    }
+
+    if (newVideo) {
+      const fd = new FormData();
+      fd.append("video", newVideo);
+      const videoRes = await fetch(`/api/properties/${propertyId}/video`, {
+        method: "POST",
+        body: fd,
+      });
+      const videoData = await videoRes.json().catch(() => ({}));
+      if (!videoRes.ok) {
+        setError(videoData.error || "Could not upload property video.");
+        setSaving(false);
+        return;
+      }
+      setCurrentVideoUrl(videoData.videoUrl || "");
+      setNewVideo(null);
+    }
+
     setForm((prev) => ({ ...prev, status: data.status || nextStatus || prev.status }));
     setSuccess("Property saved.");
     setSaving(false);
@@ -124,6 +159,33 @@ export default function EditPropertyPage() {
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
               />
             </label>
+            <div className={ui.field}>
+              <span className={ui.label}>Property Video (Optional)</span>
+              {currentVideoUrl && !removeVideo ? (
+                <>
+                  <video controls preload="metadata" src={currentVideoUrl} style={{ width: "100%", borderRadius: "12px" }}>
+                    Your browser does not support this video format.
+                  </video>
+                  <label className={ui.muted}>
+                    <input
+                      type="checkbox"
+                      checked={removeVideo}
+                      onChange={(e) => setRemoveVideo(e.target.checked)}
+                    />{" "}
+                    Remove current video
+                  </label>
+                </>
+              ) : currentVideoUrl ? (
+                <p className={ui.muted}>The current video will be removed when you save.</p>
+              ) : null}
+              <input
+                className={ui.input}
+                type="file"
+                accept="video/mp4,video/webm,video/quicktime,video/ogg,.mp4,.webm,.mov,.ogg"
+                onChange={(e) => setNewVideo(e.target.files?.[0] || null)}
+              />
+              <p className={ui.muted}>MP4, WebM, MOV, or OGG. One video only.</p>
+            </div>
             <label className={ui.field}>
               <span className={ui.label}>Description</span>
               <textarea

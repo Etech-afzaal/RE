@@ -11,6 +11,7 @@ const STEPS = [
   "Location",
   "Property Details",
   "Images",
+  "Video",
   "Actions",
 ];
 
@@ -55,6 +56,7 @@ export default function CreatePropertyPage() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [files, setFiles] = useState([]);
+  const [video, setVideo] = useState(null);
   const [form, setForm] = useState({
     title: "",
     propertyType: "sale",
@@ -128,6 +130,19 @@ export default function CreatePropertyPage() {
           method: "POST",
           body: fd,
         });
+      }
+
+      if (video && propertyId) {
+        const fd = new FormData();
+        fd.append("video", video);
+        const videoRes = await fetch(`/api/properties/${propertyId}/video`, {
+          method: "POST",
+          body: fd,
+        });
+        const videoData = await videoRes.json().catch(() => ({}));
+        if (!videoRes.ok) {
+          throw new Error(videoData.error || "Could not upload property video.");
+        }
       }
 
       router.push(`${base}/properties`);
@@ -333,6 +348,25 @@ export default function CreatePropertyPage() {
 
         {step === 4 ? (
           <>
+            <label className={ui.field}>
+              <span className={ui.label}>Property Video (Optional)</span>
+              <input
+                className={ui.input}
+                type="file"
+                accept="video/mp4,video/webm,video/quicktime,video/ogg,.mp4,.webm,.mov,.ogg"
+                onChange={(e) => setVideo(e.target.files?.[0] || null)}
+              />
+            </label>
+            {video ? (
+              <p className={ui.muted}>Selected: {video.name}</p>
+            ) : (
+              <p className={ui.muted}>Optional — MP4, WebM, MOV, or OGG. One video only.</p>
+            )}
+          </>
+        ) : null}
+
+        {step === 5 ? (
+          <>
             <p className={ui.muted}>
               Save as draft to continue later, or submit for admin approval.
               Drafts never appear on your public website.
@@ -358,7 +392,7 @@ export default function CreatePropertyPage() {
           </>
         ) : null}
 
-        {step < 4 ? (
+        {step < 5 ? (
           <div className={ui.formActions}>
             {step > 0 ? (
               <button
@@ -372,7 +406,7 @@ export default function CreatePropertyPage() {
             <button
               type="button"
               className={ui.btnPrimary}
-              onClick={() => setStep((s) => Math.min(4, s + 1))}
+              onClick={() => setStep((s) => Math.min(5, s + 1))}
             >
               Continue
             </button>

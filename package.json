@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "seed": "node scripts/seed.js",
-    "migrate:phase1": "node scripts/migrate-phase1.js"
+    "migrate:phase1": "node scripts/migrate-phase1.js",
+    "migrate:property-video": "node scripts/migrate-property-video.js"
   },
   "dependencies": {
     "next": "14.2.5",
