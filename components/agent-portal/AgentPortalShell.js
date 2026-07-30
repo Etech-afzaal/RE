@@ -179,7 +179,12 @@ export default function AgentPortalShell({
         </nav>
 
         <div className={styles.sidebarFooter}>
-          <Link href={`/re/${encodeURIComponent(username)}`} className={styles.viewSite}>
+          <Link
+            href={`/re/${encodeURIComponent(username)}`}
+            className={styles.viewSite}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             View public website
           </Link>
           <button
