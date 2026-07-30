@@ -9,6 +9,14 @@ import TrustStats from "@/components/TrustStats";
 import LocationCarousel from "@/components/LocationCarousel";
 import styles from "@/app/page.module.css";
 
+const AGENT_PUBLIC_NAV = [
+  { label: "Home", href: "/" },
+  { label: "Sale", href: "#sale" },
+  { label: "Rent", href: "#rent" },
+  { label: "Plots", href: "#plots" },
+  { label: "Areas", href: "#areas" },
+];
+
 /**
  * Shared public property website UI (homepage design).
  * Used by `/` (marketplace) and `/re/[agent_username]` (per-agent site).
@@ -35,7 +43,11 @@ export default function PublicPropertyWebsite({
 
   return (
     <div className={styles.wrapper}>
-      <SiteHeader />
+      <SiteHeader
+        navLinks={AGENT_PUBLIC_NAV}
+        ctaLabel="Schedule a Tour"
+        ctaHref="#contact"
+      />
       <HeroSlider slides={heroSlides} />
       <div className={styles.container}>
         {agent ? <AgentBrandProfile agent={agent} /> : <AboutDHALahore />}

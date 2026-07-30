@@ -38,7 +38,11 @@ function getProbeY() {
   return Math.max(headerHeight + 8, 120);
 }
 
-export default function SiteHeader({ navLinks = DEFAULT_NAV_LINKS }) {
+export default function SiteHeader({
+  navLinks = DEFAULT_NAV_LINKS,
+  ctaLabel = "Become an agent",
+  ctaHref = "/agent/login",
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const homeHref = useMemo(() => getAgentHomeHref(pathname), [pathname]);
@@ -236,8 +240,16 @@ export default function SiteHeader({ navLinks = DEFAULT_NAV_LINKS }) {
         </nav>
 
         <div className={styles.actions}>
-          <Link href="/agent/login" className={styles.agentButton}>
-            Become an agent
+          <Link
+            href={ctaHref}
+            className={styles.agentButton}
+            onClick={
+              ctaHref.startsWith("#")
+                ? (event) => handleSectionClick(event, ctaHref)
+                : undefined
+            }
+          >
+            {ctaLabel}
           </Link>
           <button
             type="button"
