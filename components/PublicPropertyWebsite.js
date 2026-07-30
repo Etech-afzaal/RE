@@ -53,6 +53,7 @@ export default function PublicPropertyWebsite({
             ? `${agent.company_name} logo`
             : "Dhalahore Properties"
         }
+        logoScrollTarget={agent ? "hero" : undefined}
       />
       <HeroSlider slides={heroSlides} />
       <div className={styles.container}>

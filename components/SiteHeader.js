@@ -44,6 +44,7 @@ export default function SiteHeader({
   ctaHref = "/agent/login",
   logoSrc = "/logo.svg",
   logoAlt = "Dhalahore Properties",
+  logoScrollTarget,
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -139,6 +140,16 @@ export default function SiteHeader({
     window.clearTimeout(lockTimerRef.current);
     setMenuOpen(false);
     window.dispatchEvent(new Event("dhalahorePropertiesResetFilters"));
+
+    if (logoScrollTarget) {
+      const target = document.getElementById(logoScrollTarget);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      setActiveHref(homeHref);
+      return;
+    }
+
     await router.replace("/");
     window.scrollTo({ top: 0, behavior: "smooth" });
     setActiveHref("/");
