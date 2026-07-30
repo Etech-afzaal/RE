@@ -47,6 +47,12 @@ export default function PublicPropertyWebsite({
         navLinks={AGENT_PUBLIC_NAV}
         ctaLabel="Schedule a Tour"
         ctaHref="#contact"
+        logoSrc={agent?.company_logo || "/logo.svg"}
+        logoAlt={
+          agent?.company_logo && agent?.company_name
+            ? `${agent.company_name} logo`
+            : "Dhalahore Properties"
+        }
       />
       <HeroSlider slides={heroSlides} />
       <div className={styles.container}>

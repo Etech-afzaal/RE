@@ -42,6 +42,8 @@ export default function SiteHeader({
   navLinks = DEFAULT_NAV_LINKS,
   ctaLabel = "Become an agent",
   ctaHref = "/agent/login",
+  logoSrc = "/logo.svg",
+  logoAlt = "Dhalahore Properties",
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -208,8 +210,8 @@ export default function SiteHeader({
           className={styles.logoGroup}
         >
           <Image
-            src="/logo.svg"
-            alt="Dhalahore Properties"
+            src={logoSrc}
+            alt={logoAlt}
             width={169}
             height={47}
             priority
