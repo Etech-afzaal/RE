@@ -28,9 +28,15 @@ export default function EditPropertyPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [newImages, setNewImages] = useState([]);
+  const [newImagePreviews, setNewImagePreviews] = useState([]);
   const [currentVideoUrl, setCurrentVideoUrl] = useState("");
   const [newVideo, setNewVideo] = useState(null);
   const [removeVideo, setRemoveVideo] = useState(false);
+  useEffect(() => {
+    const previews = newImages.map((file) => ({ file, url: URL.createObjectURL(file) }));
+    setNewImagePreviews(previews);
+    return () => previews.forEach((item) => URL.revokeObjectURL(item.url));
+  }, [newImages]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -91,10 +97,16 @@ export default function EditPropertyPage() {
         fd.append("imageOrder", String(index));
         fd.append("isFeatured", "0");
       });
-      await fetch(`/api/properties/${propertyId}/images`, {
+      const imageRes = await fetch(`/api/properties/${propertyId}/images`, {
         method: "POST",
         body: fd,
       });
+      const imageData = await imageRes.json().catch(() => ({}));
+      if (!imageRes.ok) {
+        setError(imageData.error || "Could not upload property images.");
+        setSaving(false);
+        return;
+      }
       setNewImages([]);
     }
 
@@ -252,6 +264,24 @@ export default function EditPropertyPage() {
                 }
               />
             </label>
+            {newImagePreviews.length > 0 ? (
+              <div className={ui.previewGrid}>
+                {newImagePreviews.map(({ file, url }, index) => (
+                  <div key={url} className={ui.previewItem}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt={file.name} />
+                    <button
+                      type="button"
+                      className={ui.removePreview}
+                      onClick={() => setNewImages((items) => items.filter((_, itemIndex) => itemIndex !== index))}
+                      aria-label={`Remove ${file.name}`}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : null}
 
             <div className={ui.formActions}>
               <button

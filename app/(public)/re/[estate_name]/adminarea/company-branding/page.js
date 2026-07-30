@@ -22,7 +22,8 @@ export default function CompanyBrandingPage() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [selectedLogo, setSelectedLogo] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -49,6 +50,16 @@ export default function CompanyBrandingPage() {
     })();
   }, [status, router]);
 
+  useEffect(() => {
+    if (!selectedLogo) {
+      setLogoPreview(null);
+      return undefined;
+    }
+    const previewUrl = URL.createObjectURL(selectedLogo);
+    setLogoPreview(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [selectedLogo]);
+
   async function save(e) {
     e.preventDefault();
     setSaving(true);
@@ -60,32 +71,32 @@ export default function CompanyBrandingPage() {
       body: JSON.stringify(form),
     });
     const data = await res.json().catch(() => ({}));
-    setSaving(false);
     if (!res.ok) {
+      setSaving(false);
       setError(data.error || "Could not save branding.");
       return;
     }
+    if (selectedLogo) {
+      const fd = new FormData();
+      fd.append("image", selectedLogo);
+      const logoRes = await fetch("/api/agent/company-logo", { method: "POST", body: fd });
+      const logoData = await logoRes.json().catch(() => ({}));
+      if (!logoRes.ok) {
+        setSaving(false);
+        setError(logoData.error || "Branding saved, but the logo could not be uploaded.");
+        return;
+      }
+      setForm((prev) => ({ ...prev, company_logo: logoData.company_logo }));
+      setSelectedLogo(null);
+    }
+    setSaving(false);
     setSuccess("Company branding updated.");
   }
 
-  async function uploadLogo(file) {
+  function selectLogo(file) {
     if (!file) return;
-    setUploading(true);
     setError("");
-    const fd = new FormData();
-    fd.append("image", file);
-    const res = await fetch("/api/agent/company-logo", {
-      method: "POST",
-      body: fd,
-    });
-    const data = await res.json().catch(() => ({}));
-    setUploading(false);
-    if (!res.ok) {
-      setError(data.error || "Upload failed.");
-      return;
-    }
-    setForm((prev) => ({ ...prev, company_logo: data.company_logo }));
-    setSuccess("Company logo updated.");
+    setSelectedLogo(file);
   }
 
   return (
@@ -101,9 +112,9 @@ export default function CompanyBrandingPage() {
         {success ? <p className={ui.success}>{success}</p> : null}
 
         <div style={{ display: "flex", gap: "1rem", alignItems: "center", marginBottom: "1rem" }}>
-          {form.company_logo ? (
+          {logoPreview || form.company_logo ? (
             <Image
-              src={form.company_logo}
+              src={logoPreview || form.company_logo}
               alt=""
               width={72}
               height={72}
@@ -115,13 +126,13 @@ export default function CompanyBrandingPage() {
             </div>
           )}
           <label className={ui.btnGhost} style={{ cursor: "pointer" }}>
-            {uploading ? "Uploading…" : "Upload company logo"}
+            {selectedLogo ? "Logo selected" : "Upload company logo"}
             <input
               type="file"
               accept="image/*"
               hidden
-              disabled={uploading}
-              onChange={(e) => uploadLogo(e.target.files?.[0])}
+              disabled={saving}
+              onChange={(e) => selectLogo(e.target.files?.[0])}
             />
           </label>
         </div>

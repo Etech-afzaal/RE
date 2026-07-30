@@ -14,6 +14,8 @@ export default function AgentDashboardPage() {
   const [agentEmail, setAgentEmail] = useState("");
   const [estateName, setEstateName] = useState("");
   const [profileImage, setProfileImage] = useState(null);
+  const [selectedProfileImage, setSelectedProfileImage] = useState(null);
+  const [profileImagePreview, setProfileImagePreview] = useState(null);
   const [profileImageError, setProfileImageError] = useState("");
   const [uploadingProfileImage, setUploadingProfileImage] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -64,6 +66,16 @@ export default function AgentDashboardPage() {
     loadDashboard();
   }, [router]);
 
+  useEffect(() => {
+    if (!selectedProfileImage) {
+      setProfileImagePreview(null);
+      return undefined;
+    }
+    const previewUrl = URL.createObjectURL(selectedProfileImage);
+    setProfileImagePreview(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [selectedProfileImage]);
+
   async function handleDelete(propertyId) {
     if (!confirm("Delete this property?")) return;
 
@@ -86,11 +98,19 @@ export default function AgentDashboardPage() {
     const image = e.target.files?.[0];
     if (!image) return;
 
+    setProfileImageError("");
+    setSelectedProfileImage(image);
+    e.target.value = "";
+  }
+
+  async function saveProfileImage() {
+    if (!selectedProfileImage) return;
+
     setUploadingProfileImage(true);
     setProfileImageError("");
 
     const formData = new FormData();
-    formData.append("image", image);
+    formData.append("image", selectedProfileImage);
 
     try {
       const res = await fetch("/api/agent/profile-image", {
@@ -105,11 +125,11 @@ export default function AgentDashboardPage() {
       }
 
       setProfileImage(data.profile_image || null);
+      setSelectedProfileImage(null);
     } catch {
       setProfileImageError("Could not upload your image. Please try again.");
     } finally {
       setUploadingProfileImage(false);
-      e.target.value = "";
     }
   }
 
@@ -226,9 +246,9 @@ export default function AgentDashboardPage() {
             flexWrap: "wrap",
           }}
         >
-          {profileImage ? (
+          {profileImagePreview || profileImage ? (
             <img
-              src={profileImage}
+              src={profileImagePreview || profileImage}
               alt="Your profile"
               width={72}
               height={72}
@@ -274,6 +294,24 @@ export default function AgentDashboardPage() {
             />
             {uploadingProfileImage ? "Uploading..." : "Upload picture"}
           </label>
+          {selectedProfileImage ? (
+            <button
+              type="button"
+              onClick={saveProfileImage}
+              disabled={uploadingProfileImage}
+              style={{
+                border: "none",
+                borderRadius: 999,
+                padding: "10px 16px",
+                fontWeight: 700,
+                color: "#fff",
+                background: "#0f766e",
+                cursor: uploadingProfileImage ? "wait" : "pointer",
+              }}
+            >
+              Save picture
+            </button>
+          ) : null}
         </div>
         {profileImageError ? (
           <p style={{ margin: "12px 0 0", color: "#b91c1c", fontSize: 14 }}>

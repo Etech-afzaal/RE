@@ -22,7 +22,8 @@ export default function AgentProfilePage() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -49,6 +50,16 @@ export default function AgentProfilePage() {
     })();
   }, [status, router]);
 
+  useEffect(() => {
+    if (!selectedImage) {
+      setImagePreview(null);
+      return undefined;
+    }
+    const previewUrl = URL.createObjectURL(selectedImage);
+    setImagePreview(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [selectedImage]);
+
   async function saveProfile(e) {
     e.preventDefault();
     setSaving(true);
@@ -60,32 +71,32 @@ export default function AgentProfilePage() {
       body: JSON.stringify(form),
     });
     const data = await res.json().catch(() => ({}));
-    setSaving(false);
     if (!res.ok) {
+      setSaving(false);
       setError(data.error || "Could not save profile.");
       return;
     }
+    if (selectedImage) {
+      const fd = new FormData();
+      fd.append("image", selectedImage);
+      const imageRes = await fetch("/api/agent/profile-image", { method: "POST", body: fd });
+      const imageData = await imageRes.json().catch(() => ({}));
+      if (!imageRes.ok) {
+        setSaving(false);
+        setError(imageData.error || "Profile saved, but the image could not be uploaded.");
+        return;
+      }
+      setForm((prev) => ({ ...prev, profile_image: imageData.profile_image }));
+      setSelectedImage(null);
+    }
+    setSaving(false);
     setSuccess("Profile updated.");
   }
 
-  async function uploadImage(file) {
+  function selectImage(file) {
     if (!file) return;
-    setUploading(true);
     setError("");
-    const fd = new FormData();
-    fd.append("image", file);
-    const res = await fetch("/api/agent/profile-image", {
-      method: "POST",
-      body: fd,
-    });
-    const data = await res.json().catch(() => ({}));
-    setUploading(false);
-    if (!res.ok) {
-      setError(data.error || "Upload failed.");
-      return;
-    }
-    setForm((prev) => ({ ...prev, profile_image: data.profile_image }));
-    setSuccess("Profile image updated.");
+    setSelectedImage(file);
   }
 
   return (
@@ -101,9 +112,9 @@ export default function AgentProfilePage() {
         {success ? <p className={ui.success}>{success}</p> : null}
 
         <div style={{ display: "flex", gap: "1rem", alignItems: "center", marginBottom: "1rem" }}>
-          {form.profile_image ? (
+          {imagePreview || form.profile_image ? (
             <Image
-              src={form.profile_image}
+              src={imagePreview || form.profile_image}
               alt=""
               width={72}
               height={72}
@@ -115,13 +126,13 @@ export default function AgentProfilePage() {
             </div>
           )}
           <label className={ui.btnGhost} style={{ cursor: "pointer" }}>
-            {uploading ? "Uploading…" : "Upload picture"}
+            {selectedImage ? "Picture selected" : "Upload picture"}
             <input
               type="file"
               accept="image/*"
               hidden
-              disabled={uploading}
-              onChange={(e) => uploadImage(e.target.files?.[0])}
+              disabled={saving}
+              onChange={(e) => selectImage(e.target.files?.[0])}
             />
           </label>
         </div>

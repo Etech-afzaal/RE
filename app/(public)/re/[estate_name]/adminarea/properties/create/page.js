@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
@@ -56,6 +56,7 @@ export default function CreatePropertyPage() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [files, setFiles] = useState([]);
+  const [previews, setPreviews] = useState([]);
   const [video, setVideo] = useState(null);
   const [form, setForm] = useState({
     title: "",
@@ -72,10 +73,11 @@ export default function CreatePropertyPage() {
     price: "",
   });
 
-  const previews = useMemo(
-    () => files.map((file) => ({ file, url: URL.createObjectURL(file) })),
-    [files],
-  );
+  useEffect(() => {
+    const nextPreviews = files.map((file) => ({ file, url: URL.createObjectURL(file) }));
+    setPreviews(nextPreviews);
+    return () => nextPreviews.forEach((item) => URL.revokeObjectURL(item.url));
+  }, [files]);
 
   if (status === "unauthenticated") {
     router.replace("/agent/login");
@@ -126,10 +128,14 @@ export default function CreatePropertyPage() {
           fd.append("imageOrder", String(index));
           fd.append("isFeatured", index === 0 ? "1" : "0");
         });
-        await fetch(`/api/properties/${propertyId}/images`, {
+        const imageRes = await fetch(`/api/properties/${propertyId}/images`, {
           method: "POST",
           body: fd,
         });
+        const imageData = await imageRes.json().catch(() => ({}));
+        if (!imageRes.ok) {
+          throw new Error(imageData.error || "Could not upload property images.");
+        }
       }
 
       if (video && propertyId) {
