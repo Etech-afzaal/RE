@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Archive, CircleCheck, Send } from "lucide-react";
+import ActionMenu from "@/components/ActionMenu";
 import styles from "@/components/admin/adminUi.module.css";
 
 const ITEMS_PER_PAGE = 8;
@@ -240,47 +241,22 @@ export default function AdminPropertiesPage() {
                       ).toLocaleDateString()}
                     </td>
                     <td>
-                      <div className={styles.actions}>
-                        {property.status === "active" && (
-                          <Link
-                            href={`/re/${property.estate_name}/${property.id}`}
-                            className={styles.btn}
-                            target="_blank"
-                          >
-                            View
-                          </Link>
-                        )}
-                        {property.status !== "draft" && (
-                          <button
-                            type="button"
-                            className={`${styles.btn} ${styles.btnDanger}`}
-                            disabled={busyId === property.id}
-                            onClick={() => updateStatus(property, "draft")}
-                          >
-                            Unpublish
-                          </button>
-                        )}
-                        {property.status === "draft" && (
-                          <button
-                            type="button"
-                            className={`${styles.btn} ${styles.btnSuccess}`}
-                            disabled={busyId === property.id}
-                            onClick={() => updateStatus(property, "active")}
-                          >
-                            Publish
-                          </button>
-                        )}
-                        {property.status !== "sold" && (
-                          <button
-                            type="button"
-                            className={styles.btn}
-                            disabled={busyId === property.id}
-                            onClick={() => updateStatus(property, "sold")}
-                          >
-                            Mark sold
-                          </button>
-                        )}
-                      </div>
+                      <ActionMenu
+                        ariaLabel={`Actions for ${property.title}`}
+                        onView={
+                          property.status === "active"
+                            ? () => window.open(`/re/${property.estate_name}/${property.id}`, "_blank", "noopener,noreferrer")
+                            : undefined
+                        }
+                        additionalActions={[
+                          ...(property.status !== "draft"
+                            ? [{ label: "Unpublish", icon: Archive, destructive: true, disabled: busyId === property.id, onSelect: () => updateStatus(property, "draft") }]
+                            : [{ label: "Publish", icon: CircleCheck, disabled: busyId === property.id, onSelect: () => updateStatus(property, "active") }]),
+                          ...(property.status !== "sold"
+                            ? [{ label: "Mark sold", icon: Send, disabled: busyId === property.id, onSelect: () => updateStatus(property, "sold") }]
+                            : []),
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}

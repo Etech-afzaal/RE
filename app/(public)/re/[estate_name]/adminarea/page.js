@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
+import ActionMenu from "@/components/ActionMenu";
 import ui from "@/components/agent-portal/portal.module.css";
 
 function greeting() {
@@ -176,23 +177,15 @@ export default function AgentAdminDashboardPage() {
                       </td>
                       <td>{formatPrice(property.price)}</td>
                       <td>
-                        <div className={ui.actions}>
-                          {property.status === "approved" ? (
-                            <Link
-                              href={`/re/${encodeURIComponent(username)}/${property.id}`}
-                              className={ui.btnGhost}
-                              target="_blank"
-                            >
-                              View
-                            </Link>
-                          ) : null}
-                          <Link
-                            href={`${base}/properties/${property.id}/edit`}
-                            className={ui.btnGhost}
-                          >
-                            Edit
-                          </Link>
-                        </div>
+                        <ActionMenu
+                          ariaLabel={`Actions for ${property.title}`}
+                          onView={
+                            property.status === "approved"
+                              ? () => window.open(`/re/${encodeURIComponent(username)}/${property.id}`, "_blank", "noopener,noreferrer")
+                              : undefined
+                          }
+                          onEdit={() => router.push(`${base}/properties/${property.id}/edit`)}
+                        />
                       </td>
                     </tr>
                   );

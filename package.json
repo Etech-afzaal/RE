@@ -12,15 +12,16 @@
     "migrate:property-video": "node scripts/migrate-property-video.js"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "lucide-react": "^0.468.0",
+    "mysql2": "^3.10.0",
+    "nanoid": "^5.0.7",
     "next": "14.2.5",
+    "next-auth": "^4.24.7",
+    "nodemailer": "^7.0.7",
     "react": "^18",
     "react-dom": "^18",
-    "next-auth": "^4.24.7",
-    "mysql2": "^3.10.0",
-    "bcryptjs": "^2.4.3",
-    "nodemailer": "^7.0.7",
     "sharp": "^0.33.4",
-    "nanoid": "^5.0.7",
     "zod": "^3.23.8"
   }
 }

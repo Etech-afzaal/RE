@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
+import ActionMenu from "@/components/ActionMenu";
 import ui from "@/components/agent-portal/portal.module.css";
 
 const TABS = [
@@ -193,48 +194,26 @@ export default function AgentPropertiesPage() {
                       </td>
                       <td>{formatPrice(property.price)}</td>
                       <td>
-                        <div className={ui.actions}>
-                          {property.status === "approved" ? (
-                            <Link
-                              href={`/re/${encodeURIComponent(username)}/${property.id}`}
-                              className={ui.btnGhost}
-                              target="_blank"
-                            >
-                              View
-                            </Link>
-                          ) : null}
-                          <Link
-                            href={`${base}/properties/${property.id}/edit`}
-                            className={ui.btnGhost}
-                          >
-                            {property.status === "draft"
-                              ? "Continue Editing"
-                              : "Edit"}
-                          </Link>
-                          {property.status === "draft" ||
-                          property.status === "rejected" ? (
-                            <button
-                              type="button"
-                              className={ui.btnGhost}
-                              disabled={busyId === property.id}
-                              onClick={() => submitForApproval(property)}
-                            >
-                              Submit
-                            </button>
-                          ) : null}
-                          <button
-                            type="button"
-                            className={ui.btnDanger}
-                            disabled={busyId === property.id}
-                            onClick={() => {
-                              setError("");
-                              setSuccess("");
-                              setPropertyToDelete(property);
-                            }}
-                          >
-                            Delete
-                          </button>
-                        </div>
+                        <ActionMenu
+                          ariaLabel={`Actions for ${property.title}`}
+                          onView={
+                            property.status === "approved"
+                              ? () => window.open(`/re/${encodeURIComponent(username)}/${property.id}`, "_blank", "noopener,noreferrer")
+                              : undefined
+                          }
+                          onEdit={() => router.push(`${base}/properties/${property.id}/edit`)}
+                          onDelete={() => {
+                            setError("");
+                            setSuccess("");
+                            setPropertyToDelete(property);
+                          }}
+                          deleteDisabled={busyId === property.id}
+                          additionalActions={
+                            property.status === "draft" || property.status === "rejected"
+                              ? [{ label: "Submit", onSelect: () => submitForApproval(property), disabled: busyId === property.id }]
+                              : []
+                          }
+                        />
                       </td>
                     </tr>
                   );

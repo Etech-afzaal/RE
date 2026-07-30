@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
+import ActionMenu from "@/components/ActionMenu";
 import { isAgentRole } from "@/lib/roles";
 
 export default function AgentDashboardPage() {
@@ -327,17 +328,11 @@ export default function AgentDashboardPage() {
                     — {property.size_value} {property.size_unit}
                   </span>
                 </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <Link href={`/agent/properties/${property.id}/edit`}>
-                    <button style={actionButtonStyle}>Edit</button>
-                  </Link>
-                  <button
-                    style={{ ...actionButtonStyle, background: "#dc2626" }}
-                    onClick={() => handleDelete(property.id)}
-                  >
-                    Delete
-                  </button>
-                </div>
+                <ActionMenu
+                  ariaLabel={`Actions for ${property.title}`}
+                  onEdit={() => router.push(`/agent/properties/${property.id}/edit`)}
+                  onDelete={() => handleDelete(property.id)}
+                />
               </li>
             ))}
           </ul>
@@ -346,7 +341,6 @@ export default function AgentDashboardPage() {
     </div>
   );
 }
-
 function formatEstateName(value) {
   if (!value) return "";
 
@@ -356,13 +350,3 @@ function formatEstateName(value) {
     .trim()
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
-
-const actionButtonStyle = {
-  border: "none",
-  borderRadius: 999,
-  padding: "8px 12px",
-  fontWeight: 700,
-  color: "#fff",
-  background: "#2563eb",
-  cursor: "pointer",
-};
