@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAgent } from "@/lib/adminAuth";
 import {
-  getManagedPropertiesByAgent,
+  getManagedPropertiesPageByAgent,
   getAgentPropertyStats,
 } from "@/lib/queries";
 import { query } from "@/lib/db";
@@ -19,14 +19,16 @@ export async function GET(req) {
   const agentId = Number(session.user.agent_id || session.user.id);
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
+  const search = searchParams.get("search");
+  const page = searchParams.get("page");
   const includeStats = searchParams.get("stats") === "1";
 
-  let properties = await getManagedPropertiesByAgent(agentId);
-  if (status && status !== "all") {
-    properties = properties.filter((p) => p.status === status);
-  }
-
-  const payload = { properties };
+  const payload = await getManagedPropertiesPageByAgent(agentId, {
+    page,
+    pageSize: 10,
+    status,
+    search,
+  });
   if (includeStats) {
     payload.stats = await getAgentPropertyStats(agentId);
   }

@@ -50,6 +50,14 @@
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+  scroll-margin-top: 6rem;
+}
+
+.paginationCount {
+  margin: 1rem 1.1rem 0;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  font-weight: 600;
 }
 
 .panelHeader {

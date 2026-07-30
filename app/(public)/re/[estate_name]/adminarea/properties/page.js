@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import ActionMenu from "@/components/ActionMenu";
+import Pagination from "@/components/Pagination";
 import ui from "@/components/agent-portal/portal.module.css";
 
 const TABS = [
@@ -45,18 +46,38 @@ export default function AgentPropertiesPage() {
   const base = `/re/${encodeURIComponent(username)}/adminarea`;
   const [tab, setTab] = useState("all");
   const [properties, setProperties] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalProperties, setTotalProperties] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
   const [propertyToDelete, setPropertyToDelete] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const propertiesSectionRef = useRef(null);
+  const shouldScrollRef = useRef(false);
 
-  async function load() {
+  async function load(page = currentPage, selectedTab = tab) {
     setLoading(true);
-    const res = await fetch("/api/properties");
-    const data = await res.json().catch(() => ({}));
-    setProperties(Array.isArray(data.properties) ? data.properties : []);
-    setLoading(false);
+    setError("");
+    const params = new URLSearchParams({ page: String(page) });
+    if (selectedTab !== "all") params.set("status", selectedTab);
+    try {
+      const res = await fetch(`/api/properties?${params}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Could not load properties.");
+      }
+
+      setProperties(Array.isArray(data.properties) ? data.properties : []);
+      setCurrentPage(data.currentPage || 1);
+      setTotalProperties(Number(data.totalProperties) || 0);
+      setTotalPages(Number(data.totalPages) || 1);
+    } catch (err) {
+      setError(err.message || "Could not load properties.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -67,10 +88,27 @@ export default function AgentPropertiesPage() {
     if (status === "authenticated") load();
   }, [status, router]);
 
-  const filtered = useMemo(() => {
-    if (tab === "all") return properties;
-    return properties.filter((p) => p.status === tab);
-  }, [properties, tab]);
+  useEffect(() => {
+    if (!loading && shouldScrollRef.current) {
+      shouldScrollRef.current = false;
+      propertiesSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [loading, properties]);
+
+  function changePage(page) {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+    shouldScrollRef.current = true;
+    load(page);
+  }
+
+  function changeTab(nextTab) {
+    setTab(nextTab);
+    setCurrentPage(1);
+    load(1, nextTab);
+  }
 
   async function submitForApproval(property) {
     setBusyId(property.id);
@@ -104,9 +142,13 @@ export default function AgentPropertiesPage() {
         throw new Error(data.error || "Could not delete this property.");
       }
 
-      setProperties((current) => current.filter((property) => property.id !== id));
+      const pageAfterDelete =
+        properties.length === 1 && currentPage > 1
+          ? currentPage - 1
+          : currentPage;
       setPropertyToDelete(null);
       setSuccess("Property deleted successfully.");
+      await load(pageAfterDelete);
     } catch (err) {
       setError(err.message || "Could not delete this property.");
     } finally {
@@ -132,23 +174,29 @@ export default function AgentPropertiesPage() {
             key={item.id}
             type="button"
             className={`${ui.tab} ${tab === item.id ? ui.tabActive : ""}`}
-            onClick={() => setTab(item.id)}
+            onClick={() => changeTab(item.id)}
           >
             {item.label}
           </button>
         ))}
       </div>
 
-      <div className={ui.panel}>
+      <div className={ui.panel} ref={propertiesSectionRef}>
         {error ? <p className={ui.error}>{error}</p> : null}
         {success ? <p className={ui.success}>{success}</p> : null}
         {loading ? (
           <p className={ui.empty}>Loading…</p>
-        ) : filtered.length === 0 ? (
+        ) : properties.length === 0 ? (
           <p className={ui.empty}>No properties in this tab.</p>
         ) : (
-          <div className={ui.tableWrap}>
-            <table className={ui.table}>
+          <>
+            <p className={ui.paginationCount}>
+              Showing {(currentPage - 1) * 10 + 1}&ndash;
+              {Math.min(currentPage * 10, totalProperties)} of {totalProperties}{" "}
+              properties
+            </p>
+            <div className={ui.tableWrap}>
+              <table className={ui.table}>
               <thead>
                 <tr>
                   <th>Property</th>
@@ -159,7 +207,7 @@ export default function AgentPropertiesPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((property) => {
+                {properties.map((property) => {
                   const image =
                     property.featuredImage?.image_url ||
                     property.images?.[0]?.image_url ||
@@ -219,8 +267,14 @@ export default function AgentPropertiesPage() {
                   );
                 })}
               </tbody>
-            </table>
-          </div>
+              </table>
+            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={changePage}
+            />
+          </>
         )}
       </div>
       {propertyToDelete ? (
