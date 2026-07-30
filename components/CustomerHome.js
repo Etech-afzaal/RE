@@ -506,7 +506,7 @@ export default function CustomerHome({ agents = [], areas = [] }) {
                 </div>
 
                 <div className={styles.contactFormPanel}>
-                  <p className={styles.contactFormKicker}>Send a message</p>
+                  <p className={styles.contactFormKicker}>Send a Message</p>
                   <form className={styles.contactForm}>
                     <div className={styles.contactFields}>
                       <label className={styles.formField}>

@@ -46,6 +46,14 @@ export default function HeroSlider({ slides = [] }) {
     setActive(index);
   }, []);
 
+  const showPrevious = useCallback(() => {
+    setActive((previous) => (previous - 1 + items.length) % items.length);
+  }, [items.length]);
+
+  const showNext = useCallback(() => {
+    setActive((previous) => (previous + 1) % items.length);
+  }, [items.length]);
+
   useEffect(() => {
     if (items.length <= 1) return undefined;
     const id = setInterval(() => {
@@ -128,6 +136,27 @@ export default function HeroSlider({ slides = [] }) {
             </div> */}
           </div>
         </div>
+
+        {items.length > 1 ? (
+          <div className={styles.navigation}>
+            <button
+              type="button"
+              className={`${styles.navigationButton} ${styles.previousButton}`}
+              aria-label="Previous Slide"
+              onClick={showPrevious}
+            >
+              <span aria-hidden="true">‹</span>
+            </button>
+            <button
+              type="button"
+              className={`${styles.navigationButton} ${styles.nextButton}`}
+              aria-label="Next Slide"
+              onClick={showNext}
+            >
+              <span aria-hidden="true">›</span>
+            </button>
+          </div>
+        ) : null}
 
         {items.length > 1 ? (
           <div className={styles.dots} role="tablist" aria-label="Hero slides">

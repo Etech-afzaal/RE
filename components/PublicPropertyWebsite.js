@@ -21,11 +21,6 @@ export default function PublicPropertyWebsite({
   locations = [],
   agent = null,
 }) {
-  const agentCtaImage =
-    heroSlides.find((slide) => slide.image_url)?.image_url ||
-    properties.find((property) => property.featuredImage?.image_url)
-      ?.featuredImage?.image_url ||
-    null;
   const trustBackground =
     properties.find((property) => property.featuredImage?.image_url)
       ?.featuredImage?.image_url ||
@@ -114,36 +109,6 @@ export default function PublicPropertyWebsite({
                 </div>
               </li>
             </ol>
-          </section>
-
-          <section className={styles.sellCta}>
-            {agentCtaImage ? (
-              <Image
-                src={agentCtaImage}
-                alt=""
-                fill
-                sizes="(max-width: 1240px) 100vw, 1240px"
-                className={styles.sellCtaImage}
-              />
-            ) : null}
-            <div className={styles.sellCtaOverlay} aria-hidden="true" />
-            <div className={styles.sellCopy}>
-              <p className={styles.kickerLight}>For estate agents</p>
-              <h2>List your properties. Reach serious buyers.</h2>
-              <p>
-                Get a branded page at{" "}
-                <strong>dhalahore.com/re/your-estate</strong> and manage your
-                portfolio in one place.
-              </p>
-            </div>
-            <div className={styles.sellActions}>
-              <Link href="/agent/signup" className={styles.btnPrimary}>
-                Become an agent
-              </Link>
-              <Link href="/agent/login" className={styles.btnGhost}>
-                Agent login
-              </Link>
-            </div>
           </section>
 
           <section id="contact" className={styles.contactSection}>
