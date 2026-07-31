@@ -195,7 +195,7 @@ export default function AdminShell({ children }) {
               <span />
             </button>
             <div>
-              <p className={styles.kicker}>Admin dashboard</p>
+              <p className={styles.kicker}>Super Admin dashboard</p>
               <h1 className={styles.pageTitle}>{pageTitle}</h1>
               {pageSubtitle ? (
                 <p className={styles.pageSubtitle}>{pageSubtitle}</p>
