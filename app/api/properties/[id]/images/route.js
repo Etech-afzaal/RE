@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAgent } from "@/lib/adminAuth";
 import { query } from "@/lib/db";
 import { imageFormatErrorMessage, isImageFile } from "@/lib/imageUpload";
+import { normalizeImageCategory } from "@/lib/imageCategories";
 import sharp from "sharp";
 import { writeFile, mkdir, rm } from "fs/promises";
 import path from "path";
@@ -42,6 +43,26 @@ async function ensureImageColumns() {
       "ALTER TABLE property_images ADD COLUMN is_featured BOOLEAN DEFAULT FALSE",
     );
   }
+
+  const categoryColumn = await query(
+    "SHOW COLUMNS FROM property_images LIKE 'category'",
+  );
+  if (categoryColumn.length === 0) {
+    await query(
+      "ALTER TABLE property_images ADD COLUMN category VARCHAR(40) NULL",
+    );
+  }
+}
+
+/** Images may only be touched by the agent who owns the listing. */
+async function ownsProperty(propertyId, session) {
+  if (!Number.isInteger(propertyId) || propertyId <= 0) return false;
+  const agentId = Number(session.user.agent_id || session.user.id);
+  const rows = await query(
+    "SELECT id FROM properties WHERE id = ? AND agent_id = ?",
+    [propertyId, agentId],
+  );
+  return rows.length > 0;
 }
 
 export async function POST(req, { params }) {
@@ -49,13 +70,8 @@ export async function POST(req, { params }) {
   if (error) return error;
 
   const propertyId = Number(params.id);
-  const agentId = Number(session.user.agent_id || session.user.id);
-
-  const rows = await query(
-    "SELECT id FROM properties WHERE id = ? AND agent_id = ?",
-    [propertyId, agentId],
-  );
-  if (rows.length === 0) {
+  const owned = await ownsProperty(propertyId, session);
+  if (!owned) {
     return NextResponse.json({ error: "Property not found." }, { status: 404 });
   }
 
@@ -70,6 +86,10 @@ export async function POST(req, { params }) {
   const featuredFlags = formData
     .getAll("isFeatured")
     .map((value) => value === "1");
+  // Unknown or missing values normalize to null, i.e. "Uncategorized".
+  const imageCategories = formData
+    .getAll("imageCategories")
+    .map((value) => normalizeImageCategory(value));
 
   if (files.length === 0) {
     return NextResponse.json({ error: "No images provided." }, { status: 400 });
@@ -131,9 +151,10 @@ export async function POST(req, { params }) {
     const title = imageTitles[i] || null;
     const sortOrder = Number.isFinite(imageOrders[i]) ? imageOrders[i] : i;
     const isFeatured = Boolean(featuredFlags[i]);
+    const category = imageCategories[i] ?? null;
     await query(
-      "INSERT INTO property_images (property_id, image_url, sort_order, image_title, is_featured) VALUES (?, ?, ?, ?, ?)",
-      [propertyId, savedUrls[i], sortOrder, title, isFeatured],
+      "INSERT INTO property_images (property_id, image_url, sort_order, image_title, is_featured, category) VALUES (?, ?, ?, ?, ?, ?)",
+      [propertyId, savedUrls[i], sortOrder, title, isFeatured, category],
     );
   }
 
@@ -141,10 +162,15 @@ export async function POST(req, { params }) {
 }
 
 export async function PUT(req, { params }) {
-  const { error } = await requireAgent();
+  const { session, error } = await requireAgent();
   if (error) return error;
 
   const propertyId = Number(params.id);
+  const owned = await ownsProperty(propertyId, session);
+  if (!owned) {
+    return NextResponse.json({ error: "Property not found." }, { status: 404 });
+  }
+
   const body = await req.json().catch(() => ({}));
   const updates = Array.isArray(body.updates) ? body.updates : [];
 
@@ -172,9 +198,23 @@ export async function PUT(req, { params }) {
     );
     if (imageRows.length === 0) continue;
 
+    // Only touch what the caller sent, so older screens that post just a title
+    // and featured flag cannot wipe an image's category or position.
+    const fields = ["image_title = ?", "is_featured = ?"];
+    const values = [update.title || null, Boolean(update.isFeatured)];
+
+    if ("category" in update) {
+      fields.push("category = ?");
+      values.push(normalizeImageCategory(update.category));
+    }
+    if ("sortOrder" in update && Number.isFinite(Number(update.sortOrder))) {
+      fields.push("sort_order = ?");
+      values.push(Number(update.sortOrder));
+    }
+
     await query(
-      "UPDATE property_images SET image_title = ?, is_featured = ? WHERE id = ? AND property_id = ?",
-      [update.title || null, Boolean(update.isFeatured), imageId, propertyId],
+      `UPDATE property_images SET ${fields.join(", ")} WHERE id = ? AND property_id = ?`,
+      [...values, imageId, propertyId],
     );
   }
 
@@ -182,10 +222,15 @@ export async function PUT(req, { params }) {
 }
 
 export async function DELETE(req, { params }) {
-  const { error } = await requireAgent();
+  const { session, error } = await requireAgent();
   if (error) return error;
 
   const propertyId = Number(params.id);
+  const owned = await ownsProperty(propertyId, session);
+  if (!owned) {
+    return NextResponse.json({ error: "Property not found." }, { status: 404 });
+  }
+
   const body = await req.json().catch(() => ({}));
   const imageIds = Array.isArray(body.imageIds) ? body.imageIds : [];
 

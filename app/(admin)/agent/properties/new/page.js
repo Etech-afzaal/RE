@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import BackButton from "@/components/BackButton";
+import ImageCategorySelect from "@/components/ImageCategorySelect";
 
 export default function AgentNewPropertyPage() {
   const router = useRouter();
@@ -44,6 +45,7 @@ export default function AgentNewPropertyPage() {
         formData.append("images", item.file);
         formData.append("imageTitles", item.title.trim());
         formData.append("imageOrder", String(index));
+        formData.append("imageCategories", item.category || "");
         formData.append("isFeatured", item.isFeatured ? "1" : "0");
       });
 
@@ -142,6 +144,7 @@ export default function AgentNewPropertyPage() {
                 title:
                   file.name.replace(/\.[^.]+$/, "") || `Image ${index + 1}`,
                 order: index,
+                category: "",
                 isFeatured: index === 0,
               }));
               setSelectedImages(nextImages);
@@ -196,6 +199,19 @@ export default function AgentNewPropertyPage() {
                       onChange={(e) => {
                         const next = [...selectedImages];
                         next[index] = { ...next[index], title: e.target.value };
+                        setSelectedImages(next);
+                      }}
+                      style={{ ...inputStyle, marginTop: 6, width: "100%" }}
+                    />
+                    <ImageCategorySelect
+                      value={item.category}
+                      ariaLabel={`Category for image ${index + 1}`}
+                      onChange={(category) => {
+                        const next = [...selectedImages];
+                        next[index] = {
+                          ...next[index],
+                          category: category || "",
+                        };
                         setSelectedImages(next);
                       }}
                       style={{ ...inputStyle, marginTop: 6, width: "100%" }}

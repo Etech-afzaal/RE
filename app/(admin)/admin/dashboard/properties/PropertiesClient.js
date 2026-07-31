@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Archive, CircleCheck, Send } from "lucide-react";
 import ActionMenu from "@/components/ActionMenu";
 import styles from "@/components/admin/adminUi.module.css";
@@ -20,18 +20,41 @@ function formatPrice(value) {
 }
 
 const statusClass = {
+  approved: "badgeSuccess",
   active: "badgeSuccess",
   sold: "badgeInfo",
   draft: "badgeMuted",
+  pending_approval: "badgePending",
+  rejected: "badgeDanger",
+  hidden: "badgeMuted",
 };
 
+const STATUS_FILTER_OPTIONS = [
+  "all",
+  "approved",
+  "pending_approval",
+  "rejected",
+  "sold",
+  "draft",
+  "hidden",
+];
+
+function statusLabel(status) {
+  return String(status || "draft").replace(/_/g, " ");
+}
+
 export default function AdminPropertiesPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const agentFromQuery = searchParams.get("agent") || "";
+  const statusFromQuery = searchParams.get("status") || "";
+  const initialStatus = STATUS_FILTER_OPTIONS.includes(statusFromQuery)
+    ? statusFromQuery
+    : "all";
 
   const [properties, setProperties] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [agentFilter, setAgentFilter] = useState(agentFromQuery);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -41,6 +64,13 @@ export default function AdminPropertiesPage() {
   useEffect(() => {
     setAgentFilter(agentFromQuery);
   }, [agentFromQuery]);
+
+  useEffect(() => {
+    const next = STATUS_FILTER_OPTIONS.includes(statusFromQuery)
+      ? statusFromQuery
+      : "all";
+    setStatusFilter(next);
+  }, [statusFromQuery]);
 
   useEffect(() => {
     async function load() {
@@ -143,9 +173,12 @@ export default function AdminPropertiesPage() {
             onChange={(e) => setStatusFilter(e.target.value)}
           >
             <option value="all">All</option>
-            <option value="active">Active</option>
+            <option value="approved">Approved</option>
+            <option value="pending_approval">Pending approval</option>
+            <option value="rejected">Rejected</option>
             <option value="sold">Sold</option>
             <option value="draft">Draft</option>
+            <option value="hidden">Hidden</option>
           </select>
         </div>
         <div className={styles.field} style={{ maxWidth: 200 }}>
@@ -232,7 +265,7 @@ export default function AdminPropertiesPage() {
                           styles[statusClass[property.status] || "badgeMuted"]
                         }`}
                       >
-                        {property.status}
+                        {statusLabel(property.status)}
                       </span>
                     </td>
                     <td>
@@ -244,18 +277,22 @@ export default function AdminPropertiesPage() {
                       <ActionMenu
                         ariaLabel={`Actions for ${property.title}`}
                         onView={
-                          property.status === "active"
+                          property.status === "approved"
                             ? () => window.open(`/re/${property.estate_name}/${property.id}`, "_blank", "noopener,noreferrer")
                             : undefined
                         }
-                        additionalActions={[
-                          ...(property.status !== "draft"
-                            ? [{ label: "Unpublish", icon: Archive, destructive: true, disabled: busyId === property.id, onSelect: () => updateStatus(property, "draft") }]
-                            : [{ label: "Publish", icon: CircleCheck, disabled: busyId === property.id, onSelect: () => updateStatus(property, "active") }]),
-                          ...(property.status !== "sold"
-                            ? [{ label: "Mark sold", icon: Send, disabled: busyId === property.id, onSelect: () => updateStatus(property, "sold") }]
-                            : []),
-                        ]}
+                        additionalActions={
+                          property.status === "pending_approval"
+                            ? [{ label: "Review submission", icon: CircleCheck, onSelect: () => router.push(`/admin/dashboard/approvals/${property.id}`) }]
+                            : [
+                                ...(property.status !== "draft"
+                                  ? [{ label: "Unpublish", icon: Archive, destructive: true, disabled: busyId === property.id, onSelect: () => updateStatus(property, "draft") }]
+                                  : [{ label: "Publish", icon: CircleCheck, disabled: busyId === property.id, onSelect: () => updateStatus(property, "active") }]),
+                                ...(property.status !== "sold"
+                                  ? [{ label: "Mark sold", icon: Send, disabled: busyId === property.id, onSelect: () => updateStatus(property, "sold") }]
+                                  : []),
+                              ]
+                        }
                       />
                     </td>
                   </tr>

@@ -25,6 +25,18 @@ function formatPrice(value) {
   return `PKR ${n.toLocaleString("en-PK")}`;
 }
 
+/** Date-only label from properties.created_at, e.g. "30 Jul 2026". */
+function formatAddedDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 function statusClass(status) {
   if (status === "approved") return ui.badgeApproved;
   if (status === "pending_approval") return ui.badgePending;
@@ -36,6 +48,15 @@ function statusClass(status) {
 
 function statusLabel(status) {
   return String(status || "draft").replace(/_/g, " ");
+}
+
+/** Short line under the status badge so agents know what happens next. */
+function statusNote(status) {
+  if (status === "approved") return "Listed publicly";
+  if (status === "pending_approval") return "Waiting for admin review";
+  if (status === "draft") return "Not visible to the public";
+  if (status === "hidden") return "Hidden from your public website";
+  return null;
 }
 
 export default function AgentPropertiesPage() {
@@ -53,6 +74,7 @@ export default function AgentPropertiesPage() {
   const [busyId, setBusyId] = useState(null);
   const [propertyToDelete, setPropertyToDelete] = useState(null);
   const [error, setError] = useState("");
+  const [errorDetails, setErrorDetails] = useState([]);
   const [success, setSuccess] = useState("");
   const propertiesSectionRef = useRef(null);
   const shouldScrollRef = useRef(false);
@@ -85,7 +107,16 @@ export default function AgentPropertiesPage() {
       router.replace("/agent/login");
       return;
     }
-    if (status === "authenticated") load();
+    if (status !== "authenticated") return;
+
+    // Dashboard stat cards link here with ?status=<tab>; anything unrecognised
+    // falls back to the default "All" tab.
+    const requested = new URLSearchParams(window.location.search).get("status");
+    const initialTab = TABS.some((item) => item.id === requested)
+      ? requested
+      : "all";
+    setTab(initialTab);
+    load(1, initialTab);
   }, [status, router]);
 
   useEffect(() => {
@@ -112,21 +143,26 @@ export default function AgentPropertiesPage() {
 
   async function submitForApproval(property) {
     setBusyId(property.id);
-    await fetch(`/api/properties/${property.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: property.title,
-        description: property.description,
-        size_value: property.size_value,
-        size_unit: property.size_unit,
-        price: property.price,
-        location: property.location,
-        status: "pending_approval",
-      }),
-    });
-    await load();
-    setBusyId(null);
+    setError("");
+    setErrorDetails([]);
+    setSuccess("");
+    try {
+      const res = await fetch(`/api/properties/${property.id}/submit`, {
+        method: "POST",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Could not submit this property for approval.");
+        setErrorDetails(Array.isArray(data.errors) ? data.errors : []);
+        return;
+      }
+      setSuccess("Property submitted for approval.");
+      await load();
+    } catch {
+      setError("Could not submit this property for approval.");
+    } finally {
+      setBusyId(null);
+    }
   }
 
   async function deleteProperty() {
@@ -182,7 +218,18 @@ export default function AgentPropertiesPage() {
       </div>
 
       <div className={ui.panel} ref={propertiesSectionRef}>
-        {error ? <p className={ui.error}>{error}</p> : null}
+        {error ? (
+          <div className={ui.error}>
+            <p className={ui.noticeTitle}>{error}</p>
+            {errorDetails.length > 0 ? (
+              <ul className={ui.errorList}>
+                {errorDetails.map((detail) => (
+                  <li key={detail}>{detail}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
         {success ? <p className={ui.success}>{success}</p> : null}
         {loading ? (
           <p className={ui.empty}>Loading…</p>
@@ -212,6 +259,11 @@ export default function AgentPropertiesPage() {
                     property.featuredImage?.image_url ||
                     property.images?.[0]?.image_url ||
                     null;
+                  const editHref = `${base}/properties/${property.id}/edit`;
+                  const isPending = property.status === "pending_approval";
+                  const isRejected = property.status === "rejected";
+                  const note = statusNote(property.status);
+                  const addedOn = formatAddedDate(property.created_at);
                   return (
                     <tr key={property.id}>
                       <td>
@@ -229,6 +281,9 @@ export default function AgentPropertiesPage() {
                           )}
                           <div>
                             <p className={ui.propTitle}>{property.title}</p>
+                            {addedOn ? (
+                              <p className={ui.propMeta}>Added: {addedOn}</p>
+                            ) : null}
                           </div>
                         </div>
                       </td>
@@ -239,6 +294,14 @@ export default function AgentPropertiesPage() {
                         >
                           {statusLabel(property.status)}
                         </span>
+                        {note ? <p className={ui.statusNote}>{note}</p> : null}
+                        {isRejected ? (
+                          <p className={`${ui.statusNote} ${ui.statusNoteRejected}`}>
+                            <span className={ui.reasonLabel}>Reason: </span>
+                            {property.rejected_reason ||
+                              "No reason was recorded."}
+                          </p>
+                        ) : null}
                       </td>
                       <td>{formatPrice(property.price)}</td>
                       <td>
@@ -247,18 +310,25 @@ export default function AgentPropertiesPage() {
                           onView={
                             property.status === "approved"
                               ? () => window.open(`/re/${encodeURIComponent(username)}/${property.id}`, "_blank", "noopener,noreferrer")
+                              : isPending
+                              ? () => router.push(editHref)
                               : undefined
                           }
-                          onEdit={() => router.push(`${base}/properties/${property.id}/edit`)}
-                          onDelete={() => {
-                            setError("");
-                            setSuccess("");
-                            setPropertyToDelete(property);
-                          }}
+                          onEdit={isPending ? undefined : () => router.push(editHref)}
+                          onDelete={
+                            isPending
+                              ? undefined
+                              : () => {
+                                  setError("");
+                                  setErrorDetails([]);
+                                  setSuccess("");
+                                  setPropertyToDelete(property);
+                                }
+                          }
                           deleteDisabled={busyId === property.id}
                           additionalActions={
-                            property.status === "draft" || property.status === "rejected"
-                              ? [{ label: "Submit", onSelect: () => submitForApproval(property), disabled: busyId === property.id }]
+                            property.status === "draft" || isRejected
+                              ? [{ label: isRejected ? "Resubmit" : "Submit For Approval", onSelect: () => submitForApproval(property), disabled: busyId === property.id }]
                               : []
                           }
                         />

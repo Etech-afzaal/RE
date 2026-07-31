@@ -4,78 +4,86 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import styles from "./GalleryCarousel.module.css";
 
+/**
+ * "Explore every space" rail — swipeable cards from the listing's own photos.
+ * Prefers category / title labels so each card reads as a room or area.
+ */
 export default function GalleryCarousel({ slides = [], title }) {
   const carouselRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cardWidth, setCardWidth] = useState(0);
 
-  const updateCardWidth = () => {
+  const measureStep = () => {
     const container = carouselRef.current;
-    if (!container) return;
+    if (!container) return 0;
     const card = container.querySelector("[data-card]");
-    if (!card) return;
+    if (!card) return 0;
 
     const computedGap = parseInt(
-      getComputedStyle(container).columnGap || "18",
+      getComputedStyle(container).columnGap ||
+        getComputedStyle(container).gap ||
+        "18",
       10,
     );
-    setCardWidth(card.offsetWidth + computedGap);
+    const gap = Number.isFinite(computedGap) ? computedGap : 18;
+    return card.offsetWidth + gap;
+  };
+
+  const updateCardWidth = () => {
+    const step = measureStep();
+    if (step > 0) setCardWidth(step);
   };
 
   const scrollToIndex = (index) => {
     const container = carouselRef.current;
-    if (!container || cardWidth === 0) return;
-    container.scrollTo({ left: cardWidth * index, behavior: "smooth" });
+    if (!container) return;
+    const step = measureStep() || cardWidth;
+    if (!step) return;
+    container.scrollTo({ left: step * index, behavior: "smooth" });
   };
 
   useEffect(() => {
     updateCardWidth();
     window.addEventListener("resize", updateCardWidth);
     return () => window.removeEventListener("resize", updateCardWidth);
-  }, []);
-
-  useEffect(() => {
-    if (slides.length <= 1) return undefined;
-    const interval = setInterval(() => {
-      setCurrentIndex((current) =>
-        current >= slides.length - 1 ? 0 : current + 1,
-      );
-    }, 4500);
-    return () => clearInterval(interval);
   }, [slides.length]);
 
   useEffect(() => {
-    if (slides.length === 0 || cardWidth === 0) return;
-    scrollToIndex(currentIndex);
-  }, [currentIndex, slides.length, cardWidth]);
+    const container = carouselRef.current;
+    if (!container || cardWidth === 0) return undefined;
+
+    const onScroll = () => {
+      const next = Math.round(container.scrollLeft / cardWidth);
+      setCurrentIndex((prev) => (prev === next ? prev : next));
+    };
+
+    container.addEventListener("scroll", onScroll, { passive: true });
+    return () => container.removeEventListener("scroll", onScroll);
+  }, [cardWidth]);
 
   const handleArrow = (direction) => {
     setCurrentIndex((current) => {
+      let next;
       if (direction === "prev") {
-        return current === 0 ? Math.max(slides.length - 1, 0) : current - 1;
+        next = current === 0 ? Math.max(slides.length - 1, 0) : current - 1;
+      } else {
+        next = current >= slides.length - 1 ? 0 : current + 1;
       }
-      return current >= slides.length - 1 ? 0 : current + 1;
+      requestAnimationFrame(() => scrollToIndex(next));
+      return next;
     });
   };
 
   if (!slides.length) {
-    return (
-      <section className={styles.gallerySection}>
-        <p className={styles.galleryTitle}>Explore the spaces</p>
-        <h2 className={styles.galleryIntro}>Photos coming soon</h2>
-        <div className={styles.emptyGallery}>No images uploaded yet.</div>
-      </section>
-    );
+    return null;
   }
 
   return (
     <section className={styles.gallerySection}>
       <div className={styles.galleryHeader}>
         <div>
-          <p className={styles.galleryTitle}>Explore the spaces</p>
-          <h2 className={styles.galleryIntro}>
-            Swipe through every space
-          </h2>
+          <p className={styles.galleryTitle}>Explore every space</p>
+          <h2 className={styles.galleryIntro}>Swipe through the property</h2>
         </div>
         <p className={styles.galleryCount}>
           {slides.length} {slides.length === 1 ? "space" : "spaces"}
@@ -85,7 +93,11 @@ export default function GalleryCarousel({ slides = [], title }) {
       <div className={styles.galleryOuter}>
         <div ref={carouselRef} className={styles.carouselScroll}>
           {slides.map((slide, index) => (
-            <div key={slide.id || index} data-card className={styles.carouselCard}>
+            <div
+              key={slide.id || index}
+              data-card
+              className={styles.carouselCard}
+            >
               <Image
                 src={slide.image}
                 alt={slide.label || title}
@@ -101,6 +113,9 @@ export default function GalleryCarousel({ slides = [], title }) {
                 <p className={styles.captionTitle}>{slide.label || title}</p>
                 {slide.copy ? (
                   <p className={styles.captionCopy}>{slide.copy}</p>
+                ) : slide.categoryLabel &&
+                  slide.label !== slide.categoryLabel ? (
+                  <p className={styles.captionCopy}>{slide.categoryLabel}</p>
                 ) : null}
               </div>
             </div>
@@ -136,7 +151,10 @@ export default function GalleryCarousel({ slides = [], title }) {
               key={index}
               type="button"
               aria-label={`Go to space ${index + 1}`}
-              onClick={() => setCurrentIndex(index)}
+              onClick={() => {
+                setCurrentIndex(index);
+                requestAnimationFrame(() => scrollToIndex(index));
+              }}
               className={`${styles.carouselDot} ${
                 index === currentIndex ? styles.carouselDotActive : ""
               }`}

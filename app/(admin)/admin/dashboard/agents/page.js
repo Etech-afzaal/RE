@@ -2,11 +2,46 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Ban, Building2, CirclePause, CirclePlay } from "lucide-react";
+import ActionMenu from "@/components/ActionMenu";
+import BlockAgentDialog from "@/components/admin/BlockAgentDialog";
 import styles from "@/components/admin/adminUi.module.css";
 
 const ITEMS_PER_PAGE = 8;
 
+/**
+ * Estate slug is the brand identity in this product.
+ * township-re → Township RE
+ */
+function companyFromEstate(estateName) {
+  return String(estateName || "")
+    .trim()
+    .split(/[-_]+/)
+    .filter(Boolean)
+    .map((part) => {
+      if (part.length <= 3) return part.toUpperCase();
+      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+    })
+    .join(" ");
+}
+
+function statusBadgeClass(status) {
+  if (status === "active") return styles.badgeSuccess;
+  if (status === "disabled") return styles.badgePending;
+  if (status === "blocked") return styles.badgeDanger;
+  return styles.badgeMuted;
+}
+
+function statusLabel(status) {
+  if (status === "active") return "Active";
+  if (status === "disabled") return "Disabled";
+  if (status === "blocked") return "Blocked";
+  return String(status || "unknown").replace(/_/g, " ");
+}
+
 export default function AdminAgentsPage() {
+  const router = useRouter();
   const [agents, setAgents] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -14,6 +49,7 @@ export default function AdminAgentsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
+  const [blocking, setBlocking] = useState(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -44,7 +80,8 @@ export default function AdminAgentsPage() {
         (a) =>
           a.full_name.toLowerCase().includes(term) ||
           a.email.toLowerCase().includes(term) ||
-          a.estate_name.toLowerCase().includes(term),
+          a.estate_name.toLowerCase().includes(term) ||
+          companyFromEstate(a.estate_name).toLowerCase().includes(term),
       );
     }
     setFiltered(next);
@@ -57,28 +94,91 @@ export default function AdminAgentsPage() {
     currentPage * ITEMS_PER_PAGE,
   );
 
-  async function setAgentStatus(agent, status) {
+  async function setAgentStatus(agent, status, blockedReason = null) {
     setBusyId(agent.id);
     setError("");
     try {
+      const body = { status };
+      if (status === "blocked") body.blocked_reason = blockedReason;
+
       const res = await fetch(`/api/admin/agents/${agent.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(body),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
         setError(data.error || "Could not update agent.");
         return;
       }
       setAgents((prev) =>
-        prev.map((a) => (a.id === agent.id ? { ...a, status } : a)),
+        prev.map((a) =>
+          a.id === agent.id
+            ? {
+                ...a,
+                status: data.status || status,
+                blocked_reason: data.blocked_reason ?? null,
+                blocked_at: data.blocked_at ?? null,
+                blocked_by: data.blocked_by ?? null,
+              }
+            : a,
+        ),
       );
+      setBlocking(null);
     } catch {
       setError("Could not update agent.");
     } finally {
       setBusyId(null);
     }
+  }
+
+  function agentActions(agent) {
+    const busy = busyId === agent.id;
+    const actions = [
+      {
+        label: "View Properties",
+        icon: Building2,
+        onSelect: () =>
+          router.push(
+            `/admin/dashboard/properties?agent=${encodeURIComponent(agent.estate_name)}`,
+          ),
+      },
+    ];
+
+    if (agent.status === "active") {
+      actions.push({
+        label: "Disable Agent",
+        icon: CirclePause,
+        disabled: busy,
+        onSelect: () => setAgentStatus(agent, "disabled"),
+      });
+    } else if (agent.status === "disabled") {
+      actions.push({
+        label: "Enable Agent",
+        icon: CirclePlay,
+        disabled: busy,
+        onSelect: () => setAgentStatus(agent, "active"),
+      });
+    } else if (agent.status === "blocked") {
+      actions.push({
+        label: "Unblock Agent",
+        icon: CirclePlay,
+        disabled: busy,
+        onSelect: () => setAgentStatus(agent, "active"),
+      });
+    }
+
+    if (agent.status !== "blocked") {
+      actions.push({
+        label: "Permanently Block",
+        icon: Ban,
+        destructive: true,
+        disabled: busy,
+        onSelect: () => setBlocking(agent),
+      });
+    }
+
+    return actions;
   }
 
   return (
@@ -89,7 +189,7 @@ export default function AdminAgentsPage() {
           <input
             id="agent-search"
             className={styles.input}
-            placeholder="Name, email, or estate…"
+            placeholder="Name, company, email, or estate…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -105,6 +205,7 @@ export default function AdminAgentsPage() {
             <option value="all">All</option>
             <option value="active">Active</option>
             <option value="disabled">Disabled</option>
+            <option value="blocked">Blocked</option>
           </select>
         </div>
         <div className={styles.toolbarMeta}>
@@ -137,9 +238,16 @@ export default function AdminAgentsPage() {
                   <tr key={agent.id}>
                     <td>
                       <p className={styles.listPrimary}>{agent.full_name}</p>
-                      <p className={styles.listSecondary}>{agent.email}</p>
+                      <p className={styles.listSecondary}>
+                        <a href={`mailto:${agent.email}`} className={styles.mailLink}>
+                          {agent.email}
+                        </a>
+                      </p>
                     </td>
                     <td>
+                      <p className={styles.listPrimary}>
+                        {companyFromEstate(agent.estate_name)}
+                      </p>
                       <Link
                         href={`/re/${agent.estate_name}`}
                         className={styles.link}
@@ -158,43 +266,21 @@ export default function AdminAgentsPage() {
                     <td>{new Date(agent.created_at).toLocaleDateString()}</td>
                     <td>
                       <span
-                        className={`${styles.badge} ${
-                          agent.status === "active"
-                            ? styles.badgeSuccess
-                            : styles.badgeDanger
-                        }`}
+                        className={`${styles.badge} ${statusBadgeClass(agent.status)}`}
                       >
-                        {agent.status === "active" ? "Active" : "Disabled"}
+                        {statusLabel(agent.status)}
                       </span>
+                      {agent.status === "blocked" && agent.blocked_reason ? (
+                        <p className={styles.listSecondary} style={{ marginTop: 6 }}>
+                          {agent.blocked_reason}
+                        </p>
+                      ) : null}
                     </td>
                     <td>
-                      <div className={styles.actions}>
-                        <Link
-                          href={`/admin/dashboard/properties?agent=${encodeURIComponent(agent.estate_name)}`}
-                          className={styles.btn}
-                        >
-                          Properties
-                        </Link>
-                        {agent.status === "active" ? (
-                          <button
-                            type="button"
-                            className={`${styles.btn} ${styles.btnDanger}`}
-                            disabled={busyId === agent.id}
-                            onClick={() => setAgentStatus(agent, "disabled")}
-                          >
-                            {busyId === agent.id ? "…" : "Disable"}
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className={`${styles.btn} ${styles.btnSuccess}`}
-                            disabled={busyId === agent.id}
-                            onClick={() => setAgentStatus(agent, "active")}
-                          >
-                            {busyId === agent.id ? "…" : "Enable"}
-                          </button>
-                        )}
-                      </div>
+                      <ActionMenu
+                        ariaLabel={`Actions for ${agent.full_name}`}
+                        additionalActions={agentActions(agent)}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -242,6 +328,15 @@ export default function AdminAgentsPage() {
           )}
         </>
       )}
+
+      {blocking ? (
+        <BlockAgentDialog
+          agentName={blocking.full_name}
+          busy={busyId === blocking.id}
+          onCancel={() => setBlocking(null)}
+          onConfirm={(reason) => setAgentStatus(blocking, "blocked", reason)}
+        />
+      ) : null}
     </div>
   );
 }

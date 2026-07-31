@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
+import ImageCategorySelect from "@/components/ImageCategorySelect";
 import ui from "@/components/agent-portal/portal.module.css";
 
 export default function EditPropertyPage() {
@@ -23,20 +24,21 @@ export default function EditPropertyPage() {
     location: "",
     status: "draft",
   });
+  const [rejection, setRejection] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [errorDetails, setErrorDetails] = useState([]);
   const [success, setSuccess] = useState("");
+  const [existingImages, setExistingImages] = useState([]);
+  const [deletedImageIds, setDeletedImageIds] = useState([]);
   const [newImages, setNewImages] = useState([]);
-  const [newImagePreviews, setNewImagePreviews] = useState([]);
+  // "existing:<id>" or "new:<key>" — exactly one image is the featured one.
+  const [featuredKey, setFeaturedKey] = useState(null);
+  const newImageKey = useRef(0);
   const [currentVideoUrl, setCurrentVideoUrl] = useState("");
   const [newVideo, setNewVideo] = useState(null);
   const [removeVideo, setRemoveVideo] = useState(false);
-  useEffect(() => {
-    const previews = newImages.map((file) => ({ file, url: URL.createObjectURL(file) }));
-    setNewImagePreviews(previews);
-    return () => previews.forEach((item) => URL.revokeObjectURL(item.url));
-  }, [newImages]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -63,24 +65,90 @@ export default function EditPropertyPage() {
         location: p.location || "",
         status: p.status || "draft",
       });
+      setRejection(
+        p.status === "rejected"
+          ? { reason: p.rejected_reason, at: p.rejected_at }
+          : null,
+      );
+      const loadedImages = p.images || [];
+      setExistingImages(loadedImages);
+      const featured =
+        loadedImages.find((image) => image.is_featured) || loadedImages[0];
+      setFeaturedKey(featured ? `existing:${featured.id}` : null);
       setCurrentVideoUrl(p.video_url || "");
       setLoading(false);
     })();
   }, [status, propertyId, router]);
 
-  async function handleSave(nextStatus) {
+  useEffect(() => {
+    return () => {
+      newImages.forEach((item) => URL.revokeObjectURL(item.url));
+    };
+    // Previews are revoked when leaving the page, not on every list change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function addFiles(fileList) {
+    const added = Array.from(fileList || []).map((file) => ({
+      key: `n${newImageKey.current++}`,
+      file,
+      url: URL.createObjectURL(file),
+      category: "",
+    }));
+    if (added.length === 0) return;
+    setNewImages((prev) => [...prev, ...added]);
+    setFeaturedKey((prev) => prev ?? `new:${added[0].key}`);
+  }
+
+  function updateExistingImage(id, changes) {
+    setExistingImages((prev) =>
+      prev.map((image) => (image.id === id ? { ...image, ...changes } : image)),
+    );
+  }
+
+  function moveExistingImage(index, offset) {
+    setExistingImages((prev) => {
+      const target = index + offset;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  }
+
+  function removeExistingImage(id) {
+    setDeletedImageIds((prev) => [...prev, id]);
+    setExistingImages((prev) => prev.filter((image) => image.id !== id));
+    setFeaturedKey((prev) => (prev === `existing:${id}` ? null : prev));
+  }
+
+  function removeNewImage(key) {
+    setNewImages((prev) => {
+      const target = prev.find((item) => item.key === key);
+      if (target) URL.revokeObjectURL(target.url);
+      return prev.filter((item) => item.key !== key);
+    });
+    setFeaturedKey((prev) => (prev === `new:${key}` ? null : prev));
+  }
+
+  async function handleSave({ submit = false } = {}) {
     setSaving(true);
     setError("");
+    setErrorDetails([]);
     setSuccess("");
 
+    // Status is never sent from here: submitting goes through the submit
+    // endpoint so the listing is validated before an admin sees it.
     const res = await fetch(`/api/properties/${propertyId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        ...form,
+        title: form.title,
+        description: form.description,
+        location: form.location,
+        size_unit: form.size_unit,
         size_value: form.size_value ? Number(form.size_value) : null,
         price: form.price ? Number(form.price) : null,
-        status: nextStatus || form.status,
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -90,12 +158,51 @@ export default function EditPropertyPage() {
       return;
     }
 
+    // Category / featured / order changes on images that already exist.
+    if (existingImages.length > 0) {
+      const metaRes = await fetch(`/api/properties/${propertyId}/images`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          updates: existingImages.map((image, index) => ({
+            id: image.id,
+            title: image.image_title || "",
+            category: image.category || null,
+            sortOrder: index,
+            isFeatured: featuredKey === `existing:${image.id}`,
+          })),
+        }),
+      });
+      if (!metaRes.ok) {
+        const metaData = await metaRes.json().catch(() => ({}));
+        setError(metaData.error || "Could not update image details.");
+        setSaving(false);
+        return;
+      }
+    }
+
+    if (deletedImageIds.length > 0) {
+      const deleteRes = await fetch(`/api/properties/${propertyId}/images`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageIds: deletedImageIds }),
+      });
+      if (!deleteRes.ok) {
+        const deleteData = await deleteRes.json().catch(() => ({}));
+        setError(deleteData.error || "Could not remove some images.");
+        setSaving(false);
+        return;
+      }
+      setDeletedImageIds([]);
+    }
+
     if (newImages.length > 0) {
       const fd = new FormData();
-      newImages.forEach((file, index) => {
-        fd.append("images", file);
-        fd.append("imageOrder", String(index));
-        fd.append("isFeatured", "0");
+      newImages.forEach((item, index) => {
+        fd.append("images", item.file);
+        fd.append("imageOrder", String(existingImages.length + index));
+        fd.append("imageCategories", item.category || "");
+        fd.append("isFeatured", featuredKey === `new:${item.key}` ? "1" : "0");
       });
       const imageRes = await fetch(`/api/properties/${propertyId}/images`, {
         method: "POST",
@@ -107,7 +214,21 @@ export default function EditPropertyPage() {
         setSaving(false);
         return;
       }
+      newImages.forEach((item) => URL.revokeObjectURL(item.url));
       setNewImages([]);
+    }
+
+    if (existingImages.length > 0 || newImages.length > 0) {
+      const refreshed = await fetch(`/api/properties/${propertyId}`);
+      const refreshedData = await refreshed.json().catch(() => ({}));
+      const refreshedImages = refreshedData.property?.images || [];
+      if (refreshed.ok) {
+        setExistingImages(refreshedImages);
+        const featured =
+          refreshedImages.find((image) => image.is_featured) ||
+          refreshedImages[0];
+        setFeaturedKey(featured ? `existing:${featured.id}` : null);
+      }
     }
 
     if (removeVideo && currentVideoUrl) {
@@ -141,25 +262,85 @@ export default function EditPropertyPage() {
       setNewVideo(null);
     }
 
-    setForm((prev) => ({ ...prev, status: data.status || nextStatus || prev.status }));
+    setForm((prev) => ({ ...prev, status: data.status || prev.status }));
+
+    if (submit) {
+      const submitRes = await fetch(`/api/properties/${propertyId}/submit`, {
+        method: "POST",
+      });
+      const submitData = await submitRes.json().catch(() => ({}));
+      if (!submitRes.ok) {
+        setError(
+          submitData.error || "Could not submit this property for approval.",
+        );
+        setErrorDetails(
+          Array.isArray(submitData.errors) ? submitData.errors : [],
+        );
+        setSuccess("Your changes were saved, but the listing was not submitted.");
+        setSaving(false);
+        return;
+      }
+      setForm((prev) => ({ ...prev, status: "pending_approval" }));
+      setRejection(null);
+      setSuccess("Property submitted for approval.");
+      setSaving(false);
+      return;
+    }
+
     setSuccess("Property saved.");
     setSaving(false);
   }
+
+  const isPending = form.status === "pending_approval";
+  const isRejected = form.status === "rejected";
+  const isDraft = form.status === "draft";
+  const canSubmit = isDraft || isRejected;
 
   return (
     <AgentPortalShell
       username={username}
       agentName={session?.user?.name}
-      title="Edit Property"
-      subtitle="Update listing details and submission status"
+      title={isPending ? "Property Under Review" : "Edit Property"}
+      subtitle={
+        isPending
+          ? "Locked until an admin finishes reviewing this listing"
+          : "Update listing details and submission status"
+      }
     >
       <div className={ui.formCard}>
         {loading ? <p className={ui.muted}>Loading…</p> : null}
-        {error ? <p className={ui.error}>{error}</p> : null}
+        {error ? (
+          <div className={ui.error}>
+            <p className={ui.noticeTitle}>{error}</p>
+            {errorDetails.length > 0 ? (
+              <ul className={ui.errorList}>
+                {errorDetails.map((detail) => (
+                  <li key={detail}>{detail}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
         {success ? <p className={ui.success}>{success}</p> : null}
 
         {!loading ? (
           <>
+            {isPending ? (
+              <div className={ui.noticePending}>
+                <p className={ui.noticeTitle}>Waiting for admin review</p>
+                You will be able to edit this listing again once it has been
+                approved or rejected.
+              </div>
+            ) : null}
+            {isRejected ? (
+              <div className={ui.noticeRejected}>
+                <p className={ui.noticeTitle}>
+                  Your property was rejected. Please review the reason and update
+                  it.
+                </p>
+                {rejection?.reason || "No reason was recorded."}
+              </div>
+            ) : null}
             <p className={ui.muted}>
               Current status: <strong>{String(form.status).replace(/_/g, " ")}</strong>
             </p>
@@ -168,6 +349,7 @@ export default function EditPropertyPage() {
               <input
                 className={ui.input}
                 value={form.title}
+                disabled={isPending}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
               />
             </label>
@@ -182,6 +364,7 @@ export default function EditPropertyPage() {
                     <input
                       type="checkbox"
                       checked={removeVideo}
+                      disabled={isPending}
                       onChange={(e) => setRemoveVideo(e.target.checked)}
                     />{" "}
                     Remove current video
@@ -194,6 +377,7 @@ export default function EditPropertyPage() {
                 className={ui.input}
                 type="file"
                 accept="video/mp4,video/webm,video/quicktime,video/ogg,.mp4,.webm,.mov,.ogg"
+                disabled={isPending}
                 onChange={(e) => setNewVideo(e.target.files?.[0] || null)}
               />
               <p className={ui.muted}>MP4, WebM, MOV, or OGG. One video only.</p>
@@ -203,6 +387,7 @@ export default function EditPropertyPage() {
               <textarea
                 className={ui.textarea}
                 value={form.description}
+                disabled={isPending}
                 onChange={(e) =>
                   setForm({ ...form, description: e.target.value })
                 }
@@ -213,6 +398,7 @@ export default function EditPropertyPage() {
               <input
                 className={ui.input}
                 value={form.location}
+                disabled={isPending}
                 onChange={(e) => setForm({ ...form, location: e.target.value })}
               />
             </label>
@@ -223,6 +409,7 @@ export default function EditPropertyPage() {
                   className={ui.input}
                   type="number"
                   value={form.size_value}
+                  disabled={isPending}
                   onChange={(e) =>
                     setForm({ ...form, size_value: e.target.value })
                   }
@@ -233,6 +420,7 @@ export default function EditPropertyPage() {
                 <select
                   className={ui.select}
                   value={form.size_unit}
+                  disabled={isPending}
                   onChange={(e) =>
                     setForm({ ...form, size_unit: e.target.value })
                   }
@@ -249,9 +437,93 @@ export default function EditPropertyPage() {
                 className={ui.input}
                 type="number"
                 value={form.price}
+                disabled={isPending}
                 onChange={(e) => setForm({ ...form, price: e.target.value })}
               />
             </label>
+            <div className={ui.field}>
+              <span className={ui.label}>Property Images</span>
+              {existingImages.length === 0 ? (
+                <p className={ui.muted}>No images uploaded yet.</p>
+              ) : (
+                <div className={ui.imageManager}>
+                  {existingImages.map((image, index) => (
+                    <div key={image.id} className={ui.imageCard}>
+                      <div className={ui.imageCardThumb}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={image.image_url} alt={image.image_title || ""} />
+                        {featuredKey === `existing:${image.id}` ? (
+                          <span className={ui.featuredTag}>Featured</span>
+                        ) : null}
+                      </div>
+                      <div className={ui.imageCardBody}>
+                        <label className={ui.field}>
+                          <span className={ui.imageCardLabel}>Category</span>
+                          <ImageCategorySelect
+                            className={ui.select}
+                            value={image.category}
+                            disabled={isPending}
+                            ariaLabel={`Category for image ${index + 1}`}
+                            onChange={(category) =>
+                              updateExistingImage(image.id, { category })
+                            }
+                          />
+                        </label>
+                        <div className={ui.imageCardMeta}>
+                          <label className={ui.imageCardCheck}>
+                            <input
+                              type="radio"
+                              name="featured-image"
+                              checked={featuredKey === `existing:${image.id}`}
+                              disabled={isPending}
+                              onChange={() =>
+                                setFeaturedKey(`existing:${image.id}`)
+                              }
+                            />
+                            Featured image
+                          </label>
+                          <span className={ui.imageCardLabel}>
+                            Order {index + 1}
+                          </span>
+                          <div className={ui.imageCardActions}>
+                            <button
+                              type="button"
+                              className={ui.iconBtn}
+                              disabled={isPending || index === 0}
+                              aria-label={`Move image ${index + 1} up`}
+                              onClick={() => moveExistingImage(index, -1)}
+                            >
+                              ↑
+                            </button>
+                            <button
+                              type="button"
+                              className={ui.iconBtn}
+                              disabled={
+                                isPending || index === existingImages.length - 1
+                              }
+                              aria-label={`Move image ${index + 1} down`}
+                              onClick={() => moveExistingImage(index, 1)}
+                            >
+                              ↓
+                            </button>
+                            <button
+                              type="button"
+                              className={`${ui.iconBtn} ${ui.iconBtnDanger}`}
+                              disabled={isPending}
+                              aria-label={`Remove image ${index + 1}`}
+                              onClick={() => removeExistingImage(image.id)}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <label className={ui.field}>
               <span className={ui.label}>Add images</span>
               <input
@@ -259,47 +531,93 @@ export default function EditPropertyPage() {
                 type="file"
                 accept="image/*"
                 multiple
-                onChange={(e) =>
-                  setNewImages(Array.from(e.target.files || []))
-                }
+                disabled={isPending}
+                onChange={(e) => {
+                  addFiles(e.target.files);
+                  e.target.value = "";
+                }}
               />
             </label>
-            {newImagePreviews.length > 0 ? (
-              <div className={ui.previewGrid}>
-                {newImagePreviews.map(({ file, url }, index) => (
-                  <div key={url} className={ui.previewItem}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={url} alt={file.name} />
-                    <button
-                      type="button"
-                      className={ui.removePreview}
-                      onClick={() => setNewImages((items) => items.filter((_, itemIndex) => itemIndex !== index))}
-                      aria-label={`Remove ${file.name}`}
-                    >
-                      ×
-                    </button>
+            {newImages.length > 0 ? (
+              <div className={ui.imageManager}>
+                {newImages.map((item, index) => (
+                  <div key={item.key} className={ui.imageCard}>
+                    <div className={ui.imageCardThumb}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={item.url} alt="" />
+                      {featuredKey === `new:${item.key}` ? (
+                        <span className={ui.featuredTag}>Featured</span>
+                      ) : null}
+                    </div>
+                    <div className={ui.imageCardBody}>
+                      <label className={ui.field}>
+                        <span className={ui.imageCardLabel}>Category</span>
+                        <ImageCategorySelect
+                          className={ui.select}
+                          value={item.category}
+                          disabled={isPending}
+                          ariaLabel={`Category for new image ${index + 1}`}
+                          onChange={(category) =>
+                            setNewImages((prev) =>
+                              prev.map((entry) =>
+                                entry.key === item.key
+                                  ? { ...entry, category: category || "" }
+                                  : entry,
+                              ),
+                            )
+                          }
+                        />
+                      </label>
+                      <div className={ui.imageCardMeta}>
+                        <label className={ui.imageCardCheck}>
+                          <input
+                            type="radio"
+                            name="featured-image"
+                            checked={featuredKey === `new:${item.key}`}
+                            disabled={isPending}
+                            onChange={() => setFeaturedKey(`new:${item.key}`)}
+                          />
+                          Featured image
+                        </label>
+                        <div className={ui.imageCardActions}>
+                          <button
+                            type="button"
+                            className={`${ui.iconBtn} ${ui.iconBtnDanger}`}
+                            disabled={isPending}
+                            aria-label={`Remove new image ${index + 1}`}
+                            onClick={() => removeNewImage(item.key)}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
             ) : null}
 
             <div className={ui.formActions}>
-              <button
-                type="button"
-                className={ui.btnGhost}
-                disabled={saving}
-                onClick={() => handleSave("draft")}
-              >
-                Save Draft
-              </button>
-              <button
-                type="button"
-                className={ui.btnPrimary}
-                disabled={saving}
-                onClick={() => handleSave("pending_approval")}
-              >
-                Submit For Approval
-              </button>
+              {isPending ? null : (
+                <button
+                  type="button"
+                  className={ui.btnGhost}
+                  disabled={saving}
+                  onClick={() => handleSave()}
+                >
+                  {saving ? "Saving…" : isDraft ? "Save Draft" : "Save Changes"}
+                </button>
+              )}
+              {canSubmit ? (
+                <button
+                  type="button"
+                  className={ui.btnPrimary}
+                  disabled={saving}
+                  onClick={() => handleSave({ submit: true })}
+                >
+                  {isRejected ? "Save & Resubmit" : "Submit For Approval"}
+                </button>
+              ) : null}
               <button
                 type="button"
                 className={ui.btnGhost}

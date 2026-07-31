@@ -136,7 +136,11 @@ export default function RequestsPage() {
                   <div className={styles.cardTop}>
                     <div>
                       <h2 className={styles.cardTitle}>{request.full_name}</h2>
-                      <p className={styles.cardEmail}>{request.email}</p>
+                      <p className={styles.cardEmail}>
+                        <a href={`mailto:${request.email}`} className={styles.mailLink}>
+                          {request.email}
+                        </a>
+                      </p>
                     </div>
                     <span className={`${styles.badge} ${styles[meta.className]}`}>
                       {meta.label}

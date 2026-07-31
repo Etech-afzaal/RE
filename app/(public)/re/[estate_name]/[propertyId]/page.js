@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import GalleryCarousel from "./GalleryCarousel";
+import HeroGallery from "./HeroGallery";
 import {
   getAgentByUsername,
   getPropertyByAgentAndSlug,
@@ -31,52 +32,75 @@ const formatDate = (date) => {
   }
 };
 
-/* Representative interiors shown while listings only carry a few photos.
-   These live in /public/uploads and are clearly labelled in the UI. */
-const SPACE_HIGHLIGHTS = [
-  {
-    label: "TV lounge",
-    copy: "A formal lounge with statement lighting and a marble feature wall — made for entertaining.",
-    image: "/uploads/34/7voS1CO2Ul.jpg",
-  },
-  {
-    label: "Bedroom suite",
-    copy: "Generous bedrooms with textured feature walls and abundant natural light.",
-    image: "/uploads/35/12WxQOKJvw.jpg",
-  },
-  {
-    label: "Designer bathroom",
-    copy: "Spa-style bath with jacuzzi tub, walk-in rain shower and imported fittings.",
-    image: "/uploads/34/kRjDW2M7LD.jpg",
-  },
-  {
-    label: "Powder room",
-    copy: "Stone vanities and warm wood detailing carry the finish into every corner.",
-    image: "/uploads/33/orC6c7J2p5.jpg",
-  },
-  {
-    label: "Grand gallery",
-    copy: "A double-height gallery crowned with chandeliers connects the living floors.",
-    image: "/uploads/32/lClwoFcK15.jpg",
-  },
-  {
-    label: "Evening elevation",
-    copy: "Architectural facade lighting gives the home real presence after dark.",
-    image: "/uploads/34/lulJb0e94y.jpg",
-  },
-];
+function titleCaseWords(value) {
+  return String(value || "")
+    .replace(/[-_]+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
-const ASSURANCES = [
+/** Prefer stored company_name; otherwise derive from username/estate. */
+function companyNameFromAgent(agent) {
+  if (agent.company_name && String(agent.company_name).trim()) {
+    return String(agent.company_name).trim();
+  }
+  const base = titleCaseWords(agentPublicUsername(agent) || agent.estate_name);
+  if (!base) return "Agency Properties";
+  if (/propert/i.test(base)) return base;
+  return `${base} Properties`;
+}
+
+function companyInitials(companyName) {
+  const words = String(companyName || "")
+    .split(/\s+/)
+    .filter(Boolean);
+  if (words.length === 0) return "RE";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return `${words[0][0] || ""}${words[1][0] || ""}`.toUpperCase();
+}
+
+/** Split "Johar Town, Lahore" into area + city when possible. */
+function parseLocation(location) {
+  const raw = String(location || "").trim();
+  if (!raw) return { area: null, city: null, full: null };
+  const parts = raw
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (parts.length >= 2) {
+    return {
+      area: parts.slice(0, -1).join(", "),
+      city: parts[parts.length - 1],
+      full: raw,
+    };
+  }
+  return { area: raw, city: null, full: raw };
+}
+
+/** Build a WhatsApp deep link from a local or international phone number. */
+function whatsappHref(phone) {
+  if (!phone) return null;
+  let digits = String(phone).replace(/\D/g, "");
+  if (!digits) return null;
+  if (digits.startsWith("0")) digits = `92${digits.slice(1)}`;
+  return `https://wa.me/${digits}`;
+}
+
+const TRUST_ITEMS = [
   {
-    title: "Verified agent",
-    copy: "Every agent on Dhalahore is manually approved before they can list.",
+    title: "Verified Agent",
+    copy: "This agent was manually approved before listing on the platform.",
   },
   {
-    title: "Direct contact",
+    title: "Direct Contact",
     copy: "Your inquiry goes straight to the listing agent — no middlemen.",
   },
   {
-    title: "Viewings arranged",
+    title: "Genuine Listings",
+    copy: "Properties are reviewed before they appear on public pages.",
+  },
+  {
+    title: "Private Viewings",
     copy: "Schedule a private visit at a time that suits you.",
   },
 ];
@@ -86,15 +110,16 @@ export default async function PropertyDetailPage({ params }) {
   if (!agent) return notFound();
 
   const agentHandle = agentPublicUsername(agent);
-  // `propertyId` route segment accepts slug (`title-id`) or legacy numeric id.
   const property = await getPropertyByAgentAndSlug(
     agent.id,
     params.propertyId,
   );
   if (!property) return notFound();
 
+  const companyName = companyNameFromAgent(agent);
   const sizeLabel = formatSize(property.size_value, property.size_unit);
   const listedDate = formatDate(property.created_at);
+  const locationInfo = parseLocation(property.location);
   const statusLabel =
     property.status === "sold"
       ? "Sold"
@@ -104,9 +129,42 @@ export default async function PropertyDetailPage({ params }) {
 
   const gallery = property.images || [];
   const heroImage = property.featuredImage || gallery[0] || null;
-  const sideImages = gallery
-    .filter((img) => img.id !== heroImage?.id)
-    .slice(0, 2);
+
+  /** Hero shows only exterior elevations — interiors live in the space rail. */
+  const HERO_PRIMARY = new Set(["front_view", "back_view"]);
+  const HERO_FILL = new Set([
+    "garden",
+    "street_view",
+    "gate",
+    "terrace",
+    "community_view",
+  ]);
+  const heroImages = (() => {
+    const primary = gallery.filter((img) => HERO_PRIMARY.has(img.category));
+    const fill = gallery.filter((img) => HERO_FILL.has(img.category));
+    const picked = [];
+    const push = (img) => {
+      if (!img || picked.length >= 3) return;
+      if (picked.some((p) => p.id === img.id)) return;
+      picked.push(img);
+    };
+
+    // Featured first when it is an exterior elevation.
+    if (
+      heroImage &&
+      (HERO_PRIMARY.has(heroImage.category) ||
+        HERO_FILL.has(heroImage.category))
+    ) {
+      push(heroImage);
+    }
+    for (const img of primary) push(img);
+    for (const img of fill) push(img);
+
+    // Soft fallback so a listing is never left without a hero photo.
+    if (picked.length === 0 && heroImage) push(heroImage);
+    if (picked.length === 0 && gallery[0]) push(gallery[0]);
+    return picked;
+  })();
 
   const inquiryHref = `mailto:${agent.email}?subject=${encodeURIComponent(
     `Inquiry — ${property.title} (Ref #${property.id})`,
@@ -114,74 +172,82 @@ export default async function PropertyDetailPage({ params }) {
   const viewingHref = `mailto:${agent.email}?subject=${encodeURIComponent(
     `Viewing request — ${property.title} (Ref #${property.id})`,
   )}`;
-  const telHref = agent.phone ? `tel:${agent.phone.replace(/\s/g, "")}` : null;
+  const telHref = agent.phone
+    ? `tel:${String(agent.phone).replace(/\s/g, "")}`
+    : null;
+  const waHref = whatsappHref(agent.phone);
+  const agentProfileHref = `/re/${encodeURIComponent(agentHandle)}`;
+
+  const highlights = [
+    sizeLabel
+      ? { value: sizeLabel, label: "Plot Size" }
+      : null,
+    locationInfo.area
+      ? { value: locationInfo.area, label: "Area" }
+      : null,
+    locationInfo.city
+      ? { value: locationInfo.city, label: "City" }
+      : null,
+    { value: statusLabel, label: "Listing" },
+    listedDate ? { value: listedDate, label: "Listed" } : null,
+  ].filter(Boolean);
+
+  const spaceSlides = gallery.map((img) => ({
+    id: `db-${img.id}`,
+    image: img.image_url,
+    label:
+      img.image_title ||
+      (img.category ? img.category_label : property.title),
+    category: img.category,
+    categoryLabel: img.category_label,
+    copy: null,
+  }));
 
   return (
     <div className={styles.page}>
       <div className={styles.container}>
+        {/* 1. Agent brand header — no DhaLahore logo */}
         <header className={styles.header}>
           <div className={styles.headerLeft}>
             <BackButton
-              fallbackHref={`/re/${agentHandle}`}
+              fallbackHref={agentProfileHref}
               label="← Back"
               className={styles.backBtn}
             />
-            <Link href="/" className={styles.logoLink}>
-              <Image
-                src="/logo.svg"
-                alt="Dhalahore Properties"
-                width={144}
-                height={40}
-              />
+            <Link href={agentProfileHref} className={styles.brandLink}>
+              {agent.company_logo ? (
+                <Image
+                  src={agent.company_logo}
+                  alt=""
+                  width={44}
+                  height={44}
+                  className={styles.brandLogo}
+                />
+              ) : (
+                <span className={styles.brandLogoFallback} aria-hidden="true">
+                  {companyInitials(companyName)}
+                </span>
+              )}
+              <span className={styles.brandText}>
+                <span className={styles.brandName}>{companyName}</span>
+                <span className={styles.brandSub}>Listed by {agent.full_name}</span>
+              </span>
             </Link>
           </div>
           <div className={styles.headerActions}>
             <a href={inquiryHref} className={styles.contactButton}>
-              Contact agent
+              Contact Agent
             </a>
           </div>
         </header>
 
-        {/* Hero mosaic — photos straight from the listing */}
-        <section className={styles.heroMosaic} aria-label="Property photos">
-          <div className={styles.mosaicMain}>
-            {heroImage ? (
-              <Image
-                src={heroImage.image_url}
-                alt={heroImage.image_title || property.title}
-                fill
-                priority
-                sizes="(max-width: 900px) 100vw, 66vw"
-                className={styles.mosaicImage}
-              />
-            ) : (
-              <div className={styles.mosaicFallback} />
-            )}
-            <span className={styles.photoCount}>
-              {gallery.length} {gallery.length === 1 ? "photo" : "photos"}
-            </span>
-          </div>
-          <div className={styles.mosaicSide}>
-            {sideImages.map((img) => (
-              <div key={img.id} className={styles.mosaicTile}>
-                <Image
-                  src={img.image_url}
-                  alt={img.image_title || property.title}
-                  fill
-                  sizes="(max-width: 900px) 50vw, 33vw"
-                  className={styles.mosaicImage}
-                />
-              </div>
-            ))}
-            {sideImages.length === 0 ? (
-              <div className={`${styles.mosaicTile} ${styles.mosaicFallback}`} />
-            ) : null}
-          </div>
-        </section>
+        {/* 2. Hero property media */}
+        <HeroGallery images={heroImages} title={property.title} />
 
-        {/* Title + facts */}
+        {/* Summary + sticky agent contact + details */}
         <section className={styles.overview}>
-          <div className={styles.overviewMain}>
+          {/* 3. Property summary card */}
+          <article className={`${styles.summaryCard} ${styles.overviewSummary}`}>
             <div className={styles.badges}>
               <span className={styles.statusBadge}>{statusLabel}</span>
               {property.location ? (
@@ -193,90 +259,96 @@ export default async function PropertyDetailPage({ params }) {
             </div>
             <h1 className={styles.title}>{property.title}</h1>
             <p className={styles.price}>{formatPrice(property.price)}</p>
+          </article>
 
-            <div className={styles.factRow}>
-              {sizeLabel ? (
-                <div className={styles.fact}>
-                  <span className={styles.factLabel}>Plot size</span>
-                  <strong>{sizeLabel}</strong>
-                </div>
-              ) : null}
-              <div className={styles.fact}>
-                <span className={styles.factLabel}>Location</span>
-                <strong>{property.location || "Not specified"}</strong>
-              </div>
-              <div className={styles.fact}>
-                <span className={styles.factLabel}>Listed by</span>
-                <strong>{agent.full_name}</strong>
-              </div>
-              {listedDate ? (
-                <div className={styles.fact}>
-                  <span className={styles.factLabel}>Listed on</span>
-                  <strong>{listedDate}</strong>
-                </div>
-              ) : null}
-            </div>
-
-            {property.description ? (
-              <div className={styles.description}>
-                <p className={styles.sectionKicker}>The story</p>
-                <h2 className={styles.sectionTitle}>About this home</h2>
-                <p className={styles.descriptionText}>
-                  {property.description}
-                </p>
-              </div>
-            ) : null}
-          </div>
-
-          {/* Agent card */}
+          {/* 4. Agent contact card */}
           <aside className={styles.agentCard}>
-            <div className={styles.agentTop}>
-              <div className={styles.agentAvatar} aria-hidden="true">
-                {agent.full_name?.charAt(0)?.toUpperCase() || "A"}
-              </div>
+            <div className={styles.agentBrandRow}>
+              {agent.company_logo ? (
+                <Image
+                  src={agent.company_logo}
+                  alt=""
+                  width={52}
+                  height={52}
+                  className={styles.agentCompanyLogo}
+                />
+              ) : (
+                <span className={styles.agentCompanyFallback} aria-hidden="true">
+                  {companyInitials(companyName)}
+                </span>
+              )}
               <div>
+                <p className={styles.agentCompanyName}>{companyName}</p>
                 <p className={styles.agentKicker}>Listed by</p>
-                <h2 className={styles.agentName}>{agent.full_name}</h2>
-                <p className={styles.agentRole}>{agentPublicUsername(agent)}</p>
               </div>
             </div>
 
-            <span className={styles.verifiedBadge}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M12 2l2.4 2.1 3.1-.4 1 3 2.9 1.2-.7 3.1L23 13.5l-2.3 2.2.4 3.1-3 .9-1.4 2.9-3.1-.8-2.6 1.9-2.6-1.9-3.1.8-1.4-2.9-3-.9.4-3.1L1 13.5l2.3-2.5-.7-3.1L5.5 6.7l1-3 3.1.4L12 2z"
-                  fill="#f2bb46"
+            <div className={styles.agentTop}>
+              {agent.profile_image ? (
+                <Image
+                  src={agent.profile_image}
+                  alt=""
+                  width={56}
+                  height={56}
+                  className={styles.agentAvatarImg}
                 />
-                <path
-                  d="M8.5 12.5l2.4 2.4 4.6-5"
-                  stroke="#1a1a1a"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Verified Dhalahore agent
-            </span>
+              ) : (
+                <div className={styles.agentAvatar} aria-hidden="true">
+                  {agent.full_name?.charAt(0)?.toUpperCase() || "A"}
+                </div>
+              )}
+              <div>
+                <h2 className={styles.agentName}>{agent.full_name}</h2>
+                <span className={styles.verifiedBadge}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M12 2l2.4 2.1 3.1-.4 1 3 2.9 1.2-.7 3.1L23 13.5l-2.3 2.2.4 3.1-3 .9-1.4 2.9-3.1-.8-2.6 1.9-2.6-1.9-3.1.8-1.4-2.9-3-.9.4-3.1L1 13.5l2.3-2.5-.7-3.1L5.5 6.7l1-3 3.1.4L12 2z"
+                      fill="#f2bb46"
+                    />
+                    <path
+                      d="M8.5 12.5l2.4 2.4 4.6-5"
+                      stroke="#1a1a1a"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  Verified Agent
+                </span>
+              </div>
+            </div>
 
             <div className={styles.agentDetails}>
-              <a href={`mailto:${agent.email}`} className={styles.agentDetail}>
-                <span>Email</span>
-                <strong>{agent.email}</strong>
-              </a>
               {agent.phone ? (
                 <a href={telHref} className={styles.agentDetail}>
                   <span>Phone</span>
                   <strong>{agent.phone}</strong>
                 </a>
               ) : null}
+              <a href={`mailto:${agent.email}`} className={styles.agentDetail}>
+                <span>Email</span>
+                <strong>{agent.email}</strong>
+              </a>
             </div>
 
             <div className={styles.agentActions}>
-              <a href={viewingHref} className={styles.agentPrimary}>
-                Request a viewing
-              </a>
-              <a href={inquiryHref} className={styles.agentSecondary}>
-                Ask a question
+              {telHref ? (
+                <a href={telHref} className={styles.agentPrimary}>
+                  Call Agent
+                </a>
+              ) : null}
+              {waHref ? (
+                <a
+                  href={waHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.agentWhatsApp}
+                >
+                  WhatsApp
+                </a>
+              ) : null}
+              <a href={viewingHref} className={styles.agentSecondary}>
+                Request Viewing
               </a>
             </div>
 
@@ -284,29 +356,40 @@ export default async function PropertyDetailPage({ params }) {
               Mention ref #{property.id} for a faster response.
             </p>
           </aside>
+
+          <div className={styles.overviewDetails}>
+            {/* 5. Property highlights — only real fields */}
+            {highlights.length > 0 ? (
+              <section className={styles.highlights} aria-label="Property highlights">
+                {highlights.map((item) => (
+                  <div key={item.label} className={styles.highlightCard}>
+                    <strong className={styles.highlightValue}>{item.value}</strong>
+                    <span className={styles.highlightLabel}>{item.label}</span>
+                  </div>
+                ))}
+              </section>
+            ) : null}
+
+            {/* 6. Property story */}
+            {property.description ? (
+              <section className={styles.story}>
+                <p className={styles.sectionKicker}>The story</p>
+                <h2 className={styles.sectionTitle}>Property Overview</h2>
+                <p className={styles.storyText}>{property.description}</p>
+              </section>
+            ) : null}
+          </div>
         </section>
 
-        {/* Explore the spaces — listing photos + room highlights in one swipeable rail */}
-        <GalleryCarousel
-          slides={[
-            ...gallery.map((img) => ({
-              id: `db-${img.id}`,
-              image: img.image_url,
-              label: img.image_title || property.title,
-              copy: null,
-            })),
-            ...SPACE_HIGHLIGHTS.map((space, index) => ({
-              id: `space-${index}`,
-              image: space.image,
-              label: space.label,
-              copy: space.copy,
-            })),
-          ]}
-          title={property.title}
-        />
+        {/* 7. Explore every space — listing photos only */}
+        <GalleryCarousel slides={spaceSlides} title={property.title} />
 
-        {/* Uploaded video replaces the existing walkthrough placeholder. */}
+        {/* 8. Property video tour */}
         <section className={styles.videoSection}>
+          <div className={styles.sectionIntro}>
+            <p className={styles.sectionKicker}>Walkthrough</p>
+            <h2 className={styles.sectionTitle}>Property Video Tour</h2>
+          </div>
           <div className={styles.videoFrame}>
             {property.video_url ? (
               <video
@@ -314,64 +397,142 @@ export default async function PropertyDetailPage({ params }) {
                 controls
                 preload="metadata"
                 src={property.video_url}
+                poster={heroImage?.image_url || undefined}
               >
                 Your browser does not support this video format.
               </video>
-            ) : heroImage ? (
-              <Image
-                src={heroImage.image_url}
-                alt=""
-                fill
-                sizes="100vw"
-                className={styles.videoPoster}
-                aria-hidden="true"
-              />
-            ) : null}
-            {!property.video_url ? <div className={styles.videoScrim} /> : null}
-            {!property.video_url ? <div className={styles.videoContent}>
-              <span className={styles.videoPlay} aria-hidden="true">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-                  <path d="M8 5.5v13l11-6.5-11-6.5z" fill="currentColor" />
-                </svg>
-              </span>
-              <p className={styles.videoKicker}>Video walkthrough</p>
-              <h2 className={styles.videoTitle}>Cinematic tour coming soon</h2>
-              <p className={styles.videoText}>
-                We&apos;re filming this home. Until then, the agent will gladly
-                walk you through it — live on a call or in person.
-              </p>
-              <a href={viewingHref} className={styles.videoCta}>
-                Book a live tour
-              </a>
-            </div> : null}
+            ) : (
+              <>
+                {heroImage ? (
+                  <Image
+                    src={heroImage.image_url}
+                    alt=""
+                    fill
+                    sizes="100vw"
+                    className={styles.videoPoster}
+                    aria-hidden="true"
+                  />
+                ) : null}
+                <div className={styles.videoScrim} />
+                <div className={styles.videoContent}>
+                  <span className={styles.videoPlay} aria-hidden="true">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                      <path d="M8 5.5v13l11-6.5-11-6.5z" fill="currentColor" />
+                    </svg>
+                  </span>
+                  <p className={styles.videoKicker}>Private walkthrough</p>
+                  <h3 className={styles.videoTitle}>
+                    Contact the agent for a viewing
+                  </h3>
+                  <p className={styles.videoText}>
+                    A filmed tour is not available for this listing yet. The
+                    agent can arrange a private in-person or live walkthrough.
+                  </p>
+                  <a href={viewingHref} className={styles.videoCta}>
+                    Request a viewing
+                  </a>
+                </div>
+              </>
+            )}
           </div>
         </section>
 
-        {/* Assurance strip */}
-        <section className={styles.assurance}>
-          {ASSURANCES.map((item) => (
+        {/* 9. Location */}
+        {locationInfo.full ? (
+          <section className={styles.locationSection}>
+            <div className={styles.sectionIntro}>
+              <p className={styles.sectionKicker}>Neighbourhood</p>
+              <h2 className={styles.sectionTitle}>Location</h2>
+            </div>
+            <div className={styles.locationCard}>
+              {locationInfo.area ? (
+                <div className={styles.locationRow}>
+                  <span>Area</span>
+                  <strong>{locationInfo.area}</strong>
+                </div>
+              ) : null}
+              {locationInfo.city ? (
+                <div className={styles.locationRow}>
+                  <span>City</span>
+                  <strong>{locationInfo.city}</strong>
+                </div>
+              ) : null}
+              <div className={styles.locationRow}>
+                <span>Address</span>
+                <strong>{locationInfo.full}</strong>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {/* 10. Agent brand story */}
+        <section className={styles.brandStory}>
+          <div className={styles.brandStoryInner}>
+            <div className={styles.brandStoryLogo}>
+              {agent.company_logo ? (
+                <Image
+                  src={agent.company_logo}
+                  alt=""
+                  width={72}
+                  height={72}
+                  className={styles.brandStoryLogoImg}
+                />
+              ) : (
+                <span className={styles.brandStoryLogoFallback} aria-hidden="true">
+                  {companyInitials(companyName)}
+                </span>
+              )}
+            </div>
+            <div className={styles.brandStoryCopy}>
+              <p className={styles.sectionKicker}>The agency</p>
+              <h2 className={styles.sectionTitle}>About {companyName}</h2>
+              <p className={styles.brandStoryText}>
+                {agent.description
+                  ? agent.description
+                  : `${companyName} helps customers find premium properties across ${
+                      locationInfo.city || "Lahore"
+                    }.`}
+              </p>
+              <p className={styles.brandManaged}>
+                Managed by <strong>{agent.full_name}</strong>
+              </p>
+              <Link href={agentProfileHref} className={styles.brandProfileBtn}>
+                View Agent Profile
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* 11. Trust */}
+        <section className={styles.assurance} aria-label="Trust indicators">
+          {TRUST_ITEMS.map((item) => (
             <div key={item.title} className={styles.assuranceCard}>
-              <strong>{item.title}</strong>
-              <span>{item.copy}</span>
+              <span className={styles.assuranceCheck} aria-hidden="true">
+                ✓
+              </span>
+              <div>
+                <strong>{item.title}</strong>
+                <span>{item.copy}</span>
+              </div>
             </div>
           ))}
         </section>
 
-        {/* Closing CTA */}
+        {/* 12. Final CTA */}
         <section className={styles.closingCta}>
           <div>
             <p className={styles.closingKicker}>Ready when you are</p>
             <h2 className={styles.closingTitle}>
-              Picture your life at {property.location || "this address"}
+              Ready to visit this property?
             </h2>
           </div>
           <div className={styles.closingActions}>
             <a href={viewingHref} className={styles.contactButton}>
-              Request a viewing
+              Request Viewing
             </a>
-            <Link href="/#sale" className={styles.closingGhost}>
-              Browse more homes
-            </Link>
+            <a href={inquiryHref} className={styles.closingGhost}>
+              Contact Agent
+            </a>
           </div>
         </section>
       </div>

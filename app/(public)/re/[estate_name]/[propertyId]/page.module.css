@@ -1,6 +1,6 @@
 .page {
   min-height: 100vh;
-  color: #1a1a1a;
+  color: var(--ink);
   background:
     radial-gradient(ellipse 80% 45% at 50% -8%, rgba(242, 187, 70, 0.14), transparent 55%),
     linear-gradient(180deg, #ffffff 0%, #faf9f6 30%, #f7f4ec 100%);
@@ -9,26 +9,27 @@
 .container {
   width: min(1180px, calc(100% - 2rem));
   margin: 0 auto;
-  padding: 1.25rem 0 3.5rem;
+  padding: 1.1rem 0 3.75rem;
 }
 
-/* ---------- Header ---------- */
+/* ---------- 1. Agent brand header ---------- */
 .header {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  padding: 0.85rem 0 1.15rem;
-  margin-bottom: 1.5rem;
+  padding: 0.65rem 0 1.1rem;
+  margin-bottom: 1.35rem;
   border-bottom: 1px solid rgba(242, 187, 70, 0.22);
 }
 
 .headerLeft {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.85rem;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .backBtn {
@@ -40,15 +41,67 @@
   cursor: pointer;
   padding: 0;
   font-family: var(--font-body);
+  flex-shrink: 0;
 }
 
 .backBtn:hover {
-  color: #1a1a1a;
+  color: var(--ink);
 }
 
-.logoLink {
+.brandLink {
   display: inline-flex;
   align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.brandLogo,
+.brandLogoFallback {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  object-fit: cover;
+  background: #fff;
+  border: 1px solid rgba(242, 187, 70, 0.35);
+}
+
+.brandLogoFallback {
+  display: grid;
+  place-items: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--gold-deep);
+  background: var(--gold-tint);
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.brandName {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brandSub {
+  font-size: 0.78rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .headerActions {
@@ -61,10 +114,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.7rem 1.2rem;
+  padding: 0.72rem 1.25rem;
   border-radius: 12px;
   background: var(--gold);
-  color: #1a1a1a;
+  color: var(--ink);
   font-weight: 700;
   text-decoration: none;
   font-size: 0.92rem;
@@ -77,78 +130,42 @@
   transform: translateY(-1px);
 }
 
-/* ---------- Hero mosaic ---------- */
-.heroMosaic {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 0.75rem;
-  margin-bottom: 2rem;
-}
-
-.mosaicMain {
-  position: relative;
-  aspect-ratio: 16 / 10;
-  border-radius: 22px;
-  overflow: hidden;
-  background: #ece9e2;
-}
-
-.mosaicSide {
-  display: grid;
-  grid-template-rows: 1fr 1fr;
-  gap: 0.75rem;
-}
-
-.mosaicTile {
-  position: relative;
-  border-radius: 18px;
-  overflow: hidden;
-  background: #ece9e2;
-}
-
-.mosaicImage {
-  object-fit: cover;
-  transition: transform 0.5s ease;
-}
-
-.mosaicMain:hover .mosaicImage,
-.mosaicTile:hover .mosaicImage {
-  transform: scale(1.04);
-}
-
-.mosaicFallback {
-  background: linear-gradient(135deg, #f4efe4 0%, #e9e2d2 100%);
-}
-
-.photoCount {
-  position: absolute;
-  bottom: 1rem;
-  left: 1rem;
-  z-index: 2;
-  padding: 0.4rem 0.8rem;
-  border-radius: 999px;
-  background: rgba(20, 20, 20, 0.72);
-  color: #fff;
-  font-size: 0.8rem;
-  font-weight: 600;
-  backdrop-filter: blur(6px);
-}
-
-/* ---------- Overview ---------- */
+/* ---------- Overview layout ---------- */
 .overview {
   display: grid;
-  grid-template-columns: 1.4fr 0.8fr;
-  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.9fr);
+  grid-template-areas:
+    "summary agent"
+    "details agent";
+  gap: 1.5rem;
   align-items: start;
-  margin-bottom: 3rem;
+  margin-bottom: 2.75rem;
 }
 
-.overviewMain {
+.overviewSummary {
+  grid-area: summary;
+}
+
+.agentCard {
+  grid-area: agent;
+}
+
+.overviewDetails {
+  grid-area: details;
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  min-width: 0;
+}
+
+/* ---------- 3. Summary card ---------- */
+.summaryCard {
   background: #fff;
-  border: 1px solid rgba(242, 187, 70, 0.22);
-  border-radius: 22px;
-  padding: 1.7rem 1.6rem 1.8rem;
-  box-shadow: 0 14px 34px rgba(26, 26, 26, 0.05);
+  border: 1px solid rgba(26, 26, 26, 0.06);
+  border-radius: 20px;
+  padding: 1.5rem 1.6rem;
+  box-shadow: var(--shadow-md);
+  border-top: 3px solid var(--gold);
 }
 
 .badges {
@@ -163,184 +180,223 @@
 .refBadge {
   display: inline-flex;
   align-items: center;
-  padding: 0.32rem 0.7rem;
+  padding: 0.28rem 0.7rem;
   border-radius: 999px;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .statusBadge {
-  background: var(--gold);
-  color: #1a1a1a;
+  background: var(--gold-tint);
+  color: var(--gold-deep);
+  border: 1px solid rgba(242, 187, 70, 0.45);
 }
 
 .locationBadge {
-  background: #faf8f3;
-  border: 1px solid rgba(26, 26, 26, 0.08);
-  color: #525252;
+  background: var(--surface-sunken);
+  color: var(--ink-soft);
 }
 
 .refBadge {
-  background: transparent;
-  border: 1px dashed rgba(26, 26, 26, 0.18);
-  color: #8a8a8a;
+  background: #fff;
+  color: var(--muted);
+  border: 1px solid rgba(26, 26, 26, 0.08);
 }
 
 .title {
-  margin: 0 0 0.55rem;
-  font-size: clamp(1.55rem, 3.2vw, 2.25rem);
+  margin: 0 0 0.65rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.65rem, 3.2vw, 2.15rem);
   font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.18;
-  color: #1a1a1a;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  color: var(--ink);
 }
 
 .price {
-  margin: 0 0 1.35rem;
-  font-size: clamp(1.45rem, 2.8vw, 1.95rem);
+  margin: 0;
+  font-size: clamp(1.35rem, 2.4vw, 1.7rem);
   font-weight: 800;
-  letter-spacing: -0.02em;
   color: var(--gold-deep);
+  letter-spacing: -0.02em;
 }
 
-.factRow {
+/* ---------- 5. Highlights ---------- */
+.highlights {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 0.75rem;
-  margin-bottom: 1.6rem;
 }
 
-.fact {
+.highlightCard {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
-  padding: 0.9rem 0.95rem;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #fffdf8 0%, #fff8e8 100%);
-  border: 1px solid rgba(242, 187, 70, 0.22);
+  gap: 0.35rem;
+  padding: 1rem 1.05rem;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid rgba(26, 26, 26, 0.06);
+  box-shadow: var(--shadow-sm);
 }
 
-.factLabel {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+.highlightValue {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.highlightLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
   text-transform: uppercase;
-  color: var(--gold-deep);
+  letter-spacing: 0.08em;
+  color: var(--muted);
 }
 
-.fact strong {
-  font-size: 0.98rem;
-  font-weight: 700;
-  color: #1a1a1a;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
+/* ---------- 6. Story ---------- */
+.story {
+  padding: 1.5rem 1.6rem;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid rgba(26, 26, 26, 0.06);
+  box-shadow: var(--shadow-sm);
 }
 
 .sectionKicker {
-  margin: 0 0 0.4rem;
+  margin: 0 0 0.35rem;
   color: var(--gold-deep);
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
   text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .sectionTitle {
-  margin: 0 0 0.75rem;
-  font-size: clamp(1.25rem, 2.4vw, 1.6rem);
+  margin: 0 0 0.85rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.4vw, 1.7rem);
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: #1a1a1a;
+  color: var(--ink);
 }
 
-.description {
-  border-top: 1px solid rgba(26, 26, 26, 0.06);
-  padding-top: 1.4rem;
-}
-
-.descriptionText {
+.storyText {
   margin: 0;
-  color: #5f5a50;
-  line-height: 1.8;
-  font-size: 0.98rem;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: var(--ink-soft);
+  white-space: pre-wrap;
 }
 
-/* ---------- Agent card ---------- */
+.sectionIntro {
+  margin-bottom: 1rem;
+}
+
+/* ---------- 4. Agent contact card ---------- */
 .agentCard {
-  background: #fff;
-  border: 1px solid rgba(242, 187, 70, 0.28);
-  border-radius: 22px;
-  padding: 1.4rem 1.3rem 1.35rem;
-  box-shadow: 0 14px 34px rgba(26, 26, 26, 0.05);
   position: sticky;
-  top: 1rem;
+  top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.35rem 1.35rem 1.2rem;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid rgba(26, 26, 26, 0.06);
+  box-shadow: var(--shadow-lg);
+  align-self: start;
+}
+
+.agentBrandRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.agentCompanyLogo,
+.agentCompanyFallback {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid rgba(242, 187, 70, 0.35);
+  background: #fff;
+}
+
+.agentCompanyFallback {
+  display: grid;
+  place-items: center;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--gold-deep);
+  background: var(--gold-tint);
+}
+
+.agentCompanyName {
+  margin: 0;
+  font-weight: 800;
+  font-size: 0.98rem;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.agentKicker {
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
 }
 
 .agentTop {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
-  margin-bottom: 0.9rem;
+  gap: 0.85rem;
+}
+
+.agentAvatar,
+.agentAvatarImg {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  object-fit: cover;
 }
 
 .agentAvatar {
-  flex-shrink: 0;
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.45rem;
-  font-weight: 800;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(145deg, var(--gold), var(--gold-deep));
   color: #1a1a1a;
-  background: linear-gradient(135deg, var(--gold-soft) 0%, var(--gold) 100%);
-  box-shadow: var(--shadow-gold);
-}
-
-.agentKicker {
-  margin: 0 0 0.15rem;
-  color: var(--gold-deep);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-weight: 800;
+  font-size: 1.25rem;
 }
 
 .agentName {
-  margin: 0 0 0.1rem;
-  font-size: 1.2rem;
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
   font-weight: 800;
-  color: #1a1a1a;
-}
-
-.agentRole {
-  margin: 0;
-  color: #737373;
-  font-size: 0.88rem;
+  letter-spacing: -0.02em;
 }
 
 .verifiedBadge {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.7rem;
-  margin-bottom: 1.05rem;
-  border-radius: 999px;
-  background: #fff8e8;
-  border: 1px solid rgba(242, 187, 70, 0.35);
-  color: #6b5518;
+  gap: 0.35rem;
   font-size: 0.78rem;
   font-weight: 700;
+  color: var(--ink-soft);
 }
 
 .agentDetails {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
-  margin-bottom: 1.1rem;
 }
 
 .agentDetail {
@@ -349,30 +405,29 @@
   gap: 0.15rem;
   padding: 0.7rem 0.85rem;
   border-radius: 12px;
-  background: #faf8f3;
-  border: 1px solid rgba(26, 26, 26, 0.05);
+  background: var(--surface-sunken);
   text-decoration: none;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  color: inherit;
+  transition: background 0.15s ease;
 }
 
 .agentDetail:hover {
-  border-color: rgba(242, 187, 70, 0.45);
   background: var(--gold-tint);
 }
 
 .agentDetail span {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #9a8b6a;
+  letter-spacing: 0.08em;
+  color: var(--muted);
 }
 
 .agentDetail strong {
-  color: #1a1a1a;
   font-size: 0.92rem;
-  font-weight: 600;
-  overflow-wrap: anywhere;
+  font-weight: 700;
+  color: var(--ink);
+  word-break: break-word;
 }
 
 .agentActions {
@@ -381,19 +436,24 @@
   gap: 0.55rem;
 }
 
-.agentPrimary {
+.agentPrimary,
+.agentSecondary,
+.agentWhatsApp {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 46px;
+  padding: 0.78rem 1rem;
   border-radius: 12px;
-  background: var(--gold);
-  color: #1a1a1a;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   text-decoration: none;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.agentPrimary {
+  background: var(--gold);
+  color: var(--ink);
   box-shadow: var(--shadow-gold);
-  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .agentPrimary:hover {
@@ -401,242 +461,364 @@
   transform: translateY(-1px);
 }
 
+.agentWhatsApp {
+  background: #ecfdf3;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.agentWhatsApp:hover {
+  background: #dcfce7;
+}
+
 .agentSecondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  border-radius: 12px;
-  border: 1px solid rgba(26, 26, 26, 0.12);
   background: #fff;
-  color: #1a1a1a;
-  font-weight: 600;
-  font-size: 0.92rem;
-  text-decoration: none;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  color: var(--ink);
+  border: 1px solid rgba(26, 26, 26, 0.12);
 }
 
 .agentSecondary:hover {
-  border-color: rgba(242, 187, 70, 0.55);
+  border-color: var(--gold);
   background: var(--gold-tint);
 }
 
 .agentNote {
-  margin: 0.85rem 0 0;
-  text-align: center;
-  color: #9a9a9a;
+  margin: 0;
   font-size: 0.78rem;
+  color: var(--muted);
+  text-align: center;
 }
 
-/* ---------- Video tour ---------- */
+/* ---------- 8. Video ---------- */
 .videoSection {
-  margin-bottom: 3rem;
+  margin-bottom: 2.75rem;
 }
 
 .videoFrame {
   position: relative;
-  border-radius: 24px;
+  aspect-ratio: 16 / 9;
+  border-radius: 22px;
   overflow: hidden;
-  isolation: isolate;
-  min-height: 380px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #14120d;
+  background: #1a1a1a;
+  box-shadow: var(--shadow-lg);
 }
 
 .videoPlayer {
-  display: block;
   width: 100%;
-  max-height: 70vh;
-  aspect-ratio: 16 / 9;
+  height: 100%;
   object-fit: contain;
-  background: #14120d;
+  background: #000;
+  display: block;
 }
 
 .videoPoster {
   object-fit: cover;
-  z-index: 0;
-  opacity: 0.5;
 }
 
 .videoScrim {
   position: absolute;
   inset: 0;
-  z-index: 1;
-  background: radial-gradient(ellipse 70% 80% at 50% 50%, rgba(10, 9, 6, 0.35) 0%, rgba(10, 9, 6, 0.78) 100%);
+  background: rgba(26, 26, 26, 0.55);
 }
 
 .videoContent {
-  position: relative;
-  z-index: 2;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: 3rem 1.5rem;
-  max-width: 34rem;
+  padding: 1.5rem;
+  color: #fff;
+  z-index: 1;
 }
 
 .videoPlay {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 68px;
-  height: 68px;
-  margin-bottom: 1.1rem;
-  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  margin-bottom: 1rem;
+  border-radius: 999px;
   background: var(--gold);
-  color: #1a1a1a;
-  box-shadow: 0 0 0 10px rgba(242, 187, 70, 0.22), 0 14px 34px rgba(0, 0, 0, 0.35);
+  color: var(--ink);
+  box-shadow: var(--shadow-gold);
 }
 
 .videoKicker {
   margin: 0 0 0.35rem;
-  color: var(--gold);
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
   text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--gold-soft);
 }
 
 .videoTitle {
-  margin: 0 0 0.6rem;
-  color: #fff;
-  font-size: clamp(1.3rem, 2.6vw, 1.7rem);
+  margin: 0 0 0.55rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 2.5vw, 1.65rem);
   font-weight: 800;
   letter-spacing: -0.02em;
 }
 
 .videoText {
-  margin: 0 0 1.35rem;
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 0.94rem;
-  line-height: 1.65;
+  margin: 0 0 1.15rem;
+  max-width: 34rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .videoCta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.75rem 1.4rem;
+  padding: 0.7rem 1.2rem;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  color: #fff;
+  background: var(--gold);
+  color: var(--ink);
   font-weight: 700;
-  font-size: 0.92rem;
   text-decoration: none;
-  backdrop-filter: blur(6px);
-  transition: background 0.2s ease, border-color 0.2s ease;
+  box-shadow: var(--shadow-gold);
 }
 
 .videoCta:hover {
-  background: rgba(242, 187, 70, 0.25);
-  border-color: var(--gold);
+  background: var(--gold-soft);
 }
 
-/* ---------- Assurance strip ---------- */
+/* ---------- 9. Location ---------- */
+.locationSection {
+  margin-bottom: 2.75rem;
+}
+
+.locationCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1.35rem 1.5rem;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid rgba(26, 26, 26, 0.06);
+  box-shadow: var(--shadow-sm);
+}
+
+.locationRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(26, 26, 26, 0.06);
+}
+
+.locationRow:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.locationRow span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.locationRow strong {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: right;
+}
+
+/* ---------- 10. Brand story ---------- */
+.brandStory {
+  margin-bottom: 2.75rem;
+}
+
+.brandStoryInner {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.5rem;
+  align-items: start;
+  padding: 1.6rem 1.7rem;
+  border-radius: 22px;
+  background: #fff;
+  border: 1px solid rgba(26, 26, 26, 0.06);
+  box-shadow: var(--shadow-md);
+}
+
+.brandStoryLogoImg,
+.brandStoryLogoFallback {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  object-fit: cover;
+  border: 1px solid rgba(242, 187, 70, 0.35);
+  background: #fff;
+}
+
+.brandStoryLogoFallback {
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--gold-deep);
+  background: var(--gold-tint);
+}
+
+.brandStoryText {
+  margin: 0 0 0.85rem;
+  font-size: 1.02rem;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+.brandManaged {
+  margin: 0 0 1.1rem;
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+.brandManaged strong {
+  color: var(--ink);
+}
+
+.brandProfileBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1.15rem;
+  border-radius: 12px;
+  border: 1px solid rgba(26, 26, 26, 0.12);
+  background: #fff;
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 0.92rem;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.brandProfileBtn:hover {
+  border-color: var(--gold);
+  background: var(--gold-tint);
+}
+
+/* ---------- 11. Trust ---------- */
 .assurance {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.9rem;
-  margin-bottom: 3rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 2.75rem;
 }
 
 .assuranceCard {
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  padding: 1.15rem 1.2rem;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 1.1rem 1.05rem;
   border-radius: 16px;
   background: #fff;
-  border: 1px solid rgba(242, 187, 70, 0.2);
-  box-shadow: 0 10px 26px rgba(26, 26, 26, 0.04);
+  border: 1px solid rgba(26, 26, 26, 0.06);
+  box-shadow: var(--shadow-sm);
+}
+
+.assuranceCheck {
+  display: grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+  background: var(--gold-tint);
+  color: var(--gold-deep);
+  font-weight: 800;
+  font-size: 0.85rem;
+  border: 1px solid rgba(242, 187, 70, 0.45);
 }
 
 .assuranceCard strong {
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: #1a1a1a;
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.92rem;
+  color: var(--ink);
 }
 
-.assuranceCard span {
-  color: #737373;
-  font-size: 0.86rem;
-  line-height: 1.55;
+.assuranceCard span:last-child {
+  display: block;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--muted);
 }
 
-/* ---------- Closing CTA ---------- */
+/* ---------- 12. Closing CTA ---------- */
 .closingCta {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
   flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
   gap: 1.25rem;
-  padding: 1.9rem 1.8rem;
+  padding: 1.75rem 1.85rem;
   border-radius: 22px;
-  background: linear-gradient(135deg, #fffdf8 0%, #fff3d6 100%);
+  background:
+    linear-gradient(135deg, rgba(242, 187, 70, 0.16), rgba(255, 255, 255, 0.9)),
+    #fff;
   border: 1px solid rgba(242, 187, 70, 0.35);
+  box-shadow: var(--shadow-md);
 }
 
 .closingKicker {
   margin: 0 0 0.35rem;
   color: var(--gold-deep);
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
   text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .closingTitle {
   margin: 0;
-  font-size: clamp(1.2rem, 2.4vw, 1.55rem);
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.6vw, 1.75rem);
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: #1a1a1a;
 }
 
 .closingActions {
   display: flex;
-  gap: 0.7rem;
   flex-wrap: wrap;
+  gap: 0.65rem;
 }
 
 .closingGhost {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.7rem 1.2rem;
+  padding: 0.72rem 1.2rem;
   border-radius: 12px;
   border: 1px solid rgba(26, 26, 26, 0.14);
   background: #fff;
-  color: #1a1a1a;
-  font-weight: 600;
-  font-size: 0.92rem;
+  color: var(--ink);
+  font-weight: 700;
   text-decoration: none;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  font-size: 0.92rem;
 }
 
 .closingGhost:hover {
-  border-color: rgba(242, 187, 70, 0.55);
+  border-color: var(--gold);
   background: var(--gold-tint);
 }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 960px) {
-  .heroMosaic {
-    grid-template-columns: 1fr;
-  }
-
-  .mosaicSide {
-    grid-template-rows: none;
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .mosaicTile {
-    aspect-ratio: 16 / 9;
-  }
-
   .overview {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "summary"
+      "agent"
+      "details";
   }
 
   .agentCard {
@@ -644,38 +826,56 @@
   }
 
   .assurance {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .brandStoryInner {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 600px) {
-  .headerActions {
-    width: 100%;
+@media (max-width: 640px) {
+  .container {
+    width: min(100%, calc(100% - 1.25rem));
+    padding-bottom: 3rem;
   }
 
-  .contactButton {
-    flex: 1;
+  .header {
+    align-items: flex-start;
   }
 
-  .mosaicSide {
+  .brandSub {
     display: none;
   }
 
-  .videoFrame {
-    min-height: 320px;
+  .summaryCard,
+  .story,
+  .locationCard,
+  .brandStoryInner,
+  .closingCta {
+    padding-left: 1.15rem;
+    padding-right: 1.15rem;
+  }
+
+  .assurance {
+    grid-template-columns: 1fr;
   }
 
   .closingCta {
-    padding: 1.5rem 1.25rem;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .closingActions {
+    flex-direction: column;
+  }
+
+  .closingActions > * {
     width: 100%;
   }
 
-  .closingActions .contactButton,
-  .closingGhost {
-    flex: 1;
-    white-space: nowrap;
+  .videoFrame {
+    aspect-ratio: 4 / 3;
+    border-radius: 18px;
   }
 }

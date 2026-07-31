@@ -3,44 +3,328 @@ import { requireAdmin } from "@/lib/adminAuth";
 import {
   AGENT_LIVE_STATUS,
   PROPERTY_PUBLIC_STATUS,
+  PROPERTY_STATUS,
   toClientAgentStatus,
 } from "@/lib/status";
+
+const MONTH_LABELS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+/** Last N calendar months as { key: 'YYYY-MM', label: 'Jan' }. */
+function lastNMonths(n = 6) {
+  const months = [];
+  const now = new Date();
+  for (let i = n - 1; i >= 0; i -= 1) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    months.push({ key, label: MONTH_LABELS[d.getMonth()] });
+  }
+  return months;
+}
+
+/**
+ * Fill missing months with zeros and add a running total.
+ * The cumulative value keeps the growth line meaningful even when a young
+ * platform only has activity in one or two months.
+ */
+function fillMonthlySeries(months, rows, startingTotal = 0) {
+  const map = new Map(
+    rows.map((row) => [String(row.month), Number(row.total) || 0]),
+  );
+  let running = Number(startingTotal) || 0;
+  return months.map((m) => {
+    const total = map.get(m.key) || 0;
+    running += total;
+    return { month: m.key, label: m.label, total, cumulative: running };
+  });
+}
+
+function percentChange(current, previous) {
+  const cur = Number(current) || 0;
+  const prev = Number(previous) || 0;
+  if (prev === 0) {
+    return cur > 0 ? 100 : 0;
+  }
+  return Math.round(((cur - prev) / prev) * 100);
+}
+
+/**
+ * Collapse free-text locations into a short area key for the distribution chart.
+ * "DHA Phase 5, Lahore" → "DHA Phase 5"
+ */
+function areaKey(location) {
+  const raw = String(location || "").trim();
+  if (!raw) return "Unspecified";
+  const beforeComma = raw.split(",")[0].trim();
+  return beforeComma || "Unspecified";
+}
 
 export async function GET() {
   const { error } = await requireAdmin();
   if (error) return error;
 
   try {
-    const rows = await query(
+    const months = lastNMonths(6);
+    const rangeStart = `${months[0].key}-01`;
+
+    const countRows = await query(
       `SELECT
          (SELECT COUNT(*) FROM signup_requests WHERE status = 'pending') AS pendingRequests,
          (SELECT COUNT(*) FROM signup_requests) AS totalRequests,
          (SELECT COUNT(*) FROM agents WHERE status = ?) AS activeAgents,
          (SELECT COUNT(*) FROM agents WHERE status = 'disabled') AS disabledAgents,
+         (SELECT COUNT(*) FROM agents WHERE status = 'blocked') AS blockedAgents,
          (SELECT COUNT(*) FROM agents) AS totalAgents,
          (SELECT COUNT(*) FROM properties WHERE status = ?) AS activeProperties,
+         (SELECT COUNT(*) FROM properties WHERE status = 'pending_approval') AS pendingProperties,
          (SELECT COUNT(*) FROM properties WHERE status = 'sold') AS soldProperties,
          (SELECT COUNT(*) FROM properties WHERE status = 'draft') AS draftProperties,
-         (SELECT COUNT(*) FROM properties) AS totalProperties`,
+         (SELECT COUNT(*) FROM properties WHERE status = 'rejected') AS rejectedProperties,
+         (SELECT COUNT(*) FROM properties WHERE status = 'hidden') AS hiddenProperties,
+         (SELECT COUNT(*) FROM properties) AS totalProperties,
+         (SELECT COUNT(*) FROM properties
+           WHERE created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')) AS propertiesThisMonth,
+         (SELECT COUNT(*) FROM properties
+           WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01')
+             AND created_at < DATE_FORMAT(CURDATE(), '%Y-%m-01')) AS propertiesLastMonth,
+         (SELECT COUNT(*) FROM agents
+           WHERE created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')) AS agentsThisMonth,
+         (SELECT COUNT(*) FROM agents
+           WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01')
+             AND created_at < DATE_FORMAT(CURDATE(), '%Y-%m-01')) AS agentsLastMonth`,
       [AGENT_LIVE_STATUS, PROPERTY_PUBLIC_STATUS],
     );
 
-    const stats = rows[0] || {};
+    const stats = countRows[0] || {};
 
-    const recentPending = await query(
-      `SELECT id, full_name, email, estate_name, phone, created_at, status
-       FROM signup_requests
-       WHERE status = 'pending'
-       ORDER BY created_at DESC
-       LIMIT 5`,
-    );
+    const [
+      propertyGrowthRows,
+      agentGrowthRows,
+      baselineRows,
+      recentPending,
+      recentAgents,
+      approvalQueue,
+      topAgents,
+      locationRows,
+      activityProperties,
+      activityApprovals,
+      activityAgents,
+      activityRequests,
+    ] = await Promise.all([
+      query(
+        `SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, COUNT(*) AS total
+         FROM properties
+         WHERE created_at >= ?
+         GROUP BY month
+         ORDER BY month`,
+        [rangeStart],
+      ),
+      query(
+        `SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, COUNT(*) AS total
+         FROM agents
+         WHERE created_at >= ?
+         GROUP BY month
+         ORDER BY month`,
+        [rangeStart],
+      ),
+      // Totals that already existed before the chart window, so the
+      // cumulative line starts from the real platform size.
+      query(
+        `SELECT
+           (SELECT COUNT(*) FROM properties WHERE created_at < ?) AS propertiesBefore,
+           (SELECT COUNT(*) FROM agents WHERE created_at < ?) AS agentsBefore`,
+        [rangeStart, rangeStart],
+      ),
+      query(
+        `SELECT id, full_name, email, estate_name, phone, created_at, status
+         FROM signup_requests
+         WHERE status = 'pending'
+         ORDER BY created_at DESC
+         LIMIT 5`,
+      ),
+      query(
+        `SELECT id, full_name, email, estate_name, status, created_at
+         FROM agents
+         ORDER BY created_at DESC
+         LIMIT 5`,
+      ),
+      query(
+        `SELECT p.id, p.title, p.location, p.submitted_at, p.created_at,
+                a.full_name AS agent_name, a.estate_name
+         FROM properties p
+         JOIN agents a ON a.id = p.agent_id
+         WHERE p.status = ?
+         ORDER BY COALESCE(p.submitted_at, p.created_at) DESC
+         LIMIT 6`,
+        [PROPERTY_STATUS.PENDING_APPROVAL],
+      ),
+      query(
+        `SELECT a.id, a.full_name, a.estate_name, a.status,
+                COUNT(p.id) AS total_properties,
+                SUM(CASE WHEN p.status = ? THEN 1 ELSE 0 END) AS approved_properties
+         FROM agents a
+         LEFT JOIN properties p ON p.agent_id = a.id
+         WHERE a.status = ?
+         GROUP BY a.id, a.full_name, a.estate_name, a.status
+         HAVING total_properties > 0
+         ORDER BY approved_properties DESC, total_properties DESC
+         LIMIT 8`,
+        [PROPERTY_PUBLIC_STATUS, AGENT_LIVE_STATUS],
+      ),
+      query(
+        `SELECT location, COUNT(*) AS total
+         FROM properties
+         WHERE location IS NOT NULL AND location != ''
+         GROUP BY location
+         ORDER BY total DESC
+         LIMIT 40`,
+      ),
+      query(
+        `SELECT p.id, p.title, p.created_at, a.full_name AS agent_name
+         FROM properties p
+         JOIN agents a ON a.id = p.agent_id
+         ORDER BY p.created_at DESC
+         LIMIT 8`,
+      ),
+      query(
+        `SELECT p.id, p.title, p.approved_at AS event_at, a.full_name AS agent_name
+         FROM properties p
+         JOIN agents a ON a.id = p.agent_id
+         WHERE p.approved_at IS NOT NULL
+         ORDER BY p.approved_at DESC
+         LIMIT 8`,
+      ),
+      query(
+        `SELECT id, full_name, estate_name, created_at
+         FROM agents
+         ORDER BY created_at DESC
+         LIMIT 8`,
+      ),
+      query(
+        `SELECT id, full_name, estate_name, created_at
+         FROM signup_requests
+         WHERE status = 'pending'
+         ORDER BY created_at DESC
+         LIMIT 5`,
+      ),
+    ]);
 
-    const recentAgents = await query(
-      `SELECT id, full_name, email, estate_name, status, created_at
-       FROM agents
-       ORDER BY created_at DESC
-       LIMIT 5`,
+    // Area distribution: normalize free-text locations, keep top 5 + Others.
+    const areaTotals = new Map();
+    for (const row of locationRows) {
+      const key = areaKey(row.location);
+      areaTotals.set(key, (areaTotals.get(key) || 0) + (Number(row.total) || 0));
+    }
+    const sortedAreas = Array.from(areaTotals.entries()).sort(
+      (a, b) => b[1] - a[1],
     );
+    const topAreas = sortedAreas.slice(0, 5);
+    const otherTotal = sortedAreas
+      .slice(5)
+      .reduce((sum, [, total]) => sum + total, 0);
+    const areaSum =
+      topAreas.reduce((sum, [, total]) => sum + total, 0) + otherTotal;
+    const areas = [
+      ...topAreas.map(([name, total]) => ({
+        name,
+        total,
+        percent: areaSum ? Math.round((total / areaSum) * 100) : 0,
+      })),
+      ...(otherTotal
+        ? [
+            {
+              name: "Others",
+              total: otherTotal,
+              percent: areaSum ? Math.round((otherTotal / areaSum) * 100) : 0,
+            },
+          ]
+        : []),
+    ];
+
+    const statusBreakdown = [
+      {
+        status: "approved",
+        label: "Approved",
+        total: Number(stats.activeProperties) || 0,
+      },
+      {
+        status: "pending_approval",
+        label: "Pending",
+        total: Number(stats.pendingProperties) || 0,
+      },
+      {
+        status: "draft",
+        label: "Draft",
+        total: Number(stats.draftProperties) || 0,
+      },
+      {
+        status: "rejected",
+        label: "Rejected",
+        total: Number(stats.rejectedProperties) || 0,
+      },
+      {
+        status: "sold",
+        label: "Sold",
+        total: Number(stats.soldProperties) || 0,
+      },
+      {
+        status: "hidden",
+        label: "Hidden",
+        total: Number(stats.hiddenProperties) || 0,
+      },
+    ].filter((item) => item.total > 0);
+
+    const activity = [
+      ...activityProperties.map((row) => ({
+        id: `prop-${row.id}`,
+        type: "property_added",
+        title: `${row.agent_name} added a new property`,
+        detail: row.title,
+        at: row.created_at,
+      })),
+      ...activityApprovals.map((row) => ({
+        id: `apr-${row.id}`,
+        type: "property_approved",
+        title: "Admin approved a property",
+        detail: row.title,
+        at: row.event_at,
+      })),
+      ...activityAgents.map((row) => ({
+        id: `agt-${row.id}`,
+        type: "agent_joined",
+        title: "New agent registered",
+        detail: `${row.full_name} · /re/${row.estate_name}`,
+        at: row.created_at,
+      })),
+      ...activityRequests.map((row) => ({
+        id: `req-${row.id}`,
+        type: "agent_request",
+        title: "New agent access request",
+        detail: `${row.full_name} · ${row.estate_name}`,
+        at: row.created_at,
+      })),
+    ]
+      .filter((item) => item.at)
+      .sort((a, b) => new Date(b.at) - new Date(a.at))
+      .slice(0, 10);
+
+    const baseline = baselineRows[0] || {};
+    const propertiesThisMonth = Number(stats.propertiesThisMonth) || 0;
+    const propertiesLastMonth = Number(stats.propertiesLastMonth) || 0;
+    const agentsThisMonth = Number(stats.agentsThisMonth) || 0;
+    const agentsLastMonth = Number(stats.agentsLastMonth) || 0;
 
     return Response.json({
       stats: {
@@ -48,14 +332,46 @@ export async function GET() {
         totalRequests: Number(stats.totalRequests) || 0,
         activeAgents: Number(stats.activeAgents) || 0,
         disabledAgents: Number(stats.disabledAgents) || 0,
+        blockedAgents: Number(stats.blockedAgents) || 0,
         totalAgents: Number(stats.totalAgents) || 0,
         activeProperties: Number(stats.activeProperties) || 0,
+        pendingProperties: Number(stats.pendingProperties) || 0,
         soldProperties: Number(stats.soldProperties) || 0,
         draftProperties: Number(stats.draftProperties) || 0,
+        rejectedProperties: Number(stats.rejectedProperties) || 0,
+        hiddenProperties: Number(stats.hiddenProperties) || 0,
         totalProperties: Number(stats.totalProperties) || 0,
+        propertiesThisMonth,
+        propertiesLastMonth,
+        propertiesTrend: percentChange(propertiesThisMonth, propertiesLastMonth),
+        agentsThisMonth,
+        agentsLastMonth,
+        agentsTrend: percentChange(agentsThisMonth, agentsLastMonth),
       },
+      propertyGrowth: fillMonthlySeries(
+        months,
+        propertyGrowthRows,
+        Number(baseline.propertiesBefore) || 0,
+      ),
+      agentGrowth: fillMonthlySeries(
+        months,
+        agentGrowthRows,
+        Number(baseline.agentsBefore) || 0,
+      ),
+      statusBreakdown,
+      approvalQueue: approvalQueue.map((row) => ({
+        ...row,
+        id: Number(row.id),
+      })),
+      topAgents: topAgents.map((agent) => ({
+        ...agent,
+        status: toClientAgentStatus(agent.status),
+        total_properties: Number(agent.total_properties) || 0,
+        approved_properties: Number(agent.approved_properties) || 0,
+      })),
+      areas,
+      activity,
       recentPending,
-      // Map approved → active so existing admin overview badges keep working.
       recentAgents: recentAgents.map((agent) => ({
         ...agent,
         status: toClientAgentStatus(agent.status),

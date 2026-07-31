@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import BackButton from "@/components/BackButton";
+import ImageCategorySelect from "@/components/ImageCategorySelect";
 
 export default function AgentEditPropertyPage() {
   const router = useRouter();
@@ -78,9 +79,11 @@ export default function AgentEditPropertyPage() {
 
     const imageUpdates = existingImages
       .filter((image) => !image.pendingDelete)
-      .map((image) => ({
+      .map((image, index) => ({
         id: image.id,
         title: image.image_title || "",
+        category: image.category || null,
+        sortOrder: index,
         isFeatured: Boolean(image.is_featured),
       }));
 
@@ -123,6 +126,7 @@ export default function AgentEditPropertyPage() {
       newImages.forEach((item) => {
         formData.append("images", item.file);
         formData.append("imageTitles", item.title.trim());
+        formData.append("imageCategories", item.category || "");
         formData.append("isFeatured", item.isFeatured ? "1" : "0");
       });
 
@@ -266,6 +270,14 @@ export default function AgentEditPropertyPage() {
                         }
                         style={{ ...inputStyle, width: "100%" }}
                       />
+                      <ImageCategorySelect
+                        value={image.category}
+                        ariaLabel={`Category for image ${index + 1}`}
+                        onChange={(category) =>
+                          updateExistingImage(image.id, { category })
+                        }
+                        style={{ ...inputStyle, width: "100%", marginTop: 6 }}
+                      />
                       <label
                         style={{
                           display: "flex",
@@ -333,6 +345,7 @@ export default function AgentEditPropertyPage() {
                 file,
                 title:
                   file.name.replace(/\.[^.]+$/, "") || `Image ${index + 1}`,
+                category: "",
                 isFeatured: false,
               }));
               setNewImages(nextImages);
@@ -375,6 +388,16 @@ export default function AgentEditPropertyPage() {
                   onChange={(e) => {
                     const next = [...newImages];
                     next[index] = { ...next[index], title: e.target.value };
+                    setNewImages(next);
+                  }}
+                  style={inputStyle}
+                />
+                <ImageCategorySelect
+                  value={item.category}
+                  ariaLabel={`Category for new image ${index + 1}`}
+                  onChange={(category) => {
+                    const next = [...newImages];
+                    next[index] = { ...next[index], category: category || "" };
                     setNewImages(next);
                   }}
                   style={inputStyle}

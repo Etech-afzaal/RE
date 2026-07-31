@@ -1,21 +1,22 @@
 import { NextResponse } from "next/server";
 import { requireAgent } from "@/lib/adminAuth";
 import { query } from "@/lib/db";
-import { PROPERTY_STATUS } from "@/lib/status";
+import {
+  imageCategoryLabel,
+  normalizeImageCategory,
+} from "@/lib/imageCategories";
+import {
+  canAgentTransition,
+  isPropertyLockedForAgent,
+  PROPERTY_DB_STATUSES,
+  PROPERTY_STATUS,
+} from "@/lib/status";
 import { rm } from "fs/promises";
 import path from "path";
 
 function agentIdFrom(session) {
   return Number(session.user.agent_id || session.user.id);
 }
-
-/** Statuses an agent may set on their own listing (never self-approve). */
-const AGENT_SETTABLE_STATUSES = new Set([
-  PROPERTY_STATUS.DRAFT,
-  PROPERTY_STATUS.PENDING_APPROVAL,
-  PROPERTY_STATUS.SOLD,
-  PROPERTY_STATUS.HIDDEN,
-]);
 
 export async function GET(_req, { params }) {
   const { session, error } = await requireAgent();
@@ -32,10 +33,14 @@ export async function GET(_req, { params }) {
     return NextResponse.json({ error: "Property not found." }, { status: 404 });
   }
 
-  const images = await query(
+  const imageRows = await query(
     "SELECT * FROM property_images WHERE property_id = ? ORDER BY sort_order ASC, id ASC",
     [propertyId],
   );
+  const images = imageRows.map((image) => {
+    const category = normalizeImageCategory(image.category);
+    return { ...image, category, category_label: imageCategoryLabel(category) };
+  });
 
   return NextResponse.json({ property: { ...property, images } });
 }
@@ -55,19 +60,52 @@ export async function PUT(req, { params }) {
 
   const agentId = agentIdFrom(session);
   const existing = await query(
-    "SELECT id, status FROM properties WHERE id = ? AND agent_id = ?",
+    "SELECT id, status, approved_at FROM properties WHERE id = ? AND agent_id = ?",
     [propertyId, agentId],
   );
   if (existing.length === 0) {
     return NextResponse.json({ error: "Property not found." }, { status: 404 });
   }
 
-  let nextStatus = existing[0].status;
-  if (status != null) {
-    if (!AGENT_SETTABLE_STATUSES.has(status)) {
+  const current = existing[0];
+  if (isPropertyLockedForAgent(current.status)) {
+    return NextResponse.json(
+      {
+        error:
+          "This property is awaiting admin review and cannot be edited right now.",
+      },
+      { status: 409 },
+    );
+  }
+
+  let nextStatus = current.status;
+  if (status != null && status !== current.status) {
+    if (!PROPERTY_DB_STATUSES.has(status)) {
+      return NextResponse.json(
+        { error: "Unknown property status." },
+        { status: 400 },
+      );
+    }
+    if (status === PROPERTY_STATUS.PENDING_APPROVAL) {
+      return NextResponse.json(
+        {
+          error:
+            "Use the submit-for-approval action so the listing can be validated first.",
+        },
+        { status: 400 },
+      );
+    }
+    // Re-listing is only for something an admin already cleared once.
+    if (status === PROPERTY_STATUS.APPROVED && !current.approved_at) {
+      return NextResponse.json(
+        { error: "Only an admin can approve a property." },
+        { status: 403 },
+      );
+    }
+    if (!canAgentTransition(current.status, status)) {
       return NextResponse.json(
         { error: "You cannot set that property status." },
-        { status: 400 },
+        { status: 403 },
       );
     }
     nextStatus = status;

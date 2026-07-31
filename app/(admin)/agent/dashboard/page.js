@@ -165,7 +165,17 @@ export default function AgentDashboardPage() {
             }}
           >
             {agentName && <span>👤 {agentName}</span>}
-            {agentEmail && <span>✉️ {agentEmail}</span>}
+            {agentEmail && (
+              <span>
+                ✉️{" "}
+                <a
+                  href={`mailto:${agentEmail}`}
+                  style={{ color: "inherit", textDecoration: "none" }}
+                >
+                  {agentEmail}
+                </a>
+              </span>
+            )}
             {displayEstateName && <span>🏠 {displayEstateName}</span>}
           </div>
         </div>

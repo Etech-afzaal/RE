@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
+import ImageCategorySelect from "@/components/ImageCategorySelect";
 import ui from "@/components/agent-portal/portal.module.css";
 
 const STEPS = [
@@ -54,9 +55,11 @@ export default function CreatePropertyPage() {
 
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
+  const [errorDetails, setErrorDetails] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [files, setFiles] = useState([]);
-  const [previews, setPreviews] = useState([]);
+  // Each entry: { file, url, category, isFeatured }. Position in the array is
+  // the display order sent to the API as imageOrder.
+  const [images, setImages] = useState([]);
   const [video, setVideo] = useState(null);
   const [form, setForm] = useState({
     title: "",
@@ -74,10 +77,13 @@ export default function CreatePropertyPage() {
   });
 
   useEffect(() => {
-    const nextPreviews = files.map((file) => ({ file, url: URL.createObjectURL(file) }));
-    setPreviews(nextPreviews);
-    return () => nextPreviews.forEach((item) => URL.revokeObjectURL(item.url));
-  }, [files]);
+    return () => {
+      images.forEach((item) => URL.revokeObjectURL(item.url));
+    };
+    // Object URLs are revoked once, when leaving the page; revoking on every
+    // change would break previews that are still on screen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (status === "unauthenticated") {
     router.replace("/agent/login");
@@ -87,12 +93,58 @@ export default function CreatePropertyPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  function removeFile(index) {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+  function addFiles(fileList) {
+    const added = Array.from(fileList || []).map((file) => ({
+      file,
+      url: URL.createObjectURL(file),
+      category: "",
+      isFeatured: false,
+    }));
+    if (added.length === 0) return;
+    setImages((prev) => {
+      const next = [...prev, ...added];
+      if (!next.some((item) => item.isFeatured)) next[0].isFeatured = true;
+      return next;
+    });
   }
 
-  async function save(nextStatus) {
+  function updateImage(index, changes) {
+    setImages((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, ...changes } : item)),
+    );
+  }
+
+  /** Exactly one image can be the featured one. */
+  function setFeatured(index) {
+    setImages((prev) =>
+      prev.map((item, i) => ({ ...item, isFeatured: i === index })),
+    );
+  }
+
+  function moveImage(index, offset) {
+    setImages((prev) => {
+      const target = index + offset;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  }
+
+  function removeImage(index) {
+    setImages((prev) => {
+      URL.revokeObjectURL(prev[index].url);
+      const next = prev.filter((_, i) => i !== index);
+      if (next.length > 0 && !next.some((item) => item.isFeatured)) {
+        next[0] = { ...next[0], isFeatured: true };
+      }
+      return next;
+    });
+  }
+
+  async function save({ submit = false } = {}) {
     setError("");
+    setErrorDetails([]);
     const title = buildTitle(form.title, form.propertyType);
     if (!title) {
       setError("Title is required.");
@@ -112,7 +164,6 @@ export default function CreatePropertyPage() {
           size_value: form.size_value ? Number(form.size_value) : null,
           size_unit: form.size_unit || "marla",
           price: form.price ? Number(form.price) : null,
-          status: nextStatus,
         }),
       });
       const createData = await createRes.json().catch(() => ({}));
@@ -121,12 +172,13 @@ export default function CreatePropertyPage() {
       }
 
       const propertyId = createData.propertyId;
-      if (files.length > 0 && propertyId) {
+      if (images.length > 0 && propertyId) {
         const fd = new FormData();
-        files.forEach((file, index) => {
-          fd.append("images", file);
+        images.forEach((item, index) => {
+          fd.append("images", item.file);
           fd.append("imageOrder", String(index));
-          fd.append("isFeatured", index === 0 ? "1" : "0");
+          fd.append("imageCategories", item.category || "");
+          fd.append("isFeatured", item.isFeatured ? "1" : "0");
         });
         const imageRes = await fetch(`/api/properties/${propertyId}/images`, {
           method: "POST",
@@ -148,6 +200,25 @@ export default function CreatePropertyPage() {
         const videoData = await videoRes.json().catch(() => ({}));
         if (!videoRes.ok) {
           throw new Error(videoData.error || "Could not upload property video.");
+        }
+      }
+
+      // Submission happens after the uploads so the listing can be validated
+      // against its real images.
+      if (submit && propertyId) {
+        const submitRes = await fetch(`/api/properties/${propertyId}/submit`, {
+          method: "POST",
+        });
+        const submitData = await submitRes.json().catch(() => ({}));
+        if (!submitRes.ok) {
+          setError(
+            `${submitData.error || "Could not submit this property for approval."} It has been saved as a draft.`,
+          );
+          setErrorDetails(
+            Array.isArray(submitData.errors) ? submitData.errors : [],
+          );
+          setSaving(false);
+          return;
         }
       }
 
@@ -178,7 +249,18 @@ export default function CreatePropertyPage() {
           ))}
         </div>
 
-        {error ? <p className={ui.error}>{error}</p> : null}
+        {error ? (
+          <div className={ui.error}>
+            <p className={ui.noticeTitle}>{error}</p>
+            {errorDetails.length > 0 ? (
+              <ul className={ui.errorList}>
+                {errorDetails.map((detail) => (
+                  <li key={detail}>{detail}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
 
         {step === 0 ? (
           <>
@@ -315,34 +397,84 @@ export default function CreatePropertyPage() {
         {step === 3 ? (
           <>
             <label className={ui.field}>
-              <span className={ui.label}>Images</span>
+              <span className={ui.label}>Upload Images</span>
               <input
                 className={ui.input}
                 type="file"
                 accept="image/*"
                 multiple
-                onChange={(e) =>
-                  setFiles((prev) => [
-                    ...prev,
-                    ...Array.from(e.target.files || []),
-                  ])
-                }
+                onChange={(e) => {
+                  addFiles(e.target.files);
+                  e.target.value = "";
+                }}
               />
             </label>
-            {previews.length > 0 ? (
-              <div className={ui.previewGrid}>
-                {previews.map((item, index) => (
-                  <div key={item.url} className={ui.previewItem}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={item.url} alt="" />
-                    <button
-                      type="button"
-                      className={ui.removePreview}
-                      onClick={() => removeFile(index)}
-                      aria-label="Remove image"
-                    >
-                      ×
-                    </button>
+            {images.length > 0 ? (
+              <div className={ui.imageManager}>
+                {images.map((item, index) => (
+                  <div key={item.url} className={ui.imageCard}>
+                    <div className={ui.imageCardThumb}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={item.url} alt="" />
+                      {item.isFeatured ? (
+                        <span className={ui.featuredTag}>Featured</span>
+                      ) : null}
+                    </div>
+                    <div className={ui.imageCardBody}>
+                      <label className={ui.field}>
+                        <span className={ui.imageCardLabel}>Category</span>
+                        <ImageCategorySelect
+                          className={ui.select}
+                          value={item.category}
+                          ariaLabel={`Category for image ${index + 1}`}
+                          onChange={(category) =>
+                            updateImage(index, { category: category || "" })
+                          }
+                        />
+                      </label>
+                      <div className={ui.imageCardMeta}>
+                        <label className={ui.imageCardCheck}>
+                          <input
+                            type="radio"
+                            name="featured-image"
+                            checked={item.isFeatured}
+                            onChange={() => setFeatured(index)}
+                          />
+                          Featured image
+                        </label>
+                        <span className={ui.imageCardLabel}>
+                          Order {index + 1}
+                        </span>
+                        <div className={ui.imageCardActions}>
+                          <button
+                            type="button"
+                            className={ui.iconBtn}
+                            disabled={index === 0}
+                            aria-label={`Move image ${index + 1} up`}
+                            onClick={() => moveImage(index, -1)}
+                          >
+                            ↑
+                          </button>
+                          <button
+                            type="button"
+                            className={ui.iconBtn}
+                            disabled={index === images.length - 1}
+                            aria-label={`Move image ${index + 1} down`}
+                            onClick={() => moveImage(index, 1)}
+                          >
+                            ↓
+                          </button>
+                          <button
+                            type="button"
+                            className={`${ui.iconBtn} ${ui.iconBtnDanger}`}
+                            aria-label={`Remove image ${index + 1}`}
+                            onClick={() => removeImage(index)}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -375,14 +507,16 @@ export default function CreatePropertyPage() {
           <>
             <p className={ui.muted}>
               Save as draft to continue later, or submit for admin approval.
-              Drafts never appear on your public website.
+              Drafts never appear on your public website. Submitting needs a
+              title, description, location, price, property type, and at least
+              one image.
             </p>
             <div className={ui.formActions}>
               <button
                 type="button"
                 className={ui.btnGhost}
                 disabled={saving}
-                onClick={() => save("draft")}
+                onClick={() => save()}
               >
                 {saving ? "Saving…" : "Save Draft"}
               </button>
@@ -390,7 +524,7 @@ export default function CreatePropertyPage() {
                 type="button"
                 className={ui.btnPrimary}
                 disabled={saving}
-                onClick={() => save("pending_approval")}
+                onClick={() => save({ submit: true })}
               >
                 {saving ? "Submitting…" : "Submit For Approval"}
               </button>

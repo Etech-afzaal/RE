@@ -39,8 +39,11 @@ CREATE TABLE IF NOT EXISTS agents (
   social_links VARCHAR(1000) NULL,                 -- Company branding (URLs)
   password_hash VARCHAR(255) NOT NULL,
   must_reset_password BOOLEAN DEFAULT TRUE,
-  -- Phase 1: pending | approved | rejected | disabled (was active|disabled)
-  status ENUM('pending','approved','rejected','disabled') DEFAULT 'approved',
+  -- Phase 1 + block: pending | approved | rejected | disabled | blocked
+  status ENUM('pending','approved','rejected','disabled','blocked') DEFAULT 'approved',
+  blocked_reason TEXT NULL,                  -- required when permanently blocked
+  blocked_at DATETIME NULL,
+  blocked_by VARCHAR(100) NULL,              -- admin identifier
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -55,12 +58,15 @@ CREATE TABLE IF NOT EXISTS properties (
   price DECIMAL(15,2),
   location VARCHAR(255),
   video_url VARCHAR(500) NULL,                     -- optional property walkthrough video
-  -- Phase 1 workflow: draft → pending_approval → approved | rejected; plus sold | hidden
-  -- Default approved so existing agent create flow stays publicly visible until Phase 2.
-  status ENUM('draft','pending_approval','approved','rejected','sold','hidden') DEFAULT 'approved',
-  approved_by VARCHAR(100) NULL,                   -- Phase 1: admin identifier (env admin has no users row)
+  -- Workflow: draft → pending_approval → approved | rejected; plus sold | hidden
+  -- Only 'approved' is publicly visible, so new listings start as drafts.
+  status ENUM('draft','pending_approval','approved','rejected','sold','hidden') NOT NULL DEFAULT 'draft',
+  submitted_at DATETIME NULL,                      -- set when the agent submits for review
+  approved_by VARCHAR(100) NULL,                   -- admin identifier (env admin has no users row)
   approved_at DATETIME NULL,
   rejected_reason TEXT NULL,
+  rejected_at DATETIME NULL,
+  rejected_by VARCHAR(100) NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE
@@ -71,15 +77,18 @@ CREATE TABLE IF NOT EXISTS property_images (
   property_id INT NOT NULL,
   image_url VARCHAR(500) NOT NULL,          -- watermarked, public-facing
   image_title VARCHAR(255),                -- optional title for the property detail gallery
+  category VARCHAR(40) NULL,               -- room/area label, e.g. master_bedroom (see lib/imageCategories.js)
   is_featured BOOLEAN DEFAULT FALSE,       -- marked as the main image for the property page
-  sort_order INT DEFAULT 0,
+  sort_order INT DEFAULT 0,                -- display order within the gallery
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_properties_agent ON properties(agent_id);
+CREATE INDEX idx_properties_status ON properties(status);
 CREATE INDEX idx_images_property ON property_images(property_id);
+CREATE INDEX idx_images_category ON property_images(property_id, category);
 
 -- Demo / realistic listings live in seed.sql (agents, sale/rent/plot properties, images).
 -- After creating tables, run:

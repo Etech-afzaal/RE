@@ -15,6 +15,29 @@
   overflow: hidden;
 }
 
+/* Clickable overview cards — same look as .statCard, hover only. */
+.statCardLink {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.statCardLink:hover {
+  border-color: var(--gold);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.statCardLink:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
 .statCard::after {
   content: "";
   position: absolute;
@@ -48,6 +71,372 @@
   margin: 0.35rem 0 0;
   color: var(--ink-soft);
   font-size: 0.85rem;
+}
+
+.statTrend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.statTrendUp {
+  color: var(--success);
+}
+
+.statTrendDown {
+  color: var(--danger);
+}
+
+.statTrendFlat {
+  color: var(--muted);
+}
+
+.opsStack {
+  display: grid;
+  gap: 1rem;
+}
+
+.opsRow {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 1rem;
+}
+
+.chartBody {
+  padding: 1rem 1.15rem 1.2rem;
+}
+
+.chartEmpty {
+  margin: 0;
+  padding: 2rem 0.5rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.lineChart {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.lineChartGrid {
+  stroke: var(--line-soft);
+  stroke-width: 1;
+}
+
+.lineChartLine {
+  fill: none;
+  stroke: var(--gold-deep);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lineChartArea {
+  fill: rgba(242, 187, 70, 0.16);
+}
+
+.lineChartDot {
+  fill: var(--gold);
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.lineChartLineAlt {
+  fill: none;
+  stroke: #2563eb;
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lineChartDotAlt {
+  fill: #2563eb;
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.chartLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 0.25rem;
+}
+
+.chartLegendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.allClear {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1.25rem 0.25rem;
+}
+
+.allClearIcon {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+  background: var(--success-tint);
+  color: var(--success);
+  border: 1px solid #86efac;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.lineChartLabel {
+  fill: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.barChart {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: 2.6rem 1fr 2rem;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.barLabel {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.barTrack {
+  height: 0.55rem;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--gold) 0%, var(--gold-deep) 100%);
+}
+
+.barValue {
+  text-align: right;
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.donutWrap {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 1rem;
+  align-items: center;
+}
+
+.donutSvg {
+  width: 140px;
+  height: 140px;
+}
+
+.donutCenter {
+  fill: var(--ink);
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  text-anchor: middle;
+}
+
+.donutCenterSub {
+  fill: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  text-anchor: middle;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.donutLegend {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.donutLegendItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.84rem;
+}
+
+.donutSwatch {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.donutLegendLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--ink-soft);
+}
+
+.donutLegendValue {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.queueTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.queueTable th,
+.queueTable td {
+  padding: 0.75rem 1.1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 0.88rem;
+}
+
+.queueTable th {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.queueTable tr:last-child td {
+  border-bottom: none;
+}
+
+.rankList {
+  display: grid;
+  gap: 0;
+}
+
+.rankRow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1.15rem;
+  border-bottom: 1px solid var(--line-soft);
+  text-decoration: none;
+  color: inherit;
+}
+
+.rankRow:last-child {
+  border-bottom: none;
+}
+
+.rankRow:hover {
+  background: rgba(242, 187, 70, 0.06);
+}
+
+.rankBadge {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: var(--gold-tint);
+  color: var(--gold-deep);
+  font-size: 0.78rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.areaList {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem 1.15rem 1.2rem;
+}
+
+.areaRow {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.areaMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.86rem;
+}
+
+.areaName {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.areaPct {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.timeline {
+  display: grid;
+  gap: 0;
+  padding: 0.35rem 0;
+}
+
+.timelineItem {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr;
+  gap: 0.75rem;
+  padding: 0.85rem 1.15rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.timelineItem:last-child {
+  border-bottom: none;
+}
+
+.timelineDot {
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-top: 0.4rem;
+  margin-left: 0.35rem;
+  border-radius: 999px;
+  background: var(--gold);
+  box-shadow: 0 0 0 3px rgba(242, 187, 70, 0.2);
+}
+
+.timelineTitle {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.timelineDetail {
+  margin: 0.2rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+}
+
+.timelineTime {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
 }
 
 .panelGrid {
@@ -462,6 +851,16 @@
   text-decoration: underline;
 }
 
+/* Displayed emails: keep surrounding text color; mailto only. */
+.mailLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.mailLink:hover {
+  text-decoration: underline;
+}
+
 .loading,
 .emptyState {
   background: var(--surface);
@@ -478,12 +877,190 @@
   font-size: 0.85rem;
 }
 
+/* --- Property approvals -------------------------------------------------- */
+
+.textarea {
+  width: 100%;
+  min-height: 7rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 0.7rem 0.85rem;
+  font: inherit;
+  resize: vertical;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(242, 187, 70, 0.2);
+}
+
+.dialogBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.dialog {
+  width: min(30rem, 100%);
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg, 0 24px 48px rgba(15, 23, 42, 0.24));
+  padding: 1.4rem;
+}
+
+.dialogTitle {
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+}
+
+.dialogText {
+  margin: 0 0 0.9rem;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.dialogActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: var(--gold-deep);
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.reviewGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 1.15rem;
+}
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.7rem;
+}
+
+.galleryItem {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface-sunken);
+}
+
+.galleryItem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.galleryFlag {
+  position: absolute;
+  top: 0.4rem;
+  left: 0.4rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.reviewVideo {
+  width: 100%;
+  border-radius: 12px;
+  background: #000;
+}
+
+.infoRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.infoRow:last-child {
+  border-bottom: none;
+}
+
+.infoLabel {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.infoValue {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.92rem;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.descriptionText {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.reviewActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.noticeDanger {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(220, 38, 38, 0.28);
+  border-radius: 12px;
+  background: var(--danger-tint);
+  color: var(--danger);
+  font-size: 0.88rem;
+}
+
 @media (max-width: 1100px) {
   .gridStats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .panelGrid {
+  .panelGrid,
+  .opsRow,
+  .reviewGrid,
+  .donutWrap {
     grid-template-columns: 1fr;
   }
 }

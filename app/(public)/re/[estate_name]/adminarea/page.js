@@ -9,6 +9,14 @@ import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import ActionMenu from "@/components/ActionMenu";
 import ui from "@/components/agent-portal/portal.module.css";
 
+/** `id` matches the stats payload key; `status` filters the properties list. */
+const STAT_CARDS = [
+  { id: "total", label: "Total Properties", status: null },
+  { id: "approved", label: "Approved", status: "approved" },
+  { id: "pending_approval", label: "Pending Approval", status: "pending_approval" },
+  { id: "draft", label: "Draft", status: "draft" },
+];
+
 function greeting() {
   const h = new Date().getHours();
   if (h < 12) return "Good Morning";
@@ -88,24 +96,22 @@ export default function AgentAdminDashboardPage() {
       }
     >
       <div className={ui.gridStats}>
-        <div className={ui.statCard}>
-          <p className={ui.statLabel}>Total Properties</p>
-          <p className={ui.statValue}>{stats?.total ?? (loading ? "…" : 0)}</p>
-        </div>
-        <div className={ui.statCard}>
-          <p className={ui.statLabel}>Approved</p>
-          <p className={ui.statValue}>{stats?.approved ?? (loading ? "…" : 0)}</p>
-        </div>
-        <div className={ui.statCard}>
-          <p className={ui.statLabel}>Pending Approval</p>
-          <p className={ui.statValue}>
-            {stats?.pending_approval ?? (loading ? "…" : 0)}
-          </p>
-        </div>
-        <div className={ui.statCard}>
-          <p className={ui.statLabel}>Draft</p>
-          <p className={ui.statValue}>{stats?.draft ?? (loading ? "…" : 0)}</p>
-        </div>
+        {STAT_CARDS.map((card) => (
+          <Link
+            key={card.id}
+            href={
+              card.status
+                ? `${base}/properties?status=${card.status}`
+                : `${base}/properties`
+            }
+            className={`${ui.statCard} ${ui.statCardLink}`}
+          >
+            <p className={ui.statLabel}>{card.label}</p>
+            <p className={ui.statValue}>
+              {stats?.[card.id] ?? (loading ? "…" : 0)}
+            </p>
+          </Link>
+        ))}
       </div>
 
       <div className={ui.panel}>
@@ -182,9 +188,13 @@ export default function AgentAdminDashboardPage() {
                           onView={
                             property.status === "approved"
                               ? () => window.open(`/re/${encodeURIComponent(username)}/${property.id}`, "_blank", "noopener,noreferrer")
-                              : undefined
+                              : () => router.push(`${base}/properties/${property.id}/edit`)
                           }
-                          onEdit={() => router.push(`${base}/properties/${property.id}/edit`)}
+                          onEdit={
+                            property.status === "pending_approval"
+                              ? undefined
+                              : () => router.push(`${base}/properties/${property.id}/edit`)
+                          }
                         />
                       </td>
                     </tr>

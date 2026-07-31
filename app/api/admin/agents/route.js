@@ -19,6 +19,9 @@ export async function GET() {
          a.estate_name,
          a.username,
          a.status,
+         a.blocked_reason,
+         a.blocked_at,
+         a.blocked_by,
          a.must_reset_password,
          a.created_at,
          (

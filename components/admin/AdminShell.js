@@ -11,7 +11,7 @@ const NAV = [
     href: "/admin/dashboard",
     label: "Overview",
     exact: true,
-    subtitle: "Platform health and items that need your attention.",
+    subtitle: "Platform performance and items that need your attention.",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path
@@ -26,7 +26,7 @@ const NAV = [
   },
   {
     href: "/admin/dashboard/requests",
-    label: "Requests",
+    label: "Agent Requests",
     subtitle: "Approve, reject, revoke, or re-grant agent access requests.",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -60,6 +60,30 @@ const NAV = [
           stroke="currentColor"
           strokeWidth="1.8"
           strokeLinecap="round"
+        />
+      </svg>
+    ),
+  },
+  {
+    href: "/admin/dashboard/approvals",
+    label: "Property Approvals",
+    subtitle: "Review listings agents submitted and approve or reject them.",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M12 3.5 4.5 6.8V12c0 4.4 3.1 7.6 7.5 8.6 4.4-1 7.5-4.2 7.5-8.6V6.8L12 3.5Z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        />
+        <path
+          d="m9 12 2.2 2.2L15.5 10"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
       </svg>
     ),
@@ -140,7 +164,13 @@ export default function AdminShell({ children }) {
         </nav>
 
         <div className={styles.sidebarFooter}>
-          <Link href="/" className={styles.viewSite} onClick={() => setOpen(false)}>
+          <Link
+            href="/"
+            className={styles.viewSite}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setOpen(false)}
+          >
             View public site
           </Link>
           <LogoutButton
@@ -173,7 +203,7 @@ export default function AdminShell({ children }) {
             </div>
           </div>
           <div className={styles.topbarRight}>
-            <span className={styles.rolePill}>Administrator</span>
+            <span className={styles.rolePill}>Superadmin</span>
           </div>
         </header>
 

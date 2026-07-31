@@ -7,11 +7,6 @@ import {
 import { query } from "@/lib/db";
 import { PROPERTY_STATUS } from "@/lib/status";
 
-const AGENT_CREATABLE_STATUSES = new Set([
-  PROPERTY_STATUS.DRAFT,
-  PROPERTY_STATUS.PENDING_APPROVAL,
-]);
-
 export async function GET(req) {
   const { session, error } = await requireAgent();
   if (error) return error;
@@ -41,23 +36,16 @@ export async function POST(req) {
 
   const agentId = Number(session.user.agent_id || session.user.id);
   const body = await req.json();
-  const {
-    title,
-    description,
-    size_value,
-    size_unit,
-    price,
-    location,
-    status: requestedStatus,
-  } = body;
+  const { title, description, size_value, size_unit, price, location } = body;
 
   if (!title || !String(title).trim()) {
     return NextResponse.json({ error: "Title is required." }, { status: 400 });
   }
 
-  const status = AGENT_CREATABLE_STATUSES.has(requestedStatus)
-    ? requestedStatus
-    : PROPERTY_STATUS.DRAFT;
+  // Always a draft: images are uploaded after the row exists, so a listing can
+  // never satisfy the submission rules at insert time. The client submits for
+  // approval via POST /api/properties/:id/submit once uploads finish.
+  const status = PROPERTY_STATUS.DRAFT;
 
   const result = await query(
     `INSERT INTO properties
