@@ -256,32 +256,13 @@ export default function AgentDashboardPage() {
             flexWrap: "wrap",
           }}
         >
-          {profileImagePreview || profileImage ? (
-            <img
-              src={profileImagePreview || profileImage}
-              alt="Your profile"
-              width={72}
-              height={72}
-              style={{ borderRadius: "50%", objectFit: "cover" }}
-            />
-          ) : (
-            <div
-              aria-hidden="true"
-              style={{
-                width: 72,
-                height: 72,
-                display: "grid",
-                placeItems: "center",
-                borderRadius: "50%",
-                background: "#fef3c7",
-                color: "#92400e",
-                fontSize: 28,
-                fontWeight: 800,
-              }}
-            >
-              {(agentName || "A").charAt(0).toUpperCase()}
-            </div>
-          )}
+          <AgentAvatar
+            src={profileImagePreview || profileImage}
+            alt="Your profile"
+            width={72}
+            height={72}
+            style={{ borderRadius: "50%", objectFit: "cover" }}
+          />
           <label
             style={{
               display: "inline-flex",

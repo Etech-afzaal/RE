@@ -284,19 +284,13 @@ export default async function PropertyDetailPage({ params }) {
             </div>
 
             <div className={styles.agentTop}>
-              {agent.profile_image ? (
-                <Image
-                  src={agent.profile_image}
-                  alt=""
-                  width={56}
-                  height={56}
-                  className={styles.agentAvatarImg}
-                />
-              ) : (
-                <div className={styles.agentAvatar} aria-hidden="true">
-                  {agent.full_name?.charAt(0)?.toUpperCase() || "A"}
-                </div>
-              )}
+              <AgentAvatar
+                src={agent.profile_image}
+                alt=""
+                width={56}
+                height={56}
+                className={styles.agentAvatarImg}
+              />
               <div>
                 <h2 className={styles.agentName}>{agent.full_name}</h2>
                 <span className={styles.verifiedBadge}>

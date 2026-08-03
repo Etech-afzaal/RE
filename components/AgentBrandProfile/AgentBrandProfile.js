@@ -1,4 +1,5 @@
 import Image from "next/image";
+import AgentAvatar from "@/components/AgentAvatar";
 import { agentPublicUsername } from "@/lib/propertySlug";
 import styles from "./AgentBrandProfile.module.css";
 
@@ -84,19 +85,13 @@ export default function AgentBrandProfile({ agent }) {
         <div className={styles.divider} aria-hidden="true" />
 
         <div className={styles.agentBlock}>
-          {agent.profile_image ? (
-            <Image
-              src={agent.profile_image}
-              alt=""
-              width={72}
-              height={72}
-              className={styles.agentPhoto}
-            />
-          ) : (
-            <div className={styles.agentPhotoFallback} aria-hidden="true">
-              {(agent.full_name || "A").charAt(0).toUpperCase()}
-            </div>
-          )}
+          <AgentAvatar
+            src={agent.profile_image}
+            alt=""
+            width={72}
+            height={72}
+            className={styles.agentPhoto}
+          />
           <div className={styles.agentCopy}>
             <h3 className={styles.agentName}>{agent.full_name}</h3>
             <p className={styles.agentRole}>{designation}</p>

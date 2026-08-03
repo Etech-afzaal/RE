@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import AgentAvatar from "@/components/AgentAvatar";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import ui from "@/components/agent-portal/portal.module.css";
 
@@ -112,19 +113,13 @@ export default function AgentProfilePage() {
         {success ? <p className={ui.success}>{success}</p> : null}
 
         <div style={{ display: "flex", gap: "1rem", alignItems: "center", marginBottom: "1rem" }}>
-          {imagePreview || form.profile_image ? (
-            <Image
-              src={imagePreview || form.profile_image}
-              alt=""
-              width={72}
-              height={72}
-              style={{ borderRadius: "50%", objectFit: "cover" }}
-            />
-          ) : (
-            <div className={ui.thumbFallback} style={{ width: 72, height: 72, borderRadius: "50%" }}>
-              {(form.full_name || "A").charAt(0)}
-            </div>
-          )}
+          <AgentAvatar
+            src={imagePreview || form.profile_image}
+            alt=""
+            width={72}
+            height={72}
+            style={{ borderRadius: "50%", objectFit: "cover" }}
+          />
           <label className={ui.btnGhost} style={{ cursor: "pointer" }}>
             {selectedImage ? "Picture selected" : "Upload picture"}
             <input
