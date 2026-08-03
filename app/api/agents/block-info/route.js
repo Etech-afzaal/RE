@@ -25,7 +25,7 @@ export async function POST(req) {
 
   const rows = await query(
     `SELECT status, blocked_reason, blocked_at
-     FROM agents WHERE email = ? LIMIT 1`,
+     FROM users WHERE email = ? AND user_type = 'agent' LIMIT 1`,
     [email],
   );
   const agent = rows[0];

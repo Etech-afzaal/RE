@@ -83,10 +83,10 @@ export async function GET() {
       `SELECT
          (SELECT COUNT(*) FROM signup_requests WHERE status = 'pending') AS pendingRequests,
          (SELECT COUNT(*) FROM signup_requests) AS totalRequests,
-         (SELECT COUNT(*) FROM agents WHERE status = ?) AS activeAgents,
-         (SELECT COUNT(*) FROM agents WHERE status = 'disabled') AS disabledAgents,
-         (SELECT COUNT(*) FROM agents WHERE status = 'blocked') AS blockedAgents,
-         (SELECT COUNT(*) FROM agents) AS totalAgents,
+         (SELECT COUNT(*) FROM users WHERE status = ? AND user_type = 'agent') AS activeAgents,
+         (SELECT COUNT(*) FROM users WHERE status = 'disabled' AND user_type = 'agent') AS disabledAgents,
+         (SELECT COUNT(*) FROM users WHERE status = 'blocked' AND user_type = 'agent') AS blockedAgents,
+         (SELECT COUNT(*) FROM users WHERE user_type = 'agent') AS totalAgents,
          (SELECT COUNT(*) FROM properties WHERE status = ?) AS activeProperties,
          (SELECT COUNT(*) FROM properties WHERE status = 'pending_approval') AS pendingProperties,
          (SELECT COUNT(*) FROM properties WHERE status = 'sold') AS soldProperties,
@@ -99,10 +99,10 @@ export async function GET() {
          (SELECT COUNT(*) FROM properties
            WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01')
              AND created_at < DATE_FORMAT(CURDATE(), '%Y-%m-01')) AS propertiesLastMonth,
-         (SELECT COUNT(*) FROM agents
-           WHERE created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')) AS agentsThisMonth,
-         (SELECT COUNT(*) FROM agents
-           WHERE created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01')
+         (SELECT COUNT(*) FROM users
+           WHERE user_type = 'agent' AND created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')) AS agentsThisMonth,
+         (SELECT COUNT(*) FROM users
+           WHERE user_type = 'agent' AND created_at >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01')
              AND created_at < DATE_FORMAT(CURDATE(), '%Y-%m-01')) AS agentsLastMonth`,
       [AGENT_LIVE_STATUS, PROPERTY_PUBLIC_STATUS],
     );
@@ -133,8 +133,8 @@ export async function GET() {
       ),
       query(
         `SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, COUNT(*) AS total
-         FROM agents
-         WHERE created_at >= ?
+         FROM users
+         WHERE user_type = 'agent' AND created_at >= ?
          GROUP BY month
          ORDER BY month`,
         [rangeStart],
@@ -144,7 +144,7 @@ export async function GET() {
       query(
         `SELECT
            (SELECT COUNT(*) FROM properties WHERE created_at < ?) AS propertiesBefore,
-           (SELECT COUNT(*) FROM agents WHERE created_at < ?) AS agentsBefore`,
+           (SELECT COUNT(*) FROM users WHERE user_type = 'agent' AND created_at < ?) AS agentsBefore`,
         [rangeStart, rangeStart],
       ),
       query(
@@ -156,7 +156,8 @@ export async function GET() {
       ),
       query(
         `SELECT id, full_name, email, estate_name, status, created_at
-         FROM agents
+         FROM users
+         WHERE user_type = 'agent'
          ORDER BY created_at DESC
          LIMIT 5`,
       ),
@@ -164,7 +165,7 @@ export async function GET() {
         `SELECT p.id, p.title, p.location, p.submitted_at, p.created_at,
                 a.full_name AS agent_name, a.estate_name
          FROM properties p
-         JOIN agents a ON a.id = p.agent_id
+         JOIN users a ON a.id = p.agent_id
          WHERE p.status = ?
          ORDER BY COALESCE(p.submitted_at, p.created_at) DESC
          LIMIT 6`,
@@ -174,9 +175,9 @@ export async function GET() {
         `SELECT a.id, a.full_name, a.estate_name, a.status,
                 COUNT(p.id) AS total_properties,
                 SUM(CASE WHEN p.status = ? THEN 1 ELSE 0 END) AS approved_properties
-         FROM agents a
+         FROM users a
          LEFT JOIN properties p ON p.agent_id = a.id
-         WHERE a.status = ?
+         WHERE a.status = ? AND a.user_type = 'agent'
          GROUP BY a.id, a.full_name, a.estate_name, a.status
          HAVING total_properties > 0
          ORDER BY approved_properties DESC, total_properties DESC
@@ -194,21 +195,22 @@ export async function GET() {
       query(
         `SELECT p.id, p.title, p.created_at, a.full_name AS agent_name
          FROM properties p
-         JOIN agents a ON a.id = p.agent_id
+         JOIN users a ON a.id = p.agent_id
          ORDER BY p.created_at DESC
          LIMIT 8`,
       ),
       query(
         `SELECT p.id, p.title, p.approved_at AS event_at, a.full_name AS agent_name
          FROM properties p
-         JOIN agents a ON a.id = p.agent_id
+         JOIN users a ON a.id = p.agent_id
          WHERE p.approved_at IS NOT NULL
          ORDER BY p.approved_at DESC
          LIMIT 8`,
       ),
       query(
         `SELECT id, full_name, estate_name, created_at
-         FROM agents
+         FROM users
+         WHERE user_type = 'agent'
          ORDER BY created_at DESC
          LIMIT 8`,
       ),

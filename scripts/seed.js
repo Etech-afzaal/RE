@@ -42,7 +42,7 @@ async function main() {
 
   await conn.query(sql);
 
-  const [[{ agents }]] = await conn.query("SELECT COUNT(*) AS agents FROM agents");
+  const [[{ agents }]] = await conn.query("SELECT COUNT(*) AS agents FROM users WHERE user_type = 'agent'");
   const [[{ properties }]] = await conn.query(
     "SELECT COUNT(*) AS properties FROM properties",
   );

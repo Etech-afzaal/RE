@@ -22,8 +22,8 @@ CREATE TABLE IF NOT EXISTS signup_requests (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Approved agents who can log in to the admin app.
-CREATE TABLE IF NOT EXISTS agents (
+-- All authenticated accounts. Agents and administrators share this source.
+CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   estate_name VARCHAR(20) UNIQUE NOT NULL,          -- used in /re/{estate_name}
   username VARCHAR(100) UNIQUE,                    -- Phase 1: public/handle identity
@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS agents (
   office_address VARCHAR(500) NULL,                -- Company branding
   social_links VARCHAR(1000) NULL,                 -- Company branding (URLs)
   password_hash VARCHAR(255) NOT NULL,
+  user_type ENUM('admin','agent') NOT NULL DEFAULT 'agent',
   must_reset_password BOOLEAN DEFAULT TRUE,
   -- Phase 1 + block: pending | approved | rejected | disabled | blocked
   status ENUM('pending','approved','rejected','disabled','blocked') DEFAULT 'approved',
@@ -69,7 +70,7 @@ CREATE TABLE IF NOT EXISTS properties (
   rejected_by VARCHAR(100) NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE
+  FOREIGN KEY (agent_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS property_images (

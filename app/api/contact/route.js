@@ -15,7 +15,7 @@ export async function POST(req) {
   }
 
   const agents = await query(
-    "SELECT full_name, email, phone FROM agents WHERE estate_name = ? AND status = ?",
+    "SELECT full_name, email, phone FROM users WHERE estate_name = ? AND status = ? AND user_type = 'agent'",
     [estate_name, AGENT_LIVE_STATUS],
   );
   const agent = agents[0];

@@ -32,7 +32,7 @@ export async function POST(req) {
 
     const estateName = signupRequest.estate_name;
     const existingEstate = await query(
-      "SELECT id FROM agents WHERE estate_name = ?",
+      "SELECT id FROM users WHERE estate_name = ? AND user_type = 'agent'",
       [estateName],
     );
     if (existingEstate.length > 0) {
@@ -46,8 +46,8 @@ export async function POST(req) {
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
     await query(
-      `INSERT INTO agents (estate_name, username, full_name, email, phone, password_hash, must_reset_password, status)
-       VALUES (?, ?, ?, ?, ?, ?, TRUE, 'approved')`,
+      `INSERT INTO users (estate_name, username, full_name, email, phone, password_hash, must_reset_password, status, user_type)
+       VALUES (?, ?, ?, ?, ?, ?, TRUE, 'approved', 'agent')`,
       [
         estateName,
         estateName,

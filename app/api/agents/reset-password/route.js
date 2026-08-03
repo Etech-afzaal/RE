@@ -20,7 +20,7 @@ export async function POST(req) {
   const agentId = Number(session.user.agent_id || session.user.id);
 
   await query(
-    "UPDATE agents SET password_hash = ?, must_reset_password = FALSE WHERE id = ?",
+    "UPDATE users SET password_hash = ?, must_reset_password = FALSE WHERE id = ? AND user_type = 'agent'",
     [passwordHash, agentId],
   );
 

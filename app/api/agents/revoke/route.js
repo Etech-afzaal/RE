@@ -27,7 +27,7 @@ export async function POST(req) {
       );
     }
 
-    await query("UPDATE agents SET status = 'disabled' WHERE email = ?", [
+    await query("UPDATE users SET status = 'disabled' WHERE email = ? AND user_type = 'agent'", [
       signupRequest.email,
     ]);
 

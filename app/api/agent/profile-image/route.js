@@ -20,7 +20,7 @@ export async function GET() {
 
   const agentId = agentIdFromSession(session);
   const agents = await query(
-    "SELECT profile_image FROM agents WHERE id = ? LIMIT 1",
+    "SELECT profile_image FROM users WHERE id = ? AND user_type = 'agent' LIMIT 1",
     [agentId],
   );
 
@@ -56,7 +56,7 @@ export async function POST(req) {
 
   try {
     const agents = await query(
-      "SELECT username, estate_name FROM agents WHERE id = ? LIMIT 1",
+      "SELECT username, estate_name FROM users WHERE id = ? AND user_type = 'agent' LIMIT 1",
       [agentId],
     );
     const agent = agents[0];
@@ -103,7 +103,7 @@ export async function POST(req) {
     await writeFile(outputPath, imageBuffer);
 
     const profileImage = `/uploads/agents/${agentId}/${filename}`;
-    await query("UPDATE agents SET profile_image = ? WHERE id = ?", [
+    await query("UPDATE users SET profile_image = ? WHERE id = ? AND user_type = 'agent'", [
       profileImage,
       agentId,
     ]);

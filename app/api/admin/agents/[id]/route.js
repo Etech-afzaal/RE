@@ -47,7 +47,7 @@ export async function PATCH(req, { params }) {
 
   try {
     const agents = await query(
-      "SELECT id, email, status FROM agents WHERE id = ?",
+      "SELECT id, email, status FROM users WHERE id = ? AND user_type = 'agent'",
       [agentId],
     );
     const agent = agents[0];
@@ -60,7 +60,7 @@ export async function PATCH(req, { params }) {
 
     if (nextStatus === AGENT_STATUS.BLOCKED) {
       await query(
-        `UPDATE agents
+        `UPDATE users
          SET status = ?,
              blocked_reason = ?,
              blocked_at = NOW(),
@@ -71,7 +71,7 @@ export async function PATCH(req, { params }) {
     } else {
       // Enabling or temporarily disabling clears any prior block record.
       await query(
-        `UPDATE agents
+        `UPDATE users
          SET status = ?,
              blocked_reason = NULL,
              blocked_at = NULL,
@@ -100,7 +100,7 @@ export async function PATCH(req, { params }) {
 
     const [updated] = await query(
       `SELECT status, blocked_reason, blocked_at, blocked_by
-       FROM agents WHERE id = ?`,
+       FROM users WHERE id = ? AND user_type = 'agent'`,
       [agentId],
     );
 

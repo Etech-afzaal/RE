@@ -15,7 +15,7 @@ export async function GET() {
   const rows = await query(
     `SELECT id, estate_name, username, company_name, company_logo,
             description, office_address, social_links, areas_served
-     FROM agents WHERE id = ? LIMIT 1`,
+     FROM users WHERE id = ? AND user_type = 'agent' LIMIT 1`,
     [agentId],
   );
   if (!rows[0]) {
@@ -40,7 +40,7 @@ export async function PATCH(req) {
     body.areas_served != null ? String(body.areas_served).trim() : null;
 
   await query(
-    `UPDATE agents
+    `UPDATE users
      SET company_name = ?, description = ?, office_address = ?,
          social_links = ?, areas_served = ?
      WHERE id = ?`,
@@ -55,7 +55,7 @@ export async function PATCH(req) {
   );
 
   const rows = await query(
-    "SELECT username, estate_name FROM agents WHERE id = ? LIMIT 1",
+    "SELECT username, estate_name FROM users WHERE id = ? AND user_type = 'agent' LIMIT 1",
     [agentId],
   );
   const handle = rows[0]?.username || rows[0]?.estate_name;

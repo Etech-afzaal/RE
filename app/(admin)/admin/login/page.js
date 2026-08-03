@@ -28,12 +28,8 @@ export default function LoginPage() {
     setLoading(false);
 
     if (res?.error === "ACCOUNT_REVOKED") {
-      const adminEmail =
-        process.env.NEXT_PUBLIC_ADMIN_EMAIL ||
-        process.env.ADMIN_EMAIL ||
-        "admin@example.com";
       setError(
-        `Your account access has been revoked. Contact admin at ${adminEmail} to request access.`,
+        "Your account access has been revoked. Contact the administrator to request access.",
       );
       return;
     }

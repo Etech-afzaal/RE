@@ -15,7 +15,7 @@ export async function GET() {
   const rows = await query(
     `SELECT id, estate_name, username, full_name, email, phone,
             profile_image, company_logo, description, areas_served, status
-     FROM agents WHERE id = ? LIMIT 1`,
+     FROM users WHERE id = ? AND user_type = 'agent' LIMIT 1`,
     [agentId],
   );
   if (!rows[0]) {
@@ -43,7 +43,7 @@ export async function PATCH(req) {
 
   // Email stays identity-bound; do not allow arbitrary email changes here.
   await query(
-    `UPDATE agents
+    `UPDATE users
      SET full_name = ?, phone = ?, description = ?, areas_served = ?
      WHERE id = ?`,
     [
@@ -56,7 +56,7 @@ export async function PATCH(req) {
   );
 
   const rows = await query(
-    "SELECT username, estate_name FROM agents WHERE id = ? LIMIT 1",
+    "SELECT username, estate_name FROM users WHERE id = ? AND user_type = 'agent' LIMIT 1",
     [agentId],
   );
   const handle = rows[0]?.username || rows[0]?.estate_name;

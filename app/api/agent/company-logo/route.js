@@ -37,7 +37,7 @@ export async function POST(req) {
 
   try {
     const agents = await query(
-      "SELECT username, estate_name FROM agents WHERE id = ? LIMIT 1",
+      "SELECT username, estate_name FROM users WHERE id = ? AND user_type = 'agent' LIMIT 1",
       [agentId],
     );
     const agent = agents[0];
@@ -65,7 +65,7 @@ export async function POST(req) {
       .toFile(outputPath);
 
     const companyLogo = `/uploads/agents/${agentId}/${filename}`;
-    await query("UPDATE agents SET company_logo = ? WHERE id = ?", [
+    await query("UPDATE users SET company_logo = ? WHERE id = ? AND user_type = 'agent'", [
       companyLogo,
       agentId,
     ]);

@@ -404,7 +404,7 @@ async function main() {
   });
 
   const [[ayesha]] = await conn.query(
-    "SELECT id, estate_name, username FROM agents WHERE full_name = ? LIMIT 1",
+    "SELECT id, estate_name, username FROM users WHERE full_name = ? AND user_type = 'agent' LIMIT 1",
     ["Ayesha Raza"],
   );
   if (!ayesha) {
@@ -420,7 +420,7 @@ async function main() {
   }
 
   await conn.query(
-    `UPDATE agents SET
+    `UPDATE users SET
       profile_image = ?,
       description = ?,
       areas_served = ?,
@@ -457,7 +457,7 @@ async function main() {
       }[agent.estate_name] || "house-front.jpg";
 
     const [[existing]] = await conn.query(
-      "SELECT id FROM agents WHERE email = ? OR estate_name = ? LIMIT 1",
+      "SELECT id FROM users WHERE (email = ? OR estate_name = ?) AND user_type = 'agent' LIMIT 1",
       [agent.email, agent.estate_name],
     );
     if (existing) {
@@ -469,7 +469,7 @@ async function main() {
         console.log(`  added demo profile image`);
       }
       await conn.query(
-        `UPDATE agents SET profile_image = ?, description = ?, areas_served = ?, status = 'approved' WHERE id = ?`,
+        `UPDATE users SET profile_image = ?, description = ?, areas_served = ?, status = 'approved' WHERE id = ? AND user_type = 'agent'`,
         [profile.url, agent.description, agent.areas_served, existing.id],
       );
       createdAgents.push({
@@ -490,7 +490,7 @@ async function main() {
     );
 
     const [result] = await conn.query(
-      `INSERT INTO agents
+      `INSERT INTO users
         (estate_name, username, full_name, email, phone, profile_image, description, areas_served, password_hash, must_reset_password, status)
        VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?, FALSE, 'approved')`,
       [
@@ -507,7 +507,7 @@ async function main() {
 
     const agentId = result.insertId;
     const profile = ensureAgentProfileImage(agentId, portrait);
-    await conn.query("UPDATE agents SET profile_image = ? WHERE id = ?", [
+    await conn.query("UPDATE users SET profile_image = ? WHERE id = ? AND user_type = 'agent'", [
       profile.url,
       agentId,
     ]);

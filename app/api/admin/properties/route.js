@@ -54,7 +54,7 @@ export async function GET(req) {
            LIMIT 1
          ) AS image_url
        FROM properties p
-       JOIN agents a ON a.id = p.agent_id
+       JOIN users a ON a.id = p.agent_id
        ${where}
        ORDER BY p.updated_at DESC, p.id DESC`,
       params,

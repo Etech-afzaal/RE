@@ -38,7 +38,7 @@ export async function POST(req) {
       .replace(/^-+|-+$/g, "");
 
   // Prevent duplicate pending requests / already-registered agents
-  const existingAgent = await query("SELECT id FROM agents WHERE email = ?", [
+  const existingAgent = await query("SELECT id FROM users WHERE email = ?", [
     email,
   ]);
   if (existingAgent.length > 0) {
@@ -49,7 +49,7 @@ export async function POST(req) {
   }
 
   const existingAgentsWithEstate = await query(
-    "SELECT estate_name FROM agents",
+    "SELECT estate_name FROM users WHERE user_type = 'agent'",
   );
   const existingSignupRequestsWithEstate = await query(
     "SELECT estate_name FROM signup_requests",
@@ -81,8 +81,11 @@ export async function POST(req) {
   }
 
   try {
+    const admins = await query(
+      "SELECT email FROM users WHERE user_type = 'admin' LIMIT 1",
+    );
     await sendMail(
-      process.env.ADMIN_EMAIL,
+      admins[0]?.email,
       `New agent signup request: ${full_name}`,
       newSignupRequestEmail({ full_name, email, phone }),
     );

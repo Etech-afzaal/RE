@@ -1,20 +1,20 @@
 import Link from "next/link";
 import styles from "../login/page.module.css";
+import { query } from "@/lib/db";
 
 export const metadata = {
   title: "Forgot password — Dhalahore Properties",
 };
 
 /**
- * Server component so the admin address comes from ADMIN_EMAIL, which is not
- * exposed to the browser. There is no self-service reset yet, so this points
- * agents at the admin who can issue a new temporary password.
+ * There is no self-service reset yet, so this points agents at the
+ * database-backed administrator who can issue a new temporary password.
  */
-export default function AgentForgotPasswordPage() {
-  const adminEmail = String(process.env.ADMIN_EMAIL || "")
-    .replace(/\s+#.*$/, "")
-    .trim();
-  const contactEmail = adminEmail || "admin@example.com";
+export default async function AgentForgotPasswordPage() {
+  const admins = await query(
+    "SELECT email FROM users WHERE user_type = 'admin' LIMIT 1",
+  );
+  const contactEmail = admins[0]?.email || "admin@example.com";
   const mailtoHref = `mailto:${contactEmail}?subject=${encodeURIComponent(
     "Agent password reset request",
   )}&body=${encodeURIComponent(

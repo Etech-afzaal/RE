@@ -44,7 +44,7 @@ export async function GET(_req, { params }) {
          a.company_name AS agent_company,
          a.status AS agent_status
        FROM properties p
-       JOIN agents a ON a.id = p.agent_id
+       JOIN users a ON a.id = p.agent_id
        WHERE p.id = ?
        LIMIT 1`,
       [propertyId],

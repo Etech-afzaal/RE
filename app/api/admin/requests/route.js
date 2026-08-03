@@ -1,6 +1,9 @@
 import { getSignupRequests } from "@/lib/queries";
 import { requireAdmin } from "@/lib/adminAuth";
 
+// This route reads the session from request headers and must run per request.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const { error } = await requireAdmin();

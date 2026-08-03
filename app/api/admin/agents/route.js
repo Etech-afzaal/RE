@@ -37,7 +37,8 @@ export async function GET() {
            ORDER BY sr.created_at DESC
            LIMIT 1
          ) AS request_id
-       FROM agents a
+       FROM users a
+       WHERE a.user_type = 'agent'
        ORDER BY a.created_at DESC`,
       [PROPERTY_PUBLIC_STATUS],
     );

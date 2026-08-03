@@ -18,7 +18,7 @@ fs.readFileSync(".env.local", "utf8")
   });
 
   const [rows] = await pool.query(
-    'SELECT id, estate_name, full_name, status FROM agents WHERE status = "active"',
+    'SELECT id, estate_name, full_name, status FROM users WHERE status = "active" AND user_type = "agent"',
   );
   console.log(JSON.stringify(rows, null, 2));
   await pool.end();

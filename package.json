@@ -13,7 +13,8 @@
     "migrate:property-video": "node scripts/migrate-property-video.js",
     "migrate:property-approval": "node scripts/migrate-property-approval.js",
     "migrate:image-category": "node scripts/migrate-property-image-category.js",
-    "migrate:agent-block": "node scripts/migrate-agent-block.js"
+    "migrate:agent-block": "node scripts/migrate-agent-block.js",
+    "migrate:users": "node scripts/migrate-users.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
