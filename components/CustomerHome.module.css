@@ -520,6 +520,34 @@
   flex-wrap: wrap;
 }
 
+/* Floating WhatsApp */
+.whatsappFab {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 9999;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 999px;
+  background: #25d366;
+  color: #fff;
+  box-shadow: 0 14px 30px rgba(37, 211, 102, 0.32);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.whatsappFab:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 18px 38px rgba(37, 211, 102, 0.42);
+}
+
+.whatsappFab svg {
+  width: 28px;
+  height: 28px;
+}
+
 /* Contact */
 .contactSection {
   margin-bottom: 3rem;

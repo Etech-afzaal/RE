@@ -67,9 +67,9 @@ export default function AgentBrandProfile({ agent }) {
             {agent.company_logo ? (
               <Image
                 src={agent.company_logo}
-                alt=""
-                width={88}
-                height={88}
+                alt={`${companyName} logo`}
+                width={169}
+                height={47}
                 className={styles.logoImage}
               />
             ) : (

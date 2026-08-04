@@ -19,31 +19,35 @@
 }
 
 .logoWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 0.35rem;
 }
 
 .logoImage {
-  width: 88px;
-  height: 88px;
-  object-fit: cover;
-  border-radius: 18px;
-  border: 1px solid rgba(26, 26, 26, 0.08);
-  background: #faf9f6;
+  width: 100%;
+  max-width: 169px;
+  height: 47px;
+  object-fit: contain;
+  border-radius: 0;
+  border: none;
+  background: transparent;
 }
 
 .logoFallback {
-  width: 88px;
-  height: 88px;
+  width: 169px;
+  height: 47px;
   display: grid;
   place-items: center;
-  border-radius: 18px;
+  border-radius: 14px;
   border: 1px solid rgba(26, 26, 26, 0.08);
   background:
     linear-gradient(145deg, var(--gold-tint, rgba(242, 187, 70, 0.18)), #fff),
     #faf9f6;
   color: var(--gold-deep, #9a6b12);
   font-family: var(--font-display, inherit);
-  font-size: 1.45rem;
+  font-size: 0.95rem;
   font-weight: 800;
   letter-spacing: 0.04em;
 }

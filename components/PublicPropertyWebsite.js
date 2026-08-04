@@ -269,10 +269,15 @@ export default function PublicPropertyWebsite({
           <div className={styles.footerInner}>
             <div className={styles.footerBrand}>
               <Image
-                src="/logo-white.svg"
-                alt="Dhalahore Properties"
-                width={155}
-                height={43}
+                src={agent?.company_logo || "/logo-white.svg"}
+                alt={
+                  agent?.company_logo && agent?.company_name
+                    ? `${agent.company_name} logo`
+                    : "Dhalahore Properties"
+                }
+                width={169}
+                height={47}
+                className={styles.footerLogo}
               />
               <p>
                 Lahore&apos;s marketplace for verified agent listings — clear

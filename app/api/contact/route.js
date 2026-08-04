@@ -46,11 +46,14 @@ export async function POST(req) {
   try {
     body = await req.json();
   } catch {
+    console.error("Contact request parsing failed.");
     return NextResponse.json(
       { error: "Unable to send your message. Please try again." },
       { status: 400 },
     );
   }
+
+  console.log("Contact request received", body);
 
   const estate_name = normalizeText(body?.estate_name);
   const full_name = normalizeText(body?.full_name || body?.name);
@@ -101,7 +104,9 @@ export async function POST(req) {
         </p>
       `;
 
+      console.log("Attempting to send email to agent...", agent.email);
       await sendMail(agent.email, `New inquiry for ${agent.full_name}`, html);
+      console.log("Email sent successfully to agent.");
       return NextResponse.json({ success: true });
     }
 
@@ -118,15 +123,17 @@ export async function POST(req) {
       message,
     });
 
+    console.log("Attempting to send email to admin...", adminEmail);
     await sendMail(
       adminEmail,
       `New Contact Form Submission - ${subject}`,
       html,
     );
+    console.log("Email sent successfully to admin.");
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("Contact email send failure:", err);
+    console.error("SMTP Error:", err);
     return NextResponse.json(
       { error: "Unable to send your message. Please try again." },
       { status: 500 },
