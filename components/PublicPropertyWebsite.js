@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { PUBLIC_SITE_LOGO_DIMENSIONS } from "@/components/publicSiteLogo";
 import SiteHeader from "@/components/SiteHeader";
 import HeroSlider from "@/components/HeroSlider";
 import AboutDHALahore from "@/components/AboutDHALahore/AboutDHALahore";
@@ -275,8 +276,10 @@ export default function PublicPropertyWebsite({
                     ? `${agent.company_name} logo`
                     : "Dhalahore Properties"
                 }
-                width={169}
-                height={47}
+                width={PUBLIC_SITE_LOGO_DIMENSIONS.width}
+                height={PUBLIC_SITE_LOGO_DIMENSIONS.height}
+                quality={PUBLIC_SITE_LOGO_DIMENSIONS.quality}
+                sizes={PUBLIC_SITE_LOGO_DIMENSIONS.sizes}
                 className={styles.footerLogo}
               />
               <p>

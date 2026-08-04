@@ -1,5 +1,6 @@
 import Image from "next/image";
 import AgentAvatar from "@/components/AgentAvatar";
+import { PUBLIC_SITE_LOGO_DIMENSIONS } from "@/components/publicSiteLogo";
 import { agentPublicUsername } from "@/lib/propertySlug";
 import styles from "./AgentBrandProfile.module.css";
 
@@ -68,8 +69,10 @@ export default function AgentBrandProfile({ agent }) {
               <Image
                 src={agent.company_logo}
                 alt={`${companyName} logo`}
-                width={169}
-                height={47}
+                width={PUBLIC_SITE_LOGO_DIMENSIONS.width}
+                height={PUBLIC_SITE_LOGO_DIMENSIONS.height}
+                quality={PUBLIC_SITE_LOGO_DIMENSIONS.quality}
+                sizes={PUBLIC_SITE_LOGO_DIMENSIONS.sizes}
                 className={styles.logoImage}
               />
             ) : (

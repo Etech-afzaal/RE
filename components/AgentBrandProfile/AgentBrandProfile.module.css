@@ -26,9 +26,11 @@
 }
 
 .logoImage {
-  width: 100%;
+  display: block;
+  width: 169px;
   max-width: 169px;
   height: 47px;
+  max-height: 47px;
   object-fit: contain;
   border-radius: 0;
   border: none;

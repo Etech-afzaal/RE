@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { PUBLIC_SITE_LOGO_DIMENSIONS } from "@/components/publicSiteLogo";
 import styles from "./SiteHeader.module.css";
 
 const DEFAULT_NAV_LINKS = [
@@ -223,9 +224,12 @@ export default function SiteHeader({
           <Image
             src={logoSrc}
             alt={logoAlt}
-            width={169}
-            height={47}
+            width={PUBLIC_SITE_LOGO_DIMENSIONS.width}
+            height={PUBLIC_SITE_LOGO_DIMENSIONS.height}
+            quality={PUBLIC_SITE_LOGO_DIMENSIONS.quality}
+            sizes={PUBLIC_SITE_LOGO_DIMENSIONS.sizes}
             priority
+            className={styles.logoImage}
           />
         </Link>
 
