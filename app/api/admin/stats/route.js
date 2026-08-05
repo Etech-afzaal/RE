@@ -6,6 +6,10 @@ import {
   PROPERTY_STATUS,
   toClientAgentStatus,
 } from "@/lib/status";
+import {
+  agentPublicUsername,
+  propertyPublicPath,
+} from "@/lib/propertySlug";
 
 const MONTH_LABELS = [
   "Jan",
@@ -60,17 +64,6 @@ function percentChange(current, previous) {
   return Math.round(((cur - prev) / prev) * 100);
 }
 
-/**
- * Collapse free-text locations into a short area key for the distribution chart.
- * "DHA Phase 5, Lahore" → "DHA Phase 5"
- */
-function areaKey(location) {
-  const raw = String(location || "").trim();
-  if (!raw) return "Unspecified";
-  const beforeComma = raw.split(",")[0].trim();
-  return beforeComma || "Unspecified";
-}
-
 export async function GET() {
   const { error } = await requireAdmin();
   if (error) return error;
@@ -116,11 +109,12 @@ export async function GET() {
       recentPending,
       recentAgents,
       approvalQueue,
-      topAgents,
-      locationRows,
+      blockedAgents,
       activityProperties,
       activityApprovals,
+      activityRejections,
       activityAgents,
+      activityBlocked,
       activityRequests,
     ] = await Promise.all([
       query(
@@ -155,10 +149,13 @@ export async function GET() {
          LIMIT 5`,
       ),
       query(
-        `SELECT id, full_name, email, estate_name, status, created_at
-         FROM users
-         WHERE user_type = 'agent'
-         ORDER BY created_at DESC
+        `SELECT a.id, a.full_name, a.email, a.estate_name, a.status, a.created_at,
+                COUNT(p.id) AS total_properties
+         FROM users a
+         LEFT JOIN properties p ON p.agent_id = a.id
+         WHERE a.user_type = 'agent'
+         GROUP BY a.id, a.full_name, a.email, a.estate_name, a.status, a.created_at
+         ORDER BY a.created_at DESC
          LIMIT 5`,
       ),
       query(
@@ -172,35 +169,23 @@ export async function GET() {
         [PROPERTY_STATUS.PENDING_APPROVAL],
       ),
       query(
-        `SELECT a.id, a.full_name, a.estate_name, a.status,
-                COUNT(p.id) AS total_properties,
-                SUM(CASE WHEN p.status = ? THEN 1 ELSE 0 END) AS approved_properties
-         FROM users a
-         LEFT JOIN properties p ON p.agent_id = a.id
-         WHERE a.status = ? AND a.user_type = 'agent'
-         GROUP BY a.id, a.full_name, a.estate_name, a.status
-         HAVING total_properties > 0
-         ORDER BY approved_properties DESC, total_properties DESC
-         LIMIT 8`,
-        [PROPERTY_PUBLIC_STATUS, AGENT_LIVE_STATUS],
+        `SELECT id, full_name, estate_name, status, blocked_at, created_at
+         FROM users
+         WHERE user_type = 'agent' AND status = 'blocked'
+         ORDER BY COALESCE(blocked_at, created_at) DESC
+         LIMIT 5`,
       ),
       query(
-        `SELECT location, COUNT(*) AS total
-         FROM properties
-         WHERE location IS NOT NULL AND location != ''
-         GROUP BY location
-         ORDER BY total DESC
-         LIMIT 40`,
-      ),
-      query(
-        `SELECT p.id, p.title, p.created_at, a.full_name AS agent_name
+        `SELECT p.id, p.title, p.created_at,
+                a.full_name AS agent_name, a.estate_name, a.username
          FROM properties p
          JOIN users a ON a.id = p.agent_id
          ORDER BY p.created_at DESC
          LIMIT 8`,
       ),
       query(
-        `SELECT p.id, p.title, p.approved_at AS event_at, a.full_name AS agent_name
+        `SELECT p.id, p.title, p.approved_at AS event_at,
+                a.full_name AS agent_name, a.estate_name, a.username
          FROM properties p
          JOIN users a ON a.id = p.agent_id
          WHERE p.approved_at IS NOT NULL
@@ -208,11 +193,26 @@ export async function GET() {
          LIMIT 8`,
       ),
       query(
-        `SELECT id, full_name, estate_name, created_at
+        `SELECT p.id, p.title, p.rejected_at AS event_at, a.full_name AS agent_name
+         FROM properties p
+         JOIN users a ON a.id = p.agent_id
+         WHERE p.rejected_at IS NOT NULL
+         ORDER BY p.rejected_at DESC
+         LIMIT 8`,
+      ),
+      query(
+        `SELECT id, full_name, estate_name, username, created_at
          FROM users
          WHERE user_type = 'agent'
          ORDER BY created_at DESC
          LIMIT 8`,
+      ),
+      query(
+        `SELECT id, full_name, estate_name, blocked_at
+         FROM users
+         WHERE user_type = 'agent' AND status = 'blocked' AND blocked_at IS NOT NULL
+         ORDER BY blocked_at DESC
+         LIMIT 5`,
       ),
       query(
         `SELECT id, full_name, estate_name, created_at
@@ -223,104 +223,95 @@ export async function GET() {
       ),
     ]);
 
-    // Area distribution: normalize free-text locations, keep top 5 + Others.
-    const areaTotals = new Map();
-    for (const row of locationRows) {
-      const key = areaKey(row.location);
-      areaTotals.set(key, (areaTotals.get(key) || 0) + (Number(row.total) || 0));
-    }
-    const sortedAreas = Array.from(areaTotals.entries()).sort(
-      (a, b) => b[1] - a[1],
-    );
-    const topAreas = sortedAreas.slice(0, 5);
-    const otherTotal = sortedAreas
-      .slice(5)
-      .reduce((sum, [, total]) => sum + total, 0);
-    const areaSum =
-      topAreas.reduce((sum, [, total]) => sum + total, 0) + otherTotal;
-    const areas = [
-      ...topAreas.map(([name, total]) => ({
-        name,
-        total,
-        percent: areaSum ? Math.round((total / areaSum) * 100) : 0,
-      })),
-      ...(otherTotal
-        ? [
-            {
-              name: "Others",
-              total: otherTotal,
-              percent: areaSum ? Math.round((otherTotal / areaSum) * 100) : 0,
-            },
-          ]
-        : []),
-    ];
-
-    const statusBreakdown = [
-      {
-        status: "approved",
-        label: "Approved",
-        total: Number(stats.activeProperties) || 0,
-      },
-      {
-        status: "pending_approval",
-        label: "Pending",
-        total: Number(stats.pendingProperties) || 0,
-      },
-      {
-        status: "draft",
-        label: "Draft",
-        total: Number(stats.draftProperties) || 0,
-      },
-      {
-        status: "rejected",
-        label: "Rejected",
-        total: Number(stats.rejectedProperties) || 0,
-      },
-      {
-        status: "sold",
-        label: "Sold",
-        total: Number(stats.soldProperties) || 0,
-      },
-      {
-        status: "hidden",
-        label: "Hidden",
-        total: Number(stats.hiddenProperties) || 0,
-      },
-    ].filter((item) => item.total > 0);
-
     const activity = [
-      ...activityProperties.map((row) => ({
-        id: `prop-${row.id}`,
-        type: "property_added",
-        title: `${row.agent_name} added a new property`,
+      ...activityProperties.map((row) => {
+        const agentHandle = agentPublicUsername(row);
+        return {
+          id: `prop-${row.id}`,
+          type: "property",
+          title: `${row.agent_name} added a new property`,
+          detail: row.title,
+          user: row.agent_name,
+          action: "Added Property",
+          details: row.title,
+          propertyId: Number(row.id),
+          href: propertyPublicPath(agentHandle, {
+            id: row.id,
+            title: row.title,
+          }),
+          at: row.created_at,
+        };
+      }),
+      ...activityApprovals.map((row) => {
+        const agentHandle = agentPublicUsername(row);
+        return {
+          id: `apr-${row.id}`,
+          type: "property",
+          title: "Admin approved a property",
+          detail: row.title,
+          user: "Superadmin",
+          action: "Approved Property",
+          details: row.title,
+          propertyId: Number(row.id),
+          href: propertyPublicPath(agentHandle, {
+            id: row.id,
+            title: row.title,
+          }),
+          at: row.event_at,
+        };
+      }),
+      ...activityRejections.map((row) => ({
+        id: `rej-${row.id}`,
+        type: "property_rejected",
+        title: "Admin rejected a property",
         detail: row.title,
-        at: row.created_at,
-      })),
-      ...activityApprovals.map((row) => ({
-        id: `apr-${row.id}`,
-        type: "property_approved",
-        title: "Admin approved a property",
-        detail: row.title,
+        user: "Superadmin",
+        action: "Rejected Property",
+        details: row.title,
         at: row.event_at,
       })),
-      ...activityAgents.map((row) => ({
-        id: `agt-${row.id}`,
-        type: "agent_joined",
-        title: "New agent registered",
+      ...activityAgents.map((row) => {
+        const agentHandle = agentPublicUsername(row);
+        return {
+          id: `agt-${row.id}`,
+          type: "agent",
+          title: "New agent registered",
+          detail: `${row.full_name} · /re/${row.estate_name}`,
+          user: row.full_name,
+          action: "Agent Registered",
+          details: row.estate_name ? `/re/${row.estate_name}` : row.full_name,
+          href: agentHandle
+            ? `/re/${encodeURIComponent(agentHandle)}`
+            : null,
+          at: row.created_at,
+        };
+      }),
+      ...activityBlocked.map((row) => ({
+        id: `blk-${row.id}`,
+        type: "agent_blocked",
+        title: "Admin blocked an agent",
         detail: `${row.full_name} · /re/${row.estate_name}`,
-        at: row.created_at,
+        user: "Superadmin",
+        action: "Blocked Agent",
+        details: row.estate_name
+          ? `${row.full_name} · /re/${row.estate_name}`
+          : row.full_name,
+        at: row.blocked_at,
       })),
       ...activityRequests.map((row) => ({
         id: `req-${row.id}`,
         type: "agent_request",
         title: "New agent access request",
         detail: `${row.full_name} · ${row.estate_name}`,
+        user: row.full_name,
+        action: "Access Request",
+        details: row.estate_name || row.full_name,
         at: row.created_at,
       })),
     ]
       .filter((item) => item.at)
       .sort((a, b) => new Date(b.at) - new Date(a.at))
-      .slice(0, 10);
+      .slice(0, 12);
 
     const baseline = baselineRows[0] || {};
     const propertiesThisMonth = Number(stats.propertiesThisMonth) || 0;
@@ -360,23 +351,21 @@ export async function GET() {
         agentGrowthRows,
         Number(baseline.agentsBefore) || 0,
       ),
-      statusBreakdown,
       approvalQueue: approvalQueue.map((row) => ({
         ...row,
         id: Number(row.id),
       })),
-      topAgents: topAgents.map((agent) => ({
+      blockedAgents: blockedAgents.map((agent) => ({
         ...agent,
+        id: Number(agent.id),
         status: toClientAgentStatus(agent.status),
-        total_properties: Number(agent.total_properties) || 0,
-        approved_properties: Number(agent.approved_properties) || 0,
       })),
-      areas,
       activity,
       recentPending,
       recentAgents: recentAgents.map((agent) => ({
         ...agent,
         status: toClientAgentStatus(agent.status),
+        total_properties: Number(agent.total_properties) || 0,
       })),
     });
   } catch (err) {

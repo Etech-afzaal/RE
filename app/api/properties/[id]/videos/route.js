@@ -1,0 +1,248 @@
+import { NextResponse } from "next/server";
+import { requireAgent } from "@/lib/adminAuth";
+import { query } from "@/lib/db";
+import { normalizeImageCategory } from "@/lib/imageCategories";
+import {
+  MAX_PROPERTY_VIDEOS,
+  getVideoExtension,
+  isVideoFile,
+  videoLimitErrorMessage,
+  videosFormatErrorMessage,
+} from "@/lib/videoUpload";
+import { mkdir, rm, writeFile } from "fs/promises";
+import path from "path";
+import { nanoid } from "nanoid";
+
+async function ensurePropertyVideosTable() {
+  await query(`
+    CREATE TABLE IF NOT EXISTS property_videos (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      property_id INT NOT NULL,
+      video_url VARCHAR(500) NOT NULL,
+      category VARCHAR(100) NULL,
+      is_featured BOOLEAN DEFAULT FALSE,
+      display_order INT DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
+    )
+  `);
+}
+
+/** Videos may only be touched by the agent who owns the listing. */
+async function ownsProperty(propertyId, session) {
+  if (!Number.isInteger(propertyId) || propertyId <= 0) return false;
+  const agentId = Number(session.user.agent_id || session.user.id);
+  const rows = await query(
+    "SELECT id FROM properties WHERE id = ? AND agent_id = ?",
+    [propertyId, agentId],
+  );
+  return rows.length > 0;
+}
+
+function videoLocalPath(videoUrl) {
+  return path.join(process.cwd(), "public", String(videoUrl).replace(/^\/+/, ""));
+}
+
+/** Keep properties.video_url in sync with the featured gallery video. */
+async function syncLegacyVideoUrl(propertyId) {
+  const featured = await query(
+    `SELECT video_url FROM property_videos
+     WHERE property_id = ?
+     ORDER BY is_featured DESC, display_order ASC, id ASC
+     LIMIT 1`,
+    [propertyId],
+  );
+  await query("UPDATE properties SET video_url = ? WHERE id = ?", [
+    featured[0]?.video_url || null,
+    propertyId,
+  ]);
+}
+
+export async function POST(req, { params }) {
+  const { session, error } = await requireAgent();
+  if (error) return error;
+
+  const propertyId = Number(params.id);
+  const owned = await ownsProperty(propertyId, session);
+  if (!owned) {
+    return NextResponse.json({ error: "Property not found." }, { status: 404 });
+  }
+
+  await ensurePropertyVideosTable();
+
+  const formData = await req.formData();
+  const files = formData.getAll("videos");
+  const videoOrders = formData
+    .getAll("videoOrder")
+    .map((value) => Number(value));
+  const featuredFlags = formData
+    .getAll("isFeatured")
+    .map((value) => value === "1");
+  const videoCategories = formData
+    .getAll("videoCategories")
+    .map((value) => normalizeImageCategory(value));
+
+  if (files.length === 0) {
+    return NextResponse.json({ error: "No videos provided." }, { status: 400 });
+  }
+
+  const invalid = files.find(
+    (file) => !(file instanceof File) || !isVideoFile(file),
+  );
+  if (invalid) {
+    return NextResponse.json(
+      { error: videosFormatErrorMessage() },
+      { status: 400 },
+    );
+  }
+
+  const existing = await query(
+    "SELECT COUNT(*) AS total FROM property_videos WHERE property_id = ?",
+    [propertyId],
+  );
+  const existingCount = Number(existing[0]?.total || 0);
+  if (existingCount + files.length > MAX_PROPERTY_VIDEOS) {
+    return NextResponse.json({ error: videoLimitErrorMessage() }, { status: 400 });
+  }
+
+  const uploadDir = path.join(
+    process.cwd(),
+    "public",
+    "uploads",
+    "videos",
+    String(propertyId),
+  );
+  await mkdir(uploadDir, { recursive: true });
+
+  const saved = [];
+
+  try {
+    for (let i = 0; i < files.length; i += 1) {
+      const file = files[i];
+      const extension = getVideoExtension(file);
+      const filename = `${nanoid(10)}.${extension}`;
+      const publicUrl = `/uploads/videos/${propertyId}/${filename}`;
+
+      await writeFile(
+        path.join(uploadDir, filename),
+        Buffer.from(await file.arrayBuffer()),
+      );
+
+      const displayOrder = Number.isFinite(videoOrders[i]) ? videoOrders[i] : i;
+      const isFeatured = Boolean(featuredFlags[i]);
+      const category = videoCategories[i] ?? null;
+
+      await query(
+        `INSERT INTO property_videos
+          (property_id, video_url, category, is_featured, display_order)
+         VALUES (?, ?, ?, ?, ?)`,
+        [propertyId, publicUrl, category, isFeatured, displayOrder],
+      );
+
+      saved.push({ videoUrl: publicUrl, category, isFeatured, displayOrder });
+    }
+
+    // Exactly one featured video per property after this upload batch.
+    if (saved.some((item) => item.isFeatured)) {
+      await query(
+        "UPDATE property_videos SET is_featured = FALSE WHERE property_id = ?",
+        [propertyId],
+      );
+      const featuredUrl =
+        saved.find((item) => item.isFeatured)?.videoUrl || saved[0].videoUrl;
+      await query(
+        `UPDATE property_videos SET is_featured = TRUE
+         WHERE property_id = ? AND video_url = ?`,
+        [propertyId, featuredUrl],
+      );
+    } else if (existingCount === 0 && saved.length > 0) {
+      await query(
+        `UPDATE property_videos SET is_featured = TRUE
+         WHERE property_id = ? AND video_url = ?`,
+        [propertyId, saved[0].videoUrl],
+      );
+    }
+
+    await syncLegacyVideoUrl(propertyId);
+  } catch (err) {
+    for (const item of saved) {
+      await rm(videoLocalPath(item.videoUrl), { force: true }).catch(() => {});
+    }
+    console.error("Failed to save property videos:", err);
+    return NextResponse.json(
+      { error: "Could not upload the property videos." },
+      { status: 500 },
+    );
+  }
+
+  return NextResponse.json({
+    success: true,
+    videos: saved.map((item) => item.videoUrl),
+  });
+}
+
+export async function DELETE(req, { params }) {
+  const { session, error } = await requireAgent();
+  if (error) return error;
+
+  const propertyId = Number(params.id);
+  const owned = await ownsProperty(propertyId, session);
+  if (!owned) {
+    return NextResponse.json({ error: "Property not found." }, { status: 404 });
+  }
+
+  await ensurePropertyVideosTable();
+
+  const body = await req.json().catch(() => ({}));
+  const clearAll = Boolean(body.clearAll);
+  const videoIds = Array.isArray(body.videoIds) ? body.videoIds : [];
+
+  const rows = clearAll
+    ? await query(
+        "SELECT id, video_url, is_featured FROM property_videos WHERE property_id = ?",
+        [propertyId],
+      )
+    : (
+        await Promise.all(
+          videoIds.map(async (videoId) => {
+            const found = await query(
+              "SELECT id, video_url, is_featured FROM property_videos WHERE id = ? AND property_id = ?",
+              [Number(videoId), propertyId],
+            );
+            return found[0] || null;
+          }),
+        )
+      ).filter(Boolean);
+
+  for (const video of rows) {
+    await rm(videoLocalPath(video.video_url), { force: true });
+    await query(
+      "DELETE FROM property_videos WHERE id = ? AND property_id = ?",
+      [video.id, propertyId],
+    );
+  }
+
+  const remaining = await query(
+    `SELECT id FROM property_videos
+     WHERE property_id = ?
+     ORDER BY display_order ASC, id ASC`,
+    [propertyId],
+  );
+  if (remaining.length > 0) {
+    const hasFeatured = await query(
+      "SELECT id FROM property_videos WHERE property_id = ? AND is_featured = TRUE LIMIT 1",
+      [propertyId],
+    );
+    if (hasFeatured.length === 0) {
+      await query(
+        "UPDATE property_videos SET is_featured = TRUE WHERE id = ?",
+        [remaining[0].id],
+      );
+    }
+  }
+
+  await syncLegacyVideoUrl(propertyId);
+
+  return NextResponse.json({ success: true });
+}

@@ -35,12 +35,43 @@ function SizeIcon() {
   );
 }
 
-function AgentIcon() {
+function BedIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.8" />
       <path
-        d="M5 19c0-3 3.1-5 7-5s7 2 7 5"
+        d="M3 18V9.5A2.5 2.5 0 0 1 5.5 7H10a3 3 0 0 1 6 0h2.5A2.5 2.5 0 0 1 21 9.5V18"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M3 14h18M3 18h18"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function BathIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M4 12h16v2.5A3.5 3.5 0 0 1 16.5 18h-9A3.5 3.5 0 0 1 4 14.5V12z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M6 12V6.5A2.5 2.5 0 0 1 8.5 4H10"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M7 18v2M17 18v2"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinecap="round"
@@ -58,6 +89,20 @@ function StatusIcon() {
         strokeWidth="1.8"
         strokeLinejoin="round"
       />
+    </svg>
+  );
+}
+
+function LocationIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.8" />
     </svg>
   );
 }
@@ -93,20 +138,69 @@ function getCategory(property) {
   return "sale";
 }
 
+/** Prefer numeric field when present; otherwise null. */
+function numericField(...values) {
+  for (const value of values) {
+    if (value == null || value === "") continue;
+    const n = Number(value);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
+/**
+ * Beds / baths from dedicated columns when present, else create-form meta
+ * embedded in description (`Bedrooms: 4 | Bathrooms: 5`).
+ */
+function parseRoomCounts(property) {
+  const fromFields = {
+    beds: numericField(property.bedrooms, property.beds, property.bed_count),
+    baths: numericField(
+      property.bathrooms,
+      property.baths,
+      property.bath_count,
+    ),
+  };
+
+  const text = `${property.description || ""}\n${property.title || ""}`;
+  const bedsMatch =
+    text.match(/Bedrooms?:\s*(\d+)/i) ||
+    text.match(/(\d+)\s*(?:bed(?:room)?s?)\b/i);
+  const bathsMatch =
+    text.match(/Bathrooms?:\s*(\d+)/i) ||
+    text.match(/(\d+)\s*(?:bath(?:room)?s?)\b/i);
+
+  return {
+    beds: fromFields.beds ?? (bedsMatch ? Number(bedsMatch[1]) : null),
+    baths: fromFields.baths ?? (bathsMatch ? Number(bathsMatch[1]) : null),
+  };
+}
+
+function formatSizeLabel(value, unit) {
+  const raw = formatSize(value, unit);
+  if (!raw) return null;
+  return raw.replace(/\b(marla|kanal|sqft)\b/gi, (match) => {
+    if (match.toLowerCase() === "sqft") return "Sqft";
+    return match.charAt(0).toUpperCase() + match.slice(1).toLowerCase();
+  });
+}
+
 function PropertyCard({ property }) {
-  const sizeLabel = formatSize(property.size_value, property.size_unit);
-  const address = property.title || property.location;
+  const sizeLabel = formatSizeLabel(property.size_value, property.size_unit);
+  const location = String(property.location || "").trim();
+  const title = property.title || location || "Property";
   const category = getCategory(property);
+  const { beds, baths } = parseRoomCounts(property);
   const statusLabel =
     property.status === "sold"
       ? "Sold"
       : property.status === "draft"
-      ? "Draft"
-      : category === "rent"
-      ? "For Rent"
-      : category === "plot"
-      ? "Plot"
-      : "For Sale";
+        ? "Draft"
+        : category === "rent"
+          ? "For Rent"
+          : category === "plot"
+            ? "Plot"
+            : "For Sale";
 
   return (
     <Link
@@ -117,7 +211,7 @@ function PropertyCard({ property }) {
         {property.featuredImage ? (
           <Image
             src={property.featuredImage.image_url}
-            alt={property.title}
+            alt={property.title || "Property"}
             fill
             sizes="(max-width: 768px) 100vw, 33vw"
             className={styles.image}
@@ -128,7 +222,16 @@ function PropertyCard({ property }) {
       </div>
 
       <div className={styles.body}>
-        <h3 className={styles.address}>{address}</h3>
+        {location ? (
+          <div className={styles.locationRow}>
+            <span className={styles.location}>
+              <LocationIcon />
+              <span>{location}</span>
+            </span>
+          </div>
+        ) : null}
+
+        <h3 className={styles.address}>{title}</h3>
 
         <div className={styles.attrs}>
           {sizeLabel ? (
@@ -137,10 +240,16 @@ function PropertyCard({ property }) {
               {sizeLabel}
             </span>
           ) : null}
-          {property.agent_name ? (
+          {beds != null ? (
             <span className={styles.attr}>
-              <AgentIcon />
-              {property.agent_name}
+              <BedIcon />
+              {beds} {beds === 1 ? "Bed" : "Beds"}
+            </span>
+          ) : null}
+          {baths != null ? (
+            <span className={styles.attr}>
+              <BathIcon />
+              {baths} {baths === 1 ? "Bath" : "Baths"}
             </span>
           ) : null}
           <span className={styles.attr}>
@@ -153,12 +262,6 @@ function PropertyCard({ property }) {
           <div className={styles.footerItem}>
             <span className={styles.footerLabel}>Price</span>
             <span className={styles.footerValue}>{formatPrice(property.price)}</span>
-          </div>
-          <div className={`${styles.footerItem} ${styles.footerRight}`}>
-            <span className={styles.footerLabel}>Listed by</span>
-            <span className={styles.footerValueSmall}>
-              {property.agent_name || property.estate_name || "Agent"}
-            </span>
           </div>
         </div>
       </div>

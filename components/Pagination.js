@@ -16,20 +16,28 @@ function pageRange(currentPage, totalPages) {
   return Array.from({ length: end - start + 1 }, (_, index) => start + index);
 }
 
-export default function Pagination({ currentPage, totalPages, onPageChange }) {
+export default function Pagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+  showNav = true,
+  ariaLabel = "Pagination",
+}) {
   if (totalPages <= 1) return null;
 
   return (
-    <nav className={styles.pagination} aria-label="Properties pagination">
-      <button
-        type="button"
-        className={styles.pageButton}
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        aria-label="Previous page"
-      >
-        &lt;
-      </button>
+    <nav className={styles.pagination} aria-label={ariaLabel}>
+      {showNav ? (
+        <button
+          type="button"
+          className={styles.pageButton}
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          aria-label="Previous page"
+        >
+          &lt;
+        </button>
+      ) : null}
       {pageRange(currentPage, totalPages).map((page) => (
         <button
           key={page}
@@ -41,15 +49,17 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
           {page}
         </button>
       ))}
-      <button
-        type="button"
-        className={styles.pageButton}
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        aria-label="Next page"
-      >
-        &gt;
-      </button>
+      {showNav ? (
+        <button
+          type="button"
+          className={styles.pageButton}
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          aria-label="Next page"
+        >
+          &gt;
+        </button>
+      ) : null}
     </nav>
   );
 }

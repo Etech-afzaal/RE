@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CircleCheck, CircleX, Eye } from "lucide-react";
 import ActionMenu from "@/components/ActionMenu";
+import ImagePreviewModal from "@/components/ImagePreviewModal";
 import RejectPropertyDialog from "@/components/admin/RejectPropertyDialog";
 import styles from "@/components/admin/adminUi.module.css";
 
@@ -35,6 +36,8 @@ export default function ApprovalsClient() {
   const [rejecting, setRejecting] = useState(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [previewImages, setPreviewImages] = useState([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -141,12 +144,27 @@ export default function ApprovalsClient() {
                     <td>
                       <div className={styles.propCell}>
                         {property.image_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={property.image_url}
-                            alt=""
-                            className={styles.thumb}
-                          />
+                          <button
+                            type="button"
+                            className={styles.thumbButton}
+                            aria-label={`Preview image for ${property.title}`}
+                            onClick={() => {
+                              setPreviewImages([
+                                {
+                                  image_url: property.image_url,
+                                  image_title: property.title,
+                                },
+                              ]);
+                              setPreviewOpen(true);
+                            }}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={property.image_url}
+                              alt=""
+                              className={styles.thumb}
+                            />
+                          </button>
                         ) : (
                           <div
                             className={`${styles.thumb} ${styles.thumbPlaceholder}`}
@@ -258,6 +276,13 @@ export default function ApprovalsClient() {
           onConfirm={(reason) => review(rejecting, "rejected", reason)}
         />
       ) : null}
+
+      <ImagePreviewModal
+        images={previewImages}
+        currentIndex={0}
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+      />
     </div>
   );
 }

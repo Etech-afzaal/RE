@@ -247,3 +247,42 @@ button:disabled {
   white-space: nowrap;
   border-width: 0;
 }
+
+/* Customer homepage floating WhatsApp (inline styles in app/page.js) */
+@keyframes whatsappFabFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+a[aria-label="Chat with us on WhatsApp"] {
+  width: 58px !important;
+  height: 58px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  background: #25d366 !important;
+  background-image: none !important;
+  color: #fff !important;
+  overflow: hidden !important;
+  box-shadow: 0 10px 28px rgba(37, 211, 102, 0.38) !important;
+  animation: whatsappFabFloat 2.6s ease-in-out infinite !important;
+}
+
+a[aria-label="Chat with us on WhatsApp"]:hover {
+  background: #20bd5a !important;
+  transform: translateY(-9px) scale(1.04) !important;
+  box-shadow: 0 16px 36px rgba(37, 211, 102, 0.48) !important;
+  animation-play-state: paused !important;
+}
+
+a[aria-label="Chat with us on WhatsApp"] svg {
+  display: block !important;
+  width: 30px !important;
+  height: 30px !important;
+  fill: #fff !important;
+  color: #fff !important;
+}

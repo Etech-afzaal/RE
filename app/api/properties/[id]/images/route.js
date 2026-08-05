@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { requireAgent } from "@/lib/adminAuth";
 import { query } from "@/lib/db";
-import { imageFormatErrorMessage, isImageFile } from "@/lib/imageUpload";
+import {
+  MAX_PROPERTY_IMAGES,
+  imageFormatErrorMessage,
+  imageLimitErrorMessage,
+  isImageFile,
+} from "@/lib/imageUpload";
 import { normalizeImageCategory } from "@/lib/imageCategories";
 import sharp from "sharp";
 import { writeFile, mkdir, rm } from "fs/promises";
@@ -49,8 +54,15 @@ async function ensureImageColumns() {
   );
   if (categoryColumn.length === 0) {
     await query(
-      "ALTER TABLE property_images ADD COLUMN category VARCHAR(40) NULL",
+      "ALTER TABLE property_images ADD COLUMN category VARCHAR(100) NULL",
     );
+  } else {
+    const type = String(categoryColumn[0]?.Type || "").toLowerCase();
+    if (type.includes("varchar(40)")) {
+      await query(
+        "ALTER TABLE property_images MODIFY COLUMN category VARCHAR(100) NULL",
+      );
+    }
   }
 }
 
@@ -98,6 +110,15 @@ export async function POST(req, { params }) {
   const invalid = files.find((file) => !(file instanceof File) || !isImageFile(file));
   if (invalid) {
     return NextResponse.json({ error: imageFormatErrorMessage() }, { status: 400 });
+  }
+
+  const existing = await query(
+    "SELECT COUNT(*) AS total FROM property_images WHERE property_id = ?",
+    [propertyId],
+  );
+  const existingCount = Number(existing[0]?.total || 0);
+  if (existingCount + files.length > MAX_PROPERTY_IMAGES) {
+    return NextResponse.json({ error: imageLimitErrorMessage() }, { status: 400 });
   }
 
   await ensureImageColumns();

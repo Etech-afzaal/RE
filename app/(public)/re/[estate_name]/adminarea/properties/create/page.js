@@ -1,10 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import ImageCategorySelect from "@/components/ImageCategorySelect";
+import ImagePreviewModal from "@/components/ImagePreviewModal";
+import { needsCustomImageCategory } from "@/lib/imageCategories";
+import {
+  MAX_PROPERTY_IMAGES,
+  imageLimitErrorMessage,
+} from "@/lib/imageUpload";
+import { MAX_PROPERTY_VIDEOS, videoLimitErrorMessage } from "@/lib/videoUpload";
 import ui from "@/components/agent-portal/portal.module.css";
 
 const STEPS = [
@@ -56,11 +63,17 @@ export default function CreatePropertyPage() {
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
   const [errorDetails, setErrorDetails] = useState([]);
-  const [saving, setSaving] = useState(false);
+  const [busyAction, setBusyAction] = useState(null); // null | "draft" | "submit"
+  const [submitSuccessOpen, setSubmitSuccessOpen] = useState(false);
   // Each entry: { file, url, category, isFeatured }. Position in the array is
-  // the display order sent to the API as imageOrder.
+  // the display order sent to the API as imageOrder. Capped at MAX_PROPERTY_IMAGES.
   const [images, setImages] = useState([]);
-  const [video, setVideo] = useState(null);
+  // Same shape as images; capped at MAX_PROPERTY_VIDEOS.
+  const [videos, setVideos] = useState([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
+  const fileInputRef = useRef(null);
+  const videoInputRef = useRef(null);
   const [form, setForm] = useState({
     title: "",
     propertyType: "sale",
@@ -79,6 +92,7 @@ export default function CreatePropertyPage() {
   useEffect(() => {
     return () => {
       images.forEach((item) => URL.revokeObjectURL(item.url));
+      videos.forEach((item) => URL.revokeObjectURL(item.url));
     };
     // Object URLs are revoked once, when leaving the page; revoking on every
     // change would break previews that are still on screen.
@@ -94,15 +108,26 @@ export default function CreatePropertyPage() {
   }
 
   function addFiles(fileList) {
-    const added = Array.from(fileList || []).map((file) => ({
-      file,
-      url: URL.createObjectURL(file),
-      category: "",
-      isFeatured: false,
-    }));
-    if (added.length === 0) return;
+    const incoming = Array.from(fileList || []);
+    if (incoming.length === 0) return;
+
+    const remaining = Math.max(0, MAX_PROPERTY_IMAGES - images.length);
+    if (remaining === 0 || incoming.length > remaining) {
+      setError(imageLimitErrorMessage());
+    } else {
+      setError("");
+    }
+    if (remaining === 0) return;
+
     setImages((prev) => {
-      const next = [...prev, ...added];
+      const accepted = incoming.slice(0, remaining).map((file) => ({
+        file,
+        url: URL.createObjectURL(file),
+        category: "",
+        isFeatured: false,
+      }));
+      if (accepted.length === 0) return prev;
+      const next = [...prev, ...accepted];
       if (!next.some((item) => item.isFeatured)) next[0].isFeatured = true;
       return next;
     });
@@ -142,6 +167,142 @@ export default function CreatePropertyPage() {
     });
   }
 
+  function clearAllImages() {
+    const confirmed = window.confirm(
+      "Remove all uploaded images?\n\nThis will remove all selected images from this property.",
+    );
+    if (!confirmed) return;
+    setImages((prev) => {
+      prev.forEach((item) => URL.revokeObjectURL(item.url));
+      return [];
+    });
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function addVideos(fileList) {
+    const incoming = Array.from(fileList || []);
+    if (incoming.length === 0) return;
+
+    const remaining = Math.max(0, MAX_PROPERTY_VIDEOS - videos.length);
+    if (remaining === 0 || incoming.length > remaining) {
+      setError(videoLimitErrorMessage());
+    } else {
+      setError("");
+    }
+    if (remaining === 0) return;
+
+    const accepted = incoming.slice(0, remaining).map((file) => ({
+      file,
+      url: URL.createObjectURL(file),
+      category: "",
+      isFeatured: false,
+    }));
+
+    setVideos((prev) => {
+      const next = [...prev, ...accepted];
+      if (!next.some((item) => item.isFeatured)) next[0].isFeatured = true;
+      return next;
+    });
+  }
+
+  function updateVideo(index, changes) {
+    setVideos((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, ...changes } : item)),
+    );
+  }
+
+  /** Exactly one video can be the featured walkthrough. */
+  function setFeaturedVideo(index) {
+    setVideos((prev) =>
+      prev.map((item, i) => ({ ...item, isFeatured: i === index })),
+    );
+  }
+
+  function moveVideo(index, offset) {
+    setVideos((prev) => {
+      const target = index + offset;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  }
+
+  function removeVideo(index) {
+    setVideos((prev) => {
+      URL.revokeObjectURL(prev[index].url);
+      const next = prev.filter((_, i) => i !== index);
+      if (next.length > 0 && !next.some((item) => item.isFeatured)) {
+        next[0] = { ...next[0], isFeatured: true };
+      }
+      return next;
+    });
+    setError("");
+  }
+
+  function clearAllVideos() {
+    const confirmed = window.confirm(
+      "Remove all uploaded videos?\n\nThis will remove all selected videos from this property.",
+    );
+    if (!confirmed) return;
+    setVideos((prev) => {
+      prev.forEach((item) => URL.revokeObjectURL(item.url));
+      return [];
+    });
+    if (videoInputRef.current) videoInputRef.current.value = "";
+    setError("");
+  }
+
+  function validateImagesStep() {
+    if (images.length === 0) {
+      return "Please upload at least one image.";
+    }
+    for (let i = 0; i < images.length; i += 1) {
+      const category = images[i].category;
+      if (!category || !String(category).trim()) {
+        return "Please add a category for all images.";
+      }
+      if (needsCustomImageCategory(category)) {
+        return "Please enter custom category.";
+      }
+    }
+    return null;
+  }
+
+  function validateVideosStep() {
+    if (videos.length === 0) return null;
+    for (let i = 0; i < videos.length; i += 1) {
+      const category = videos[i].category;
+      if (!category || !String(category).trim()) {
+        return "Please add a category for all videos.";
+      }
+      if (needsCustomImageCategory(category)) {
+        return "Please enter custom category.";
+      }
+    }
+    return null;
+  }
+
+  function handleContinue() {
+    setError("");
+    setErrorDetails([]);
+    if (step === 3) {
+      const imageError = validateImagesStep();
+      if (imageError) {
+        setError(imageError);
+        return;
+      }
+    }
+    if (step === 4) {
+      const videoError = validateVideosStep();
+      if (videoError) {
+        setError(videoError);
+        return;
+      }
+    }
+    setStep((s) => Math.min(5, s + 1));
+  }
+
   async function save({ submit = false } = {}) {
     setError("");
     setErrorDetails([]);
@@ -152,7 +313,7 @@ export default function CreatePropertyPage() {
       return;
     }
 
-    setSaving(true);
+    setBusyAction(submit ? "submit" : "draft");
     try {
       const createRes = await fetch("/api/properties", {
         method: "POST",
@@ -190,16 +351,21 @@ export default function CreatePropertyPage() {
         }
       }
 
-      if (video && propertyId) {
+      if (videos.length > 0 && propertyId) {
         const fd = new FormData();
-        fd.append("video", video);
-        const videoRes = await fetch(`/api/properties/${propertyId}/video`, {
+        videos.forEach((item, index) => {
+          fd.append("videos", item.file);
+          fd.append("videoOrder", String(index));
+          fd.append("videoCategories", item.category || "");
+          fd.append("isFeatured", item.isFeatured ? "1" : "0");
+        });
+        const videoRes = await fetch(`/api/properties/${propertyId}/videos`, {
           method: "POST",
           body: fd,
         });
         const videoData = await videoRes.json().catch(() => ({}));
         if (!videoRes.ok) {
-          throw new Error(videoData.error || "Could not upload property video.");
+          throw new Error(videoData.error || "Could not upload property videos.");
         }
       }
 
@@ -211,23 +377,31 @@ export default function CreatePropertyPage() {
         });
         const submitData = await submitRes.json().catch(() => ({}));
         if (!submitRes.ok) {
-          setError(
-            `${submitData.error || "Could not submit this property for approval."} It has been saved as a draft.`,
-          );
+          setError("Unable to submit property. Please try again.");
           setErrorDetails(
             Array.isArray(submitData.errors) ? submitData.errors : [],
           );
-          setSaving(false);
           return;
         }
+        setSubmitSuccessOpen(true);
+        return;
       }
 
       router.push(`${base}/properties`);
     } catch (err) {
-      setError(err.message || "Something went wrong.");
+      if (submit) {
+        setError("Unable to submit property. Please try again.");
+      } else {
+        setError(err.message || "Something went wrong.");
+      }
     } finally {
-      setSaving(false);
+      setBusyAction(null);
     }
+  }
+
+  function handleSubmitSuccessContinue() {
+    setSubmitSuccessOpen(false);
+    router.push(`${base}/properties`);
   }
 
   return (
@@ -396,110 +570,264 @@ export default function CreatePropertyPage() {
 
         {step === 3 ? (
           <>
-            <label className={ui.field}>
-              <span className={ui.label}>Upload Images</span>
-              <input
-                className={ui.input}
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => {
-                  addFiles(e.target.files);
-                  e.target.value = "";
-                }}
-              />
-            </label>
+            <span className={ui.label}>Property Images</span>
+
             {images.length > 0 ? (
-              <div className={ui.imageManager}>
-                {images.map((item, index) => (
-                  <div key={item.url} className={ui.imageCard}>
-                    <div className={ui.imageCardThumb}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={item.url} alt="" />
-                      {item.isFeatured ? (
-                        <span className={ui.featuredTag}>Featured</span>
-                      ) : null}
-                    </div>
-                    <div className={ui.imageCardBody}>
-                      <label className={ui.field}>
-                        <span className={ui.imageCardLabel}>Category</span>
-                        <ImageCategorySelect
-                          className={ui.select}
-                          value={item.category}
-                          ariaLabel={`Category for image ${index + 1}`}
-                          onChange={(category) =>
-                            updateImage(index, { category: category || "" })
-                          }
-                        />
-                      </label>
-                      <div className={ui.imageCardMeta}>
-                        <label className={ui.imageCardCheck}>
-                          <input
-                            type="radio"
-                            name="featured-image"
-                            checked={item.isFeatured}
-                            onChange={() => setFeatured(index)}
+              <>
+                <span className={ui.label}>Uploaded Images</span>
+                <div className={ui.imageManager}>
+                  {images.map((item, index) => (
+                    <div key={item.url} className={ui.imageCard}>
+                      <button
+                        type="button"
+                        className={ui.imageCardThumb}
+                        aria-label={`Preview image ${index + 1}`}
+                        onClick={() => {
+                          setPreviewIndex(index);
+                          setPreviewOpen(true);
+                        }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={item.url} alt="" />
+                        {item.isFeatured ? (
+                          <span className={ui.featuredTag}>Featured</span>
+                        ) : null}
+                      </button>
+                      <div className={ui.imageCardBody}>
+                        <label className={ui.field}>
+                          <span className={ui.imageCardLabel}>Category</span>
+                          <ImageCategorySelect
+                            className={ui.select}
+                            inputClassName={ui.input}
+                            value={item.category}
+                            ariaLabel={`Category for image ${index + 1}`}
+                            onChange={(category) =>
+                              updateImage(index, { category: category || "" })
+                            }
                           />
-                          Featured image
                         </label>
-                        <span className={ui.imageCardLabel}>
-                          Order {index + 1}
-                        </span>
-                        <div className={ui.imageCardActions}>
-                          <button
-                            type="button"
-                            className={ui.iconBtn}
-                            disabled={index === 0}
-                            aria-label={`Move image ${index + 1} up`}
-                            onClick={() => moveImage(index, -1)}
-                          >
-                            ↑
-                          </button>
-                          <button
-                            type="button"
-                            className={ui.iconBtn}
-                            disabled={index === images.length - 1}
-                            aria-label={`Move image ${index + 1} down`}
-                            onClick={() => moveImage(index, 1)}
-                          >
-                            ↓
-                          </button>
-                          <button
-                            type="button"
-                            className={`${ui.iconBtn} ${ui.iconBtnDanger}`}
-                            aria-label={`Remove image ${index + 1}`}
-                            onClick={() => removeImage(index)}
-                          >
-                            ×
-                          </button>
+                        <div className={ui.imageCardMeta}>
+                          <label className={ui.imageCardCheck}>
+                            <input
+                              type="radio"
+                              name="featured-image"
+                              checked={item.isFeatured}
+                              onChange={() => setFeatured(index)}
+                            />
+                            Featured image
+                          </label>
+                          <span className={ui.imageCardLabel}>
+                            Order {index + 1}
+                          </span>
+                          <div className={ui.imageCardActions}>
+                            <button
+                              type="button"
+                              className={ui.iconBtn}
+                              disabled={index === 0}
+                              aria-label={`Move image ${index + 1} up`}
+                              onClick={() => moveImage(index, -1)}
+                            >
+                              ↑
+                            </button>
+                            <button
+                              type="button"
+                              className={ui.iconBtn}
+                              disabled={index === images.length - 1}
+                              aria-label={`Move image ${index + 1} down`}
+                              onClick={() => moveImage(index, 1)}
+                            >
+                              ↓
+                            </button>
+                            <button
+                              type="button"
+                              className={`${ui.iconBtn} ${ui.iconBtnDanger}`}
+                              aria-label={`Remove image ${index + 1}`}
+                              onClick={() => removeImage(index)}
+                            >
+                              ×
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </>
+            ) : null}
+
+            <div className={ui.field}>
+              <div className={ui.filePicker}>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/jpg,.jpg,.jpeg,.png,.webp"
+                  multiple
+                  className={ui.srOnlyInput}
+                  onChange={(e) => {
+                    addFiles(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  className={ui.filePickerBtn}
+                  disabled={images.length >= MAX_PROPERTY_IMAGES}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  + Choose Images
+                </button>
+                <span className={ui.filePickerStatus}>
+                  {images.length === 0
+                    ? "No images selected"
+                    : `${images.length} image${images.length === 1 ? "" : "s"} selected`}
+                </span>
               </div>
-            ) : (
-              <p className={ui.muted}>Optional — you can add images later.</p>
-            )}
+              <p className={ui.muted}>
+                Upload JPG, PNG, WEBP images. Maximum {MAX_PROPERTY_IMAGES}{" "}
+                images allowed.
+              </p>
+            </div>
+
+            {images.length > 0 ? (
+              <div className={ui.imageUploadActions}>
+                <button
+                  type="button"
+                  className={ui.btnTextDanger}
+                  onClick={clearAllImages}
+                >
+                  Clear All Images
+                </button>
+              </div>
+            ) : null}
           </>
         ) : null}
 
         {step === 4 ? (
           <>
-            <label className={ui.field}>
-              <span className={ui.label}>Property Video (Optional)</span>
-              <input
-                className={ui.input}
-                type="file"
-                accept="video/mp4,video/webm,video/quicktime,video/ogg,.mp4,.webm,.mov,.ogg"
-                onChange={(e) => setVideo(e.target.files?.[0] || null)}
-              />
-            </label>
-            {video ? (
-              <p className={ui.muted}>Selected: {video.name}</p>
-            ) : (
-              <p className={ui.muted}>Optional — MP4, WebM, MOV, or OGG. One video only.</p>
-            )}
+            <span className={ui.label}>Property Videos (Optional)</span>
+
+            {videos.length > 0 ? (
+              <>
+                <span className={ui.label}>Uploaded Videos</span>
+                <div className={ui.imageManager}>
+                  {videos.map((item, index) => (
+                    <div key={item.url} className={ui.imageCard}>
+                      <div className={ui.imageCardThumb}>
+                        <video
+                          src={item.url}
+                          muted
+                          playsInline
+                          preload="metadata"
+                        />
+                        {item.isFeatured ? (
+                          <span className={ui.featuredTag}>Featured</span>
+                        ) : null}
+                      </div>
+                      <div className={ui.imageCardBody}>
+                        <label className={ui.field}>
+                          <span className={ui.imageCardLabel}>Category</span>
+                          <ImageCategorySelect
+                            className={ui.select}
+                            inputClassName={ui.input}
+                            value={item.category}
+                            ariaLabel={`Category for video ${index + 1}`}
+                            onChange={(category) =>
+                              updateVideo(index, { category: category || "" })
+                            }
+                          />
+                        </label>
+                        <div className={ui.imageCardMeta}>
+                          <label className={ui.imageCardCheck}>
+                            <input
+                              type="radio"
+                              name="featured-video"
+                              checked={item.isFeatured}
+                              onChange={() => setFeaturedVideo(index)}
+                            />
+                            Featured video
+                          </label>
+                          <span className={ui.imageCardLabel}>
+                            Order {index + 1}
+                          </span>
+                          <div className={ui.imageCardActions}>
+                            <button
+                              type="button"
+                              className={ui.iconBtn}
+                              disabled={index === 0}
+                              aria-label={`Move video ${index + 1} up`}
+                              onClick={() => moveVideo(index, -1)}
+                            >
+                              ↑
+                            </button>
+                            <button
+                              type="button"
+                              className={ui.iconBtn}
+                              disabled={index === videos.length - 1}
+                              aria-label={`Move video ${index + 1} down`}
+                              onClick={() => moveVideo(index, 1)}
+                            >
+                              ↓
+                            </button>
+                            <button
+                              type="button"
+                              className={`${ui.iconBtn} ${ui.iconBtnDanger}`}
+                              aria-label={`Remove video ${index + 1}`}
+                              onClick={() => removeVideo(index)}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : null}
+
+            <div className={ui.field}>
+              <div className={ui.filePicker}>
+                <input
+                  ref={videoInputRef}
+                  type="file"
+                  accept="video/mp4,video/webm,video/quicktime,video/ogg,.mp4,.webm,.mov,.ogg"
+                  multiple
+                  className={ui.srOnlyInput}
+                  onChange={(e) => {
+                    addVideos(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  className={ui.filePickerBtn}
+                  disabled={videos.length >= MAX_PROPERTY_VIDEOS}
+                  onClick={() => videoInputRef.current?.click()}
+                >
+                  + Choose Videos
+                </button>
+                <span className={ui.filePickerStatus}>
+                  {videos.length === 0
+                    ? "No videos selected"
+                    : `${videos.length} video${videos.length === 1 ? "" : "s"} selected`}
+                </span>
+              </div>
+              <p className={ui.muted}>
+                Upload MP4, WebM, MOV videos. Maximum 3 videos allowed.
+              </p>
+            </div>
+
+            {videos.length > 0 ? (
+              <div className={ui.imageUploadActions}>
+                <button
+                  type="button"
+                  className={ui.btnTextDanger}
+                  onClick={clearAllVideos}
+                >
+                  Clear All Videos
+                </button>
+              </div>
+            ) : null}
           </>
         ) : null}
 
@@ -515,18 +843,18 @@ export default function CreatePropertyPage() {
               <button
                 type="button"
                 className={ui.btnGhost}
-                disabled={saving}
+                disabled={Boolean(busyAction)}
                 onClick={() => save()}
               >
-                {saving ? "Saving…" : "Save Draft"}
+                {busyAction === "draft" ? "Saving…" : "Save Draft"}
               </button>
               <button
                 type="button"
                 className={ui.btnPrimary}
-                disabled={saving}
+                disabled={Boolean(busyAction)}
                 onClick={() => save({ submit: true })}
               >
-                {saving ? "Submitting…" : "Submit For Approval"}
+                {busyAction === "submit" ? "Submitting..." : "Submit For Approval"}
               </button>
             </div>
           </>
@@ -546,13 +874,59 @@ export default function CreatePropertyPage() {
             <button
               type="button"
               className={ui.btnPrimary}
-              onClick={() => setStep((s) => Math.min(5, s + 1))}
+              onClick={handleContinue}
             >
               Continue
             </button>
           </div>
         ) : null}
       </div>
+
+      {submitSuccessOpen ? (
+        <div className={ui.dialogBackdrop} role="presentation">
+          <div
+            className={`${ui.dialog} ${ui.dialogSuccess}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="submit-success-title"
+            aria-describedby="submit-success-description"
+          >
+            <div className={ui.dialogSuccessIcon} aria-hidden="true">
+              ✓
+            </div>
+            <h2 id="submit-success-title" className={ui.dialogTitle}>
+              Property Submitted Successfully
+            </h2>
+            <p id="submit-success-description" className={ui.dialogText}>
+              Your property has been submitted for approval.
+            </p>
+            <p className={ui.dialogText}>
+              Our team will review your listing. Once approved, it will be
+              published on your public profile.
+            </p>
+            <div className={ui.dialogActions}>
+              <button
+                type="button"
+                className={ui.btnPrimary}
+                onClick={handleSubmitSuccessContinue}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <ImagePreviewModal
+        images={images.map((item) => ({
+          url: item.url,
+          category: item.category,
+          featured: item.isFeatured,
+        }))}
+        currentIndex={previewIndex}
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+      />
     </AgentPortalShell>
   );
 }

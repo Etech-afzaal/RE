@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS property_images (
   property_id INT NOT NULL,
   image_url VARCHAR(500) NOT NULL,          -- watermarked, public-facing
   image_title VARCHAR(255),                -- optional title for the property detail gallery
-  category VARCHAR(40) NULL,               -- room/area label, e.g. master_bedroom (see lib/imageCategories.js)
+  category VARCHAR(100) NULL,               -- room/area label, e.g. master_bedroom or custom "Swimming Pool"
   is_featured BOOLEAN DEFAULT FALSE,       -- marked as the main image for the property page
   sort_order INT DEFAULT 0,                -- display order within the gallery
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -86,10 +86,44 @@ CREATE TABLE IF NOT EXISTS property_images (
   FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
 );
 
+-- Optional walkthrough videos (max 3 per property in the add flow).
+-- properties.video_url stays as a legacy mirror of the featured video.
+CREATE TABLE IF NOT EXISTS property_videos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  property_id INT NOT NULL,
+  video_url VARCHAR(500) NOT NULL,
+  category VARCHAR(100) NULL,               -- same room/area labels as property_images
+  is_featured BOOLEAN DEFAULT FALSE,       -- main walkthrough for the property page
+  display_order INT DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
+);
+
 CREATE INDEX idx_properties_agent ON properties(agent_id);
 CREATE INDEX idx_properties_status ON properties(status);
+
+-- Customer inquiries sent from agent websites / property pages (email + future leads inbox).
+CREATE TABLE IF NOT EXISTS customer_inquiries (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  agent_id INT NOT NULL,
+  property_id INT NULL,
+  customer_name VARCHAR(150) NOT NULL,
+  customer_email VARCHAR(255) NOT NULL,
+  customer_phone VARCHAR(50) NULL,
+  message TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (agent_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_customer_inquiries_agent ON customer_inquiries(agent_id);
+CREATE INDEX idx_customer_inquiries_property ON customer_inquiries(property_id);
+CREATE INDEX idx_customer_inquiries_created ON customer_inquiries(created_at);
 CREATE INDEX idx_images_property ON property_images(property_id);
 CREATE INDEX idx_images_category ON property_images(property_id, category);
+CREATE INDEX idx_videos_property ON property_videos(property_id);
+CREATE INDEX idx_videos_category ON property_videos(property_id, category);
 
 -- Demo / realistic listings live in seed.sql (agents, sale/rent/plot properties, images).
 -- After creating tables, run:

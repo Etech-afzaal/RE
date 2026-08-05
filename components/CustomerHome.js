@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
@@ -202,12 +202,25 @@ function AgentCard({ agent }) {
   );
 }
 
+const EMPTY_CONTACT_FORM = {
+  full_name: "",
+  email: "",
+  phone: "",
+  subject: "",
+  message: "",
+};
+
 export default function CustomerHome({ agents = [], areas = [] }) {
   const [query, setQuery] = useState("");
   const [area, setArea] = useState("all");
   const [city, setCity] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [openFaq, setOpenFaq] = useState(null);
+  const [contactForm, setContactForm] = useState(EMPTY_CONTACT_FORM);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(false);
+  const feedbackTimerRef = useRef(null);
 
   const filtered = useMemo(() => {
     return agents.filter(
@@ -242,11 +255,84 @@ export default function CustomerHome({ agents = [], areas = [] }) {
     setCurrentPage(1);
   }, [query, area, city]);
 
+  useEffect(() => {
+    return () => {
+      if (feedbackTimerRef.current) {
+        clearTimeout(feedbackTimerRef.current);
+      }
+    };
+  }, []);
+
+  function clearFeedback() {
+    setSuccessMessage(false);
+    setErrorMessage(false);
+  }
+
+  function showFeedback(type) {
+    if (feedbackTimerRef.current) {
+      clearTimeout(feedbackTimerRef.current);
+    }
+
+    if (type === "success") {
+      setSuccessMessage(true);
+      setErrorMessage(false);
+    } else {
+      setErrorMessage(true);
+      setSuccessMessage(false);
+    }
+
+    feedbackTimerRef.current = setTimeout(() => {
+      clearFeedback();
+      feedbackTimerRef.current = null;
+    }, 2500);
+  }
+
   function handlePageChange(page) {
     setCurrentPage(page);
     document
       .getElementById("agents")
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function handleContactFieldChange(field) {
+    return (event) => {
+      const value = event.target.value;
+      setContactForm((prev) => ({ ...prev, [field]: value }));
+    };
+  }
+
+  async function handleContactSubmit(event) {
+    event.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    clearFeedback();
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          full_name: contactForm.full_name,
+          email: contactForm.email,
+          phone: contactForm.phone,
+          subject: contactForm.subject,
+          message: contactForm.message,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to send message.");
+      }
+
+      setContactForm(EMPTY_CONTACT_FORM);
+      showFeedback("success");
+    } catch {
+      showFeedback("error");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -507,56 +593,121 @@ export default function CustomerHome({ agents = [], areas = [] }) {
 
                 <div className={styles.contactFormPanel}>
                   <p className={styles.contactFormKicker}>Send a Message</p>
-                  <form className={styles.contactForm}>
+                  <form
+                    className={styles.contactForm}
+                    onSubmit={handleContactSubmit}
+                  >
                     <div className={styles.contactFields}>
                       <label className={styles.formField}>
                         <span className={styles.formLabel}>Full Name</span>
                         <input
                           type="text"
+                          name="full_name"
+                          required
+                          maxLength={150}
+                          value={contactForm.full_name}
+                          onChange={handleContactFieldChange("full_name")}
                           placeholder="Full Name"
                           className={styles.contactInput}
+                          disabled={isSubmitting}
                         />
                       </label>
                       <label className={styles.formField}>
                         <span className={styles.formLabel}>Email Address</span>
                         <input
                           type="email"
+                          name="email"
+                          required
+                          value={contactForm.email}
+                          onChange={handleContactFieldChange("email")}
                           placeholder="Email Address"
                           className={styles.contactInput}
+                          disabled={isSubmitting}
                         />
                       </label>
                       <label className={styles.formField}>
                         <span className={styles.formLabel}>Phone Number</span>
                         <input
                           type="tel"
+                          name="phone"
+                          value={contactForm.phone}
+                          onChange={handleContactFieldChange("phone")}
                           placeholder="Phone Number"
                           className={styles.contactInput}
+                          disabled={isSubmitting}
                         />
                       </label>
                       <label className={styles.formField}>
                         <span className={styles.formLabel}>Subject</span>
                         <input
                           type="text"
+                          name="subject"
+                          required
+                          maxLength={150}
+                          value={contactForm.subject}
+                          onChange={handleContactFieldChange("subject")}
                           placeholder="Buying, selling, or renting"
                           className={styles.contactInput}
+                          disabled={isSubmitting}
                         />
                       </label>
                       <label className={`${styles.formField} ${styles.messageField}`}>
                         <span className={styles.formLabel}>Message</span>
                         <textarea
+                          name="message"
                           rows="5"
+                          required
+                          maxLength={2000}
+                          value={contactForm.message}
+                          onChange={handleContactFieldChange("message")}
                           placeholder="Write your message"
                           className={styles.contactTextarea}
+                          disabled={isSubmitting}
                         />
                       </label>
                     </div>
                     <button
-                      type="button"
+                      type="submit"
                       className={`${styles.btnPrimary} ${styles.contactSubmit}`}
+                      disabled={isSubmitting}
                     >
-                      Send Message
+                      {isSubmitting ? "Sending..." : "Send Message"}
                     </button>
                   </form>
+
+                  {successMessage || errorMessage ? (
+                    <div
+                      className={`${styles.contactFeedbackPopup} ${
+                        successMessage
+                          ? styles.contactFeedbackSuccess
+                          : styles.contactFeedbackError
+                      }`}
+                      role={successMessage ? "status" : "alert"}
+                      aria-live={successMessage ? "polite" : "assertive"}
+                    >
+                      {successMessage ? (
+                        <>
+                          <p className={styles.contactFeedbackTitle}>
+                            ✓ Message sent successfully!
+                          </p>
+                          <p className={styles.contactFeedbackText}>
+                            Thank you for contacting DhaLahore.
+                            <br />
+                            We will get back to you shortly.
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className={styles.contactFeedbackTitle}>
+                            ❌ Unable to send message.
+                          </p>
+                          <p className={styles.contactFeedbackText}>
+                            Please try again.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>

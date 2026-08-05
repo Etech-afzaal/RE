@@ -2,14 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import ImagePreviewModal from "@/components/ImagePreviewModal";
 import styles from "./HeroGallery.module.css";
 
 /**
  * Premium property media viewer — main image, swipe/drag, thumbs, counter.
  * Uses the listing's own images only; no third-party carousel library.
+ * Click / tap (without a drag) opens the shared image preview modal.
  */
 export default function HeroGallery({ images = [], title = "Property" }) {
   const [index, setIndex] = useState(0);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const dragRef = useRef({ active: false, startX: 0, deltaX: 0 });
   const thumbsRef = useRef(null);
 
@@ -44,13 +47,14 @@ export default function HeroGallery({ images = [], title = "Property" }) {
   }, [count, index]);
 
   useEffect(() => {
+    if (previewOpen) return undefined;
     const onKey = (e) => {
       if (e.key === "ArrowLeft") goPrev();
       if (e.key === "ArrowRight") goNext();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [goPrev, goNext]);
+  }, [goPrev, goNext, previewOpen]);
 
   useEffect(() => {
     const rail = thumbsRef.current;
@@ -81,13 +85,19 @@ export default function HeroGallery({ images = [], title = "Property" }) {
   };
 
   const onPointerUp = () => {
-    if (!dragRef.current.active) return;
+    if (!dragRef.current.active) {
+      // Single-image (or no drag started): treat as preview click.
+      if (count >= 1) setPreviewOpen(true);
+      return;
+    }
     const { deltaX } = dragRef.current;
     dragRef.current.active = false;
     if (Math.abs(deltaX) > 48) {
       if (deltaX < 0) goNext();
       else goPrev();
+      return;
     }
+    setPreviewOpen(true);
   };
 
   if (count === 0) {
@@ -114,10 +124,21 @@ export default function HeroGallery({ images = [], title = "Property" }) {
       <div className={styles.stage}>
         <div
           className={styles.main}
+          role="button"
+          tabIndex={0}
+          aria-label={`Open preview: ${label}`}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
+          onPointerCancel={() => {
+            dragRef.current.active = false;
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setPreviewOpen(true);
+            }
+          }}
         >
           <Image
             key={current.id || current.image_url || safeIndex}
@@ -180,6 +201,10 @@ export default function HeroGallery({ images = [], title = "Property" }) {
                   i === safeIndex ? styles.thumbActive : ""
                 }`}
                 onClick={() => goTo(i)}
+                onDoubleClick={() => {
+                  setIndex(i);
+                  setPreviewOpen(true);
+                }}
               >
                 <Image
                   src={img.image_url || img.image}
@@ -193,6 +218,13 @@ export default function HeroGallery({ images = [], title = "Property" }) {
           })}
         </div>
       ) : null}
+
+      <ImagePreviewModal
+        images={images}
+        currentIndex={safeIndex}
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+      />
     </section>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { signOut } from "next-auth/react";
+import PasswordInput from "@/components/PasswordInput";
 
 export default function ResetPasswordPage() {
   const [newPassword, setNewPassword] = useState("");
@@ -179,20 +180,20 @@ export default function ResetPasswordPage() {
           onSubmit={handleSubmit}
           style={{ display: "flex", flexDirection: "column", gap: 12 }}
         >
-          <input
+          <PasswordInput
             required
-            type="password"
             placeholder="New password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
+            autoComplete="new-password"
             style={inputStyle}
           />
-          <input
+          <PasswordInput
             required
-            type="password"
             placeholder="Confirm new password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
+            autoComplete="new-password"
             style={inputStyle}
           />
           {error && (

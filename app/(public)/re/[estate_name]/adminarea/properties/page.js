@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import ActionMenu from "@/components/ActionMenu";
+import ImagePreviewModal from "@/components/ImagePreviewModal";
 import Pagination from "@/components/Pagination";
 import ui from "@/components/agent-portal/portal.module.css";
 
@@ -76,6 +77,8 @@ export default function AgentPropertiesPage() {
   const [error, setError] = useState("");
   const [errorDetails, setErrorDetails] = useState([]);
   const [success, setSuccess] = useState("");
+  const [previewImages, setPreviewImages] = useState([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const propertiesSectionRef = useRef(null);
   const shouldScrollRef = useRef(false);
 
@@ -269,13 +272,27 @@ export default function AgentPropertiesPage() {
                       <td>
                         <div className={ui.propCell}>
                           {image ? (
-                            <Image
-                              src={image}
-                              alt=""
-                              width={52}
-                              height={52}
-                              className={ui.thumb}
-                            />
+                            <button
+                              type="button"
+                              className={ui.thumbButton}
+                              aria-label={`Preview image for ${property.title}`}
+                              onClick={() => {
+                                const gallery =
+                                  property.images?.length > 0
+                                    ? property.images
+                                    : [{ image_url: image, image_title: property.title }];
+                                setPreviewImages(gallery);
+                                setPreviewOpen(true);
+                              }}
+                            >
+                              <Image
+                                src={image}
+                                alt=""
+                                width={52}
+                                height={52}
+                                className={ui.thumb}
+                              />
+                            </button>
                           ) : (
                             <div className={ui.thumbFallback}>P</div>
                           )}
@@ -384,6 +401,13 @@ export default function AgentPropertiesPage() {
           </div>
         </div>
       ) : null}
+
+      <ImagePreviewModal
+        images={previewImages}
+        currentIndex={0}
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+      />
     </AgentPortalShell>
   );
 }

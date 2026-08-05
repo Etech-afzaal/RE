@@ -4,30 +4,30 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import styles from "@/components/admin/adminUi.module.css";
 
-const STATUS_COLORS = {
-  approved: "#16a34a",
-  pending_approval: "#d97706",
-  draft: "#64748b",
-  rejected: "#dc2626",
-  sold: "#2563eb",
-  hidden: "#94a3b8",
-};
-
 function formatDate(value) {
   if (!value) return "—";
-  return new Date(value).toLocaleDateString();
+  return new Date(value).toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
-function formatDateTime(value) {
+function formatRelativeTime(value) {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+
+  const diffMs = Date.now() - date.getTime();
+  const diffSec = Math.round(diffMs / 1000);
+  if (diffSec < 60) return "Just now";
+  const diffMin = Math.round(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} min ago`;
+  const diffHr = Math.round(diffMin / 60);
+  if (diffHr < 24) return `${diffHr} hour${diffHr === 1 ? "" : "s"} ago`;
+  const diffDay = Math.round(diffHr / 24);
+  if (diffDay < 7) return `${diffDay} day${diffDay === 1 ? "" : "s"} ago`;
+  return formatDate(value);
 }
 
 function formatNumber(value) {
@@ -160,111 +160,123 @@ function GrowthChart({ properties, agents }) {
             className={styles.donutSwatch}
             style={{ background: "var(--gold-deep)" }}
           />
-          Total properties
+          Properties
         </span>
         <span className={styles.chartLegendItem}>
           <span
             className={styles.donutSwatch}
             style={{ background: "#2563eb" }}
           />
-          Total agents
+          Agents
         </span>
       </div>
     </>
   );
 }
 
-/** Horizontal bars for any { label, value, hint } list. */
-function BarList({ items }) {
-  const max = Math.max(...items.map((item) => item.value), 1);
-  return (
-    <div className={styles.areaList}>
-      {items.map((item) => (
-        <div key={item.label} className={styles.areaRow}>
-          <div className={styles.areaMeta}>
-            <span className={styles.areaName}>{item.label}</span>
-            <span className={styles.areaPct}>{item.hint}</span>
-          </div>
-          <div className={styles.barTrack}>
-            <div
-              className={styles.barFill}
-              style={{ width: `${Math.max((item.value / max) * 100, 3)}%` }}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+function buildAttentionItems({
+  approvalQueue = [],
+  recentPending = [],
+  blockedAgents = [],
+}) {
+  return [
+    ...approvalQueue.map((item) => ({
+      id: `prop-${item.id}`,
+      type: "Property Approval",
+      name: item.title,
+      subtitle: item.location || item.agent_name || "Property submission",
+      status: "Pending",
+      statusTone: "pending",
+      href: `/admin/dashboard/approvals/${item.id}`,
+      actionLabel: "Review",
+    })),
+    ...recentPending.map((req) => ({
+      id: `req-${req.id}`,
+      type: "Agent Request",
+      name: req.full_name,
+      subtitle: req.estate_name || req.email || "Agent access request",
+      status: "Pending",
+      statusTone: "pending",
+      href: "/admin/dashboard/requests",
+      actionLabel: "Review",
+    })),
+    ...blockedAgents.map((agent) => ({
+      id: `blocked-${agent.id}`,
+      type: "Blocked Agent",
+      name: agent.full_name,
+      subtitle: agent.estate_name
+        ? `/re/${agent.estate_name}`
+        : "Requires follow-up",
+      status: "Action Needed",
+      statusTone: "danger",
+      href: "/admin/dashboard/agents",
+      actionLabel: "View",
+    })),
+  ];
 }
 
-function DonutChart({ items }) {
-  const total = items.reduce((sum, item) => sum + item.total, 0) || 1;
-  const radius = 54;
-  const circumference = 2 * Math.PI * radius;
-  let offset = 0;
+function normalizeActivity(item) {
+  if (item.user && item.action) {
+    return {
+      id: item.id,
+      time: item.at,
+      user: item.user,
+      action: item.action,
+      details: item.details || item.detail || "—",
+      href: item.href && item.href !== "#" ? item.href : null,
+      type: item.type || null,
+    };
+  }
 
-  return (
-    <div className={styles.donutWrap}>
-      <svg className={styles.donutSvg} viewBox="0 0 140 140" aria-hidden="true">
-        <circle
-          cx="70"
-          cy="70"
-          r={radius}
-          fill="none"
-          stroke="var(--line-soft)"
-          strokeWidth="16"
-        />
-        {items.map((item) => {
-          const portion = item.total / total;
-          const length = portion * circumference;
-          const dashOffset = -offset;
-          offset += length;
-          return (
-            <circle
-              key={item.status}
-              cx="70"
-              cy="70"
-              r={radius}
-              fill="none"
-              stroke={STATUS_COLORS[item.status] || "#94a3b8"}
-              strokeWidth="16"
-              strokeDasharray={`${length} ${circumference - length}`}
-              strokeDashoffset={dashOffset}
-              transform="rotate(-90 70 70)"
-            />
-          );
-        })}
-        <text className={styles.donutCenter} x="70" y="68">
-          {Math.round(
-            ((items.find((i) => i.status === "approved")?.total || 0) / total) *
-              100,
-          )}
-          %
-        </text>
-        <text className={styles.donutCenterSub} x="70" y="84">
-          Approved
-        </text>
-      </svg>
-      <div className={styles.donutLegend}>
-        {items.map((item) => (
-          <div key={item.status} className={styles.donutLegendItem}>
-            <span className={styles.donutLegendLeft}>
-              <span
-                className={styles.donutSwatch}
-                style={{
-                  background: STATUS_COLORS[item.status] || "#94a3b8",
-                }}
-              />
-              {item.label}
-            </span>
-            <span className={styles.donutLegendValue}>
-              {item.total} · {Math.round((item.total / total) * 100)}%
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  const typeMap = {
+    property: {
+      user: item.title?.replace(/\s+added a new property$/i, "") || "Agent",
+      action: "Added Property",
+    },
+    property_added: {
+      user: item.title?.replace(/\s+added a new property$/i, "") || "Agent",
+      action: "Added Property",
+    },
+    property_approved: {
+      user: "Superadmin",
+      action: "Approved Property",
+    },
+    property_rejected: {
+      user: "Superadmin",
+      action: "Rejected Property",
+    },
+    agent: {
+      user: item.detail?.split(" · ")[0] || "Agent",
+      action: "Agent Registered",
+    },
+    agent_joined: {
+      user: item.detail?.split(" · ")[0] || "Agent",
+      action: "Agent Registered",
+    },
+    agent_blocked: {
+      user: "Superadmin",
+      action: "Blocked Agent",
+    },
+    agent_request: {
+      user: item.detail?.split(" · ")[0] || "Applicant",
+      action: "Access Request",
+    },
+  };
+
+  const mapped = typeMap[item.type] || {
+    user: "System",
+    action: item.title || "Activity",
+  };
+
+  return {
+    id: item.id,
+    time: item.at,
+    user: mapped.user,
+    action: mapped.action,
+    details: item.details || item.detail || "—",
+    href: item.href && item.href !== "#" ? item.href : null,
+    type: item.type || null,
+  };
 }
 
 export default function AdminOverviewPage() {
@@ -305,16 +317,19 @@ export default function AdminOverviewPage() {
     stats,
     propertyGrowth = [],
     agentGrowth = [],
-    statusBreakdown = [],
     approvalQueue = [],
-    topAgents = [],
-    areas = [],
     activity = [],
     recentPending = [],
     recentAgents = [],
+    blockedAgents = [],
   } = data;
 
-  const attentionCount = approvalQueue.length + recentPending.length;
+  const attentionItems = buildAttentionItems({
+    approvalQueue,
+    recentPending,
+    blockedAgents,
+  });
+  const activityRows = activity.map(normalizeActivity);
 
   const STAT_CARDS = [
     {
@@ -396,6 +411,70 @@ export default function AdminOverviewPage() {
         ))}
       </div>
 
+      <section className={styles.panel}>
+        <div className={styles.panelHeader}>
+          <h2 className={styles.panelTitle}>Needs Attention</h2>
+          <Link href="/admin/dashboard/approvals" className={styles.panelLink}>
+            View all
+          </Link>
+        </div>
+        {attentionItems.length === 0 ? (
+          <div className={styles.allClear}>
+            <span className={styles.allClearIcon} aria-hidden="true">
+              ✓
+            </span>
+            <div>
+              <p className={styles.listPrimary}>You are all caught up</p>
+              <p className={styles.listSecondary}>
+                No listings, agent requests, or blocked agents need action.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className={styles.tableScroll}>
+            <table className={styles.queueTable}>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Name</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {attentionItems.map((item) => (
+                  <tr key={item.id}>
+                    <td>
+                      <span className={styles.typeLabel}>{item.type}</span>
+                    </td>
+                    <td>
+                      <p className={styles.listPrimary}>{item.name}</p>
+                      <p className={styles.listSecondary}>{item.subtitle}</p>
+                    </td>
+                    <td>
+                      <span
+                        className={`${styles.badge} ${
+                          item.statusTone === "danger"
+                            ? styles.badgeDanger
+                            : styles.badgePending
+                        }`}
+                      >
+                        {item.status}
+                      </span>
+                    </td>
+                    <td>
+                      <Link href={item.href} className={styles.panelLink}>
+                        {item.actionLabel}
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
       <div className={styles.opsRow}>
         <section className={styles.panel}>
           <div className={styles.panelHeader}>
@@ -405,146 +484,19 @@ export default function AdminOverviewPage() {
             </span>
           </div>
           <div className={styles.chartBody}>
-            <GrowthChart properties={propertyGrowth} agents={agentGrowth} />
-          </div>
-        </section>
-
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <h2 className={styles.panelTitle}>Property Status Overview</h2>
-          </div>
-          <div className={styles.chartBody}>
-            {statusBreakdown.length === 0 ? (
-              <p className={styles.chartEmpty}>No properties yet.</p>
+            {propertyGrowth.length === 0 ? (
+              <p className={styles.chartEmpty}>No growth data yet.</p>
             ) : (
-              <DonutChart items={statusBreakdown} />
+              <GrowthChart properties={propertyGrowth} agents={agentGrowth} />
             )}
           </div>
-        </section>
-      </div>
-
-      <div className={styles.opsRow}>
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <h2 className={styles.panelTitle}>Listings by Agent</h2>
-            <Link href="/admin/dashboard/agents" className={styles.panelLink}>
-              Manage
-            </Link>
-          </div>
-          {topAgents.length === 0 ? (
-            <p className={styles.empty}>No agent listings yet.</p>
-          ) : (
-            <BarList
-              items={topAgents.map((agent) => ({
-                label: agent.full_name,
-                value: agent.total_properties,
-                hint: `${agent.approved_properties} live · ${agent.total_properties} total`,
-              }))}
-            />
-          )}
-        </section>
-
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <h2 className={styles.panelTitle}>Popular Areas</h2>
-            <span className={styles.listSecondary}>By listing location</span>
-          </div>
-          {areas.length === 0 ? (
-            <p className={styles.empty}>No location data yet.</p>
-          ) : (
-            <BarList
-              items={areas.map((area) => ({
-                label: area.name,
-                value: area.total,
-                hint: `${area.total} · ${area.percent}%`,
-              }))}
-            />
-          )}
-        </section>
-      </div>
-
-      <div className={styles.opsRow}>
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <h2 className={styles.panelTitle}>Needs Attention</h2>
-            <Link href="/admin/dashboard/approvals" className={styles.panelLink}>
-              View all
-            </Link>
-          </div>
-          {attentionCount === 0 ? (
-            <div className={styles.allClear}>
-              <span className={styles.allClearIcon} aria-hidden="true">
-                ✓
-              </span>
-              <div>
-                <p className={styles.listPrimary}>You are all caught up</p>
-                <p className={styles.listSecondary}>
-                  No listings or agent requests are waiting for review.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <table className={styles.queueTable}>
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Agent</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {approvalQueue.map((item) => (
-                  <tr key={`prop-${item.id}`}>
-                    <td>
-                      <p className={styles.listPrimary}>{item.title}</p>
-                      <p className={styles.listSecondary}>
-                        {item.location || "Property submission"}
-                      </p>
-                    </td>
-                    <td>{item.agent_name}</td>
-                    <td>
-                      <Link
-                        href={`/admin/dashboard/approvals/${item.id}`}
-                        className={styles.panelLink}
-                      >
-                        Review
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-                {recentPending.map((req) => (
-                  <tr key={`req-${req.id}`}>
-                    <td>
-                      <p className={styles.listPrimary}>{req.full_name}</p>
-                      <p className={styles.listSecondary}>
-                        Agent access request · {req.estate_name}
-                      </p>
-                    </td>
-                    <td>
-                      <a href={`mailto:${req.email}`} className={styles.mailLink}>
-                        {req.email}
-                      </a>
-                    </td>
-                    <td>
-                      <Link
-                        href="/admin/dashboard/requests"
-                        className={styles.panelLink}
-                      >
-                        Review
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
         </section>
 
         <section className={styles.panel}>
           <div className={styles.panelHeader}>
             <h2 className={styles.panelTitle}>Recent Agents</h2>
             <Link href="/admin/dashboard/agents" className={styles.panelLink}>
-              Manage
+              View All
             </Link>
           </div>
           {recentAgents.length === 0 ? (
@@ -556,8 +508,13 @@ export default function AdminOverviewPage() {
                   <div>
                     <p className={styles.listPrimary}>{agent.full_name}</p>
                     <p className={styles.listSecondary}>
-                      /re/{agent.estate_name} · joined{" "}
-                      {formatDate(agent.created_at)}
+                      Joined: {formatDate(agent.created_at)}
+                    </p>
+                    <p className={styles.listSecondary}>
+                      Properties:{" "}
+                      {formatNumber(
+                        agent.total_properties ?? agent.property_count ?? 0,
+                      )}
                     </p>
                   </div>
                   <span
@@ -584,26 +541,53 @@ export default function AdminOverviewPage() {
 
       <section className={styles.panel}>
         <div className={styles.panelHeader}>
-          <h2 className={styles.panelTitle}>Recent Activity</h2>
+          <h2 className={styles.panelTitle}>Recent Activities</h2>
         </div>
-        {activity.length === 0 ? (
+        {activityRows.length === 0 ? (
           <p className={styles.empty}>No recent platform activity.</p>
         ) : (
-          <div className={styles.timeline}>
-            {activity.map((item) => (
-              <div key={item.id} className={styles.timelineItem}>
-                <span className={styles.timelineDot} aria-hidden="true" />
-                <div>
-                  <p className={styles.timelineTitle}>{item.title}</p>
-                  {item.detail ? (
-                    <p className={styles.timelineDetail}>{item.detail}</p>
-                  ) : null}
-                  <p className={styles.timelineTime}>
-                    {formatDateTime(item.at)}
-                  </p>
-                </div>
-              </div>
-            ))}
+          <div className={styles.tableScroll}>
+            <table className={styles.queueTable}>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>User</th>
+                  <th>Action</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activityRows.map((row) => (
+                  <tr key={row.id}>
+                    <td>
+                      <span className={styles.activityTime}>
+                        {formatRelativeTime(row.time)}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={styles.listPrimary}>{row.user}</span>
+                    </td>
+                    <td>{row.action}</td>
+                    <td>
+                      {row.href ? (
+                        <a
+                          href={row.href}
+                          className={`${styles.listSecondary} ${styles.activityDetailLink}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {row.details}
+                        </a>
+                      ) : (
+                        <span className={styles.listSecondary}>
+                          {row.details}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </section>

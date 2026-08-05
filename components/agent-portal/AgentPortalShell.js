@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { useSidebarCollapsed } from "@/lib/useSidebarCollapsed";
 import styles from "./AgentPortalShell.module.css";
 
 function navItems(base) {
@@ -127,6 +128,32 @@ function isActive(pathname, item) {
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
+function CollapseIcon({ collapsed }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      {collapsed ? (
+        <path
+          d="M9 6l6 6-6 6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ) : (
+        <path
+          d="M15 6l-6 6 6 6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      )}
+    </svg>
+  );
+}
+
 export default function AgentPortalShell({
   children,
   username,
@@ -137,6 +164,9 @@ export default function AgentPortalShell({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { collapsed, toggleCollapsed } = useSidebarCollapsed(
+    "agent.sidebarCollapsed",
+  );
   const base = `/re/${encodeURIComponent(username)}/adminarea`;
   const items = useMemo(() => navItems(base), [base]);
   const activeItem = items.find((item) => isActive(pathname, item));
@@ -152,13 +182,26 @@ export default function AgentPortalShell({
         />
       ) : null}
 
-      <aside className={`${styles.sidebar} ${open ? styles.sidebarOpen : ""}`}>
+      <aside
+        className={`${styles.sidebar} ${open ? styles.sidebarOpen : ""} ${
+          collapsed ? styles.sidebarCollapsed : ""
+        }`}
+      >
         <div className={styles.brand}>
           <span className={styles.brandMark}>D</span>
-          <div>
+          <div className={styles.brandText}>
             <p className={styles.brandName}>Dhalahore</p>
             <p className={styles.brandSub}>Agent Portal</p>
           </div>
+          <button
+            type="button"
+            className={styles.collapseBtn}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            onClick={toggleCollapsed}
+          >
+            <CollapseIcon collapsed={collapsed} />
+          </button>
         </div>
 
         <nav className={styles.nav} aria-label="Agent portal">
@@ -169,10 +212,11 @@ export default function AgentPortalShell({
                 key={item.href}
                 href={item.href}
                 className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`}
+                title={collapsed ? item.label : undefined}
                 onClick={() => setOpen(false)}
               >
                 <span className={styles.navIcon}>{item.icon}</span>
-                {item.label}
+                <span className={styles.navLabel}>{item.label}</span>
               </Link>
             );
           })}
@@ -184,15 +228,45 @@ export default function AgentPortalShell({
             className={styles.viewSite}
             target="_blank"
             rel="noopener noreferrer"
+            title={collapsed ? "View public website" : undefined}
           >
-            View public website
+            <span className={styles.footerIcon} aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M14 5h5v5M19 5l-9 9M10 5H5v14h14v-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+            <span className={styles.footerLabel}>View public website</span>
           </Link>
           <button
             type="button"
             className={styles.logoutBtn}
+            title={collapsed ? "Logout" : undefined}
+            aria-label="Logout"
             onClick={() => signOut({ callbackUrl: "/agent/login" })}
           >
-            Logout
+            {collapsed ? (
+              <span className={styles.footerIcon} aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="M10 7V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-8a1 1 0 0 1-1-1v-2M15 12H4m0 0 3-3M4 12l3 3"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+            ) : (
+              "Logout"
+            )}
           </button>
         </div>
       </aside>

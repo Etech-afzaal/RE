@@ -8,6 +8,9 @@ import AgentBrandProfile from "@/components/AgentBrandProfile/AgentBrandProfile"
 import HomeListings from "@/components/HomeListings";
 import TrustStats from "@/components/TrustStats";
 import LocationCarousel from "@/components/LocationCarousel";
+import AgentInquiryForm from "@/components/AgentInquiryForm";
+import AgentWhatsAppFab from "@/components/AgentWhatsAppFab";
+import { agentWebsiteWhatsAppMessage } from "@/lib/whatsapp";
 import styles from "@/app/page.module.css";
 
 const AGENT_PUBLIC_NAV = [
@@ -135,25 +138,15 @@ export default function PublicPropertyWebsite({
             <div className={styles.contactCard}>
               <div className={styles.contactGrid}>
                 <div className={styles.contactInfo}>
-                  <p className={styles.contactKicker}>CONTACT US</p>
+                  <p className={styles.contactKicker}>Contact</p>
                   <h2 className={styles.contactHeading}>
                     Let&apos;s Talk About Your Next Property
                   </h2>
                   <p className={styles.contactCopy}>
                     {agent
                       ? `Reach out to ${agent.full_name} for buying, selling, or investment guidance.`
-                      : "Reach out to our Lahore team for buying, selling, or investment guidance. We help serious buyers and trusted agents connect quickly."}
+                      : "Reach out to our Lahore team for buying, selling, or investment guidance."}
                   </p>
-
-                  <div className={styles.chooseList}>
-                    <p className={styles.chooseHeading}>Why Choose Dhalahore?</p>
-                    <ul>
-                      <li>Verified Lahore listings from trusted estate agents.</li>
-                      <li>Clear pricing and quick direct contact.</li>
-                      <li>Premium local support for buyers and sellers.</li>
-                      <li>Effortless shortlisting with smart property details.</li>
-                    </ul>
-                  </div>
 
                   <div className={styles.contactDetails}>
                     <div className={styles.contactDetail}>
@@ -166,7 +159,12 @@ export default function PublicPropertyWebsite({
                       </span>
                       <div>
                         <p className={styles.contactDetailLabel}>Phone</p>
-                        <p className={styles.contactDetailValue}>{contactPhone}</p>
+                        <a
+                          href={contactTelHref}
+                          className={styles.contactDetailLink}
+                        >
+                          {contactPhone}
+                        </a>
                       </div>
                     </div>
                     <div className={styles.contactDetail}>
@@ -178,7 +176,12 @@ export default function PublicPropertyWebsite({
                       </span>
                       <div>
                         <p className={styles.contactDetailLabel}>Email</p>
-                        <p className={styles.contactDetailValue}>{contactEmail}</p>
+                        <a
+                          href={`mailto:${contactEmail}`}
+                          className={styles.contactDetailLink}
+                        >
+                          {contactEmail}
+                        </a>
                       </div>
                     </div>
                     <div className={styles.contactDetail}>
@@ -190,7 +193,9 @@ export default function PublicPropertyWebsite({
                       </span>
                       <div>
                         <p className={styles.contactDetailLabel}>Office</p>
-                        <p className={styles.contactDetailValue}>12 Garden Town, Lahore</p>
+                        <p className={styles.contactDetailValue}>
+                          {agent?.office_address || "12 Garden Town, Lahore"}
+                        </p>
                       </div>
                     </div>
                     <div className={styles.contactDetail}>
@@ -210,55 +215,24 @@ export default function PublicPropertyWebsite({
                 </div>
 
                 <div className={styles.contactFormPanel}>
-                  <p className={styles.contactFormKicker}>Send a message</p>
-                  <h3 className={styles.contactFormHeading}>
-                    Tell us what you need and our team will respond quickly.
-                  </h3>
-                  <form className={styles.contactForm}>
-                    <label className={styles.formField}>
-                      <span className={styles.formLabel}>Full Name</span>
-                      <input
-                        type="text"
-                        placeholder="Full Name"
-                        className={styles.contactInput}
-                      />
-                    </label>
-                    <label className={styles.formField}>
-                      <span className={styles.formLabel}>Email Address</span>
-                      <input
-                        type="email"
-                        placeholder="Email Address"
-                        className={styles.contactInput}
-                      />
-                    </label>
-                    <label className={styles.formField}>
-                      <span className={styles.formLabel}>Phone Number</span>
-                      <input
-                        type="tel"
-                        placeholder="Phone Number"
-                        className={styles.contactInput}
-                      />
-                    </label>
-                    <label className={styles.formField}>
-                      <span className={styles.formLabel}>Subject</span>
-                      <input
-                        type="text"
-                        placeholder="e.g. Buying, Selling or Renting a Property"
-                        className={styles.contactInput}
-                      />
-                    </label>
-                    <label className={styles.formField}>
-                      <span className={styles.formLabel}>Message</span>
-                      <textarea
-                        rows="5"
-                        placeholder="Write your message"
-                        className={styles.contactTextarea}
-                      />
-                    </label>
-                    <button type="button" className={`${styles.btnPrimary} ${styles.contactSubmit}`}>
-                      Send Message
-                    </button>
-                  </form>
+                  {agent?.id ? (
+                    <AgentInquiryForm
+                      agentId={agent.id}
+                      variant="website"
+                      kicker="Send a message"
+                      heading="Tell us what you need and our team will respond quickly."
+                    />
+                  ) : (
+                    <>
+                      <p className={styles.contactFormKicker}>Send a message</p>
+                      <h3 className={styles.contactFormHeading}>
+                        Tell us what you need and our team will respond quickly.
+                      </h3>
+                      <p className={styles.contactCopy}>
+                        Contact is available on agent websites.
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -316,6 +290,13 @@ export default function PublicPropertyWebsite({
           </div>
         </footer>
       </main>
+
+      {agent?.phone ? (
+        <AgentWhatsAppFab
+          phone={agent.phone}
+          message={agentWebsiteWhatsAppMessage(agent.full_name)}
+        />
+      ) : null}
     </div>
   );
 }

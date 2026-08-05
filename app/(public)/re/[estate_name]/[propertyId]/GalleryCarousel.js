@@ -2,16 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import ImagePreviewModal from "@/components/ImagePreviewModal";
 import styles from "./GalleryCarousel.module.css";
 
 /**
  * "Explore every space" rail — swipeable cards from the listing's own photos.
  * Prefers category / title labels so each card reads as a room or area.
+ * Clicking a card opens the shared image preview modal.
  */
 export default function GalleryCarousel({ slides = [], title }) {
   const carouselRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cardWidth, setCardWidth] = useState(0);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
 
   const measureStep = () => {
     const container = carouselRef.current;
@@ -82,8 +86,8 @@ export default function GalleryCarousel({ slides = [], title }) {
     <section className={styles.gallerySection}>
       <div className={styles.galleryHeader}>
         <div>
-          <p className={styles.galleryTitle}>Explore every space</p>
-          <h2 className={styles.galleryIntro}>Swipe through the property</h2>
+          <p className={styles.galleryTitle}>Property spaces</p>
+          <h2 className={styles.galleryIntro}>Explore Every Space</h2>
         </div>
         <p className={styles.galleryCount}>
           {slides.length} {slides.length === 1 ? "space" : "spaces"}
@@ -93,10 +97,16 @@ export default function GalleryCarousel({ slides = [], title }) {
       <div className={styles.galleryOuter}>
         <div ref={carouselRef} className={styles.carouselScroll}>
           {slides.map((slide, index) => (
-            <div
+            <button
               key={slide.id || index}
+              type="button"
               data-card
               className={styles.carouselCard}
+              aria-label={`Open preview: ${slide.label || title || "Photo"}`}
+              onClick={() => {
+                setPreviewIndex(index);
+                setPreviewOpen(true);
+              }}
             >
               <Image
                 src={slide.image}
@@ -110,15 +120,18 @@ export default function GalleryCarousel({ slides = [], title }) {
                 <p className={styles.captionLabel}>
                   {index + 1} / {slides.length}
                 </p>
-                <p className={styles.captionTitle}>{slide.label || title}</p>
-                {slide.copy ? (
+                <p className={styles.captionTitle}>
+                  {slide.categoryLabel || slide.label || title}
+                </p>
+                {slide.label &&
+                slide.categoryLabel &&
+                slide.label !== slide.categoryLabel ? (
+                  <p className={styles.captionCopy}>{slide.label}</p>
+                ) : slide.copy ? (
                   <p className={styles.captionCopy}>{slide.copy}</p>
-                ) : slide.categoryLabel &&
-                  slide.label !== slide.categoryLabel ? (
-                  <p className={styles.captionCopy}>{slide.categoryLabel}</p>
                 ) : null}
               </div>
-            </div>
+            </button>
           ))}
         </div>
 
@@ -162,6 +175,13 @@ export default function GalleryCarousel({ slides = [], title }) {
           ))}
         </div>
       ) : null}
+
+      <ImagePreviewModal
+        images={slides}
+        currentIndex={previewIndex}
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+      />
     </section>
   );
 }

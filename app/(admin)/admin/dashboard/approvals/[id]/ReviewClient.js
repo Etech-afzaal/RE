@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import ImagePreviewModal from "@/components/ImagePreviewModal";
+import Pagination from "@/components/Pagination";
 import RejectPropertyDialog from "@/components/admin/RejectPropertyDialog";
 import styles from "@/components/admin/adminUi.module.css";
 
@@ -12,6 +14,8 @@ const STATUS_BADGE = {
   rejected: "badgeDanger",
   sold: "badgeInfo",
 };
+
+const IMAGES_PER_PAGE = 10;
 
 function formatPrice(value) {
   if (value == null || value === "") return "—";
@@ -50,6 +54,9 @@ export default function ReviewClient({ propertyId }) {
   const [busy, setBusy] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [error, setError] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
+  const [imagePage, setImagePage] = useState(1);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -96,6 +103,17 @@ export default function ReviewClient({ propertyId }) {
     }
   }
 
+  const images = property?.images || [];
+  const imageTotalPages = Math.max(1, Math.ceil(images.length / IMAGES_PER_PAGE));
+
+  useEffect(() => {
+    setImagePage(1);
+  }, [propertyId]);
+
+  useEffect(() => {
+    setImagePage((page) => Math.min(page, imageTotalPages));
+  }, [imageTotalPages]);
+
   if (loading) {
     return <div className={styles.loading}>Loading property…</div>;
   }
@@ -112,7 +130,11 @@ export default function ReviewClient({ propertyId }) {
   }
 
   const isPending = property.status === "pending_approval";
-  const images = property.images || [];
+  const safeImagePage = Math.min(imagePage, imageTotalPages);
+  const imageStart =
+    images.length === 0 ? 0 : (safeImagePage - 1) * IMAGES_PER_PAGE;
+  const imageEnd = Math.min(imageStart + IMAGES_PER_PAGE, images.length);
+  const pageImages = images.slice(imageStart, imageEnd);
 
   return (
     <div>
@@ -139,17 +161,52 @@ export default function ReviewClient({ propertyId }) {
               {images.length === 0 ? (
                 <p className={styles.empty}>This listing has no images.</p>
               ) : (
-                <div className={styles.gallery}>
-                  {images.map((image) => (
-                    <div key={image.id} className={styles.galleryItem}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={image.image_url} alt={image.image_title || ""} />
-                      {image.is_featured ? (
-                        <span className={styles.galleryFlag}>Featured</span>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
+                <>
+                  <div className={styles.galleryMeta}>
+                    <p className={styles.galleryCount}>
+                      {images.length}{" "}
+                      {images.length === 1 ? "image" : "images"}
+                    </p>
+                    {images.length > IMAGES_PER_PAGE ? (
+                      <p className={styles.galleryRange}>
+                        Showing {imageStart + 1}-{imageEnd} of {images.length}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className={styles.gallery}>
+                    {pageImages.map((image, pageIndex) => {
+                      const absoluteIndex = imageStart + pageIndex;
+                      return (
+                        <button
+                          key={image.id}
+                          type="button"
+                          className={styles.galleryItem}
+                          aria-label={`Open preview: ${image.image_title || image.category_label || "Property image"}`}
+                          onClick={() => {
+                            setPreviewIndex(absoluteIndex);
+                            setPreviewOpen(true);
+                          }}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={image.image_url}
+                            alt={image.image_title || ""}
+                          />
+                          {image.is_featured ? (
+                            <span className={styles.galleryFlag}>Featured</span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <Pagination
+                    currentPage={safeImagePage}
+                    totalPages={imageTotalPages}
+                    onPageChange={setImagePage}
+                    showNav={false}
+                    ariaLabel="Property images pagination"
+                  />
+                </>
               )}
             </div>
           </section>
@@ -297,6 +354,13 @@ export default function ReviewClient({ propertyId }) {
           onConfirm={(reason) => review("rejected", reason)}
         />
       ) : null}
+
+      <ImagePreviewModal
+        images={images}
+        currentIndex={previewIndex}
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+      />
     </div>
   );
 }

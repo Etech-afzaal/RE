@@ -521,10 +521,20 @@
 }
 
 /* Floating WhatsApp */
+@keyframes whatsappFabFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
 .whatsappFab {
   position: fixed;
-  left: 24px;
-  bottom: 24px;
+  left: max(24px, env(safe-area-inset-left, 0px));
+  bottom: max(24px, env(safe-area-inset-bottom, 0px));
   z-index: 9999;
   display: inline-flex;
   align-items: center;
@@ -533,19 +543,27 @@
   height: 58px;
   border-radius: 999px;
   background: #25d366;
+  background-image: none;
   color: #fff;
-  box-shadow: 0 14px 30px rgba(37, 211, 102, 0.32);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+  box-shadow: 0 10px 28px rgba(37, 211, 102, 0.38);
+  animation: whatsappFabFloat 2.6s ease-in-out infinite;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .whatsappFab:hover {
-  transform: translateY(-2px) scale(1.04);
-  box-shadow: 0 18px 38px rgba(37, 211, 102, 0.42);
+  background: #20bd5a;
+  transform: translateY(-9px) scale(1.04);
+  box-shadow: 0 16px 36px rgba(37, 211, 102, 0.48);
+  animation-play-state: paused;
 }
 
 .whatsappFab svg {
-  width: 28px;
-  height: 28px;
+  display: block;
+  width: 30px;
+  height: 30px;
+  fill: #fff;
+  color: #fff;
 }
 
 /* Contact */
@@ -717,6 +735,7 @@
 
 .contactFormPanel {
   gap: 0.7rem;
+  position: relative;
 }
 
 .contactFormKicker {
@@ -792,6 +811,64 @@
   width: fit-content;
   border: 0;
   cursor: pointer;
+}
+
+.contactSubmit:disabled,
+.btnPrimary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.contactFeedbackPopup {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 5;
+  width: min(100%, 320px);
+  margin: 0;
+  padding: 1rem 1.05rem;
+  border-radius: 12px;
+  border: 1px solid rgba(26, 26, 26, 0.1);
+  box-shadow: var(--shadow-md);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: contactFeedbackIn 0.22s ease;
+}
+
+.contactFeedbackSuccess {
+  background: #fff;
+  border-color: rgba(46, 125, 50, 0.35);
+}
+
+.contactFeedbackError {
+  background: #fff;
+  border-color: rgba(183, 28, 28, 0.3);
+}
+
+.contactFeedbackTitle {
+  margin: 0 0 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.contactFeedbackText {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+@keyframes contactFeedbackIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 8px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
 }
 
 @media (max-width: 780px) {

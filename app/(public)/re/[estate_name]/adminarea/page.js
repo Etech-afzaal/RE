@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import ActionMenu from "@/components/ActionMenu";
+import ImagePreviewModal from "@/components/ImagePreviewModal";
 import ui from "@/components/agent-portal/portal.module.css";
 
 /** `id` matches the stats payload key; `status` filters the properties list. */
@@ -30,6 +31,18 @@ function formatPrice(value) {
   return `PKR ${n.toLocaleString("en-PK")}`;
 }
 
+/** Date-only label from properties.created_at, e.g. "30 Jul 2026". */
+function formatAddedDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 function statusClass(status) {
   if (status === "approved") return ui.badgeApproved;
   if (status === "pending_approval") return ui.badgePending;
@@ -51,6 +64,8 @@ export default function AgentAdminDashboardPage() {
   const [properties, setProperties] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [previewImages, setPreviewImages] = useState([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const firstName = useMemo(() => {
     const name = session?.user?.name || "Agent";
@@ -152,24 +167,41 @@ export default function AgentAdminDashboardPage() {
                     property.featuredImage?.image_url ||
                     property.images?.[0]?.image_url ||
                     null;
+                  const addedOn = formatAddedDate(property.created_at);
                   return (
                     <tr key={property.id}>
                       <td>
                         <div className={ui.propCell}>
                           {image ? (
-                            <Image
-                              src={image}
-                              alt=""
-                              width={52}
-                              height={52}
-                              className={ui.thumb}
-                            />
+                            <button
+                              type="button"
+                              className={ui.thumbButton}
+                              aria-label={`Preview image for ${property.title}`}
+                              onClick={() => {
+                                const gallery =
+                                  property.images?.length > 0
+                                    ? property.images
+                                    : [{ image_url: image, image_title: property.title }];
+                                setPreviewImages(gallery);
+                                setPreviewOpen(true);
+                              }}
+                            >
+                              <Image
+                                src={image}
+                                alt=""
+                                width={52}
+                                height={52}
+                                className={ui.thumb}
+                              />
+                            </button>
                           ) : (
                             <div className={ui.thumbFallback}>P</div>
                           )}
                           <div>
                             <p className={ui.propTitle}>{property.title}</p>
-                            <p className={ui.propMeta}>#{property.id}</p>
+                            {addedOn ? (
+                              <p className={ui.propMeta}>Added at {addedOn}</p>
+                            ) : null}
                           </div>
                         </div>
                       </td>
@@ -205,6 +237,13 @@ export default function AgentAdminDashboardPage() {
           </div>
         )}
       </div>
+
+      <ImagePreviewModal
+        images={previewImages}
+        currentIndex={0}
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+      />
     </AgentPortalShell>
   );
 }

@@ -5,6 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import ImageCategorySelect from "@/components/ImageCategorySelect";
+import ImagePreviewModal from "@/components/ImagePreviewModal";
+import {
+  MAX_PROPERTY_IMAGES,
+  imageLimitErrorMessage,
+} from "@/lib/imageUpload";
 import ui from "@/components/agent-portal/portal.module.css";
 
 export default function EditPropertyPage() {
@@ -36,9 +41,12 @@ export default function EditPropertyPage() {
   // "existing:<id>" or "new:<key>" — exactly one image is the featured one.
   const [featuredKey, setFeaturedKey] = useState(null);
   const newImageKey = useRef(0);
+  const newFileInputRef = useRef(null);
   const [currentVideoUrl, setCurrentVideoUrl] = useState("");
   const [newVideo, setNewVideo] = useState(null);
   const [removeVideo, setRemoveVideo] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -89,7 +97,19 @@ export default function EditPropertyPage() {
   }, []);
 
   function addFiles(fileList) {
-    const added = Array.from(fileList || []).map((file) => ({
+    const incoming = Array.from(fileList || []);
+    if (incoming.length === 0) return;
+
+    const currentTotal = existingImages.length + newImages.length;
+    const remaining = Math.max(0, MAX_PROPERTY_IMAGES - currentTotal);
+    if (remaining === 0 || incoming.length > remaining) {
+      setError(imageLimitErrorMessage());
+    } else {
+      setError("");
+    }
+    if (remaining === 0) return;
+
+    const added = incoming.slice(0, remaining).map((file) => ({
       key: `n${newImageKey.current++}`,
       file,
       url: URL.createObjectURL(file),
@@ -129,6 +149,22 @@ export default function EditPropertyPage() {
       return prev.filter((item) => item.key !== key);
     });
     setFeaturedKey((prev) => (prev === `new:${key}` ? null : prev));
+  }
+
+  function clearAllNewImages() {
+    if (newImages.length === 0) return;
+    const confirmed = window.confirm(
+      "Remove all newly selected images?\n\nThis will remove images you just added that are not saved yet.",
+    );
+    if (!confirmed) return;
+    setNewImages((prev) => {
+      prev.forEach((item) => URL.revokeObjectURL(item.url));
+      return [];
+    });
+    setFeaturedKey((prev) =>
+      prev && String(prev).startsWith("new:") ? null : prev,
+    );
+    if (newFileInputRef.current) newFileInputRef.current.value = "";
   }
 
   async function handleSave({ submit = false } = {}) {
@@ -449,25 +485,34 @@ export default function EditPropertyPage() {
                 <div className={ui.imageManager}>
                   {existingImages.map((image, index) => (
                     <div key={image.id} className={ui.imageCard}>
-                      <div className={ui.imageCardThumb}>
+                      <button
+                        type="button"
+                        className={ui.imageCardThumb}
+                        aria-label={`Preview image ${index + 1}`}
+                        onClick={() => {
+                          setPreviewIndex(index);
+                          setPreviewOpen(true);
+                        }}
+                      >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={image.image_url} alt={image.image_title || ""} />
                         {featuredKey === `existing:${image.id}` ? (
                           <span className={ui.featuredTag}>Featured</span>
                         ) : null}
-                      </div>
+                      </button>
                       <div className={ui.imageCardBody}>
                         <label className={ui.field}>
                           <span className={ui.imageCardLabel}>Category</span>
-                          <ImageCategorySelect
-                            className={ui.select}
-                            value={image.category}
-                            disabled={isPending}
-                            ariaLabel={`Category for image ${index + 1}`}
-                            onChange={(category) =>
-                              updateExistingImage(image.id, { category })
-                            }
-                          />
+                        <ImageCategorySelect
+                          className={ui.select}
+                          inputClassName={ui.input}
+                          value={image.category}
+                          disabled={isPending}
+                          ariaLabel={`Category for image ${index + 1}`}
+                          onChange={(category) =>
+                            updateExistingImage(image.id, { category })
+                          }
+                        />
                         </label>
                         <div className={ui.imageCardMeta}>
                           <label className={ui.imageCardCheck}>
@@ -526,34 +571,32 @@ export default function EditPropertyPage() {
 
             <label className={ui.field}>
               <span className={ui.label}>Add images</span>
-              <input
-                className={ui.input}
-                type="file"
-                accept="image/*"
-                multiple
-                disabled={isPending}
-                onChange={(e) => {
-                  addFiles(e.target.files);
-                  e.target.value = "";
-                }}
-              />
             </label>
             {newImages.length > 0 ? (
               <div className={ui.imageManager}>
                 {newImages.map((item, index) => (
                   <div key={item.key} className={ui.imageCard}>
-                    <div className={ui.imageCardThumb}>
+                    <button
+                      type="button"
+                      className={ui.imageCardThumb}
+                      aria-label={`Preview new image ${index + 1}`}
+                      onClick={() => {
+                        setPreviewIndex(existingImages.length + index);
+                        setPreviewOpen(true);
+                      }}
+                    >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={item.url} alt="" />
                       {featuredKey === `new:${item.key}` ? (
                         <span className={ui.featuredTag}>Featured</span>
                       ) : null}
-                    </div>
+                    </button>
                     <div className={ui.imageCardBody}>
                       <label className={ui.field}>
                         <span className={ui.imageCardLabel}>Category</span>
                         <ImageCategorySelect
                           className={ui.select}
+                          inputClassName={ui.input}
                           value={item.category}
                           disabled={isPending}
                           ariaLabel={`Category for new image ${index + 1}`}
@@ -597,6 +640,44 @@ export default function EditPropertyPage() {
               </div>
             ) : null}
 
+            <div className={ui.imageUploadActions}>
+              <input
+                ref={newFileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                disabled={isPending}
+                className={ui.srOnlyInput}
+                onChange={(e) => {
+                  addFiles(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                className={ui.btnSecondary}
+                disabled={
+                  isPending ||
+                  existingImages.length + newImages.length >= MAX_PROPERTY_IMAGES
+                }
+                onClick={() => newFileInputRef.current?.click()}
+              >
+                {newImages.length > 0 || existingImages.length > 0
+                  ? "+ Upload More Images"
+                  : "+ Upload Images"}
+              </button>
+              {newImages.length > 0 ? (
+                <button
+                  type="button"
+                  className={ui.btnTextDanger}
+                  disabled={isPending}
+                  onClick={clearAllNewImages}
+                >
+                  Clear New Images
+                </button>
+              ) : null}
+            </div>
+
             <div className={ui.formActions}>
               {isPending ? null : (
                 <button
@@ -629,6 +710,23 @@ export default function EditPropertyPage() {
           </>
         ) : null}
       </div>
+
+      <ImagePreviewModal
+        images={[
+          ...existingImages.map((image) => ({
+            ...image,
+            featured: featuredKey === `existing:${image.id}`,
+          })),
+          ...newImages.map((item) => ({
+            url: item.url,
+            category: item.category,
+            featured: featuredKey === `new:${item.key}`,
+          })),
+        ]}
+        currentIndex={previewIndex}
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+      />
     </AgentPortalShell>
   );
 }

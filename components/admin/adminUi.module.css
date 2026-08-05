@@ -1,8 +1,28 @@
 .gridStats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
+}
+
+.tableScroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.typeLabel {
+  display: inline-block;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.activityTime {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .statCard {
@@ -508,6 +528,19 @@
   font-size: 0.85rem;
 }
 
+/* Recent Activities details: clickable without default blue link styling. */
+.activityDetailLink,
+.activityDetailLink:visited {
+  color: var(--muted);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.activityDetailLink:hover {
+  color: var(--muted);
+  text-decoration: underline;
+}
+
 .empty {
   padding: 2rem 1.2rem;
   text-align: center;
@@ -851,6 +884,17 @@
   text-decoration: underline;
 }
 
+/* Property titles in admin table: clickable but keep ink color. */
+.titleLink {
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.titleLink:hover {
+  text-decoration: underline;
+}
+
 /* Displayed emails: keep surrounding text color; mailto only. */
 .mailLink {
   color: inherit;
@@ -962,6 +1006,29 @@
   gap: 0.7rem;
 }
 
+.galleryMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.galleryCount {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.galleryRange {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
 .galleryItem {
   position: relative;
   aspect-ratio: 4 / 3;
@@ -969,12 +1036,38 @@
   border-radius: 12px;
   border: 1px solid var(--line);
   background: var(--surface-sunken);
+  padding: 0;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  color: inherit;
+  font: inherit;
+}
+
+.galleryItem:hover {
+  border-color: var(--gold);
 }
 
 .galleryItem img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  pointer-events: none;
+}
+
+.thumbButton {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 10px;
+  line-height: 0;
+}
+
+.thumbButton:hover .thumb,
+.thumbButton:focus-visible .thumb {
+  box-shadow: 0 0 0 2px var(--gold);
 }
 
 .galleryFlag {

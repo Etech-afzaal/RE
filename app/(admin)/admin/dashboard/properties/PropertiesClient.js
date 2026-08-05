@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Archive, CircleCheck, Send } from "lucide-react";
 import ActionMenu from "@/components/ActionMenu";
+import ImagePreviewModal from "@/components/ImagePreviewModal";
+import Pagination from "@/components/Pagination";
+import { propertyPublicPath } from "@/lib/propertySlug";
 import styles from "@/components/admin/adminUi.module.css";
 
 const ITEMS_PER_PAGE = 8;
@@ -39,18 +42,32 @@ const STATUS_FILTER_OPTIONS = [
   "hidden",
 ];
 
+/** API returns approved listings as "active"; dropdown uses "approved". */
+function normalizePropertyStatus(status) {
+  if (status === "active") return "approved";
+  return status || "draft";
+}
+
 function statusLabel(status) {
-  return String(status || "draft").replace(/_/g, " ");
+  return String(normalizePropertyStatus(status)).replace(/_/g, " ");
+}
+
+function isLiveProperty(status) {
+  return normalizePropertyStatus(status) === "approved";
+}
+
+function parseStatusFilter(value) {
+  if (value === "active") return "approved";
+  return STATUS_FILTER_OPTIONS.includes(value) ? value : "all";
 }
 
 export default function AdminPropertiesPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const agentFromQuery = searchParams.get("agent") || "";
   const statusFromQuery = searchParams.get("status") || "";
-  const initialStatus = STATUS_FILTER_OPTIONS.includes(statusFromQuery)
-    ? statusFromQuery
-    : "all";
+  const initialStatus = parseStatusFilter(statusFromQuery);
 
   const [properties, setProperties] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -60,16 +77,15 @@ export default function AdminPropertiesPage() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState("");
+  const [previewImages, setPreviewImages] = useState([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     setAgentFilter(agentFromQuery);
   }, [agentFromQuery]);
 
   useEffect(() => {
-    const next = STATUS_FILTER_OPTIONS.includes(statusFromQuery)
-      ? statusFromQuery
-      : "all";
-    setStatusFilter(next);
+    setStatusFilter(parseStatusFilter(statusFromQuery));
   }, [statusFromQuery]);
 
   useEffect(() => {
@@ -91,6 +107,24 @@ export default function AdminPropertiesPage() {
     load();
   }, []);
 
+  function syncFiltersToUrl({ status, agent }) {
+    const params = new URLSearchParams();
+    if (status && status !== "all") params.set("status", status);
+    if (agent) params.set("agent", agent);
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }
+
+  function handleStatusChange(value) {
+    setStatusFilter(value);
+    syncFiltersToUrl({ status: value, agent: agentFilter });
+  }
+
+  function handleAgentChange(value) {
+    setAgentFilter(value);
+    syncFiltersToUrl({ status: statusFilter, agent: value });
+  }
+
   const estates = useMemo(() => {
     const set = new Set(properties.map((p) => p.estate_name).filter(Boolean));
     return Array.from(set).sort();
@@ -99,7 +133,9 @@ export default function AdminPropertiesPage() {
   const filtered = useMemo(() => {
     let next = [...properties];
     if (statusFilter !== "all") {
-      next = next.filter((p) => p.status === statusFilter);
+      next = next.filter(
+        (p) => normalizePropertyStatus(p.status) === statusFilter,
+      );
     }
     if (agentFilter) {
       next = next.filter((p) => p.estate_name === agentFilter);
@@ -170,7 +206,7 @@ export default function AdminPropertiesPage() {
             id="prop-status"
             className={styles.select}
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => handleStatusChange(e.target.value)}
           >
             <option value="all">All</option>
             <option value="approved">Approved</option>
@@ -187,7 +223,7 @@ export default function AdminPropertiesPage() {
             id="prop-agent"
             className={styles.select}
             value={agentFilter}
-            onChange={(e) => setAgentFilter(e.target.value)}
+            onChange={(e) => handleAgentChange(e.target.value)}
           >
             <option value="">All estates</option>
             {estates.map((estate) => (
@@ -228,12 +264,27 @@ export default function AdminPropertiesPage() {
                     <td>
                       <div className={styles.propCell}>
                         {property.image_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={property.image_url}
-                            alt=""
-                            className={styles.thumb}
-                          />
+                          <button
+                            type="button"
+                            className={styles.thumbButton}
+                            aria-label={`Preview image for ${property.title}`}
+                            onClick={() => {
+                              setPreviewImages([
+                                {
+                                  image_url: property.image_url,
+                                  image_title: property.title,
+                                },
+                              ]);
+                              setPreviewOpen(true);
+                            }}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={property.image_url}
+                              alt=""
+                              className={styles.thumb}
+                            />
+                          </button>
                         ) : (
                           <div
                             className={`${styles.thumb} ${styles.thumbPlaceholder}`}
@@ -242,7 +293,17 @@ export default function AdminPropertiesPage() {
                           </div>
                         )}
                         <div>
-                          <p className={styles.listPrimary}>{property.title}</p>
+                          <a
+                            href={propertyPublicPath(
+                              property.estate_name,
+                              property,
+                            )}
+                            className={styles.titleLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {property.title}
+                          </a>
                           <p className={styles.listSecondary}>
                             {property.location || "—"}
                             {property.size_value
@@ -254,9 +315,18 @@ export default function AdminPropertiesPage() {
                     </td>
                     <td>
                       <p className={styles.listPrimary}>{property.agent_name}</p>
-                      <p className={styles.listSecondary}>
-                        /re/{property.estate_name}
-                      </p>
+                      {property.estate_name ? (
+                        <a
+                          href={`/re/${encodeURIComponent(property.estate_name)}`}
+                          className={styles.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          /re/{property.estate_name}
+                        </a>
+                      ) : (
+                        <p className={styles.listSecondary}>—</p>
+                      )}
                     </td>
                     <td>{formatPrice(property.price)}</td>
                     <td>
@@ -277,8 +347,16 @@ export default function AdminPropertiesPage() {
                       <ActionMenu
                         ariaLabel={`Actions for ${property.title}`}
                         onView={
-                          property.status === "approved"
-                            ? () => window.open(`/re/${property.estate_name}/${property.id}`, "_blank", "noopener,noreferrer")
+                          isLiveProperty(property.status)
+                            ? () =>
+                                window.open(
+                                  propertyPublicPath(
+                                    property.estate_name,
+                                    property,
+                                  ),
+                                  "_blank",
+                                  "noopener,noreferrer",
+                                )
                             : undefined
                         }
                         additionalActions={
@@ -301,46 +379,20 @@ export default function AdminPropertiesPage() {
             </table>
           </div>
 
-          {totalPages > 1 && (
-            <div className={styles.pagination}>
-              <button
-                type="button"
-                className={styles.btn}
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              >
-                Previous
-              </button>
-              <div className={styles.pageBtns}>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <button
-                      key={page}
-                      type="button"
-                      className={`${styles.pageBtn} ${
-                        page === currentPage ? styles.pageBtnActive : ""
-                      }`}
-                      onClick={() => setCurrentPage(page)}
-                    >
-                      {page}
-                    </button>
-                  ),
-                )}
-              </div>
-              <button
-                type="button"
-                className={styles.btn}
-                disabled={currentPage === totalPages}
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(totalPages, p + 1))
-                }
-              >
-                Next
-              </button>
-            </div>
-          )}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </>
       )}
+
+      <ImagePreviewModal
+        images={previewImages}
+        currentIndex={0}
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+      />
     </div>
   );
 }

@@ -25,21 +25,40 @@
   flex-direction: column;
   width: 260px;
   height: 100vh;
+  overflow-x: hidden;
   overflow-y: auto;
   padding: 1.35rem 1rem 1.25rem;
   background: #2a2418;
   color: #f5f0e6;
   border-right: 1px solid rgba(242, 187, 70, 0.18);
   flex-shrink: 0;
+  transition:
+    width 250ms ease,
+    padding 250ms ease;
+}
+
+.sidebarCollapsed {
+  width: 80px;
+  padding-left: 0.7rem;
+  padding-right: 0.7rem;
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  padding: 0.35rem 0.55rem 1.35rem;
+  padding: 0.35rem 0.25rem 1.35rem 0.55rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   margin-bottom: 1.15rem;
+  min-height: 3.6rem;
+}
+
+.sidebarCollapsed .brand {
+  flex-direction: column;
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+  gap: 0.45rem;
 }
 
 .brandMark {
@@ -54,6 +73,20 @@
   font-weight: 800;
   font-size: 1.15rem;
   box-shadow: var(--shadow-gold);
+  flex-shrink: 0;
+}
+
+.brandText {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 200ms ease;
+}
+
+.sidebarCollapsed .brandText {
+  display: none;
 }
 
 .brandName {
@@ -91,6 +124,15 @@
   font-weight: 600;
   font-size: 0.95rem;
   transition: background var(--transition-base), color var(--transition-base);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebarCollapsed .navLink {
+  justify-content: center;
+  padding-left: 0.65rem;
+  padding-right: 0.65rem;
+  gap: 0;
 }
 
 .navLink:hover {
@@ -109,11 +151,24 @@
   place-items: center;
   width: 1.25rem;
   height: 1.25rem;
+  flex-shrink: 0;
 }
 
 .navIcon svg {
   width: 1.2rem;
   height: 1.2rem;
+}
+
+.navLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 200ms ease;
+}
+
+.sidebarCollapsed .navLabel {
+  width: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .sidebarFooter {
@@ -124,18 +179,62 @@
 }
 
 .viewSite {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
   color: rgba(245, 240, 230, 0.65);
   text-decoration: none;
   font-size: 0.85rem;
   font-weight: 600;
   padding: 0.35rem 0.55rem;
+  border-radius: 10px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sidebarCollapsed .viewSite {
+  justify-content: center;
+  padding: 0.55rem;
+  gap: 0;
 }
 
 .viewSite:hover {
   color: var(--gold);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.footerIcon {
+  display: none;
+  place-items: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  flex-shrink: 0;
+}
+
+.footerIcon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.sidebarCollapsed .footerIcon {
+  display: grid;
+}
+
+.footerLabel {
+  overflow: hidden;
+}
+
+.sidebarCollapsed .footerLabel {
+  width: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .logoutBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   background: transparent;
@@ -144,11 +243,48 @@
   font-weight: 600;
   cursor: pointer;
   transition: background var(--transition-base), border-color var(--transition-base);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebarCollapsed .logoutBtn {
+  padding: 0.7rem;
 }
 
 .logoutBtn:hover {
   background: rgba(220, 38, 38, 0.12);
   border-color: rgba(252, 165, 165, 0.4);
+}
+
+.collapseBtn {
+  display: inline-grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  margin-left: auto;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(245, 240, 230, 0.7);
+  cursor: pointer;
+  transition: background var(--transition-base), color var(--transition-base), border-color var(--transition-base);
+}
+
+.collapseBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--gold);
+  border-color: rgba(242, 187, 70, 0.4);
+}
+
+.collapseBtn svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.sidebarCollapsed .collapseBtn {
+  margin-left: 0;
 }
 
 .main {
@@ -242,12 +378,15 @@
     overflow: visible;
   }
 
-  .sidebar {
+  .sidebar,
+  .sidebarCollapsed {
     position: fixed;
     left: 0;
     top: 0;
     bottom: 0;
+    width: 260px;
     height: auto;
+    padding: 1.35rem 1rem 1.25rem;
     transform: translateX(-105%);
     transition: transform var(--transition-slow);
     box-shadow: var(--shadow-xl);
@@ -255,6 +394,10 @@
 
   .sidebarOpen {
     transform: translateX(0);
+  }
+
+  .collapseBtn {
+    display: none;
   }
 
   .main {

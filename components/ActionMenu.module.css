@@ -32,6 +32,7 @@
 .item {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 0.65rem;
   width: 100%;
   padding: 0.7rem 0.75rem;
@@ -45,6 +46,13 @@
   text-align: left;
   cursor: pointer;
   transition: background var(--transition-base, 160ms ease), color var(--transition-base, 160ms ease);
+}
+
+/* Fixed icon column so labels share one left edge (overrides global button centering). */
+.item svg {
+  flex: 0 0 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .item:hover:not(:disabled) { background: var(--brass-tint, var(--gold-tint, #fff6d8)); }

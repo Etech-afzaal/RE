@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
+import PasswordInput from "@/components/PasswordInput";
 import ui from "@/components/agent-portal/portal.module.css";
 
 export default function AgentSettingsPage() {
@@ -65,21 +66,21 @@ export default function AgentSettingsPage() {
         {success ? <p className={ui.success}>{success}</p> : null}
         <label className={ui.field}>
           <span className={ui.label}>New password</span>
-          <input
+          <PasswordInput
             className={ui.input}
-            type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
             required
           />
         </label>
         <label className={ui.field}>
           <span className={ui.label}>Confirm password</span>
-          <input
+          <PasswordInput
             className={ui.input}
-            type="password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
+            autoComplete="new-password"
             required
           />
         </label>

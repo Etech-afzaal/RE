@@ -2,16 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
 import { getSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import PasswordInput from "@/components/PasswordInput";
 import styles from "./page.module.css";
 
 export default function AgentLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [accountNotice, setAccountNotice] = useState(null);
@@ -118,25 +117,14 @@ export default function AgentLoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               className={styles.loginInput}
             />
-            <div className={styles.passwordField}>
-              <input
-                required
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={`${styles.loginInput} ${styles.passwordInput}`}
-              />
-              <button
-                type="button"
-                className={styles.passwordToggle}
-                onClick={() => setShowPassword((visible) => !visible)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                aria-pressed={showPassword}
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
+            <PasswordInput
+              required
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={styles.loginInput}
+              autoComplete="current-password"
+            />
             <div className={styles.forgotRow}>
               <Link href="/agent/forgot-password" className={styles.forgotLink}>
                 Forgot password?

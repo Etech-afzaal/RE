@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Ban, Building2, CirclePause, CirclePlay } from "lucide-react";
 import ActionMenu from "@/components/ActionMenu";
+import Pagination from "@/components/Pagination";
 import BlockAgentDialog from "@/components/admin/BlockAgentDialog";
 import styles from "@/components/admin/adminUi.module.css";
 
@@ -288,44 +289,11 @@ export default function AdminAgentsPage() {
             </table>
           </div>
 
-          {totalPages > 1 && (
-            <div className={styles.pagination}>
-              <button
-                type="button"
-                className={styles.btn}
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              >
-                Previous
-              </button>
-              <div className={styles.pageBtns}>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <button
-                      key={page}
-                      type="button"
-                      className={`${styles.pageBtn} ${
-                        page === currentPage ? styles.pageBtnActive : ""
-                      }`}
-                      onClick={() => setCurrentPage(page)}
-                    >
-                      {page}
-                    </button>
-                  ),
-                )}
-              </div>
-              <button
-                type="button"
-                className={styles.btn}
-                disabled={currentPage === totalPages}
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(totalPages, p + 1))
-                }
-              >
-                Next
-              </button>
-            </div>
-          )}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </>
       )}
 
