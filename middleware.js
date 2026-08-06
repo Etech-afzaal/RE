@@ -6,11 +6,11 @@ import { isAgentRole, isSuperAdmin } from "@/lib/roles";
  * Phase 2 route protection.
  *
  * Existing routes (preserved):
- *   SUPER_ADMIN → /admin/dashboard/*
+ *   superadmin → /admin/dashboard/*
  *   AGENT       → /agent/dashboard, /agent/properties/*, /agent/reset-password
  *
  * Future patterns (matcher ready; pages not built in this phase):
- *   SUPER_ADMIN → /admin_dashboard/*
+ *   superadmin → /admin_dashboard/*
  *   AGENT       → /re/[username]/adminarea/*
  *
  * Public (no middleware): /, /re/[slug], /re/[slug]/[id], login/signup pages
@@ -58,7 +58,7 @@ export default withAuth(
       );
     }
 
-    // Admin dashboard: SUPER_ADMIN only (legacy "admin" normalized in JWT).
+    // Admin dashboard: superadmin only.
     if (isAdminArea && !isAdmin) {
       return NextResponse.redirect(new URL("/admin/login", req.url));
     }
@@ -90,7 +90,7 @@ export default withAuth(
       }
     }
 
-    // SUPER_ADMIN should not use agent-only tools.
+    // Superadmins should not use agent-only tools.
     if (isAdmin && (isAgentPortal || adminAreaMatch)) {
       return NextResponse.redirect(new URL("/admin/dashboard", req.url));
     }
@@ -110,10 +110,10 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    // Existing SUPER_ADMIN surfaces
+    // Existing superadmin surfaces
     "/admin/dashboard",
     "/admin/dashboard/:path*",
-    // Future SUPER_ADMIN alias (not implemented as pages yet)
+    // Future superadmin alias (not implemented as pages yet)
     "/admin_dashboard",
     "/admin_dashboard/:path*",
     // Existing AGENT surfaces

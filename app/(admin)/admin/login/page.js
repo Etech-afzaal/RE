@@ -23,7 +23,7 @@ export default function LoginPage() {
       const res = await signIn("credentials", {
         email,
         password,
-        role: "admin",
+        role: "superadmin",
         redirect: false,
       });
 

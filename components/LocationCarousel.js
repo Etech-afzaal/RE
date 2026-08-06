@@ -6,6 +6,7 @@ import styles from "@/app/page.module.css";
 
 export default function LocationCarousel({ locations = [] }) {
   const trackRef = useRef(null);
+  const isHoveringRef = useRef(false);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
 
@@ -25,18 +26,32 @@ export default function LocationCarousel({ locations = [] }) {
     el.addEventListener("scroll", updateArrows, { passive: true });
     window.addEventListener("resize", updateArrows);
 
-    // Convert vertical mouse-wheel into horizontal scroll while hovering the track.
-    // Non-passive so preventDefault works; React's onWheel is passive in modern browsers.
     const onWheel = (e) => {
+      if (!isHoveringRef.current) return;
       if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+
       e.preventDefault();
-      el.scrollLeft += e.deltaY;
+      const nextLeft = el.scrollLeft + e.deltaY * 0.9;
+      el.scrollTo({ left: nextLeft, behavior: "smooth" });
     };
+
+    const onMouseEnter = () => {
+      isHoveringRef.current = true;
+    };
+
+    const onMouseLeave = () => {
+      isHoveringRef.current = false;
+    };
+
     el.addEventListener("wheel", onWheel, { passive: false });
+    el.addEventListener("mouseenter", onMouseEnter);
+    el.addEventListener("mouseleave", onMouseLeave);
 
     return () => {
       el.removeEventListener("scroll", updateArrows);
       el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("mouseenter", onMouseEnter);
+      el.removeEventListener("mouseleave", onMouseLeave);
       window.removeEventListener("resize", updateArrows);
     };
   }, [locations, updateArrows]);

@@ -71,6 +71,11 @@ async function ensureSuperadmin(conn, { email, fullName }, password) {
     } else {
       console.log(`= ${normalized} already superadmin`);
     }
+    await conn.query("UPDATE users SET password_hash = ? WHERE id = ?", [
+      await bcrypt.hash(password, 10),
+      existing[0].id,
+    ]);
+    console.log(`~ ${normalized} password reset`);
     return;
   }
 
@@ -114,8 +119,9 @@ async function migrateUp(conn) {
     throw new Error(`Unexpected user_type ENUM: ${type}`);
   }
 
-  const password =
-    String(process.env.ADMIN_PASSWORD || "").trim() || "admin1234";
+  // These database accounts are the sole authentication source. Keep this
+  // deterministic so re-running the migration repairs both required logins.
+  const password = "demo1234";
 
   for (const account of SUPERADMINS) {
     await ensureSuperadmin(conn, account, password);
