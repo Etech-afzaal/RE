@@ -888,14 +888,42 @@
   background: var(--gold-tint);
 }
 
+/* Mobile sticky contact bar — hidden on desktop */
+.mobileContactBar {
+  display: none;
+}
+
+.fabDesktopOnly {
+  display: contents;
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 960px) {
+  /*
+   * Single-column reading order: Title/Price/Facts → Contact → remaining sections.
+   * display:contents lets children reorder without changing the desktop DOM.
+   */
   .overview {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+  }
+
+  .overviewMain {
+    display: contents;
+  }
+
+  .summaryCard {
+    order: 1;
   }
 
   .agentCard {
+    order: 2;
     position: static;
+  }
+
+  .contentCard {
+    order: 3;
   }
 
   .assuranceGrid {
@@ -907,14 +935,25 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+  .page {
+    --section-gap: 24px;
+    padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Full-bleed mobile container with consistent 16px side padding */
   .container {
-    width: min(100%, calc(100% - 1.25rem));
-    padding-bottom: 3rem;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 1.1rem 16px 24px;
+    box-sizing: border-box;
   }
 
   .header {
     align-items: flex-start;
+    width: 100%;
+    max-width: 100%;
   }
 
   .brandLink {
@@ -925,12 +964,106 @@
     display: none;
   }
 
+  .companyLogoImg,
+  .companyLogoFallback {
+    width: 132px;
+    max-width: 132px;
+    height: 37px;
+    max-height: 37px;
+  }
+
+  .headerActions .contactButton {
+    display: none;
+  }
+
+  .overview {
+    gap: 1.15rem;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .overviewMain {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /*
+   * Mobile reading order:
+   * Title → Features → Agent contact → remaining property sections
+   */
+  .summaryCard {
+    order: 1;
+    padding: 1.15rem 1.1rem;
+    border-radius: 16px;
+  }
+
+  .overviewMain > .contentCard:first-of-type {
+    order: 2;
+  }
+
+  .contentCard {
+    order: 4;
+  }
+
+  /* All property sections fill the mobile viewport width */
+  .summaryCard,
+  .contentCard,
+  .agentCard,
+  .videoSection,
+  .brandStory,
+  .brandStoryInner,
+  .assurance,
+  .closingCta {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /*
+   * Agent card uses align-self:start for desktop sticky sidebar sizing.
+   * In the mobile flex column that shrinks it to content width — stretch instead.
+   */
+  .agentCard {
+    order: 3;
+    align-self: stretch;
+    padding: 1.1rem 1rem;
+    border-radius: 16px;
+    gap: 0.85rem;
+  }
+
+  .title {
+    font-size: 1.45rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .locationLine {
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .price {
+    font-size: 1.35rem;
+  }
+
+  .summaryChip {
+    font-size: 0.78rem;
+    padding: 0.32rem 0.6rem;
+  }
+
+  .sectionTitle {
+    font-size: 1.2rem;
+  }
+
+  .sectionKicker {
+    font-size: 0.68rem;
+  }
+
   .summaryCard,
   .contentCard,
   .brandStoryInner,
   .closingCta {
-    padding-left: 1.15rem;
-    padding-right: 1.15rem;
+    padding-left: 1.1rem;
+    padding-right: 1.1rem;
   }
 
   .highlightsGrid {
@@ -963,8 +1096,81 @@
     width: 100%;
   }
 
+  .videoSection {
+    margin-bottom: var(--section-gap);
+  }
+
   .videoFrame {
+    width: 100%;
+    max-width: 100%;
     aspect-ratio: 4 / 3;
     border-radius: 18px;
+  }
+
+  /* Compact in-flow agent card — sticky bar handles primary CTAs */
+  .agentBrandBlock .companyLogoImg,
+  .agentBrandBlock .companyLogoFallback {
+    width: 120px;
+    max-width: 120px;
+    height: 34px;
+    max-height: 34px;
+  }
+
+  .agentActions {
+    display: none;
+  }
+
+  .agentNote {
+    display: none;
+  }
+
+  /* Sticky bottom Call / WhatsApp bar — edge-to-edge with 16px inset */
+  .mobileContactBar {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    z-index: 10000;
+    gap: 0.55rem;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 255, 255, 0.96);
+    border-top: 1px solid rgba(26, 26, 26, 0.08);
+    box-shadow: 0 -8px 28px rgba(16, 24, 40, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .mobileCallBtn,
+  .mobileWaBtn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0.7rem 0.85rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-decoration: none;
+  }
+
+  .mobileCallBtn {
+    background: var(--gold);
+    color: var(--ink);
+    box-shadow: var(--shadow-gold);
+  }
+
+  .mobileWaBtn {
+    background: #ecfdf3;
+    color: #166534;
+    border: 1px solid #86efac;
+  }
+
+  .fabDesktopOnly {
+    display: none;
   }
 }

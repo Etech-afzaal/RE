@@ -106,6 +106,12 @@
   }
 }
 
+@media (max-width: 768px) {
+  .trustBand {
+    margin-bottom: 24px;
+  }
+}
+
 @media (max-width: 560px) {
   .content {
     padding: 1.6rem 1.25rem 1.4rem;

@@ -269,7 +269,7 @@ export default function AgentPropertiesPage() {
                   const addedOn = formatAddedDate(property.created_at);
                   return (
                     <tr key={property.id}>
-                      <td>
+                      <td data-label="Property">
                         <div className={ui.propCell}>
                           {image ? (
                             <button
@@ -304,8 +304,8 @@ export default function AgentPropertiesPage() {
                           </div>
                         </div>
                       </td>
-                      <td>{property.location || "—"}</td>
-                      <td>
+                      <td data-label="Location">{property.location || "—"}</td>
+                      <td data-label="Status">
                         <span
                           className={`${ui.badge} ${statusClass(property.status)}`}
                         >
@@ -320,8 +320,8 @@ export default function AgentPropertiesPage() {
                           </p>
                         ) : null}
                       </td>
-                      <td>{formatPrice(property.price)}</td>
-                      <td>
+                      <td data-label="Price">{formatPrice(property.price)}</td>
+                      <td data-label="Actions">
                         <ActionMenu
                           ariaLabel={`Actions for ${property.title}`}
                           onView={

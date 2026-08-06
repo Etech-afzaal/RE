@@ -237,7 +237,7 @@ export default function AdminAgentsPage() {
               <tbody>
                 {pageItems.map((agent) => (
                   <tr key={agent.id}>
-                    <td>
+                    <td data-label="Agent">
                       <p className={styles.listPrimary}>{agent.full_name}</p>
                       <p className={styles.listSecondary}>
                         <a href={`mailto:${agent.email}`} className={styles.mailLink}>
@@ -245,7 +245,7 @@ export default function AdminAgentsPage() {
                         </a>
                       </p>
                     </td>
-                    <td>
+                    <td data-label="Estate">
                       <p className={styles.listPrimary}>
                         {companyFromEstate(agent.estate_name)}
                       </p>
@@ -257,15 +257,15 @@ export default function AdminAgentsPage() {
                         /re/{agent.estate_name}
                       </Link>
                     </td>
-                    <td>
+                    <td data-label="Listings">
                       {agent.active_count} active
                       <span className={styles.listSecondary}>
                         {" "}
                         · {agent.property_count} total
                       </span>
                     </td>
-                    <td>{new Date(agent.created_at).toLocaleDateString()}</td>
-                    <td>
+                    <td data-label="Joined">{new Date(agent.created_at).toLocaleDateString()}</td>
+                    <td data-label="Status">
                       <span
                         className={`${styles.badge} ${statusBadgeClass(agent.status)}`}
                       >
@@ -277,7 +277,7 @@ export default function AdminAgentsPage() {
                         </p>
                       ) : null}
                     </td>
-                    <td>
+                    <td data-label="Actions">
                       <ActionMenu
                         ariaLabel={`Actions for ${agent.full_name}`}
                         additionalActions={agentActions(agent)}

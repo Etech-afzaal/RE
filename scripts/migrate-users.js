@@ -47,20 +47,23 @@ async function up(conn) {
   if (await tableExists(conn, "agents")) await conn.query("RENAME TABLE agents TO users");
   if (!(await tableExists(conn, "users"))) throw new Error("Neither agents nor users table exists.");
   if (!(await columnExists(conn, "user_type"))) {
-    await conn.query("ALTER TABLE users ADD COLUMN user_type ENUM('admin','agent') NOT NULL DEFAULT 'agent' AFTER password_hash");
+    await conn.query("ALTER TABLE users ADD COLUMN user_type ENUM('superadmin','agent') NOT NULL DEFAULT 'agent' AFTER password_hash");
   }
-  await conn.query("UPDATE users SET user_type = 'agent' WHERE user_type IS NULL OR user_type != 'admin'");
+  await conn.query("UPDATE users SET user_type = 'agent' WHERE user_type IS NULL OR user_type NOT IN ('superadmin', 'admin')");
 
   const email = String(process.env.ADMIN_EMAIL || "").trim().toLowerCase();
   const password = String(process.env.ADMIN_PASSWORD || "");
   if (!email || !password) throw new Error("ADMIN_EMAIL and ADMIN_PASSWORD are required once to seed the administrator.");
 
-  const [admins] = await conn.query("SELECT id FROM users WHERE email = ? AND user_type = 'admin' LIMIT 1", [email]);
+  const [admins] = await conn.query(
+    "SELECT id FROM users WHERE email = ? AND user_type IN ('superadmin', 'admin') LIMIT 1",
+    [email],
+  );
   if (!admins.length) {
     const passwordHash = await bcrypt.hash(password, 10);
     await conn.query(
-      "INSERT INTO users (estate_name, username, full_name, email, password_hash, must_reset_password, status, user_type) VALUES (?, ?, ?, ?, ?, FALSE, 'approved', 'admin')",
-      [`admin-${Date.now()}`, null, "Admin", email, passwordHash],
+      "INSERT INTO users (estate_name, username, full_name, email, password_hash, must_reset_password, status, user_type) VALUES (?, ?, ?, ?, ?, FALSE, 'approved', 'superadmin')",
+      [null, null, "Admin", email, passwordHash],
     );
   }
   await conn.query("INSERT INTO schema_migrations (id) VALUES (?) ON DUPLICATE KEY UPDATE applied_at = applied_at", [MIGRATION_ID]);
@@ -69,7 +72,7 @@ async function up(conn) {
 async function down(conn) {
   if (!(await tableExists(conn, "users"))) return;
   if (await columnExists(conn, "user_type")) {
-    await conn.query("DELETE FROM users WHERE user_type = 'admin'");
+    await conn.query("DELETE FROM users WHERE user_type IN ('superadmin', 'admin')");
     await conn.query("ALTER TABLE users DROP COLUMN user_type");
   }
   await conn.query("RENAME TABLE users TO agents");

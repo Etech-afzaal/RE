@@ -1054,7 +1054,31 @@ export default async function PropertyDetailPage({ params }) {
         </section>
       </div>
 
-      <AgentWhatsAppFab phone={agent.phone} message={waFabMessage} />
+      {/* Desktop FAB — hidden on mobile where sticky contact bar replaces it */}
+      <div className={styles.fabDesktopOnly}>
+        <AgentWhatsAppFab phone={agent.phone} message={waFabMessage} />
+      </div>
+
+      {/* Mobile sticky contact CTA — Call + WhatsApp always reachable */}
+      {telHref || waHref ? (
+        <nav className={styles.mobileContactBar} aria-label="Contact agent">
+          {telHref ? (
+            <a href={telHref} className={styles.mobileCallBtn}>
+              Call Agent
+            </a>
+          ) : null}
+          {waHref ? (
+            <a
+              href={waHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.mobileWaBtn}
+            >
+              WhatsApp
+            </a>
+          ) : null}
+        </nav>
+      ) : null}
     </div>
   );
 }

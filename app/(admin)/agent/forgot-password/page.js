@@ -12,7 +12,7 @@ export const metadata = {
  */
 export default async function AgentForgotPasswordPage() {
   const admins = await query(
-    "SELECT email FROM users WHERE user_type = 'admin' LIMIT 1",
+    "SELECT email FROM users WHERE user_type = 'superadmin' LIMIT 1",
   );
   const contactEmail = admins[0]?.email || "admin@example.com";
   const mailtoHref = `mailto:${contactEmail}?subject=${encodeURIComponent(

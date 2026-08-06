@@ -109,6 +109,24 @@
   padding: 0.8rem 1rem;
 }
 
+@media (max-width: 768px) {
+  .panelProperty,
+  .panelProperty .form,
+  .panelProperty .field {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .panelProperty .input,
+  .panelProperty .textarea,
+  .panelProperty .submit {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
 .submit:hover:not(:disabled) {
   background: var(--gold-soft);
   transform: translateY(-1px);

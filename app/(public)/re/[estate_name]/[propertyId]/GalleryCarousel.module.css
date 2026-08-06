@@ -35,62 +35,38 @@
   font-weight: 600;
 }
 
-.emptyGallery {
-  padding: 2rem;
-  text-align: center;
-  border-radius: 18px;
-  background: #fff;
-  border: 1px dashed rgba(242, 187, 70, 0.45);
-  color: #737373;
-}
-
-.galleryOuter {
-  position: relative;
-  padding: 0 2.5rem;
-}
-
-.carouselScroll {
+.galleryGrid {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(300px, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
 }
 
-.carouselScroll::-webkit-scrollbar {
-  display: none;
-}
-
-.carouselCard {
+.galleryCard {
   position: relative;
-  min-height: 360px;
+  width: 100%;
+  aspect-ratio: 4 / 3;
   padding: 0;
-  border-radius: 18px;
+  border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(26, 26, 26, 0.06);
   background: #f0efed;
-  scroll-snap-align: center;
-  box-shadow: 0 12px 28px rgba(26, 26, 26, 0.07);
+  box-shadow: 0 8px 20px rgba(26, 26, 26, 0.06);
   cursor: pointer;
   text-align: left;
   color: inherit;
   font: inherit;
 }
 
-.carouselImage {
+.galleryImage {
   object-fit: cover;
   transition: transform 0.4s ease;
 }
 
-.carouselCard:hover .carouselImage {
+.galleryCard:hover .galleryImage {
   transform: scale(1.04);
 }
 
-.carouselOverlay {
+.galleryOverlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(
@@ -101,11 +77,11 @@
   pointer-events: none;
 }
 
-.carouselCaption {
+.galleryCaption {
   position: absolute;
-  left: 1.1rem;
-  right: 1.1rem;
-  bottom: 1.1rem;
+  left: 0.85rem;
+  right: 0.85rem;
+  bottom: 0.85rem;
   color: #fff;
 }
 
@@ -120,14 +96,14 @@
 
 .captionTitle {
   margin: 0.3rem 0 0;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
 }
 
 .captionCopy {
-  margin: 0.3rem 0 0;
-  font-size: 0.8rem;
-  line-height: 1.5;
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
   color: rgba(255, 255, 255, 0.82);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -135,72 +111,43 @@
   overflow: hidden;
 }
 
-.carouselArrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 42px;
-  height: 42px;
-  border-radius: 999px;
-  border: 1px solid rgba(242, 187, 70, 0.35);
-  background: #fff;
-  color: #1a1a1a;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 8px 20px rgba(26, 26, 26, 0.1);
-  z-index: 10;
-  font-size: 1.4rem;
-  line-height: 1;
-  transition: background 0.2s ease, border-color 0.2s ease;
+@media (max-width: 1024px) {
+  .galleryGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
-.carouselArrow:hover {
-  background: var(--gold-tint);
-  border-color: var(--gold);
-}
-
-.carouselArrowLeft {
-  left: 0;
-}
-
-.carouselArrowRight {
-  right: 0;
-}
-
-.carouselDots {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-top: 1.15rem;
-}
-
-.carouselDot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(26, 26, 26, 0.18);
-  background: transparent;
-  cursor: pointer;
-  padding: 0;
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
-
-.carouselDotActive {
-  background: var(--gold);
-  border-color: var(--gold);
-}
-
-@media (max-width: 700px) {
-  .galleryOuter {
-    padding: 0 1.75rem;
+@media (max-width: 768px) {
+  .gallerySection {
+    width: 100%;
+    max-width: 100%;
   }
 
-  .carouselScroll {
-    grid-auto-columns: minmax(260px, 1fr);
+  .galleryGrid {
+    width: 100%;
+    max-width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
   }
 
-  .carouselCard {
-    min-height: 300px;
+  .galleryCard {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  .galleryCaption {
+    left: 0.65rem;
+    right: 0.65rem;
+    bottom: 0.65rem;
+  }
+
+  .captionTitle {
+    font-size: 0.85rem;
+  }
+
+  .captionCopy {
+    font-size: 0.72rem;
+    -webkit-line-clamp: 1;
   }
 }

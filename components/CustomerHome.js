@@ -4,8 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
+import { useIsMobile } from "@/lib/useIsMobile";
 import styles from "./CustomerHome.module.css";
 
+const DESKTOP_AGENT_PAGE_SIZE = 9;
+const MOBILE_AGENT_PAGE_SIZE = 10;
 const CUSTOMER_NAV = [
   { label: "Home", href: "/" },
   { label: "Find agents", href: "#agents" },
@@ -185,7 +188,7 @@ function AgentCard({ agent }) {
               src={agent.profile_image}
               alt=""
               fill
-              sizes="(max-width: 640px) 110px, 110px"
+              sizes="(max-width: 768px) 72px, 110px"
               className={styles.agentImage}
             />
           ) : (
@@ -211,6 +214,8 @@ const EMPTY_CONTACT_FORM = {
 };
 
 export default function CustomerHome({ agents = [], areas = [] }) {
+  const isMobile = useIsMobile(768);
+  const pageSize = isMobile ? MOBILE_AGENT_PAGE_SIZE : DESKTOP_AGENT_PAGE_SIZE;
   const [query, setQuery] = useState("");
   const [area, setArea] = useState("all");
   const [city, setCity] = useState("all");
@@ -231,16 +236,17 @@ export default function CustomerHome({ agents = [], areas = [] }) {
     );
   }, [agents, query, area, city]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / 9));
-  const startIndex = (currentPage - 1) * 9;
-  const pageItems = filtered.slice(startIndex, startIndex + 9);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * pageSize;
+  const pageItems = filtered.slice(startIndex, startIndex + pageSize);
 
   const paginationRange = () => {
     if (totalPages <= 5) {
       return Array.from({ length: totalPages }, (_, index) => index + 1);
     }
 
-    let start = Math.max(1, currentPage - 2);
+    let start = Math.max(1, safePage - 2);
     let end = start + 4;
 
     if (end > totalPages) {
@@ -253,7 +259,7 @@ export default function CustomerHome({ agents = [], areas = [] }) {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [query, area, city]);
+  }, [query, area, city, pageSize]);
 
   useEffect(() => {
     return () => {
@@ -470,11 +476,11 @@ export default function CustomerHome({ agents = [], areas = [] }) {
                 </div>
                 {totalPages > 1 ? (
                   <div className={styles.pagination}>
-                    {currentPage > 1 ? (
+                    {safePage > 1 ? (
                       <button
                         type="button"
                         className={styles.pageButton}
-                        onClick={() => handlePageChange(currentPage - 1)}
+                        onClick={() => handlePageChange(safePage - 1)}
                       >
                         &lt;
                       </button>
@@ -485,7 +491,7 @@ export default function CustomerHome({ agents = [], areas = [] }) {
                         key={page}
                         type="button"
                         className={`${styles.pageButton} ${
-                          page === currentPage ? styles.pageButtonActive : ""
+                          page === safePage ? styles.pageButtonActive : ""
                         }`}
                         onClick={() => handlePageChange(page)}
                       >
@@ -493,11 +499,11 @@ export default function CustomerHome({ agents = [], areas = [] }) {
                       </button>
                     ))}
 
-                    {currentPage < totalPages ? (
+                    {safePage < totalPages ? (
                       <button
                         type="button"
                         className={styles.pageButton}
-                        onClick={() => handlePageChange(currentPage + 1)}
+                        onClick={() => handlePageChange(safePage + 1)}
                       >
                         &gt;
                       </button>

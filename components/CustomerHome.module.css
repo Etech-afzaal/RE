@@ -878,7 +878,7 @@
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .contactFields {
     grid-template-columns: 1fr;
   }
@@ -981,7 +981,7 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .hero {
     min-height: 52vh;
     border-radius: 16px;
@@ -993,21 +993,97 @@
 
   .heroTitle {
     max-width: none;
+    font-size: clamp(1.85rem, 7vw, 2.15rem);
   }
 
-  .agentGrid,
-  .whyGrid,
-  .footerInner {
-    grid-template-columns: 1fr;
+  .heroSubtitle {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  /* Compact 2-column agent cards */
+  .agentGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .agentCard {
+    border-radius: 14px;
+  }
+
+  .agentCard:hover {
+    transform: none;
   }
 
   .agentContent {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.65rem;
+    padding: 0.9rem 0.75rem 0.55rem;
   }
 
   .agentMedia {
     order: -1;
-    justify-self: start;
+    width: 64px;
+    height: 64px;
+    justify-self: center;
+  }
+
+  .agentFallback {
+    font-size: 1.65rem;
+  }
+
+  .agentBody {
+    align-items: center;
+    gap: 0.2rem;
+    width: 100%;
+  }
+
+  .agentAgency {
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+  }
+
+  .agentName {
+    font-size: 0.92rem;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .agentMeta {
+    font-size: 0.75rem;
+  }
+
+  .agentAreas {
+    font-size: 0.72rem;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .agentAreasLabel {
+    font-size: 0.62rem;
+  }
+
+  .viewProfile {
+    margin: 0 0.75rem 0.85rem;
+    padding: 0.55rem 0.65rem;
+    font-size: 0.78rem;
+    border-radius: 10px;
+  }
+
+  .whyGrid,
+  .footerInner {
+    grid-template-columns: 1fr;
   }
 
   .searchBar {
@@ -1016,5 +1092,25 @@
 
   .sellCta {
     padding: 1.75rem 1.25rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .agentGrid {
+    gap: 0.55rem;
+  }
+
+  .agentMedia {
+    width: 56px;
+    height: 56px;
+  }
+
+  .agentName {
+    font-size: 0.84rem;
+  }
+
+  .viewProfile {
+    font-size: 0.72rem;
+    padding: 0.5rem 0.55rem;
   }
 }

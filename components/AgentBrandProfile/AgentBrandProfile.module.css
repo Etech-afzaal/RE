@@ -219,18 +219,36 @@
   font-size: 0.85rem;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
+  .section {
+    margin: 0 0 24px;
+  }
+
   .card {
-    padding: 1.5rem 1.25rem;
+    margin: 0 12px;
+    padding: 1.35rem 1.1rem;
+    border-radius: 20px;
+  }
+
+  .companyName {
+    font-size: 1.35rem;
   }
 
   .agentBlock {
     flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
+    align-items: center;
+    text-align: center;
   }
 
   .contactGrid {
     grid-template-columns: 1fr;
+  }
+
+  .logoImage,
+  .logoFallback {
+    width: 140px;
+    max-width: 140px;
+    height: 39px;
+    max-height: 39px;
   }
 }

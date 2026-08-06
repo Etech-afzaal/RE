@@ -501,11 +501,25 @@
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .section {
-    margin-bottom: 3rem;
+    margin-bottom: 24px;
   }
 
+  .contactSection {
+    margin-bottom: 24px;
+  }
+
+  .footer {
+    margin-top: 0;
+  }
+
+  .container {
+    padding-bottom: 24px;
+  }
+}
+
+@media (max-width: 720px) {
   .contactCard {
     padding: 1.75rem 1.25rem;
   }

@@ -2,6 +2,11 @@
   position: sticky;
   top: 0;
   z-index: 40;
+}
+
+.topBar {
+  position: relative;
+  z-index: 3;
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -10,6 +15,8 @@
 }
 
 .inner {
+  position: relative;
+  z-index: 3;
   width: min(1240px, calc(100% - 2rem));
   margin: 0 auto;
   padding: 0.6rem 0;
@@ -24,7 +31,8 @@
   align-items: center;
   justify-self: start;
   flex-shrink: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.4s ease-out;
+  transform-origin: left center;
 }
 
 .logoImage {
@@ -104,7 +112,8 @@
   text-decoration: none;
   white-space: nowrap;
   box-shadow: var(--shadow-gold);
-  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  transition: background 0.2s ease, transform 0.4s ease-out, box-shadow 0.2s ease,
+    opacity 0.4s ease-out;
 }
 
 .agentButton:hover {
@@ -133,6 +142,10 @@
   border-color: rgba(242, 187, 70, 0.45);
 }
 
+.mobileOverlay {
+  display: none;
+}
+
 .mobileMenu {
   display: none;
 }
@@ -151,13 +164,56 @@
     display: inline-flex;
   }
 
+  .mobileOverlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    pointer-events: none;
+    cursor: pointer;
+    transition: opacity 400ms ease-out;
+  }
+
+  .mobileOverlayVisible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   .mobileMenu {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    z-index: 2;
     display: flex;
     flex-direction: column;
-    padding: 0.4rem 0 0.9rem;
-    width: min(1240px, calc(100% - 2rem));
-    margin: 0 auto;
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0;
+    padding: 0.4rem max(1rem, calc(50% - 620px)) 0.9rem;
     border-top: 1px solid rgba(26, 26, 26, 0.06);
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 16px 32px rgba(26, 26, 26, 0.08);
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    transition:
+      transform 400ms ease-out,
+      opacity 400ms ease-out,
+      visibility 400ms ease-out;
+  }
+
+  .mobileMenuOpen {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
   }
 
   .mobileLink {
@@ -169,6 +225,19 @@
     text-transform: uppercase;
     text-decoration: none;
     border-bottom: 1px solid rgba(26, 26, 26, 0.05);
+    opacity: 0;
+    transform: translateY(12px);
+    transition:
+      opacity 350ms ease-out,
+      transform 350ms ease-out,
+      color 0.2s ease;
+    transition-delay: 0ms;
+  }
+
+  .mobileMenuOpen .mobileLink {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: var(--stagger, 0ms);
   }
 
   .mobileLink:last-child {
@@ -179,15 +248,51 @@
   .mobileLink:hover {
     color: var(--gold-deep);
   }
+
+  .headerMenuOpen .logoGroup {
+    animation: mobileLogoIn 400ms ease-out;
+  }
+
+  /* Keep header clean: logo + hamburger; CTA lives in the menu */
+  .agentButton {
+    display: none;
+  }
+
+  .mobileCta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    background: var(--gold);
+    color: #1a1a1a;
+    font-size: 0.92rem;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: var(--shadow-gold);
+    opacity: 0;
+    transform: translateY(12px);
+    transition:
+      opacity 350ms ease-out,
+      transform 350ms ease-out,
+      background 0.2s ease;
+    transition-delay: 0ms;
+  }
+
+  .mobileMenuOpen .mobileCta {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: var(--stagger, 0ms);
+  }
+
+  .mobileCta:hover {
+    background: var(--gold-soft);
+  }
 }
 
 @media (max-width: 560px) {
-  .agentButton {
-    padding: 0.55rem 0.75rem;
-    font-size: 0.82rem;
-  }
-
-  /* Fit logo + button + hamburger on ~360px screens */
+  /* Fit logo + hamburger on ~360px screens */
   .logoGroup img {
     width: 118px;
     height: auto;
@@ -204,5 +309,47 @@
   .hamburger {
     width: 38px;
     height: 38px;
+  }
+}
+
+@keyframes mobileLogoIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes mobileCtaIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobileOverlay,
+  .mobileMenu,
+  .mobileLink,
+  .logoGroup,
+  .agentButton {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .mobileMenu {
+    transform: none;
+  }
+
+  .mobileLink {
+    opacity: 1;
+    transform: none;
   }
 }

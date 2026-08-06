@@ -261,7 +261,7 @@ export default function AdminPropertiesPage() {
               <tbody>
                 {pageItems.map((property) => (
                   <tr key={property.id}>
-                    <td>
+                    <td data-label="Property">
                       <div className={styles.propCell}>
                         {property.image_url ? (
                           <button
@@ -313,7 +313,7 @@ export default function AdminPropertiesPage() {
                         </div>
                       </div>
                     </td>
-                    <td>
+                    <td data-label="Agent">
                       <p className={styles.listPrimary}>{property.agent_name}</p>
                       {property.estate_name ? (
                         <a
@@ -328,8 +328,8 @@ export default function AdminPropertiesPage() {
                         <p className={styles.listSecondary}>—</p>
                       )}
                     </td>
-                    <td>{formatPrice(property.price)}</td>
-                    <td>
+                    <td data-label="Price">{formatPrice(property.price)}</td>
+                    <td data-label="Status">
                       <span
                         className={`${styles.badge} ${
                           styles[statusClass[property.status] || "badgeMuted"]
@@ -338,12 +338,12 @@ export default function AdminPropertiesPage() {
                         {statusLabel(property.status)}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Updated">
                       {new Date(
                         property.updated_at || property.created_at,
                       ).toLocaleDateString()}
                     </td>
-                    <td>
+                    <td data-label="Actions">
                       <ActionMenu
                         ariaLabel={`Actions for ${property.title}`}
                         onView={
@@ -357,7 +357,7 @@ export default function AdminPropertiesPage() {
                                   "_blank",
                                   "noopener,noreferrer",
                                 )
-                            : undefined
+                              : undefined
                         }
                         additionalActions={
                           property.status === "pending_approval"

@@ -60,9 +60,34 @@ export default function SiteHeader({
     [navLinks, homeHref],
   );
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuEntered, setMenuEntered] = useState(false);
+  const [menuMounted, setMenuMounted] = useState(false);
   const [activeHref, setActiveHref] = useState(homeHref);
   const lockedHrefRef = useRef(null);
   const lockTimerRef = useRef(0);
+  const closeTimerRef = useRef(0);
+
+  useEffect(() => {
+    if (menuOpen) {
+      window.clearTimeout(closeTimerRef.current);
+      setMenuMounted(true);
+      const enterId = requestAnimationFrame(() => {
+        requestAnimationFrame(() => setMenuEntered(true));
+      });
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        cancelAnimationFrame(enterId);
+        document.body.style.overflow = prevOverflow;
+      };
+    }
+
+    setMenuEntered(false);
+    closeTimerRef.current = window.setTimeout(() => {
+      setMenuMounted(false);
+    }, 420);
+    return () => window.clearTimeout(closeTimerRef.current);
+  }, [menuOpen]);
 
   useEffect(() => {
     const syncActive = () => {
@@ -214,106 +239,125 @@ export default function SiteHeader({
     : homeHref;
 
   return (
-    <header className={styles.header}>
-      <div className={styles.inner}>
-        <Link
-          href="/"
-          onClick={handleLogoClick}
-          className={styles.logoGroup}
-        >
-          <Image
-            src={logoSrc}
-            alt={logoAlt}
-            width={PUBLIC_SITE_LOGO_DIMENSIONS.width}
-            height={PUBLIC_SITE_LOGO_DIMENSIONS.height}
-            quality={PUBLIC_SITE_LOGO_DIMENSIONS.quality}
-            sizes={PUBLIC_SITE_LOGO_DIMENSIONS.sizes}
-            priority
-            className={styles.logoImage}
-          />
-        </Link>
+    <header
+      className={`${styles.header} ${menuEntered ? styles.headerMenuOpen : ""}`.trim()}
+    >
+      {menuMounted ? (
+        <button
+          type="button"
+          className={`${styles.mobileOverlay} ${menuEntered ? styles.mobileOverlayVisible : ""}`.trim()}
+          aria-label="Close menu"
+          tabIndex={menuEntered ? 0 : -1}
+          onClick={() => setMenuOpen(false)}
+        />
+      ) : null}
 
-        <nav className={styles.mainNav} aria-label="Main">
-          {resolvedNavLinks.map((link) => {
-            const active = isActiveLink(link.href);
-            const isHash = link.href.startsWith("#");
-            return (
-              <Link
-                key={link.label}
-                href={isHomeLink(link.href) ? homeLinkHref : link.href}
-                className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`.trim()}
-                onClick={
-                  isHomeLink(link.href)
-                    ? handleHomeClick
-                    : isHash
-                      ? (event) => handleSectionClick(event, link.href)
-                      : () => setMenuOpen(false)
-                }
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className={styles.actions}>
+      <div className={styles.topBar}>
+        <div className={styles.inner}>
           <Link
-            href={ctaHref}
-            className={styles.agentButton}
-            onClick={
-              ctaHref.startsWith("#")
-                ? (event) => handleSectionClick(event, ctaHref)
-                : undefined
-            }
+            href="/"
+            onClick={handleLogoClick}
+            className={styles.logoGroup}
           >
-            {ctaLabel}
+            <Image
+              src={logoSrc}
+              alt={logoAlt}
+              width={PUBLIC_SITE_LOGO_DIMENSIONS.width}
+              height={PUBLIC_SITE_LOGO_DIMENSIONS.height}
+              quality={PUBLIC_SITE_LOGO_DIMENSIONS.quality}
+              sizes={PUBLIC_SITE_LOGO_DIMENSIONS.sizes}
+              priority
+              className={styles.logoImage}
+            />
           </Link>
-          <button
-            type="button"
-            className={styles.hamburger}
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={menuOpen}
-            aria-controls="mobile-menu"
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            {menuOpen ? (
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M6 6l12 12M18 6L6 18"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            ) : (
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M4 6.5h16M4 12h16M4 17.5h16"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            )}
-          </button>
+
+          <nav className={styles.mainNav} aria-label="Main">
+            {resolvedNavLinks.map((link) => {
+              const active = isActiveLink(link.href);
+              const isHash = link.href.startsWith("#");
+              return (
+                <Link
+                  key={link.label}
+                  href={isHomeLink(link.href) ? homeLinkHref : link.href}
+                  className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`.trim()}
+                  onClick={
+                    isHomeLink(link.href)
+                      ? handleHomeClick
+                      : isHash
+                        ? (event) => handleSectionClick(event, link.href)
+                        : () => setMenuOpen(false)
+                  }
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className={styles.actions}>
+            <Link
+              href={ctaHref}
+              className={styles.agentButton}
+              onClick={
+                ctaHref.startsWith("#")
+                  ? (event) => handleSectionClick(event, ctaHref)
+                  : undefined
+              }
+            >
+              {ctaLabel}
+            </Link>
+            <button
+              type="button"
+              className={styles.hamburger}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              {menuOpen ? (
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M6 6l12 12M18 6L6 18"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 6.5h16M4 12h16M4 17.5h16"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
-      {menuOpen ? (
-        <nav id="mobile-menu" className={styles.mobileMenu} aria-label="Mobile">
-          {resolvedNavLinks.map((link) => {
+      {menuMounted ? (
+        <nav
+          id="mobile-menu"
+          className={`${styles.mobileMenu} ${menuEntered ? styles.mobileMenuOpen : ""}`.trim()}
+          aria-label="Mobile"
+          aria-hidden={!menuEntered}
+        >
+          {resolvedNavLinks.map((link, index) => {
             const active = isActiveLink(link.href);
             const isHash = link.href.startsWith("#");
             return (
@@ -321,6 +365,8 @@ export default function SiteHeader({
                 key={link.label}
                 href={isHomeLink(link.href) ? homeLinkHref : link.href}
                 className={`${styles.mobileLink} ${active ? styles.navLinkActive : ""}`.trim()}
+                style={{ "--stagger": `${index * 50}ms` }}
+                tabIndex={menuEntered ? 0 : -1}
                 onClick={(event) => {
                   if (isHomeLink(link.href)) {
                     handleHomeClick(event);
@@ -337,6 +383,21 @@ export default function SiteHeader({
               </Link>
             );
           })}
+          <Link
+            href={ctaHref}
+            className={styles.mobileCta}
+            style={{ "--stagger": `${resolvedNavLinks.length * 50}ms` }}
+            tabIndex={menuEntered ? 0 : -1}
+            onClick={(event) => {
+              if (ctaHref.startsWith("#")) {
+                handleSectionClick(event, ctaHref);
+                return;
+              }
+              setMenuOpen(false);
+            }}
+          >
+            {ctaLabel}
+          </Link>
         </nav>
       ) : null}
     </header>

@@ -22,25 +22,32 @@ CREATE TABLE IF NOT EXISTS signup_requests (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- All authenticated accounts. Agents and administrators share this source.
+-- All authenticated accounts. Agents and superadmins share this source.
+-- There is no separate agents table — agent rows are users with user_type='agent'.
+--
+-- Branding fields (agents only in practice):
+--   estate_name  — public URL identity (/re/{estate_name}); NULL for superadmins
+--   username     — optional public handle (legacy; often equals estate_name)
+--   company_name — display branding / watermark text
+--   company_logo — brand logo
 CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  estate_name VARCHAR(20) UNIQUE NOT NULL,          -- used in /re/{estate_name}
-  username VARCHAR(100) UNIQUE,                    -- Phase 1: public/handle identity
+  estate_name VARCHAR(20) UNIQUE NULL,             -- URL slug; required for agents, NULL for superadmins
+  username VARCHAR(100) UNIQUE,                    -- optional public handle (kept for compatibility)
   full_name VARCHAR(255) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
   phone VARCHAR(50),
-  profile_image VARCHAR(500) NULL,                 -- Phase 1
-  company_logo VARCHAR(500) NULL,                  -- Agent brand profile company logo
-  company_name VARCHAR(255) NULL,                  -- Public company display name
-  description TEXT NULL,                           -- Phase 1
-  areas_served VARCHAR(500) NULL,                  -- Phase 1
+  profile_image VARCHAR(500) NULL,
+  company_logo VARCHAR(500) NULL,                  -- Agent brand logo
+  company_name VARCHAR(255) NULL,                  -- Display brand / watermark (not the URL slug)
+  description TEXT NULL,
+  areas_served VARCHAR(500) NULL,
   office_address VARCHAR(500) NULL,                -- Company branding
   social_links VARCHAR(1000) NULL,                 -- Company branding (URLs)
   password_hash VARCHAR(255) NOT NULL,
-  user_type ENUM('admin','agent') NOT NULL DEFAULT 'agent',
+  user_type ENUM('superadmin','agent') NOT NULL DEFAULT 'agent',
   must_reset_password BOOLEAN DEFAULT TRUE,
-  -- Phase 1 + block: pending | approved | rejected | disabled | blocked
+  -- pending | approved | rejected | disabled | blocked
   status ENUM('pending','approved','rejected','disabled','blocked') DEFAULT 'approved',
   blocked_reason TEXT NULL,                  -- required when permanently blocked
   blocked_at DATETIME NULL,
@@ -125,9 +132,9 @@ CREATE INDEX idx_images_category ON property_images(property_id, category);
 CREATE INDEX idx_videos_property ON property_videos(property_id);
 CREATE INDEX idx_videos_category ON property_videos(property_id, category);
 
--- Demo / realistic listings live in seed.sql (agents, sale/rent/plot properties, images).
+-- Demo / realistic listings live in seed.sql (agent users, sale/rent/plot properties, images).
 -- After creating tables, run:
 --   mysql -u root -p real_estate < seed.sql
 --
--- Existing databases: apply Phase 1 with:
---   npm run migrate:phase1
+-- Existing databases: apply migrations with npm run migrate:* scripts.
+-- Drop obsolete agents snapshot (if present): npm run migrate:drop-agents

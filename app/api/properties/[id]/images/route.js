@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAgent } from "@/lib/adminAuth";
+import { companyNameFromAgent } from "@/lib/agentBranding";
 import { query } from "@/lib/db";
 import {
   MAX_PROPERTY_IMAGES,
@@ -8,7 +9,7 @@ import {
   isImageFile,
 } from "@/lib/imageUpload";
 import { normalizeImageCategory } from "@/lib/imageCategories";
-import sharp from "sharp";
+import { applyWatermark } from "@/lib/watermark";
 import { writeFile, mkdir, rm } from "fs/promises";
 import path from "path";
 import { nanoid } from "nanoid";
@@ -18,16 +19,17 @@ import { nanoid } from "nanoid";
 // is read-only/ephemeral in production — swap this for S3 / R2 / Spaces before
 // deploying. The watermark logic itself stays the same either way.
 
-function watermarkSvg(text, width, height) {
-  const fontSize = Math.max(18, Math.round(width / 22));
-  return Buffer.from(`
-    <svg width="${width}" height="${height}">
-      <style>
-        .wm { fill: rgba(255,255,255,0.65); font-size: ${fontSize}px; font-family: sans-serif; font-weight: bold; }
-      </style>
-      <text x="50%" y="95%" text-anchor="middle" class="wm">${text}</text>
-    </svg>
-  `);
+/** Load company branding for the logged-in agent (watermark text source). */
+async function getAgentWatermarkText(session) {
+  const agentId = Number(session.user.agent_id || session.user.id);
+  const rows = await query(
+    `SELECT company_name, estate_name, username
+     FROM users
+     WHERE id = ? AND user_type = 'agent'
+     LIMIT 1`,
+    [agentId],
+  );
+  return companyNameFromAgent(rows[0] || session.user);
 }
 
 async function ensureImageColumns() {
@@ -123,6 +125,9 @@ export async function POST(req, { params }) {
 
   await ensureImageColumns();
 
+  // Resolve once per upload batch — company/estate name from agent branding.
+  const watermarkText = await getAgentWatermarkText(session);
+
   const uploadDir = path.join(
     process.cwd(),
     "public",
@@ -138,21 +143,11 @@ export async function POST(req, { params }) {
       const arrayBuffer = await file.arrayBuffer();
       const inputBuffer = Buffer.from(arrayBuffer);
 
-      const image = sharp(inputBuffer, { failOn: "none" });
-      const metadata = await image.metadata();
-      const width = metadata.width || 1200;
-      const height = metadata.height || 800;
-
-      const watermarked = await image
-        .rotate()
-        .composite([
-          {
-            input: watermarkSvg("dhalahoreproperties.com", width, height),
-            gravity: "southeast",
-          },
-        ])
-        .jpeg({ quality: 85 })
-        .toBuffer();
+      // Watermark once at upload; stored file is the final branded copy.
+      // PUT/metadata edits never re-process images, so duplicates are avoided.
+      const watermarked = await applyWatermark(inputBuffer, {
+        text: watermarkText,
+      });
 
       const filename = `${nanoid(10)}.jpg`;
       await writeFile(path.join(uploadDir, filename), watermarked);

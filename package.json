@@ -16,7 +16,9 @@
     "migrate:image-category": "node scripts/migrate-property-image-category.js",
     "migrate:agent-block": "node scripts/migrate-agent-block.js",
     "migrate:users": "node scripts/migrate-users.js",
-    "migrate:customer-inquiries": "node scripts/migrate-customer-inquiries.js"
+    "migrate:customer-inquiries": "node scripts/migrate-customer-inquiries.js",
+    "migrate:superadmin-role": "node scripts/migrate-superadmin-role.js",
+    "migrate:drop-agents": "node scripts/migrate-drop-agents.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

@@ -141,7 +141,7 @@ export default function ApprovalsClient() {
               <tbody>
                 {pageItems.map((property) => (
                   <tr key={property.id}>
-                    <td>
+                    <td data-label="Property">
                       <div className={styles.propCell}>
                         {property.image_url ? (
                           <button
@@ -180,20 +180,20 @@ export default function ApprovalsClient() {
                         </div>
                       </div>
                     </td>
-                    <td>
+                    <td data-label="Agent">
                       <p className={styles.listPrimary}>{property.agent_name}</p>
                       <p className={styles.listSecondary}>
                         /re/{property.estate_name}
                       </p>
                     </td>
-                    <td>{formatPrice(property.price)}</td>
-                    <td>{formatDate(property.submitted_at)}</td>
-                    <td>
+                    <td data-label="Price">{formatPrice(property.price)}</td>
+                    <td data-label="Submitted">{formatDate(property.submitted_at)}</td>
+                    <td data-label="Status">
                       <span className={`${styles.badge} ${styles.badgePending}`}>
                         Pending approval
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Actions">
                       <ActionMenu
                         ariaLabel={`Review actions for ${property.title}`}
                         additionalActions={[

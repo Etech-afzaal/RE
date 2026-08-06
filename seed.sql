@@ -17,7 +17,7 @@ TRUNCATE TABLE signup_requests;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ---------------------------------------------------------------------------
--- Signup requests (approved) — mirrors the agents below
+-- Signup requests (approved) — mirrors the agent users below
 -- ---------------------------------------------------------------------------
 INSERT INTO signup_requests (full_name, estate_name, email, phone, message, status) VALUES
 ('Bilal Ahmed',    'dha-homes',     'bilal@dhahomes.pk',      '+923001234501', 'DHA-focused brokerage', 'approved'),
@@ -30,7 +30,7 @@ INSERT INTO signup_requests (full_name, estate_name, email, phone, message, stat
 ('Fatima Ali',     'lake-city-re',  'fatima@lakecityre.pk',   '+923001234508', 'Lake City & outskirts', 'approved');
 
 -- ---------------------------------------------------------------------------
--- Agents (estate_name = public URL slug /re/{estate_name})
+-- Agents (users with user_type='agent'; estate_name = public URL slug /re/{estate_name})
 -- password for all: demo1234
 -- ---------------------------------------------------------------------------
 INSERT INTO users (estate_name, username, full_name, email, phone, profile_image, password_hash, must_reset_password, status) VALUES

@@ -68,9 +68,8 @@ Last updated: 2026-07-26
 ## Current Authentication System
 
 - Roles: `admin` (env), `agent` (DB)
-- Live agents: `agents.status = 'approved'`
+- Live agents: `users.status = 'approved' AND users.user_type = 'agent'`
 - JWT session; middleware protects admin/agent routes
-
 ---
 
 ## Current Database Structure
@@ -79,11 +78,21 @@ Last updated: 2026-07-26
 
 Agent applications (`pending` / `approved` / `rejected` / `revoked`).
 
-### `agents`
+### `users`
 
-Login-capable estates. Phase 1 fields: `username`, `profile_image`, `description`, `areas_served`, `updated_at`.  
-Status: `pending` | `approved` | `rejected` | `disabled`.
+Single source of truth for authentication and roles (`user_type`: `agent` | `superadmin`).
 
+Agent profile / branding live on the same row:
+
+- `estate_name` — public URL slug (`/re/{estate_name}`); `NULL` for superadmins
+- `username` — optional public handle (legacy; often equals `estate_name`)
+- `company_name` — display branding / watermark (not the URL slug)
+- `company_logo` — brand logo
+- `profile_image`, `description`, `areas_served`, …
+
+Status: `pending` | `approved` | `rejected` | `disabled` | `blocked`.
+
+> **Note:** A historical `agents` table was renamed into `users` (migration 006) and any leftover snapshot is dropped by migration 009 (`npm run migrate:drop-agents`). Do not reintroduce a separate agents table.
 ### `properties`
 
 Belongs to agent (`agent_id`).  
@@ -120,7 +129,7 @@ Prepare the schema for multi-agent approval workflow **without** changing UI, ro
 
 | Table | Change |
 |-------|--------|
-| `agents` | New columns + status enum remap |
+| `agents` → later `users` | New columns + status enum remap (historical; table renamed in 006) |
 | `properties` | Approval columns + status enum remap |
 | `property_images` | Added `updated_at` |
 | `schema_migrations` | Created |
@@ -199,7 +208,7 @@ Admin can already PATCH new property statuses via API; UI still sends legacy `ac
 | Provider | NextAuth Credentials + JWT |
 | Roles | Informal strings `admin` / `agent` |
 | Admin identity | Env `ADMIN_EMAIL` / `ADMIN_PASSWORD` (no users table) |
-| Agent identity | `agents` table |
+| Agent identity | `users` table (`user_type = 'agent'`) |
 | Session | `id`, `role`, `estate_name`, `mustResetPassword`, `isActive` — missing `username`, `agent_id`, `status`, admin `email` |
 | Status login | Only “not active”; Phase 1 statuses (`pending`/`rejected`/`disabled`) already blocked via `isAgentLive` |
 | Authz helpers | Only `requireAdmin()` checking `role === "admin"` |

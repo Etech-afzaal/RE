@@ -4,7 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { propertyPublicPath } from "@/lib/propertySlug";
+import { useIsMobile } from "@/lib/useIsMobile";
 import styles from "./HomeListings.module.css";
+
+const DESKTOP_PAGE_SIZE = 3;
+const MOBILE_PAGE_SIZE = 4;
 
 const formatPrice = (price) =>
   price ? `PKR ${Number(price).toLocaleString()}` : "On request";
@@ -80,11 +84,12 @@ function BathIcon() {
   );
 }
 
-function StatusIcon() {
+/** Diamond marker for plot feature chips (◇). */
+function FeatureIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
-        d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z"
+        d="M12 3.5L20.5 12 12 20.5 3.5 12 12 3.5z"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinejoin="round"
@@ -185,22 +190,75 @@ function formatSizeLabel(value, unit) {
   });
 }
 
+/** Skip blank / placeholder agent values. */
+function meaningfulLabel(value) {
+  const label = String(value ?? "").trim();
+  if (!label) return null;
+  if (label === "-" || label === "—" || /^n\/?a$/i.test(label)) return null;
+  if (/^not\s+added$/i.test(label) || /^none$/i.test(label)) return null;
+  return label;
+}
+
+/**
+ * Plot card chips from dedicated fields when present, else signals in
+ * title/description (create form has no separate plot columns yet).
+ * Returns at most two labels so Size + feature + attribute fit the row.
+ */
+function parsePlotFeatures(property) {
+  const labels = [];
+  const push = (value) => {
+    const label = meaningfulLabel(value);
+    if (!label) return;
+    if (labels.some((item) => item.toLowerCase() === label.toLowerCase())) return;
+    labels.push(label);
+  };
+
+  push(property.plot_type);
+  push(property.plot_feature);
+  push(property.facing);
+  push(property.plot_facing);
+  if (Array.isArray(property.plot_features)) {
+    for (const item of property.plot_features) push(item);
+  }
+
+  const text = `${property.title || ""}\n${property.description || ""}`;
+
+  const structuredType = text.match(/Plot\s*Type:\s*([^\n|,]+)/i);
+  const structuredFacing = text.match(/Facing:\s*([^\n|,]+)/i);
+  if (structuredType) push(structuredType[1]);
+  if (structuredFacing) push(structuredFacing[1]);
+
+  if (/\bcorner\b/i.test(text)) push("Corner");
+
+  if (/\bpark[\s-]?facing\b|\bfacing\s+park\b/i.test(text)) {
+    push("Park Facing");
+  } else if (/\bmain\s+boulevard\b/i.test(text)) {
+    push("Main Boulevard");
+  } else if (/\bmain\s+road\b/i.test(text)) {
+    push("Main Road");
+  } else if (/\bboulevard\s+access\b|\bboulevard\b/i.test(text)) {
+    push("Boulevard");
+  } else if (/\bdual\s+road\b/i.test(text)) {
+    push("Dual Road");
+  }
+
+  if (/\bcommercial\b/i.test(text)) {
+    push("Commercial");
+  } else if (/\bresidential\b/i.test(text)) {
+    push("Residential");
+  }
+
+  return labels.slice(0, 2);
+}
+
 function PropertyCard({ property }) {
   const sizeLabel = formatSizeLabel(property.size_value, property.size_unit);
   const location = String(property.location || "").trim();
   const title = property.title || location || "Property";
   const category = getCategory(property);
+  const isPlot = category === "plot";
   const { beds, baths } = parseRoomCounts(property);
-  const statusLabel =
-    property.status === "sold"
-      ? "Sold"
-      : property.status === "draft"
-        ? "Draft"
-        : category === "rent"
-          ? "For Rent"
-          : category === "plot"
-            ? "Plot"
-            : "For Sale";
+  const plotFeatures = isPlot ? parsePlotFeatures(property) : [];
 
   return (
     <Link
@@ -213,7 +271,7 @@ function PropertyCard({ property }) {
             src={property.featuredImage.image_url}
             alt={property.title || "Property"}
             fill
-            sizes="(max-width: 768px) 100vw, 33vw"
+            sizes="(max-width: 768px) 50vw, 33vw"
             className={styles.image}
           />
         ) : (
@@ -240,22 +298,29 @@ function PropertyCard({ property }) {
               {sizeLabel}
             </span>
           ) : null}
-          {beds != null ? (
-            <span className={styles.attr}>
-              <BedIcon />
-              {beds} {beds === 1 ? "Bed" : "Beds"}
-            </span>
-          ) : null}
-          {baths != null ? (
-            <span className={styles.attr}>
-              <BathIcon />
-              {baths} {baths === 1 ? "Bath" : "Baths"}
-            </span>
-          ) : null}
-          <span className={styles.attr}>
-            <StatusIcon />
-            {statusLabel}
-          </span>
+          {isPlot
+            ? plotFeatures.map((feature) => (
+                <span key={feature} className={styles.attr}>
+                  <FeatureIcon />
+                  {feature}
+                </span>
+              ))
+            : (
+                <>
+                  {beds != null ? (
+                    <span className={styles.attr}>
+                      <BedIcon />
+                      {beds} {beds === 1 ? "Bed" : "Beds"}
+                    </span>
+                  ) : null}
+                  {baths != null ? (
+                    <span className={styles.attr}>
+                      <BathIcon />
+                      {baths} {baths === 1 ? "Bath" : "Baths"}
+                    </span>
+                  ) : null}
+                </>
+              )}
         </div>
 
         <div className={styles.footer}>
@@ -269,17 +334,26 @@ function PropertyCard({ property }) {
   );
 }
 
-function PropertySection({ id, title, kicker, properties, currentPage, onPageChange }) {
-  const totalPages = Math.max(1, Math.ceil(properties.length / 3));
-  const startIndex = (currentPage - 1) * 3;
-  const pageItems = properties.slice(startIndex, startIndex + 3);
+function PropertySection({
+  id,
+  title,
+  kicker,
+  properties,
+  currentPage,
+  onPageChange,
+  pageSize,
+}) {
+  const totalPages = Math.max(1, Math.ceil(properties.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIndex = (safePage - 1) * pageSize;
+  const pageItems = properties.slice(startIndex, startIndex + pageSize);
 
   const paginationRange = () => {
     if (totalPages <= 5) {
       return Array.from({ length: totalPages }, (_, index) => index + 1);
     }
 
-    let start = Math.max(1, currentPage - 2);
+    let start = Math.max(1, safePage - 2);
     let end = start + 4;
 
     if (end > totalPages) {
@@ -316,11 +390,11 @@ function PropertySection({ id, title, kicker, properties, currentPage, onPageCha
 
           {totalPages > 1 ? (
             <div className={styles.pagination}>
-              {currentPage > 1 ? (
+              {safePage > 1 ? (
                 <button
                   type="button"
                   className={styles.pageButton}
-                  onClick={() => onPageChange(currentPage - 1)}
+                  onClick={() => onPageChange(safePage - 1)}
                 >
                   &lt;
                 </button>
@@ -331,7 +405,7 @@ function PropertySection({ id, title, kicker, properties, currentPage, onPageCha
                   key={page}
                   type="button"
                   className={`${styles.pageButton} ${
-                    page === currentPage ? styles.pageButtonActive : ""
+                    page === safePage ? styles.pageButtonActive : ""
                   }`}
                   onClick={() => onPageChange(page)}
                 >
@@ -339,11 +413,11 @@ function PropertySection({ id, title, kicker, properties, currentPage, onPageCha
                 </button>
               ))}
 
-              {currentPage < totalPages ? (
+              {safePage < totalPages ? (
                 <button
                   type="button"
                   className={styles.pageButton}
-                  onClick={() => onPageChange(currentPage + 1)}
+                  onClick={() => onPageChange(safePage + 1)}
                 >
                   &gt;
                 </button>
@@ -357,10 +431,17 @@ function PropertySection({ id, title, kicker, properties, currentPage, onPageCha
 }
 
 export default function HomeListings({ properties = [] }) {
+  const isMobile = useIsMobile(768);
+  const pageSize = isMobile ? MOBILE_PAGE_SIZE : DESKTOP_PAGE_SIZE;
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("all");
   const [sort, setSort] = useState("default");
   const [pages, setPages] = useState({ sale: 1, rent: 1, plot: 1 });
+
+  // Reset to page 1 when mobile/desktop page size changes so slices stay valid
+  useEffect(() => {
+    setPages({ sale: 1, rent: 1, plot: 1 });
+  }, [pageSize]);
 
   const locations = useMemo(() => {
     const set = new Set(properties.map((p) => p.location).filter(Boolean));
@@ -535,6 +616,7 @@ export default function HomeListings({ properties = [] }) {
         kicker="Homes for sale"
         properties={saleProperties}
         currentPage={pages.sale}
+        pageSize={pageSize}
         onPageChange={(page) => setPages((prev) => ({ ...prev, sale: page }))}
       />
 
@@ -544,6 +626,7 @@ export default function HomeListings({ properties = [] }) {
         kicker="Homes for rent"
         properties={rentProperties}
         currentPage={pages.rent}
+        pageSize={pageSize}
         onPageChange={(page) => setPages((prev) => ({ ...prev, rent: page }))}
       />
 
@@ -553,6 +636,7 @@ export default function HomeListings({ properties = [] }) {
         kicker="Land listings"
         properties={plotProperties}
         currentPage={pages.plot}
+        pageSize={pageSize}
         onPageChange={(page) => setPages((prev) => ({ ...prev, plot: page }))}
       />
 

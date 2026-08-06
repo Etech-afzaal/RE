@@ -82,7 +82,7 @@ export async function POST(req) {
 
   try {
     const admins = await query(
-      "SELECT email FROM users WHERE user_type = 'admin' LIMIT 1",
+      "SELECT email FROM users WHERE user_type = 'superadmin' LIMIT 1",
     );
     await sendMail(
       admins[0]?.email,

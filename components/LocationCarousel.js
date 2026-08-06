@@ -25,8 +25,18 @@ export default function LocationCarousel({ locations = [] }) {
     el.addEventListener("scroll", updateArrows, { passive: true });
     window.addEventListener("resize", updateArrows);
 
+    // Convert vertical mouse-wheel into horizontal scroll while hovering the track.
+    // Non-passive so preventDefault works; React's onWheel is passive in modern browsers.
+    const onWheel = (e) => {
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+
     return () => {
       el.removeEventListener("scroll", updateArrows);
+      el.removeEventListener("wheel", onWheel);
       window.removeEventListener("resize", updateArrows);
     };
   }, [locations, updateArrows]);
