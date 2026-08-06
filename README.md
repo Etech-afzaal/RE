@@ -95,22 +95,10 @@ Or from any MySQL client, run the contents of `schema.sql`.
 This creates the `real_estate` database and tables:
 
 - `signup_requests`
-- `users` (`user_type`: `agent` | `superadmin`)
-- `properties` (`agent_id` → `users.id`)
+- `agents`
+- `properties`
 - `property_images`
-- `property_videos`
-- `customer_inquiries`
 - `schema_migrations`
-
-There is **no** separate `agents` table. Agent accounts are rows in `users` with `user_type = 'agent'`.
-
-**Branding columns on `users`:**
-
-| Column | Purpose |
-|--------|---------|
-| `estate_name` | Public URL identity (`/re/{estate_name}`); required for agents, `NULL` for superadmins |
-| `company_name` | Display branding / watermark text |
-| `company_logo` | Brand logo |
 
 If the database already existed before Phase 1, apply the foundation migration instead of recreating:
 
@@ -118,11 +106,6 @@ If the database already existed before Phase 1, apply the foundation migration i
 npm run migrate:phase1
 ```
 
-If a leftover `agents` snapshot table still exists (pre-cleanup DBs), remove it with:
-
-```bash
-npm run migrate:drop-agents
-```
 ### 4. Load demo data (recommended)
 
 ```bash
@@ -132,7 +115,7 @@ npm run seed
 This runs `seed.sql` using credentials from `.env`. It:
 
 - Clears listing tables and inserts realistic Lahore demo data
-- Creates **8 agent users**, **19 properties** (sale / rent / plots), and demo images
+- Creates **8 agents**, **19 properties** (sale / rent / plots), and demo images
 - Expects image files under `public/uploads/demo/` (already in the repo)
 
 **Demo agent password (all seeded agents):** `demo1234`
@@ -145,7 +128,8 @@ Examples:
 | `sara@bahriaestate.pk` | `/re/bahria-estate` |
 | `usman@gulbergprops.pk` | `/re/gulberg-props` |
 
-Re-running `npm run seed` **wipes** agent users/properties/images and reloads the demo set.
+Re-running `npm run seed` **wipes** agents/properties/images and reloads the demo set.
+
 Without the MySQL CLI, `npm run seed` is enough after schema exists (it uses Node + `mysql2`).
 
 ### 5. Start the app
@@ -196,7 +180,7 @@ public/
   uploads/{id}/           # Live uploads per property
   hero/                   # Fallback / marketing hero images
 schema.sql                # Tables only
-seed.sql                  # Demo agent users + properties + images
+seed.sql                  # Demo agents + properties + images
 scripts/seed.js           # npm run seed entrypoint
 example.env               # Env template
 ```
