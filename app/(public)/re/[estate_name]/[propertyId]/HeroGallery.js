@@ -49,6 +49,14 @@ export default function HeroGallery({ images = [], title = "Property" }) {
   useEffect(() => {
     if (previewOpen) return undefined;
     const onKey = (e) => {
+      const target = e.target;
+      if (
+        target instanceof HTMLElement &&
+        (target.closest("input, textarea, select, [contenteditable='true']") ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
       if (e.key === "ArrowLeft") goPrev();
       if (e.key === "ArrowRight") goNext();
     };

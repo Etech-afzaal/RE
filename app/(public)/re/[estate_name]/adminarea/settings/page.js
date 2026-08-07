@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
@@ -18,8 +18,14 @@ export default function AgentSettingsPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  if (status === "unauthenticated") {
-    router.replace("/agent/login");
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/agent/login");
+    }
+  }, [status, router]);
+
+  if (status === "loading" || status === "unauthenticated") {
+    return null;
   }
 
   async function changePassword(e) {

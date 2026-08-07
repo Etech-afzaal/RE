@@ -113,6 +113,29 @@ const NAV = [
       </svg>
     ),
   },
+  {
+    href: "/admin/dashboard/logs",
+    label: "Logs",
+    subtitle: "Audit trail of important actions across the platform.",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M7 4h10a2 2 0 0 1 2 2v14l-3.5-2.2L12 20l-3.5-2.2L5 20V6a2 2 0 0 1 2-2Z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M9 9h6M9 13h6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+      </svg>
+    ),
+  },
 ];
 
 function isActive(pathname, item) {
@@ -267,13 +290,42 @@ export default function AdminShell({ children }) {
           <div className={styles.topbarLeft}>
             <button
               type="button"
-              className={styles.menuBtn}
-              aria-label="Open menu"
-              onClick={() => setOpen(true)}
+              className={`${styles.menuBtn} ${open ? styles.menuBtnOpen : ""}`}
+              aria-label={open ? "Close menu" : "Open menu"}
+              aria-expanded={open}
+              onClick={() => setOpen((isOpen) => !isOpen)}
             >
-              <span />
-              <span />
-              <span />
+              {open ? (
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M6 6l12 12M18 6L6 18"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 6.5h16M4 12h16M4 17.5h16"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              )}
             </button>
             <div>
               <p className={styles.kicker}>Super Admin dashboard</p>

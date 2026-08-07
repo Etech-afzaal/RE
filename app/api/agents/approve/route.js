@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { requireAdmin } from "@/lib/adminAuth";
+import {
+  AUDIT_ACTIONS,
+  AUDIT_ENTITY_TYPES,
+  createAuditLog,
+  getRequestIp,
+} from "@/lib/auditLogger";
 import { query } from "@/lib/db";
 import { generateTempPassword } from "@/lib/generate";
 import { sendMail, agentCredentialsEmail } from "@/lib/mail";
 
 export async function POST(req) {
-  const { error } = await requireAdmin();
+  const { session, error } = await requireAdmin();
   if (error) return error;
 
   const { requestId } = await req.json();
@@ -45,7 +51,7 @@ export async function POST(req) {
     const tempPassword = generateTempPassword();
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
-    await query(
+    const insertResult = await query(
       `INSERT INTO users (estate_name, username, full_name, email, phone, password_hash, must_reset_password, status, user_type)
        VALUES (?, ?, ?, ?, ?, ?, TRUE, 'approved', 'agent')`,
       [
@@ -76,6 +82,24 @@ export async function POST(req) {
     } catch (err) {
       console.error("Failed to send agent credentials email:", err);
     }
+
+    const adminName = session?.user?.name || "Superadmin";
+    await createAuditLog({
+      userId: Number(session?.user?.id) || null,
+      action: AUDIT_ACTIONS.AGENT_APPROVED,
+      entityType: AUDIT_ENTITY_TYPES.USER,
+      entityId: insertResult.insertId,
+      description: `Approved agent ${signupRequest.full_name}`,
+      metadata: {
+        actor_name: adminName,
+        agent_name: signupRequest.full_name,
+        agent_username: estateName,
+        estate_name: estateName,
+        signup_request_id: Number(requestId),
+        email: signupRequest.email,
+      },
+      ipAddress: getRequestIp(req),
+    });
 
     return NextResponse.json({
       success: true,

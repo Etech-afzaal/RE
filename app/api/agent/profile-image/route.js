@@ -74,14 +74,18 @@ export async function POST(req) {
     await mkdir(uploadDir, { recursive: true });
 
     const sourceFilename = path.basename(String(image.name || ""));
-    if (!sourceFilename) {
+    const safeBase = sourceFilename
+      .replace(/[^a-zA-Z0-9._-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80);
+    if (!safeBase) {
       return NextResponse.json(
         { error: imageFormatErrorMessage() },
         { status: 400 },
       );
     }
 
-    const filename = `${nanoid(10)}-${sourceFilename}`;
+    const filename = `${nanoid(10)}-${safeBase}`;
     const outputPath = path.join(uploadDir, filename);
     const imageBuffer = Buffer.from(await image.arrayBuffer());
 

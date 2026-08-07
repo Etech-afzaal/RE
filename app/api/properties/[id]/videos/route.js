@@ -1,12 +1,25 @@
 import { NextResponse } from "next/server";
 import { requireAgent } from "@/lib/adminAuth";
+import {
+  AUDIT_ACTIONS,
+  AUDIT_ENTITY_TYPES,
+  createAuditLog,
+  getRequestIp,
+} from "@/lib/auditLogger";
 import { query } from "@/lib/db";
 import { normalizeImageCategory } from "@/lib/imageCategories";
 import {
+  isPropertyLockedForAgent,
+  PROPERTY_LOCKED_MESSAGE,
+} from "@/lib/status";
+import { resolvePublicUploadPath } from "@/lib/uploadPath";
+import {
   MAX_PROPERTY_VIDEOS,
+  MAX_PROPERTY_VIDEO_BYTES,
   getVideoExtension,
   isVideoFile,
   videoLimitErrorMessage,
+  videoSizeErrorMessage,
   videosFormatErrorMessage,
 } from "@/lib/videoUpload";
 import { mkdir, rm, writeFile } from "fs/promises";
@@ -30,18 +43,25 @@ async function ensurePropertyVideosTable() {
 }
 
 /** Videos may only be touched by the agent who owns the listing. */
-async function ownsProperty(propertyId, session) {
-  if (!Number.isInteger(propertyId) || propertyId <= 0) return false;
+async function getOwnedProperty(propertyId, session) {
+  if (!Number.isInteger(propertyId) || propertyId <= 0) return null;
   const agentId = Number(session.user.agent_id || session.user.id);
   const rows = await query(
-    "SELECT id FROM properties WHERE id = ? AND agent_id = ?",
+    "SELECT id, status FROM properties WHERE id = ? AND agent_id = ?",
     [propertyId, agentId],
   );
-  return rows.length > 0;
+  return rows[0] || null;
 }
 
 function videoLocalPath(videoUrl) {
-  return path.join(process.cwd(), "public", String(videoUrl).replace(/^\/+/, ""));
+  return resolvePublicUploadPath(videoUrl);
+}
+
+function lockedResponse() {
+  return NextResponse.json(
+    { error: PROPERTY_LOCKED_MESSAGE },
+    { status: 409 },
+  );
 }
 
 /** Keep properties.video_url in sync with the featured gallery video. */
@@ -64,9 +84,12 @@ export async function POST(req, { params }) {
   if (error) return error;
 
   const propertyId = Number(params.id);
-  const owned = await ownsProperty(propertyId, session);
-  if (!owned) {
+  const property = await getOwnedProperty(propertyId, session);
+  if (!property) {
     return NextResponse.json({ error: "Property not found." }, { status: 404 });
+  }
+  if (isPropertyLockedForAgent(property.status)) {
+    return lockedResponse();
   }
 
   await ensurePropertyVideosTable();
@@ -95,6 +118,13 @@ export async function POST(req, { params }) {
       { error: videosFormatErrorMessage() },
       { status: 400 },
     );
+  }
+
+  const oversized = files.find(
+    (file) => file instanceof File && file.size > MAX_PROPERTY_VIDEO_BYTES,
+  );
+  if (oversized) {
+    return NextResponse.json({ error: videoSizeErrorMessage() }, { status: 400 });
   }
 
   const existing = await query(
@@ -167,7 +197,8 @@ export async function POST(req, { params }) {
     await syncLegacyVideoUrl(propertyId);
   } catch (err) {
     for (const item of saved) {
-      await rm(videoLocalPath(item.videoUrl), { force: true }).catch(() => {});
+      const localPath = videoLocalPath(item.videoUrl);
+      if (localPath) await rm(localPath, { force: true }).catch(() => {});
     }
     console.error("Failed to save property videos:", err);
     return NextResponse.json(
@@ -175,6 +206,30 @@ export async function POST(req, { params }) {
       { status: 500 },
     );
   }
+
+  const agentId = Number(session.user.agent_id || session.user.id);
+  const propertyRows = await query(
+    "SELECT title FROM properties WHERE id = ? LIMIT 1",
+    [propertyId],
+  );
+  const propertyTitle = propertyRows[0]?.title || `Property #${propertyId}`;
+  const agentName = session.user.name || "Agent";
+  const agentHandle = session.user.username || session.user.estate_name || null;
+  await createAuditLog({
+    userId: agentId,
+    action: AUDIT_ACTIONS.PROPERTY_VIDEO_UPLOADED,
+    entityType: AUDIT_ENTITY_TYPES.PROPERTY,
+    entityId: propertyId,
+    description: `${agentName} uploaded ${saved.length} video(s) for "${propertyTitle}"`,
+    metadata: {
+      property_title: propertyTitle,
+      agent_name: agentName,
+      agent_username: agentHandle,
+      estate_name: session.user.estate_name || agentHandle,
+      video_count: saved.length,
+    },
+    ipAddress: getRequestIp(req),
+  });
 
   return NextResponse.json({
     success: true,
@@ -187,9 +242,12 @@ export async function DELETE(req, { params }) {
   if (error) return error;
 
   const propertyId = Number(params.id);
-  const owned = await ownsProperty(propertyId, session);
-  if (!owned) {
+  const property = await getOwnedProperty(propertyId, session);
+  if (!property) {
     return NextResponse.json({ error: "Property not found." }, { status: 404 });
+  }
+  if (isPropertyLockedForAgent(property.status)) {
+    return lockedResponse();
   }
 
   await ensurePropertyVideosTable();
@@ -216,7 +274,8 @@ export async function DELETE(req, { params }) {
       ).filter(Boolean);
 
   for (const video of rows) {
-    await rm(videoLocalPath(video.video_url), { force: true });
+    const localPath = videoLocalPath(video.video_url);
+    if (localPath) await rm(localPath, { force: true });
     await query(
       "DELETE FROM property_videos WHERE id = ? AND property_id = ?",
       [video.id, propertyId],

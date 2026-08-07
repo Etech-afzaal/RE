@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { requireAdmin } from "@/lib/adminAuth";
 import {
+  AUDIT_ACTIONS,
+  AUDIT_ENTITY_TYPES,
+  createAuditLog,
+  getRequestIp,
+} from "@/lib/auditLogger";
+import {
   AGENT_STATUS,
   AGENT_STATUS_INPUTS,
   toClientAgentStatus,
@@ -47,7 +53,8 @@ export async function PATCH(req, { params }) {
 
   try {
     const agents = await query(
-      "SELECT id, email, status FROM users WHERE id = ? AND user_type = 'agent'",
+      `SELECT id, email, status, full_name, username, estate_name
+       FROM users WHERE id = ? AND user_type = 'agent'`,
       [agentId],
     );
     const agent = agents[0];
@@ -103,6 +110,43 @@ export async function PATCH(req, { params }) {
        FROM users WHERE id = ? AND user_type = 'agent'`,
       [agentId],
     );
+
+    const adminName = session?.user?.name || "Superadmin";
+    const agentHandle = agent.username || agent.estate_name;
+    let auditAction = null;
+    let auditDescription = null;
+    if (nextStatus === AGENT_STATUS.BLOCKED) {
+      auditAction = AUDIT_ACTIONS.AGENT_BLOCKED;
+      auditDescription = `Permanently blocked agent ${agent.full_name}`;
+    } else if (nextStatus === AGENT_STATUS.DISABLED) {
+      auditAction = AUDIT_ACTIONS.AGENT_DISABLED;
+      auditDescription = `Disabled agent ${agent.full_name}`;
+    } else if (nextStatus === AGENT_STATUS.APPROVED) {
+      auditAction = AUDIT_ACTIONS.AGENT_ENABLED;
+      auditDescription = `Enabled agent ${agent.full_name}`;
+    }
+
+    if (auditAction) {
+      await createAuditLog({
+        userId: Number(session?.user?.id) || null,
+        action: auditAction,
+        entityType: AUDIT_ENTITY_TYPES.USER,
+        entityId: agentId,
+        description: auditDescription,
+        metadata: {
+          actor_name: adminName,
+          agent_name: agent.full_name,
+          agent_username: agentHandle,
+          estate_name: agent.estate_name,
+          old_status: agent.status,
+          new_status: nextStatus,
+          ...(nextStatus === AGENT_STATUS.BLOCKED
+            ? { blocked_reason: blockedReason }
+            : {}),
+        },
+        ipAddress: getRequestIp(req),
+      });
+    }
 
     return NextResponse.json({
       success: true,

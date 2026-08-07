@@ -1,15 +1,12 @@
 import { query } from "@/lib/db";
 import { requireAdmin } from "@/lib/adminAuth";
+import { toActivityItem } from "@/lib/auditLogger";
 import {
   AGENT_LIVE_STATUS,
   PROPERTY_PUBLIC_STATUS,
   PROPERTY_STATUS,
   toClientAgentStatus,
 } from "@/lib/status";
-import {
-  agentPublicUsername,
-  propertyPublicPath,
-} from "@/lib/propertySlug";
 
 const MONTH_LABELS = [
   "Jan",
@@ -110,12 +107,7 @@ export async function GET() {
       recentAgents,
       approvalQueue,
       blockedAgents,
-      activityProperties,
-      activityApprovals,
-      activityRejections,
-      activityAgents,
-      activityBlocked,
-      activityRequests,
+      recentAuditLogs,
     ] = await Promise.all([
       query(
         `SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, COUNT(*) AS total
@@ -176,142 +168,17 @@ export async function GET() {
          LIMIT 5`,
       ),
       query(
-        `SELECT p.id, p.title, p.created_at,
-                a.full_name AS agent_name, a.estate_name, a.username
-         FROM properties p
-         JOIN users a ON a.id = p.agent_id
-         ORDER BY p.created_at DESC
-         LIMIT 8`,
-      ),
-      query(
-        `SELECT p.id, p.title, p.approved_at AS event_at,
-                a.full_name AS agent_name, a.estate_name, a.username
-         FROM properties p
-         JOIN users a ON a.id = p.agent_id
-         WHERE p.approved_at IS NOT NULL
-         ORDER BY p.approved_at DESC
-         LIMIT 8`,
-      ),
-      query(
-        `SELECT p.id, p.title, p.rejected_at AS event_at, a.full_name AS agent_name
-         FROM properties p
-         JOIN users a ON a.id = p.agent_id
-         WHERE p.rejected_at IS NOT NULL
-         ORDER BY p.rejected_at DESC
-         LIMIT 8`,
-      ),
-      query(
-        `SELECT id, full_name, estate_name, username, created_at
-         FROM users
-         WHERE user_type = 'agent'
-         ORDER BY created_at DESC
-         LIMIT 8`,
-      ),
-      query(
-        `SELECT id, full_name, estate_name, blocked_at
-         FROM users
-         WHERE user_type = 'agent' AND status = 'blocked' AND blocked_at IS NOT NULL
-         ORDER BY blocked_at DESC
-         LIMIT 5`,
-      ),
-      query(
-        `SELECT id, full_name, estate_name, created_at
-         FROM signup_requests
-         WHERE status = 'pending'
-         ORDER BY created_at DESC
-         LIMIT 5`,
+        `SELECT al.id, al.user_id, al.action, al.entity_type, al.entity_id,
+                al.description, al.metadata, al.created_at,
+                u.full_name AS user_name, u.user_type, u.username, u.estate_name
+         FROM audit_logs al
+         LEFT JOIN users u ON u.id = al.user_id
+         ORDER BY al.created_at DESC
+         LIMIT 10`,
       ),
     ]);
 
-    const activity = [
-      ...activityProperties.map((row) => {
-        const agentHandle = agentPublicUsername(row);
-        return {
-          id: `prop-${row.id}`,
-          type: "property",
-          title: `${row.agent_name} added a new property`,
-          detail: row.title,
-          user: row.agent_name,
-          action: "Added Property",
-          details: row.title,
-          propertyId: Number(row.id),
-          href: propertyPublicPath(agentHandle, {
-            id: row.id,
-            title: row.title,
-          }),
-          at: row.created_at,
-        };
-      }),
-      ...activityApprovals.map((row) => {
-        const agentHandle = agentPublicUsername(row);
-        return {
-          id: `apr-${row.id}`,
-          type: "property",
-          title: "Admin approved a property",
-          detail: row.title,
-          user: "Superadmin",
-          action: "Approved Property",
-          details: row.title,
-          propertyId: Number(row.id),
-          href: propertyPublicPath(agentHandle, {
-            id: row.id,
-            title: row.title,
-          }),
-          at: row.event_at,
-        };
-      }),
-      ...activityRejections.map((row) => ({
-        id: `rej-${row.id}`,
-        type: "property_rejected",
-        title: "Admin rejected a property",
-        detail: row.title,
-        user: "Superadmin",
-        action: "Rejected Property",
-        details: row.title,
-        at: row.event_at,
-      })),
-      ...activityAgents.map((row) => {
-        const agentHandle = agentPublicUsername(row);
-        return {
-          id: `agt-${row.id}`,
-          type: "agent",
-          title: "New agent registered",
-          detail: `${row.full_name} · /re/${row.estate_name}`,
-          user: row.full_name,
-          action: "Agent Registered",
-          details: row.estate_name ? `/re/${row.estate_name}` : row.full_name,
-          href: agentHandle
-            ? `/re/${encodeURIComponent(agentHandle)}`
-            : null,
-          at: row.created_at,
-        };
-      }),
-      ...activityBlocked.map((row) => ({
-        id: `blk-${row.id}`,
-        type: "agent_blocked",
-        title: "Admin blocked an agent",
-        detail: `${row.full_name} · /re/${row.estate_name}`,
-        user: "Superadmin",
-        action: "Blocked Agent",
-        details: row.estate_name
-          ? `${row.full_name} · /re/${row.estate_name}`
-          : row.full_name,
-        at: row.blocked_at,
-      })),
-      ...activityRequests.map((row) => ({
-        id: `req-${row.id}`,
-        type: "agent_request",
-        title: "New agent access request",
-        detail: `${row.full_name} · ${row.estate_name}`,
-        user: row.full_name,
-        action: "Access Request",
-        details: row.estate_name || row.full_name,
-        at: row.created_at,
-      })),
-    ]
-      .filter((item) => item.at)
-      .sort((a, b) => new Date(b.at) - new Date(a.at))
-      .slice(0, 12);
+    const activity = recentAuditLogs.map(toActivityItem);
 
     const baseline = baselineRows[0] || {};
     const propertiesThisMonth = Number(stats.propertiesThisMonth) || 0;

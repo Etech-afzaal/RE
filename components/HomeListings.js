@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { propertyPublicPath } from "@/lib/propertySlug";
+import { formatPropertyLocation } from "@/lib/propertyLocation";
 import { useIsMobile } from "@/lib/useIsMobile";
 import styles from "./HomeListings.module.css";
 
@@ -253,7 +254,7 @@ function parsePlotFeatures(property) {
 
 function PropertyCard({ property }) {
   const sizeLabel = formatSizeLabel(property.size_value, property.size_unit);
-  const location = String(property.location || "").trim();
+  const location = formatPropertyLocation(property) || "";
   const title = property.title || location || "Property";
   const category = getCategory(property);
   const isPlot = category === "plot";
@@ -444,7 +445,9 @@ export default function HomeListings({ properties = [] }) {
   }, [pageSize]);
 
   const locations = useMemo(() => {
-    const set = new Set(properties.map((p) => p.location).filter(Boolean));
+    const set = new Set(
+      properties.map((p) => formatPropertyLocation(p)).filter(Boolean),
+    );
     return ["all", ...Array.from(set)];
   }, [properties]);
 
@@ -506,8 +509,11 @@ export default function HomeListings({ properties = [] }) {
     const q = query.trim().toLowerCase();
 
     const base = properties.filter((p) => {
-      const matchesLocation = location === "all" || p.location === location;
-      const haystack = `${p.title} ${p.location || ""} ${p.agent_name || ""}`.toLowerCase();
+      const displayLocation = formatPropertyLocation(p) || "";
+      const matchesLocation =
+        location === "all" || displayLocation === location;
+      const haystack =
+        `${p.title} ${displayLocation} ${p.city || ""} ${p.area || ""} ${p.phase || ""} ${p.agent_name || ""}`.toLowerCase();
       return matchesLocation && (!q || haystack.includes(q));
     });
 

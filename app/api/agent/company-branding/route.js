@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { requireAgent } from "@/lib/adminAuth";
+import {
+  AUDIT_ACTIONS,
+  AUDIT_ENTITY_TYPES,
+  createAuditLog,
+  getRequestIp,
+} from "@/lib/auditLogger";
 import { query } from "@/lib/db";
 
 function agentIdFrom(session) {
@@ -55,12 +61,29 @@ export async function PATCH(req) {
   );
 
   const rows = await query(
-    "SELECT username, estate_name FROM users WHERE id = ? AND user_type = 'agent' LIMIT 1",
+    "SELECT username, estate_name, full_name FROM users WHERE id = ? AND user_type = 'agent' LIMIT 1",
     [agentId],
   );
   const handle = rows[0]?.username || rows[0]?.estate_name;
   revalidatePath("/");
   if (handle) revalidatePath(`/re/${handle}`);
+
+  const agentName = rows[0]?.full_name || session.user.name || "Agent";
+  await createAuditLog({
+    userId: agentId,
+    action: AUDIT_ACTIONS.COMPANY_BRANDING_UPDATED,
+    entityType: AUDIT_ENTITY_TYPES.BRANDING,
+    entityId: agentId,
+    description: `${agentName} updated company branding`,
+    metadata: {
+      actor_name: agentName,
+      agent_name: agentName,
+      agent_username: handle,
+      estate_name: rows[0]?.estate_name || handle,
+      company_name: company_name || null,
+    },
+    ipAddress: getRequestIp(req),
+  });
 
   return NextResponse.json({ success: true });
 }

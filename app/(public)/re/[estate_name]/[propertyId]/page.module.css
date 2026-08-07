@@ -645,6 +645,97 @@
   display: block;
 }
 
+/* Multi-video overlays — sit above the media, clear of native controls */
+.videoCounter {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  z-index: 2;
+  padding: 0.28rem 0.55rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.videoCategoryLabel {
+  position: absolute;
+  left: 0.85rem;
+  bottom: 3.6rem;
+  z-index: 2;
+  max-width: calc(100% - 9rem);
+  padding: 0.32rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+}
+
+.videoNextBtn {
+  position: absolute;
+  right: 0.85rem;
+  bottom: 4.3rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  padding: 0.55rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.videoNextBtn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.42);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.videoNextBtn:active {
+  transform: translateY(0);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.videoNextBtn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 2px;
+}
+
 .videoPoster {
   object-fit: cover;
 }
@@ -1105,6 +1196,29 @@
     max-width: 100%;
     aspect-ratio: 4 / 3;
     border-radius: 18px;
+  }
+
+  .videoCounter {
+    top: 0.65rem;
+    right: 0.65rem;
+    padding: 0.24rem 0.48rem;
+    font-size: 0.72rem;
+  }
+
+  .videoCategoryLabel {
+    left: 0.65rem;
+    bottom: 3.25rem;
+    max-width: calc(100% - 7.5rem);
+    padding: 0.26rem 0.5rem;
+    font-size: 0.68rem;
+  }
+
+  .videoNextBtn {
+    right: 0.65rem;
+    bottom: 3.95rem;
+    padding: 0.45rem 0.8rem;
+    font-size: 0.7rem;
+    border-radius: 9px;
   }
 
   /* Compact in-flow agent card — sticky bar handles primary CTAs */

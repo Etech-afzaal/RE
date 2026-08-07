@@ -5,6 +5,12 @@ import path from "path";
 import sharp from "sharp";
 import { nanoid } from "nanoid";
 import { requireAgent } from "@/lib/adminAuth";
+import {
+  AUDIT_ACTIONS,
+  AUDIT_ENTITY_TYPES,
+  createAuditLog,
+  getRequestIp,
+} from "@/lib/auditLogger";
 import { query } from "@/lib/db";
 import { imageFormatErrorMessage, isImageFile } from "@/lib/imageUpload";
 
@@ -37,7 +43,7 @@ export async function POST(req) {
 
   try {
     const agents = await query(
-      "SELECT username, estate_name FROM users WHERE id = ? AND user_type = 'agent' LIMIT 1",
+      "SELECT username, estate_name, full_name FROM users WHERE id = ? AND user_type = 'agent' LIMIT 1",
       [agentId],
     );
     const agent = agents[0];
@@ -70,8 +76,26 @@ export async function POST(req) {
       agentId,
     ]);
 
+    const handle = agent.username || agent.estate_name;
     revalidatePath("/");
-    revalidatePath(`/re/${agent.username || agent.estate_name}`);
+    revalidatePath(`/re/${handle}`);
+
+    const agentName = agent.full_name || session.user.name || "Agent";
+    await createAuditLog({
+      userId: agentId,
+      action: AUDIT_ACTIONS.COMPANY_LOGO_CHANGED,
+      entityType: AUDIT_ENTITY_TYPES.BRANDING,
+      entityId: agentId,
+      description: `${agentName} changed company logo`,
+      metadata: {
+        actor_name: agentName,
+        agent_name: agentName,
+        agent_username: handle,
+        estate_name: agent.estate_name,
+        company_logo: companyLogo,
+      },
+      ipAddress: getRequestIp(req),
+    });
 
     return NextResponse.json({ success: true, company_logo: companyLogo });
   } catch (err) {

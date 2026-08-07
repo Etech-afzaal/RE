@@ -64,7 +64,11 @@ CREATE TABLE IF NOT EXISTS properties (
   size_value DECIMAL(10,2),
   size_unit ENUM('marla','kanal','sqft') DEFAULT 'marla',
   price DECIMAL(15,2),
-  location VARCHAR(255),
+  location VARCHAR(255),                           -- denormalized display: "{area} {phase}, {city}"
+  city VARCHAR(100) NULL,
+  area VARCHAR(100) NULL,
+  phase VARCHAR(100) NULL,
+  address VARCHAR(255) NULL,
   video_url VARCHAR(500) NULL,                     -- optional property walkthrough video
   -- Workflow: draft → pending_approval → approved | rejected; plus sold | hidden
   -- Only 'approved' is publicly visible, so new listings start as drafts.
@@ -109,6 +113,26 @@ CREATE TABLE IF NOT EXISTS property_videos (
 
 CREATE INDEX idx_properties_agent ON properties(agent_id);
 CREATE INDEX idx_properties_status ON properties(status);
+
+-- Platform audit trail (superadmin Logs page + Overview recent activities).
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NULL,
+  action VARCHAR(100) NOT NULL,
+  entity_type VARCHAR(50) NULL,
+  entity_id INT NULL,
+  description TEXT NOT NULL,
+  metadata JSON NULL,
+  ip_address VARCHAR(45) NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_audit_logs_created ON audit_logs(created_at);
+CREATE INDEX idx_audit_logs_action ON audit_logs(action);
+CREATE INDEX idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
+CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
 
 -- Customer inquiries sent from agent websites / property pages (email + future leads inbox).
 CREATE TABLE IF NOT EXISTS customer_inquiries (

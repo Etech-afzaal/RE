@@ -26,7 +26,10 @@ export default function EditPropertyPage() {
     size_value: "",
     size_unit: "marla",
     price: "",
-    location: "",
+    city: "",
+    area: "",
+    phase: "",
+    address: "",
     status: "draft",
   });
   const [rejection, setRejection] = useState(null);
@@ -64,13 +67,35 @@ export default function EditPropertyPage() {
         return;
       }
       const p = data.property;
+      const hasStructured = Boolean(p.city || p.area || p.phase || p.address);
+      let city = p.city || "";
+      let area = p.area || "";
+      let phase = p.phase || "";
+      let address = p.address || "";
+      // Legacy rows only have a combined location string — seed city/area so
+      // agents can edit without losing the existing value.
+      if (!hasStructured && p.location) {
+        const parts = String(p.location)
+          .split(",")
+          .map((part) => part.trim())
+          .filter(Boolean);
+        if (parts.length >= 2) {
+          city = parts[parts.length - 1];
+          area = parts.slice(0, -1).join(", ");
+        } else {
+          area = parts[0] || "";
+        }
+      }
       setForm({
         title: p.title || "",
         description: p.description || "",
         size_value: p.size_value || "",
         size_unit: p.size_unit || "marla",
         price: p.price || "",
-        location: p.location || "",
+        city,
+        area,
+        phase,
+        address,
         status: p.status || "draft",
       });
       setRejection(
@@ -181,7 +206,10 @@ export default function EditPropertyPage() {
       body: JSON.stringify({
         title: form.title,
         description: form.description,
-        location: form.location,
+        city: String(form.city || "").trim() || null,
+        area: String(form.area || "").trim() || null,
+        phase: String(form.phase || "").trim() || null,
+        address: String(form.address || "").trim() || null,
         size_unit: form.size_unit,
         size_value: form.size_value ? Number(form.size_value) : null,
         price: form.price ? Number(form.price) : null,
@@ -430,12 +458,43 @@ export default function EditPropertyPage() {
               />
             </label>
             <label className={ui.field}>
-              <span className={ui.label}>Location</span>
+              <span className={ui.label}>City</span>
               <input
                 className={ui.input}
-                value={form.location}
+                value={form.city}
                 disabled={isPending}
-                onChange={(e) => setForm({ ...form, location: e.target.value })}
+                onChange={(e) => setForm({ ...form, city: e.target.value })}
+                placeholder="Lahore"
+              />
+            </label>
+            <label className={ui.field}>
+              <span className={ui.label}>Area</span>
+              <input
+                className={ui.input}
+                value={form.area}
+                disabled={isPending}
+                onChange={(e) => setForm({ ...form, area: e.target.value })}
+                placeholder="DHA"
+              />
+            </label>
+            <label className={ui.field}>
+              <span className={ui.label}>Phase</span>
+              <input
+                className={ui.input}
+                value={form.phase}
+                disabled={isPending}
+                onChange={(e) => setForm({ ...form, phase: e.target.value })}
+                placeholder="Phase 5"
+              />
+            </label>
+            <label className={ui.field}>
+              <span className={ui.label}>Address</span>
+              <input
+                className={ui.input}
+                value={form.address}
+                disabled={isPending}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+                placeholder="House number, street, block, road, full address"
               />
             </label>
             <div className={ui.row2}>

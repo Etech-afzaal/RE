@@ -39,8 +39,16 @@ function buildTitle(title, propertyType) {
   return t;
 }
 
-function buildLocation({ area, phase, address }) {
-  return [area, phase, address].map((s) => String(s || "").trim()).filter(Boolean).join(", ");
+function buildLocation({ city, area, phase }) {
+  const areaPhase = [area, phase]
+    .map((s) => String(s || "").trim())
+    .filter(Boolean)
+    .join(" ");
+  const cityText = String(city || "").trim();
+  if (areaPhase && cityText) return `${areaPhase}, ${cityText}`;
+  if (areaPhase) return areaPhase;
+  if (cityText) return cityText;
+  return "";
 }
 
 function buildDescription({ description, bedrooms, bathrooms, parking }) {
@@ -65,6 +73,10 @@ export default function CreatePropertyPage() {
   const [errorDetails, setErrorDetails] = useState([]);
   const [busyAction, setBusyAction] = useState(null); // null | "draft" | "submit"
   const [submitSuccessOpen, setSubmitSuccessOpen] = useState(false);
+  // Reuse after first create so retries do not orphan duplicate drafts.
+  const [createdPropertyId, setCreatedPropertyId] = useState(null);
+  const imagesUploadedRef = useRef(false);
+  const videosUploadedRef = useRef(false);
   // Each entry: { file, url, category, isFeatured }. Position in the array is
   // the display order sent to the API as imageOrder. Capped at MAX_PROPERTY_IMAGES.
   const [images, setImages] = useState([]);
@@ -78,6 +90,7 @@ export default function CreatePropertyPage() {
     title: "",
     propertyType: "sale",
     description: "",
+    city: "",
     area: "",
     phase: "",
     address: "",
@@ -99,8 +112,14 @@ export default function CreatePropertyPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (status === "unauthenticated") {
-    router.replace("/agent/login");
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/agent/login");
+    }
+  }, [status, router]);
+
+  if (status === "loading" || status === "unauthenticated") {
+    return null;
   }
 
   function update(field, value) {
@@ -315,25 +334,56 @@ export default function CreatePropertyPage() {
 
     setBusyAction(submit ? "submit" : "draft");
     try {
-      const createRes = await fetch("/api/properties", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          description: buildDescription(form),
-          location: buildLocation(form) || null,
-          size_value: form.size_value ? Number(form.size_value) : null,
-          size_unit: form.size_unit || "marla",
-          price: form.price ? Number(form.price) : null,
-        }),
-      });
-      const createData = await createRes.json().catch(() => ({}));
-      if (!createRes.ok) {
-        throw new Error(createData.error || "Could not create property.");
+      let propertyId = createdPropertyId;
+
+      if (!propertyId) {
+        const createRes = await fetch("/api/properties", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            description: buildDescription(form),
+            city: String(form.city || "").trim() || null,
+            area: String(form.area || "").trim() || null,
+            phase: String(form.phase || "").trim() || null,
+            address: String(form.address || "").trim() || null,
+            location: buildLocation(form) || null,
+            size_value: form.size_value ? Number(form.size_value) : null,
+            size_unit: form.size_unit || "marla",
+            price: form.price ? Number(form.price) : null,
+          }),
+        });
+        const createData = await createRes.json().catch(() => ({}));
+        if (!createRes.ok) {
+          throw new Error(createData.error || "Could not create property.");
+        }
+        propertyId = createData.propertyId;
+        setCreatedPropertyId(propertyId);
+      } else {
+        // Update draft fields on retry so edits after a failed upload are kept.
+        const updateRes = await fetch(`/api/properties/${propertyId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            description: buildDescription(form),
+            city: String(form.city || "").trim() || null,
+            area: String(form.area || "").trim() || null,
+            phase: String(form.phase || "").trim() || null,
+            address: String(form.address || "").trim() || null,
+            location: buildLocation(form) || null,
+            size_value: form.size_value ? Number(form.size_value) : null,
+            size_unit: form.size_unit || "marla",
+            price: form.price ? Number(form.price) : null,
+          }),
+        });
+        const updateData = await updateRes.json().catch(() => ({}));
+        if (!updateRes.ok) {
+          throw new Error(updateData.error || "Could not update property.");
+        }
       }
 
-      const propertyId = createData.propertyId;
-      if (images.length > 0 && propertyId) {
+      if (images.length > 0 && propertyId && !imagesUploadedRef.current) {
         const fd = new FormData();
         images.forEach((item, index) => {
           fd.append("images", item.file);
@@ -349,9 +399,10 @@ export default function CreatePropertyPage() {
         if (!imageRes.ok) {
           throw new Error(imageData.error || "Could not upload property images.");
         }
+        imagesUploadedRef.current = true;
       }
 
-      if (videos.length > 0 && propertyId) {
+      if (videos.length > 0 && propertyId && !videosUploadedRef.current) {
         const fd = new FormData();
         videos.forEach((item, index) => {
           fd.append("videos", item.file);
@@ -367,6 +418,7 @@ export default function CreatePropertyPage() {
         if (!videoRes.ok) {
           throw new Error(videoData.error || "Could not upload property videos.");
         }
+        videosUploadedRef.current = true;
       }
 
       // Submission happens after the uploads so the listing can be validated
@@ -474,12 +526,21 @@ export default function CreatePropertyPage() {
         {step === 1 ? (
           <>
             <label className={ui.field}>
+              <span className={ui.label}>City</span>
+              <input
+                className={ui.input}
+                value={form.city}
+                onChange={(e) => update("city", e.target.value)}
+                placeholder="Lahore"
+              />
+            </label>
+            <label className={ui.field}>
               <span className={ui.label}>Area</span>
               <input
                 className={ui.input}
                 value={form.area}
                 onChange={(e) => update("area", e.target.value)}
-                placeholder="DHA Lahore"
+                placeholder="DHA"
               />
             </label>
             <label className={ui.field}>
@@ -497,7 +558,7 @@ export default function CreatePropertyPage() {
                 className={ui.input}
                 value={form.address}
                 onChange={(e) => update("address", e.target.value)}
-                placeholder="Block / street"
+                placeholder="House number, street, block, road, full address"
               />
             </label>
           </>

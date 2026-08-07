@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { propertyPublicPath } from "@/lib/propertySlug";
+import { formatPropertyLocation } from "@/lib/propertyLocation";
 import styles from "./EstatePageExtras.module.css";
 
 const formatPrice = (price) =>
@@ -16,7 +17,15 @@ export function PropertySection({ properties, estateName }) {
     const normalizedSearch = search.trim().toLowerCase();
     const result = properties.filter((property) => {
       if (!normalizedSearch) return true;
-      return [property.title, property.location, property.size_unit]
+      return [
+        property.title,
+        formatPropertyLocation(property),
+        property.city,
+        property.area,
+        property.phase,
+        property.address,
+        property.size_unit,
+      ]
         .filter(Boolean)
         .some((value) =>
           String(value).toLowerCase().includes(normalizedSearch),
@@ -109,7 +118,7 @@ export function PropertySection({ properties, estateName }) {
                 <span className={styles.propertyTag}>Property listing</span>
                 <h2 className={styles.propertyTitle}>{property.title}</h2>
                 <p className={styles.propertyText}>
-                  {property.location || "Location not specified"}
+                  {formatPropertyLocation(property) || "Location not specified"}
                 </p>
                 <div className={styles.propertyMeta}>
                   {property.size_value ? (

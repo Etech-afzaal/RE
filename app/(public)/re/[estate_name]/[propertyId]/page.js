@@ -4,6 +4,7 @@ import Image from "next/image";
 import GalleryCarousel from "./GalleryCarousel";
 import HeroGallery from "./HeroGallery";
 import ExpandableText from "./ExpandableText";
+import PropertyWalkthroughPlayer from "./PropertyWalkthroughPlayer";
 import {
   getAgentByUsername,
   getPropertyByAgentAndSlug,
@@ -17,6 +18,10 @@ import {
   buildWhatsAppUrl,
   propertyWhatsAppMessage,
 } from "@/lib/whatsapp";
+import {
+  formatPropertyLocation,
+  resolveLocationInfo,
+} from "@/lib/propertyLocation";
 import styles from "./page.module.css";
 
 const formatPrice = (price) =>
@@ -69,24 +74,6 @@ function companyInitials(companyName) {
   if (words.length === 0) return "RE";
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
   return `${words[0][0] || ""}${words[1][0] || ""}`.toUpperCase();
-}
-
-/** Split "Johar Town, Lahore" into area + city when possible. */
-function parseLocation(location) {
-  const raw = String(location || "").trim();
-  if (!raw) return { area: null, city: null, full: null };
-  const parts = raw
-    .split(",")
-    .map((p) => p.trim())
-    .filter(Boolean);
-  if (parts.length >= 2) {
-    return {
-      area: parts.slice(0, -1).join(", "),
-      city: parts[parts.length - 1],
-      full: raw,
-    };
-  }
-  return { area: raw, city: null, full: raw };
 }
 
 /**
@@ -479,7 +466,7 @@ export default async function PropertyDetailPage({ params }) {
   const companyName = companyNameFromAgent(agent);
   const sizeLabel = formatSize(property.size_value, property.size_unit);
   const listedDate = formatDate(property.created_at);
-  const locationInfo = parseLocation(property.location);
+  const locationInfo = resolveLocationInfo(property);
   const attrs = parsePropertyAttributes(property);
   const propertyTypeLabel = inferPropertyTypeLabel(property);
   const isRent = /\brent\b/i.test(fullSearchText(property));
@@ -494,6 +481,7 @@ export default async function PropertyDetailPage({ params }) {
 
   const gallery = property.images || [];
   const heroImage = property.featuredImage || gallery[0] || null;
+  const propertyVideos = property.videos || [];
 
   /** Hero shows only exterior elevations — interiors live in the space rail. */
   const HERO_PRIMARY = new Set(["front_view", "back_view"]);
@@ -536,7 +524,7 @@ export default async function PropertyDetailPage({ params }) {
   const waFabMessage = propertyWhatsAppMessage(
     agent.full_name,
     property.title,
-    property.location,
+    formatPropertyLocation(property),
   );
   const agentProfileHref = `/re/${encodeURIComponent(agentHandle)}`;
 
@@ -564,8 +552,12 @@ export default async function PropertyDetailPage({ params }) {
     { label: "Property Type", value: propertyTypeLabel },
     { label: "Listing Type", value: statusLabel },
     sizeLabel ? { label: "Size", value: sizeLabel } : null,
-    locationInfo.area ? { label: "Location", value: locationInfo.area } : null,
+    locationInfo.area ? { label: "Area", value: locationInfo.area } : null,
+    locationInfo.phase ? { label: "Phase", value: locationInfo.phase } : null,
     locationInfo.city ? { label: "City", value: locationInfo.city } : null,
+    locationInfo.address
+      ? { label: "Address", value: locationInfo.address }
+      : null,
     attrs.beds != null
       ? {
           label: "Bedrooms",
@@ -942,16 +934,11 @@ export default async function PropertyDetailPage({ params }) {
             </p>
           </div>
           <div className={styles.videoFrame}>
-            {property.video_url ? (
-              <video
-                className={styles.videoPlayer}
-                controls
-                preload="metadata"
-                src={property.video_url}
+            {propertyVideos.length > 0 ? (
+              <PropertyWalkthroughPlayer
+                videos={propertyVideos}
                 poster={heroImage?.image_url || undefined}
-              >
-                Your browser does not support this video format.
-              </video>
+              />
             ) : (
               <>
                 {heroImage ? (

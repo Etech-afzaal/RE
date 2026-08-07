@@ -18,7 +18,9 @@
     "migrate:users": "node scripts/migrate-users.js",
     "migrate:customer-inquiries": "node scripts/migrate-customer-inquiries.js",
     "migrate:superadmin-role": "node scripts/migrate-superadmin-role.js",
-    "migrate:drop-agents": "node scripts/migrate-drop-agents.js"
+    "migrate:drop-agents": "node scripts/migrate-drop-agents.js",
+    "migrate:property-location": "node scripts/migrate-property-location-fields.js",
+    "migrate:audit-logs": "node scripts/migrate-audit-logs.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

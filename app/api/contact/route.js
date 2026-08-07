@@ -53,7 +53,7 @@ export async function POST(req) {
     );
   }
 
-  console.log("Contact request received", body);
+  console.log("Contact request received");
 
   const estate_name = normalizeText(body?.estate_name);
   const full_name = normalizeText(body?.full_name || body?.name);

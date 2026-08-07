@@ -1,6 +1,12 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import {
+  AUDIT_ACTIONS,
+  AUDIT_ENTITY_TYPES,
+  createAuditLog,
+  getRequestIp,
+} from "@/lib/auditLogger";
 import { query } from "@/lib/db";
 import { sendMail, newSignupRequestEmail } from "@/lib/mail";
 
@@ -67,11 +73,27 @@ export async function POST(req) {
   }
 
   try {
-    await query(
+    const insertResult = await query(
       "INSERT INTO signup_requests (full_name, estate_name, email, phone, message) VALUES (?, ?, ?, ?, ?)",
       [full_name, normalizedEstateName, email, phone || null, message || null],
     );
     revalidatePath("/admin/dashboard/requests");
+
+    await createAuditLog({
+      userId: null,
+      action: AUDIT_ACTIONS.AGENT_SIGNUP_REQUESTED,
+      entityType: AUDIT_ENTITY_TYPES.SIGNUP_REQUEST,
+      entityId: insertResult.insertId,
+      description: `Agent signup request submitted by ${full_name}`,
+      metadata: {
+        actor_name: full_name,
+        agent_name: full_name,
+        estate_name: normalizedEstateName,
+        email,
+        phone: phone || null,
+      },
+      ipAddress: getRequestIp(req),
+    });
   } catch (err) {
     console.error("Failed to save signup request:", err);
     return NextResponse.json(

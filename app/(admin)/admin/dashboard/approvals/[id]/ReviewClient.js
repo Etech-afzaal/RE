@@ -243,7 +243,7 @@ export default function ReviewClient({ propertyId }) {
           </section>
         </div>
 
-        <div>
+        <div className={styles.reviewSidebar}>
           <section className={styles.panel}>
             <div className={styles.panelHeader}>
               <h2 className={styles.panelTitle}>Review</h2>

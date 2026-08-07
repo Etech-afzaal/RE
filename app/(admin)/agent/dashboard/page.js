@@ -339,13 +339,14 @@ export default function AgentDashboardPage() {
               <li
                 key={property.id}
                 style={{
+                  position: "relative",
                   border: "1px solid #e2e8f0",
                   borderRadius: 12,
-                  padding: 12,
+                  padding: "12px 44px 12px 12px",
                   background: "#f8fafc",
                   display: "flex",
                   justifyContent: "space-between",
-                  alignItems: "center",
+                  alignItems: "flex-start",
                   gap: 12,
                   flexWrap: "wrap",
                 }}
@@ -357,11 +358,13 @@ export default function AgentDashboardPage() {
                     — {property.size_value} {property.size_unit}
                   </span>
                 </div>
-                <ActionMenu
-                  ariaLabel={`Actions for ${property.title}`}
-                  onEdit={() => router.push(`/agent/properties/${property.id}/edit`)}
-                  onDelete={() => handleDelete(property.id)}
-                />
+                <div style={{ position: "absolute", top: 8, right: 8 }}>
+                  <ActionMenu
+                    ariaLabel={`Actions for ${property.title}`}
+                    onEdit={() => router.push(`/agent/properties/${property.id}/edit`)}
+                    onDelete={() => handleDelete(property.id)}
+                  />
+                </div>
               </li>
             ))}
           </ul>

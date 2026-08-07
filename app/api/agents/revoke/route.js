@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
+import {
+  AUDIT_ACTIONS,
+  AUDIT_ENTITY_TYPES,
+  createAuditLog,
+  getRequestIp,
+} from "@/lib/auditLogger";
 import { query } from "@/lib/db";
 
 export async function POST(req) {
-  const { error } = await requireAdmin();
+  const { session, error } = await requireAdmin();
   if (error) return error;
 
   const { requestId } = await req.json();
@@ -34,6 +40,28 @@ export async function POST(req) {
     await query("UPDATE signup_requests SET status = 'revoked' WHERE id = ?", [
       requestId,
     ]);
+
+    const agentRows = await query(
+      `SELECT id, full_name, username, estate_name
+       FROM users WHERE email = ? AND user_type = 'agent' LIMIT 1`,
+      [signupRequest.email],
+    );
+    const agent = agentRows[0];
+    await createAuditLog({
+      userId: Number(session?.user?.id) || null,
+      action: AUDIT_ACTIONS.AGENT_DISABLED,
+      entityType: AUDIT_ENTITY_TYPES.USER,
+      entityId: agent?.id || null,
+      description: `Disabled agent ${signupRequest.full_name}`,
+      metadata: {
+        actor_name: session?.user?.name || "Superadmin",
+        agent_name: signupRequest.full_name,
+        agent_username: agent?.username || agent?.estate_name || signupRequest.estate_name,
+        estate_name: signupRequest.estate_name,
+        signup_request_id: Number(requestId),
+      },
+      ipAddress: getRequestIp(req),
+    });
 
     return NextResponse.json({ success: true });
   } catch (err) {

@@ -9,6 +9,7 @@ import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import ActionMenu from "@/components/ActionMenu";
 import ImagePreviewModal from "@/components/ImagePreviewModal";
 import Pagination from "@/components/Pagination";
+import { formatPropertyLocation } from "@/lib/propertyLocation";
 import ui from "@/components/agent-portal/portal.module.css";
 
 const TABS = [
@@ -304,7 +305,7 @@ export default function AgentPropertiesPage() {
                           </div>
                         </div>
                       </td>
-                      <td data-label="Location">{property.location || "—"}</td>
+                      <td data-label="Location">{formatPropertyLocation(property) || "—"}</td>
                       <td data-label="Status">
                         <span
                           className={`${ui.badge} ${statusClass(property.status)}`}

@@ -276,13 +276,42 @@ export default function AgentPortalShell({
           <div className={styles.topbarLeft}>
             <button
               type="button"
-              className={styles.menuBtn}
-              aria-label="Open menu"
-              onClick={() => setOpen(true)}
+              className={`${styles.menuBtn} ${open ? styles.menuBtnOpen : ""}`}
+              aria-label={open ? "Close menu" : "Open menu"}
+              aria-expanded={open}
+              onClick={() => setOpen((isOpen) => !isOpen)}
             >
-              <span />
-              <span />
-              <span />
+              {open ? (
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M6 6l12 12M18 6L6 18"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 6.5h16M4 12h16M4 17.5h16"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              )}
             </button>
             <div>
               <p className={styles.kicker}>{agentName || "Agent"}</p>

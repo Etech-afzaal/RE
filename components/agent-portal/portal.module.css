@@ -847,6 +847,7 @@
   }
 
   .table tr {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 0.65rem;
@@ -869,6 +870,11 @@
     min-width: 0;
   }
 
+  /* Keep primary identity clear of the top-right action control */
+  .table td:first-child {
+    padding-right: 2.75rem;
+  }
+
   .table td[data-label]::before {
     content: attr(data-label);
     font-size: 0.68rem;
@@ -878,9 +884,22 @@
     color: var(--muted);
   }
 
-  .table td:last-child {
-    padding-top: 0.35rem;
-    border-top: 1px solid var(--line-soft);
+  /* Three-dot / row actions: top-right, icon only (no "Actions" label) */
+  .table td[data-label="Actions"] {
+    position: absolute;
+    top: 0.7rem;
+    right: 0.7rem;
+    width: auto;
+    min-width: 0;
+    padding: 0;
+    border: none;
+    align-items: flex-end;
+    z-index: 1;
+  }
+
+  .table td[data-label="Actions"]::before {
+    content: none;
+    display: none;
   }
 
   .propCell {

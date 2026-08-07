@@ -542,6 +542,9 @@ export default function AdminOverviewPage() {
       <section className={styles.panel}>
         <div className={styles.panelHeader}>
           <h2 className={styles.panelTitle}>Recent Activities</h2>
+          <Link href="/admin/dashboard/logs" className={styles.panelLink}>
+            View all
+          </Link>
         </div>
         {activityRows.length === 0 ? (
           <p className={styles.empty}>No recent platform activity.</p>

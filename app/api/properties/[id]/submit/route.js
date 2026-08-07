@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 import { requireAgent } from "@/lib/adminAuth";
+import {
+  AUDIT_ACTIONS,
+  AUDIT_ENTITY_TYPES,
+  createAuditLog,
+  getRequestIp,
+} from "@/lib/auditLogger";
 import { query } from "@/lib/db";
 import { validatePropertyForSubmission } from "@/lib/propertyValidation";
 import { canAgentSubmitFrom, PROPERTY_STATUS } from "@/lib/status";
@@ -9,7 +15,7 @@ import { canAgentSubmitFrom, PROPERTY_STATUS } from "@/lib/status";
  * This is the only way a listing can reach pending_approval, so completeness is
  * checked here rather than trusting whatever status the client asks for.
  */
-export async function POST(_req, { params }) {
+export async function POST(req, { params }) {
   const { session, error } = await requireAgent();
   if (error) return error;
 
@@ -64,6 +70,25 @@ export async function POST(_req, { params }) {
      WHERE id = ? AND agent_id = ?`,
     [PROPERTY_STATUS.PENDING_APPROVAL, propertyId, agentId],
   );
+
+  const agentName = session.user.name || "Agent";
+  const agentHandle = session.user.username || session.user.estate_name || null;
+  await createAuditLog({
+    userId: agentId,
+    action: AUDIT_ACTIONS.PROPERTY_SUBMITTED,
+    entityType: AUDIT_ENTITY_TYPES.PROPERTY,
+    entityId: propertyId,
+    description: `${agentName} submitted property "${property.title}" for approval`,
+    metadata: {
+      property_title: property.title,
+      agent_name: agentName,
+      agent_username: agentHandle,
+      estate_name: session.user.estate_name || agentHandle,
+      old_status: property.status,
+      new_status: PROPERTY_STATUS.PENDING_APPROVAL,
+    },
+    ipAddress: getRequestIp(req),
+  });
 
   return NextResponse.json({
     success: true,

@@ -39,11 +39,15 @@ export default function PublicPropertyWebsite({
     heroSlides.find((slide) => slide.image_url)?.image_url ||
     null;
 
-  const contactPhone = agent?.phone || "+92 300 123 4567";
+  const contactPhone = agent
+    ? agent.phone || null
+    : "+92 300 123 4567";
   const contactEmail = agent?.email || "info@dhalahore.com";
-  const contactTelHref = agent?.phone
-    ? `tel:${String(agent.phone).replace(/\s/g, "")}`
-    : "tel:+923001234567";
+  const contactTelHref = contactPhone
+    ? `tel:${String(contactPhone).replace(/\s/g, "")}`
+    : null;
+  const contactOffice =
+    agent?.office_address || "12 Garden Town, Lahore";
 
   return (
     <div className={styles.wrapper}>
@@ -159,12 +163,16 @@ export default function PublicPropertyWebsite({
                       </span>
                       <div>
                         <p className={styles.contactDetailLabel}>Phone</p>
-                        <a
-                          href={contactTelHref}
-                          className={styles.contactDetailLink}
-                        >
-                          {contactPhone}
-                        </a>
+                        {contactPhone && contactTelHref ? (
+                          <a
+                            href={contactTelHref}
+                            className={styles.contactDetailLink}
+                          >
+                            {contactPhone}
+                          </a>
+                        ) : (
+                          <p className={styles.contactDetailValue}>Not provided</p>
+                        )}
                       </div>
                     </div>
                     <div className={styles.contactDetail}>
@@ -194,7 +202,7 @@ export default function PublicPropertyWebsite({
                       <div>
                         <p className={styles.contactDetailLabel}>Office</p>
                         <p className={styles.contactDetailValue}>
-                          {agent?.office_address || "12 Garden Town, Lahore"}
+                          {contactOffice}
                         </p>
                       </div>
                     </div>
@@ -279,9 +287,11 @@ export default function PublicPropertyWebsite({
 
             <div className={styles.footerCol}>
               <h4>Contact</h4>
-              <a href={contactTelHref}>{contactPhone}</a>
+              {contactPhone && contactTelHref ? (
+                <a href={contactTelHref}>{contactPhone}</a>
+              ) : null}
               <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
-              <span>12 Garden Town, Lahore</span>
+              <span>{contactOffice}</span>
             </div>
           </div>
           <div className={styles.footerBottom}>

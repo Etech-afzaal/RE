@@ -1,14 +1,27 @@
 import { NextResponse } from "next/server";
 import { requireAgent } from "@/lib/adminAuth";
 import { companyNameFromAgent } from "@/lib/agentBranding";
+import {
+  AUDIT_ACTIONS,
+  AUDIT_ENTITY_TYPES,
+  createAuditLog,
+  getRequestIp,
+} from "@/lib/auditLogger";
 import { query } from "@/lib/db";
 import {
   MAX_PROPERTY_IMAGES,
+  MAX_PROPERTY_IMAGE_BYTES,
   imageFormatErrorMessage,
   imageLimitErrorMessage,
+  imageSizeErrorMessage,
   isImageFile,
 } from "@/lib/imageUpload";
 import { normalizeImageCategory } from "@/lib/imageCategories";
+import {
+  isPropertyLockedForAgent,
+  PROPERTY_LOCKED_MESSAGE,
+} from "@/lib/status";
+import { resolvePublicUploadPath } from "@/lib/uploadPath";
 import { applyWatermark } from "@/lib/watermark";
 import { writeFile, mkdir, rm } from "fs/promises";
 import path from "path";
@@ -69,14 +82,21 @@ async function ensureImageColumns() {
 }
 
 /** Images may only be touched by the agent who owns the listing. */
-async function ownsProperty(propertyId, session) {
-  if (!Number.isInteger(propertyId) || propertyId <= 0) return false;
+async function getOwnedProperty(propertyId, session) {
+  if (!Number.isInteger(propertyId) || propertyId <= 0) return null;
   const agentId = Number(session.user.agent_id || session.user.id);
   const rows = await query(
-    "SELECT id FROM properties WHERE id = ? AND agent_id = ?",
+    "SELECT id, status FROM properties WHERE id = ? AND agent_id = ?",
     [propertyId, agentId],
   );
-  return rows.length > 0;
+  return rows[0] || null;
+}
+
+function lockedResponse() {
+  return NextResponse.json(
+    { error: PROPERTY_LOCKED_MESSAGE },
+    { status: 409 },
+  );
 }
 
 export async function POST(req, { params }) {
@@ -84,9 +104,12 @@ export async function POST(req, { params }) {
   if (error) return error;
 
   const propertyId = Number(params.id);
-  const owned = await ownsProperty(propertyId, session);
-  if (!owned) {
+  const property = await getOwnedProperty(propertyId, session);
+  if (!property) {
     return NextResponse.json({ error: "Property not found." }, { status: 404 });
+  }
+  if (isPropertyLockedForAgent(property.status)) {
+    return lockedResponse();
   }
 
   const formData = await req.formData();
@@ -112,6 +135,13 @@ export async function POST(req, { params }) {
   const invalid = files.find((file) => !(file instanceof File) || !isImageFile(file));
   if (invalid) {
     return NextResponse.json({ error: imageFormatErrorMessage() }, { status: 400 });
+  }
+
+  const oversized = files.find(
+    (file) => file instanceof File && file.size > MAX_PROPERTY_IMAGE_BYTES,
+  );
+  if (oversized) {
+    return NextResponse.json({ error: imageSizeErrorMessage() }, { status: 400 });
   }
 
   const existing = await query(
@@ -174,6 +204,30 @@ export async function POST(req, { params }) {
     );
   }
 
+  const agentId = Number(session.user.agent_id || session.user.id);
+  const propertyRows = await query(
+    "SELECT title FROM properties WHERE id = ? LIMIT 1",
+    [propertyId],
+  );
+  const propertyTitle = propertyRows[0]?.title || `Property #${propertyId}`;
+  const agentName = session.user.name || "Agent";
+  const agentHandle = session.user.username || session.user.estate_name || null;
+  await createAuditLog({
+    userId: agentId,
+    action: AUDIT_ACTIONS.PROPERTY_IMAGES_UPLOADED,
+    entityType: AUDIT_ENTITY_TYPES.PROPERTY,
+    entityId: propertyId,
+    description: `${agentName} uploaded ${savedUrls.length} image(s) for "${propertyTitle}"`,
+    metadata: {
+      property_title: propertyTitle,
+      agent_name: agentName,
+      agent_username: agentHandle,
+      estate_name: session.user.estate_name || agentHandle,
+      image_count: savedUrls.length,
+    },
+    ipAddress: getRequestIp(req),
+  });
+
   return NextResponse.json({ success: true, images: savedUrls });
 }
 
@@ -182,9 +236,12 @@ export async function PUT(req, { params }) {
   if (error) return error;
 
   const propertyId = Number(params.id);
-  const owned = await ownsProperty(propertyId, session);
-  if (!owned) {
+  const property = await getOwnedProperty(propertyId, session);
+  if (!property) {
     return NextResponse.json({ error: "Property not found." }, { status: 404 });
+  }
+  if (isPropertyLockedForAgent(property.status)) {
+    return lockedResponse();
   }
 
   const body = await req.json().catch(() => ({}));
@@ -242,9 +299,12 @@ export async function DELETE(req, { params }) {
   if (error) return error;
 
   const propertyId = Number(params.id);
-  const owned = await ownsProperty(propertyId, session);
-  if (!owned) {
+  const property = await getOwnedProperty(propertyId, session);
+  if (!property) {
     return NextResponse.json({ error: "Property not found." }, { status: 404 });
+  }
+  if (isPropertyLockedForAgent(property.status)) {
+    return lockedResponse();
   }
 
   const body = await req.json().catch(() => ({}));
@@ -264,12 +324,8 @@ export async function DELETE(req, { params }) {
     const image = imageRows[0];
     if (!image) continue;
 
-    const localPath = path.join(
-      process.cwd(),
-      "public",
-      image.image_url.replace(/^\/+/, ""),
-    );
-    await rm(localPath, { force: true });
+    const localPath = resolvePublicUploadPath(image.image_url);
+    if (localPath) await rm(localPath, { force: true });
     await query(
       "DELETE FROM property_images WHERE id = ? AND property_id = ?",
       [Number(imageId), propertyId],

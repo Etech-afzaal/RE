@@ -318,24 +318,29 @@
 
 .menuBtn {
   display: none;
-  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: 4px;
   width: 2.4rem;
   height: 2.4rem;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--surface);
+  color: var(--ink);
   cursor: pointer;
-  padding: 0.55rem;
+  padding: 0;
   margin-top: 0.15rem;
+  flex-shrink: 0;
+  line-height: 0;
 }
 
-.menuBtn span {
-  display: block;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--ink);
+.menuBtn:hover {
+  border-color: var(--gold);
+  color: var(--gold-deep);
+}
+
+.menuBtnOpen {
+  position: relative;
+  z-index: 45;
 }
 
 .kicker {

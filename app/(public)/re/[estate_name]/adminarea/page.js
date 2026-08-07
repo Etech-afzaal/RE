@@ -214,7 +214,7 @@ export default function AgentAdminDashboardPage() {
                         </span>
                       </td>
                       <td>{formatPrice(property.price)}</td>
-                      <td>
+                      <td data-label="Actions">
                         <ActionMenu
                           ariaLabel={`Actions for ${property.title}`}
                           onView={

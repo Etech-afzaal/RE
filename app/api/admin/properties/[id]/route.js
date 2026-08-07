@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { requireAdmin } from "@/lib/adminAuth";
 import {
+  AUDIT_ACTIONS,
+  AUDIT_ENTITY_TYPES,
+  createAuditLog,
+  getRequestIp,
+} from "@/lib/auditLogger";
+import {
   imageCategoryLabel,
   normalizeImageCategory,
 } from "@/lib/imageCategories";
@@ -113,14 +119,23 @@ export async function PATCH(req, { params }) {
   }
 
   try {
-    const rows = await query("SELECT id, status FROM properties WHERE id = ?", [
-      propertyId,
-    ]);
+    const rows = await query(
+      `SELECT p.id, p.status, p.title,
+              a.full_name AS agent_name, a.username AS agent_username,
+              a.estate_name
+       FROM properties p
+       JOIN users a ON a.id = p.agent_id
+       WHERE p.id = ?`,
+      [propertyId],
+    );
     if (!rows[0]) {
       return NextResponse.json({ error: "Property not found." }, { status: 404 });
     }
 
+    const property = rows[0];
     const reviewer = adminIdentity(session);
+    const adminUserId = Number(session?.user?.id) || null;
+    const adminName = session?.user?.name || "Superadmin";
 
     if (nextStatus === PROPERTY_STATUS.APPROVED) {
       await query(
@@ -143,6 +158,35 @@ export async function PATCH(req, { params }) {
         nextStatus,
         propertyId,
       ]);
+    }
+
+    if (
+      nextStatus === PROPERTY_STATUS.APPROVED ||
+      nextStatus === PROPERTY_STATUS.REJECTED
+    ) {
+      const approved = nextStatus === PROPERTY_STATUS.APPROVED;
+      await createAuditLog({
+        userId: adminUserId,
+        action: approved
+          ? AUDIT_ACTIONS.PROPERTY_APPROVED
+          : AUDIT_ACTIONS.PROPERTY_REJECTED,
+        entityType: AUDIT_ENTITY_TYPES.PROPERTY,
+        entityId: propertyId,
+        description: approved
+          ? `Approved property "${property.title}"`
+          : `Rejected property "${property.title}"`,
+        metadata: {
+          property_title: property.title,
+          agent_name: property.agent_name,
+          agent_username: property.agent_username || property.estate_name,
+          estate_name: property.estate_name,
+          old_status: property.status,
+          new_status: nextStatus,
+          actor_name: adminName,
+          ...(approved ? {} : { rejected_reason: reason }),
+        },
+        ipAddress: getRequestIp(req),
+      });
     }
 
     return NextResponse.json({
