@@ -499,6 +499,45 @@
   color: var(--ink);
 }
 
+/* Golden header for high-priority "Needs Attention" panel only */
+.attentionHeader {
+  background: linear-gradient(90deg, var(--gold) 0%, var(--gold-deep) 100%);
+  border-bottom: none;
+  box-shadow: var(--shadow-gold);
+  color: #fff;
+}
+
+.attentionTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.attentionIcon {
+  flex-shrink: 0;
+  width: 1.15rem;
+  height: 1.15rem;
+  color: #fff;
+}
+
+.attentionHeaderLink {
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.attentionHeaderLink:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
 .panelBody {
   padding: 0.35rem 0;
 }
@@ -1198,6 +1237,15 @@
   .gridStats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.75rem;
+  }
+
+  .attentionHeader {
+    flex-wrap: wrap;
+    row-gap: 0.45rem;
+  }
+
+  .attentionTitle {
+    font-size: 1rem;
   }
 
   .metaGrid {

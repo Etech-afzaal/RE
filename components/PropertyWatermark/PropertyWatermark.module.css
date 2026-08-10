@@ -1,0 +1,45 @@
+/* Matches baked watermark: white @ 0.78, dark shadow @ 0.45, bold, bottom-center */
+
+.watermark {
+  position: absolute;
+  left: 50%;
+  /* Sit above native video controls while staying bottom-center */
+  bottom: clamp(2.6rem, 9%, 3.4rem);
+  transform: translateX(-50%);
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  max-width: calc(100% - 1.5rem);
+  pointer-events: none;
+  user-select: none;
+  line-height: 1.15;
+  text-align: center;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 700;
+  /* Readable on typical 16:9 players without dominating the frame */
+  font-size: clamp(0.95rem, 2.8vw, 1.65rem);
+  letter-spacing: 0.01em;
+}
+
+.compact {
+  bottom: clamp(0.45rem, 6%, 0.75rem);
+  font-size: clamp(0.62rem, 2vw, 0.85rem);
+}
+
+.shadow,
+.label {
+  grid-area: 1 / 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.shadow {
+  color: rgba(0, 0, 0, 0.45);
+  transform: translate(1px, 1px);
+}
+
+.label {
+  color: rgba(255, 255, 255, 0.78);
+}

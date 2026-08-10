@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import styles from "@/components/admin/adminUi.module.css";
+import { validateBlockReason } from "@/lib/validators/userValidator";
 
 /**
  * Permanent block confirmation. Reason is mandatory — agents see it when they
@@ -27,13 +28,16 @@ export default function BlockAgentDialog({
   }, [busy, onCancel]);
 
   function confirm() {
-    const trimmed = reason.trim();
-    if (!trimmed) {
-      setError("Please provide a reason for permanently blocking this agent.");
+    const reasonCheck = validateBlockReason(reason);
+    if (!reasonCheck.ok) {
+      setError(
+        reasonCheck.error ||
+          "Please provide a reason for permanently blocking this agent.",
+      );
       textareaRef.current?.focus();
       return;
     }
-    onConfirm(trimmed);
+    onConfirm(reasonCheck.value);
   }
 
   return (
@@ -68,6 +72,7 @@ export default function BlockAgentDialog({
             className={styles.textarea}
             value={reason}
             disabled={busy}
+            maxLength={500}
             placeholder="e.g. Fake property listings submitted"
             onChange={(event) => {
               setReason(event.target.value);

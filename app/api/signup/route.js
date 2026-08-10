@@ -1,6 +1,5 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import {
   AUDIT_ACTIONS,
   AUDIT_ENTITY_TYPES,
@@ -9,22 +8,15 @@ import {
 } from "@/lib/auditLogger";
 import { query } from "@/lib/db";
 import { sendMail, newSignupRequestEmail } from "@/lib/mail";
-
-const signupSchema = z.object({
-  full_name: z.string().min(2),
-  estate_name: z.string().min(2),
-  email: z.string().email(),
-  phone: z.string().optional(),
-  message: z.string().optional(),
-});
+import { validateSignupInput } from "@/lib/validators/userValidator";
 
 export async function POST(req) {
   const body = await req.json();
-  const parsed = signupSchema.safeParse(body);
+  const parsed = validateSignupInput(body);
 
-  if (!parsed.success) {
+  if (!parsed.ok) {
     return NextResponse.json(
-      { error: "Please fill in all required fields correctly." },
+      { error: parsed.error || "Please fill in all required fields correctly." },
       { status: 400 },
     );
   }
@@ -35,6 +27,13 @@ export async function POST(req) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+
+  if (!normalizedEstateName) {
+    return NextResponse.json(
+      { error: "Please enter a valid company / estate name." },
+      { status: 400 },
+    );
+  }
 
   const normalizeEstateValue = (value) =>
     String(value || "")

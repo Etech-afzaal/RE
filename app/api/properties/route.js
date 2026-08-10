@@ -13,6 +13,8 @@ import {
 import { query } from "@/lib/db";
 import { normalizeLocationFields } from "@/lib/propertyLocation";
 import { PROPERTY_STATUS } from "@/lib/status";
+import { sanitizeSearchInput } from "@/lib/validators/common";
+import { validatePropertyDraftInput } from "@/lib/validators/propertyValidator";
 
 export async function GET(req) {
   const { session, error } = await requireAgent();
@@ -21,7 +23,7 @@ export async function GET(req) {
   const agentId = Number(session.user.agent_id || session.user.id);
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
-  const search = searchParams.get("search");
+  const search = sanitizeSearchInput(searchParams.get("search")).value;
   const page = searchParams.get("page");
   const includeStats = searchParams.get("stats") === "1";
 
@@ -43,12 +45,23 @@ export async function POST(req) {
 
   const agentId = Number(session.user.agent_id || session.user.id);
   const body = await req.json();
-  const { title, description, size_value, size_unit, price } = body;
-  const { city, area, phase, address, location } = normalizeLocationFields(body);
-
-  if (!title || !String(title).trim()) {
-    return NextResponse.json({ error: "Title is required." }, { status: 400 });
+  const validated = validatePropertyDraftInput(body);
+  if (!validated.ok) {
+    return NextResponse.json({ error: validated.error }, { status: 400 });
   }
+
+  const {
+    title,
+    description,
+    size_value,
+    size_unit,
+    price,
+    price_currency,
+  } = validated.data;
+  const { city, area, phase, address, location } = normalizeLocationFields({
+    ...body,
+    ...validated.data,
+  });
 
   // Always a draft: images are uploaded after the row exists, so a listing can
   // never satisfy the submission rules at insert time. The client submits for
@@ -58,16 +71,17 @@ export async function POST(req) {
 
   const result = await query(
     `INSERT INTO properties
-      (agent_id, title, description, size_value, size_unit, price,
+      (agent_id, title, description, size_value, size_unit, price, price_currency,
        location, city, area, phase, address, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       agentId,
       trimmedTitle,
       description || null,
-      size_value || null,
+      size_value ?? null,
       size_unit || "marla",
-      price || null,
+      price ?? null,
+      price_currency || "PKR",
       location,
       city,
       area,

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { AlertTriangle } from "lucide-react";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import styles from "@/components/admin/adminUi.module.css";
 
 function formatDate(value) {
@@ -304,7 +306,13 @@ export default function AdminOverviewPage() {
   }, []);
 
   if (loading) {
-    return <div className={styles.loading}>Loading overview…</div>;
+    return (
+      <LoadingSpinner
+        fullPage={false}
+        label="Loading"
+        hint="Preparing dashboard…"
+      />
+    );
   }
 
   if (error || !data) {
@@ -412,9 +420,19 @@ export default function AdminOverviewPage() {
       </div>
 
       <section className={styles.panel}>
-        <div className={styles.panelHeader}>
-          <h2 className={styles.panelTitle}>Needs Attention</h2>
-          <Link href="/admin/dashboard/approvals" className={styles.panelLink}>
+        <div className={`${styles.panelHeader} ${styles.attentionHeader}`}>
+          <h2 className={`${styles.panelTitle} ${styles.attentionTitle}`}>
+            <AlertTriangle
+              className={styles.attentionIcon}
+              aria-hidden="true"
+              strokeWidth={2.5}
+            />
+            Needs Attention
+          </h2>
+          <Link
+            href="/admin/dashboard/approvals"
+            className={styles.attentionHeaderLink}
+          >
             View all
           </Link>
         </div>

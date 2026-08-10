@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import styles from "@/components/admin/adminUi.module.css";
+import { validateRejectionReason } from "@/lib/validators/userValidator";
 
 /**
  * Rejection reason prompt. The reason is what the agent sees on their dashboard,
@@ -27,13 +28,16 @@ export default function RejectPropertyDialog({
   }, [busy, onCancel]);
 
   function confirm() {
-    const trimmed = reason.trim();
-    if (!trimmed) {
-      setError("Please tell the agent why this listing was rejected.");
+    const reasonCheck = validateRejectionReason(reason);
+    if (!reasonCheck.ok) {
+      setError(
+        reasonCheck.error ||
+          "Please tell the agent why this listing was rejected.",
+      );
       textareaRef.current?.focus();
       return;
     }
-    onConfirm(trimmed);
+    onConfirm(reasonCheck.value);
   }
 
   return (
@@ -61,6 +65,7 @@ export default function RejectPropertyDialog({
             className={styles.textarea}
             value={reason}
             disabled={busy}
+            maxLength={500}
             placeholder="e.g. Images are too low quality and the price looks incorrect."
             onChange={(event) => {
               setReason(event.target.value);

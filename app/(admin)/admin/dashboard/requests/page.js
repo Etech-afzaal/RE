@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import Pagination from "@/components/Pagination";
 import RequestActions from "./ApproveButton";
 import styles from "@/components/admin/adminUi.module.css";
@@ -120,7 +121,11 @@ export default function RequestsPage() {
       </div>
 
       {loading ? (
-        <div className={styles.loading}>Loading requests…</div>
+        <LoadingSpinner
+          fullPage={false}
+          label="Loading"
+          hint="Fetching requests…"
+        />
       ) : filteredRequests.length === 0 ? (
         <div className={styles.emptyState}>
           {allRequests.length === 0

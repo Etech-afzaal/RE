@@ -4,14 +4,41 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
+import PriceCurrencyInput from "@/components/agent-portal/PriceCurrencyInput";
 import ImageCategorySelect from "@/components/ImageCategorySelect";
 import ImagePreviewModal from "@/components/ImagePreviewModal";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import PropertyWatermark from "@/components/PropertyWatermark";
+import { companyNameFromAgent } from "@/lib/agentBranding";
 import { needsCustomImageCategory } from "@/lib/imageCategories";
 import {
   MAX_PROPERTY_IMAGES,
+  imageFormatErrorMessage,
   imageLimitErrorMessage,
+  imageSizeErrorMessage,
+  isImageFile,
+  MAX_PROPERTY_IMAGE_BYTES,
 } from "@/lib/imageUpload";
-import { MAX_PROPERTY_VIDEOS, videoLimitErrorMessage } from "@/lib/videoUpload";
+import {
+  MAX_PROPERTY_VIDEOS,
+  videoFormatErrorMessage,
+  videoLimitErrorMessage,
+  videoSizeErrorMessage,
+  isVideoFile,
+  MAX_PROPERTY_VIDEO_BYTES,
+} from "@/lib/videoUpload";
+import {
+  DEFAULT_PRICE_CURRENCY,
+  PROPERTY_WIZARD_STEPS,
+  WIZARD_DIGIT_LIMITS,
+  getPropertyWizardFieldError,
+  propertyFieldToWizardStep,
+  sanitizeWizardCityInput,
+  sanitizeWizardDigitInput,
+  sanitizeWizardTextInput,
+  validatePropertyWizardFields,
+  validatePropertyWizardStep,
+} from "@/lib/validators/propertyValidator";
 import ui from "@/components/agent-portal/portal.module.css";
 
 const STEPS = [
@@ -22,6 +49,29 @@ const STEPS = [
   "Video",
   "Actions",
 ];
+
+function RequiredMark() {
+  return (
+    <span className={ui.requiredMark} aria-hidden="true">
+      {" "}
+      *
+    </span>
+  );
+}
+
+/** Always-rendered message slot so validation never shifts the layout. */
+function FieldMessage({ id, error }) {
+  return (
+    <p
+      id={id}
+      className={ui.fieldMessage}
+      role={error ? "alert" : undefined}
+      aria-hidden={error ? undefined : true}
+    >
+      {error || ""}
+    </p>
+  );
+}
 
 function buildTitle(title, propertyType) {
   const t = String(title || "").trim();
@@ -56,7 +106,9 @@ function buildDescription({ description, bedrooms, bathrooms, parking }) {
   const meta = [];
   if (bedrooms) meta.push(`Bedrooms: ${bedrooms}`);
   if (bathrooms) meta.push(`Bathrooms: ${bathrooms}`);
-  if (parking) meta.push(`Parking: ${parking}`);
+  if (String(parking || "").toLowerCase() === "yes") {
+    meta.push("Parking: Yes");
+  }
   if (meta.length) parts.push(meta.join(" | "));
   return parts.filter(Boolean).join("\n\n") || null;
 }
@@ -66,11 +118,12 @@ export default function CreatePropertyPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const username = decodeURIComponent(params.estate_name || "");
-  const base = `/re/${encodeURIComponent(username)}/adminarea`;
+  const base = `/re/${encodeURIComponent(username)}/dashboard`;
 
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
   const [errorDetails, setErrorDetails] = useState([]);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [busyAction, setBusyAction] = useState(null); // null | "draft" | "submit"
   const [submitSuccessOpen, setSubmitSuccessOpen] = useState(false);
   // Reuse after first create so retries do not orphan duplicate drafts.
@@ -84,6 +137,7 @@ export default function CreatePropertyPage() {
   const [videos, setVideos] = useState([]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(0);
+  const [watermarkText, setWatermarkText] = useState("");
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
   const [form, setForm] = useState({
@@ -98,8 +152,9 @@ export default function CreatePropertyPage() {
     size_unit: "marla",
     bedrooms: "",
     bathrooms: "",
-    parking: "",
+    parking: "No",
     price: "",
+    price_currency: DEFAULT_PRICE_CURRENCY,
   });
 
   useEffect(() => {
@@ -115,15 +170,160 @@ export default function CreatePropertyPage() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.replace("/agent/login");
+      return;
     }
-  }, [status, router]);
+    if (status !== "authenticated") return;
+
+    let cancelled = false;
+    (async () => {
+      const res = await fetch("/api/agent/company-branding");
+      const data = await res.json().catch(() => ({}));
+      if (cancelled) return;
+      setWatermarkText(
+        companyNameFromAgent(data.branding || session?.user),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [status, router, session?.user]);
 
   if (status === "loading" || status === "unauthenticated") {
-    return null;
+    return (
+      <LoadingSpinner
+        fullPage
+        label="Loading"
+        hint="Preparing property form…"
+      />
+    );
   }
 
-  function update(field, value) {
-    setForm((prev) => ({ ...prev, [field]: value }));
+  function clearStepFeedback() {
+    setError("");
+    setErrorDetails([]);
+    setFieldErrors({});
+  }
+
+  function setLiveFieldError(field, nextForm, limitError = null) {
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      if (limitError) {
+        next[field] = limitError;
+        return next;
+      }
+      const error = getPropertyWizardFieldError(field, nextForm);
+      if (error) next[field] = error;
+      else delete next[field];
+      return next;
+    });
+  }
+
+  function update(field, rawValue) {
+    const previous = form[field];
+    let value = rawValue;
+    let limitError = null;
+    const prevOpts = { previous };
+
+    if (field === "city") {
+      const sanitized = sanitizeWizardCityInput(rawValue, 100, prevOpts);
+      value = sanitized.value;
+      limitError = sanitized.limitError;
+    } else if (field === "area" || field === "phase") {
+      const sanitized = sanitizeWizardTextInput(rawValue, 100, prevOpts);
+      value = sanitized.value;
+      limitError = sanitized.limitError;
+    } else if (field === "address") {
+      const sanitized = sanitizeWizardTextInput(rawValue, 300, prevOpts);
+      value = sanitized.value;
+      limitError = sanitized.limitError;
+    } else if (field === "title") {
+      const sanitized = sanitizeWizardTextInput(rawValue, 150, prevOpts);
+      value = sanitized.value;
+      limitError = sanitized.limitError;
+    } else if (field === "description") {
+      const sanitized = sanitizeWizardTextInput(rawValue, 2000, prevOpts);
+      value = sanitized.value;
+      limitError = sanitized.limitError;
+    } else if (
+      field === "bedrooms" ||
+      field === "bathrooms" ||
+      field === "size_value" ||
+      field === "price"
+    ) {
+      const sanitized = sanitizeWizardDigitInput(
+        rawValue,
+        WIZARD_DIGIT_LIMITS[field],
+        prevOpts,
+      );
+      value = sanitized.value;
+      limitError = sanitized.limitError;
+    }
+
+    const nextForm = { ...form, [field]: value };
+    setForm(nextForm);
+
+    // Property type changes only need to re-check their own field error.
+    if (field === "propertyType") {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        const typeError = getPropertyWizardFieldError("propertyType", nextForm);
+        if (typeError) next.propertyType = typeError;
+        else delete next.propertyType;
+        return next;
+      });
+      return;
+    }
+
+    setLiveFieldError(field, nextForm, limitError);
+  }
+
+  function validateMediaStep(stepIndex) {
+    if (stepIndex === PROPERTY_WIZARD_STEPS.IMAGES) {
+      const imageError = validateImagesStep();
+      if (imageError) {
+        return {
+          ok: false,
+          fieldErrors: { images: imageError },
+          field: "images",
+          error: imageError,
+        };
+      }
+    }
+    if (stepIndex === PROPERTY_WIZARD_STEPS.VIDEO) {
+      const videoError = validateVideosStep();
+      if (videoError) {
+        return {
+          ok: false,
+          fieldErrors: { videos: videoError },
+          field: "videos",
+          error: videoError,
+        };
+      }
+    }
+    return { ok: true, fieldErrors: {} };
+  }
+
+  function validateWizardStep(stepIndex) {
+    if (
+      stepIndex === PROPERTY_WIZARD_STEPS.IMAGES ||
+      stepIndex === PROPERTY_WIZARD_STEPS.VIDEO
+    ) {
+      return validateMediaStep(stepIndex);
+    }
+    return validatePropertyWizardStep(stepIndex, form);
+  }
+
+  function isStepComplete(stepIndex) {
+    // Actions has no required fields of its own.
+    if (stepIndex === PROPERTY_WIZARD_STEPS.ACTIONS) return false;
+    return validateWizardStep(stepIndex).ok;
+  }
+
+  function applyStepValidationFailure(result, stepIndex) {
+    setStep(stepIndex);
+    setFieldErrors(result.fieldErrors || {});
+    setErrorDetails([]);
+    setError(result.error || "Please complete the required fields.");
   }
 
   function addFiles(fileList) {
@@ -138,8 +338,22 @@ export default function CreatePropertyPage() {
     }
     if (remaining === 0) return;
 
+    const valid = [];
+    for (const file of incoming.slice(0, remaining)) {
+      if (!isImageFile(file)) {
+        setError(imageFormatErrorMessage());
+        continue;
+      }
+      if (Number(file.size) > MAX_PROPERTY_IMAGE_BYTES) {
+        setError(imageSizeErrorMessage());
+        continue;
+      }
+      valid.push(file);
+    }
+    if (valid.length === 0) return;
+
     setImages((prev) => {
-      const accepted = incoming.slice(0, remaining).map((file) => ({
+      const accepted = valid.map((file) => ({
         file,
         url: URL.createObjectURL(file),
         category: "",
@@ -150,12 +364,26 @@ export default function CreatePropertyPage() {
       if (!next.some((item) => item.isFeatured)) next[0].isFeatured = true;
       return next;
     });
+    setFieldErrors((prev) => {
+      if (!prev.images) return prev;
+      const next = { ...prev };
+      delete next.images;
+      return next;
+    });
   }
 
   function updateImage(index, changes) {
     setImages((prev) =>
       prev.map((item, i) => (i === index ? { ...item, ...changes } : item)),
     );
+    if (Object.prototype.hasOwnProperty.call(changes, "category")) {
+      setFieldErrors((prev) => {
+        if (!prev.images) return prev;
+        const next = { ...prev };
+        delete next.images;
+        return next;
+      });
+    }
   }
 
   /** Exactly one image can be the featured one. */
@@ -210,7 +438,21 @@ export default function CreatePropertyPage() {
     }
     if (remaining === 0) return;
 
-    const accepted = incoming.slice(0, remaining).map((file) => ({
+    const valid = [];
+    for (const file of incoming.slice(0, remaining)) {
+      if (!isVideoFile(file)) {
+        setError(videoFormatErrorMessage());
+        continue;
+      }
+      if (Number(file.size) > MAX_PROPERTY_VIDEO_BYTES) {
+        setError(videoSizeErrorMessage());
+        continue;
+      }
+      valid.push(file);
+    }
+    if (valid.length === 0) return;
+
+    const accepted = valid.map((file) => ({
       file,
       url: URL.createObjectURL(file),
       category: "",
@@ -222,12 +464,26 @@ export default function CreatePropertyPage() {
       if (!next.some((item) => item.isFeatured)) next[0].isFeatured = true;
       return next;
     });
+    setFieldErrors((prev) => {
+      if (!prev.videos) return prev;
+      const next = { ...prev };
+      delete next.videos;
+      return next;
+    });
   }
 
   function updateVideo(index, changes) {
     setVideos((prev) =>
       prev.map((item, i) => (i === index ? { ...item, ...changes } : item)),
     );
+    if (Object.prototype.hasOwnProperty.call(changes, "category")) {
+      setFieldErrors((prev) => {
+        if (!prev.videos) return prev;
+        const next = { ...prev };
+        delete next.videos;
+        return next;
+      });
+    }
   }
 
   /** Exactly one video can be the featured walkthrough. */
@@ -303,33 +559,73 @@ export default function CreatePropertyPage() {
   }
 
   function handleContinue() {
-    setError("");
-    setErrorDetails([]);
-    if (step === 3) {
-      const imageError = validateImagesStep();
-      if (imageError) {
-        setError(imageError);
+    const result = validateWizardStep(step);
+    if (!result.ok) {
+      applyStepValidationFailure(result, step);
+      return;
+    }
+    clearStepFeedback();
+    setStep((s) => Math.min(PROPERTY_WIZARD_STEPS.ACTIONS, s + 1));
+  }
+
+  function handleBack() {
+    clearStepFeedback();
+    setStep((s) => Math.max(0, s - 1));
+  }
+
+  function handleStepClick(targetStep) {
+    if (targetStep === step) return;
+
+    // Backward (and same-or-previous) navigation is always allowed.
+    if (targetStep < step) {
+      clearStepFeedback();
+      setStep(targetStep);
+      return;
+    }
+
+    // Forward jump: every previous step must be complete.
+    for (let i = 0; i < targetStep; i += 1) {
+      const result = validateWizardStep(i);
+      if (!result.ok) {
+        applyStepValidationFailure(result, i);
         return;
       }
     }
-    if (step === 4) {
-      const videoError = validateVideosStep();
-      if (videoError) {
-        setError(videoError);
-        return;
-      }
-    }
-    setStep((s) => Math.min(5, s + 1));
+
+    clearStepFeedback();
+    setStep(targetStep);
   }
 
   async function save({ submit = false } = {}) {
-    setError("");
-    setErrorDetails([]);
+    clearStepFeedback();
     const title = buildTitle(form.title, form.propertyType);
     if (!title) {
-      setError("Title is required.");
-      setStep(0);
+      setFieldErrors({ title: "Title is required" });
+      setError("Title is required");
+      setStep(PROPERTY_WIZARD_STEPS.BASIC);
       return;
+    }
+
+    if (submit) {
+      const formCheck = validatePropertyWizardFields(form);
+      if (!formCheck.ok) {
+        setFieldErrors(formCheck.fieldErrors);
+        setError(formCheck.error);
+        setStep(propertyFieldToWizardStep(formCheck.field));
+        return;
+      }
+
+      const imageCheck = validateMediaStep(PROPERTY_WIZARD_STEPS.IMAGES);
+      if (!imageCheck.ok) {
+        applyStepValidationFailure(imageCheck, PROPERTY_WIZARD_STEPS.IMAGES);
+        return;
+      }
+
+      const videoCheck = validateMediaStep(PROPERTY_WIZARD_STEPS.VIDEO);
+      if (!videoCheck.ok) {
+        applyStepValidationFailure(videoCheck, PROPERTY_WIZARD_STEPS.VIDEO);
+        return;
+      }
     }
 
     setBusyAction(submit ? "submit" : "draft");
@@ -351,6 +647,7 @@ export default function CreatePropertyPage() {
             size_value: form.size_value ? Number(form.size_value) : null,
             size_unit: form.size_unit || "marla",
             price: form.price ? Number(form.price) : null,
+            price_currency: form.price_currency || DEFAULT_PRICE_CURRENCY,
           }),
         });
         const createData = await createRes.json().catch(() => ({}));
@@ -375,6 +672,7 @@ export default function CreatePropertyPage() {
             size_value: form.size_value ? Number(form.size_value) : null,
             size_unit: form.size_unit || "marla",
             price: form.price ? Number(form.price) : null,
+            price_currency: form.price_currency || DEFAULT_PRICE_CURRENCY,
           }),
         });
         const updateData = await updateRes.json().catch(() => ({}));
@@ -465,14 +763,22 @@ export default function CreatePropertyPage() {
     >
       <div className={ui.formCard}>
         <div className={ui.steps}>
-          {STEPS.map((label, index) => (
-            <span
-              key={label}
-              className={`${ui.stepPill} ${step === index ? ui.stepPillActive : ""}`}
-            >
-              {index + 1}. {label}
-            </span>
-          ))}
+          {STEPS.map((label, index) => {
+            const isActive = step === index;
+            // Only mark steps the user has already passed, and that still validate.
+            const isComplete = index < step && isStepComplete(index);
+            return (
+              <button
+                key={label}
+                type="button"
+                className={`${ui.stepPill} ${isActive ? ui.stepPillActive : ""} ${isComplete ? ui.stepPillCompleted : ""}`}
+                aria-current={isActive ? "step" : undefined}
+                onClick={() => handleStepClick(index)}
+              >
+                {index + 1}. {label}
+              </button>
+            );
+          })}
         </div>
 
         {error ? (
@@ -491,33 +797,54 @@ export default function CreatePropertyPage() {
         {step === 0 ? (
           <>
             <label className={ui.field}>
-              <span className={ui.label}>Title</span>
+              <span className={ui.label}>
+                Title
+                <RequiredMark />
+              </span>
               <input
-                className={ui.input}
+                className={`${ui.input} ${fieldErrors.title ? ui.inputInvalid : ""}`}
                 value={form.title}
                 onChange={(e) => update("title", e.target.value)}
                 placeholder="10 Marla House in DHA Phase 5"
+                aria-invalid={Boolean(fieldErrors.title)}
+                aria-describedby="title-error"
               />
+              <FieldMessage id="title-error" error={fieldErrors.title} />
             </label>
             <label className={ui.field}>
-              <span className={ui.label}>Property type</span>
+              <span className={ui.label}>
+                Property type
+                <RequiredMark />
+              </span>
               <select
-                className={ui.select}
+                className={`${ui.select} ${fieldErrors.propertyType ? ui.inputInvalid : ""}`}
                 value={form.propertyType}
                 onChange={(e) => update("propertyType", e.target.value)}
+                aria-invalid={Boolean(fieldErrors.propertyType)}
+                aria-describedby="propertyType-error"
               >
                 <option value="sale">Sale</option>
                 <option value="rent">Rent</option>
                 <option value="plot">Plot</option>
               </select>
+              <FieldMessage
+                id="propertyType-error"
+                error={fieldErrors.propertyType}
+              />
             </label>
             <label className={ui.field}>
               <span className={ui.label}>Description</span>
               <textarea
-                className={ui.textarea}
+                className={`${ui.textarea} ${fieldErrors.description ? ui.inputInvalid : ""}`}
                 value={form.description}
                 onChange={(e) => update("description", e.target.value)}
                 placeholder="Describe the property"
+                aria-invalid={Boolean(fieldErrors.description)}
+                aria-describedby="description-error"
+              />
+              <FieldMessage
+                id="description-error"
+                error={fieldErrors.description}
               />
             </label>
           </>
@@ -526,40 +853,58 @@ export default function CreatePropertyPage() {
         {step === 1 ? (
           <>
             <label className={ui.field}>
-              <span className={ui.label}>City</span>
+              <span className={ui.label}>
+                City
+                <RequiredMark />
+              </span>
               <input
-                className={ui.input}
+                className={`${ui.input} ${fieldErrors.city ? ui.inputInvalid : ""}`}
                 value={form.city}
                 onChange={(e) => update("city", e.target.value)}
                 placeholder="Lahore"
+                aria-invalid={Boolean(fieldErrors.city)}
+                aria-describedby="city-error"
               />
+              <FieldMessage id="city-error" error={fieldErrors.city} />
             </label>
             <label className={ui.field}>
               <span className={ui.label}>Area</span>
               <input
-                className={ui.input}
+                className={`${ui.input} ${fieldErrors.area ? ui.inputInvalid : ""}`}
                 value={form.area}
                 onChange={(e) => update("area", e.target.value)}
                 placeholder="DHA"
+                aria-invalid={Boolean(fieldErrors.area)}
+                aria-describedby="area-error"
               />
+              <FieldMessage id="area-error" error={fieldErrors.area} />
             </label>
             <label className={ui.field}>
               <span className={ui.label}>Phase</span>
               <input
-                className={ui.input}
+                className={`${ui.input} ${fieldErrors.phase ? ui.inputInvalid : ""}`}
                 value={form.phase}
                 onChange={(e) => update("phase", e.target.value)}
                 placeholder="Phase 5"
+                aria-invalid={Boolean(fieldErrors.phase)}
+                aria-describedby="phase-error"
               />
+              <FieldMessage id="phase-error" error={fieldErrors.phase} />
             </label>
             <label className={ui.field}>
-              <span className={ui.label}>Address</span>
+              <span className={ui.label}>
+                Address
+                <RequiredMark />
+              </span>
               <input
-                className={ui.input}
+                className={`${ui.input} ${fieldErrors.address ? ui.inputInvalid : ""}`}
                 value={form.address}
                 onChange={(e) => update("address", e.target.value)}
                 placeholder="House number, street, block, road, full address"
+                aria-invalid={Boolean(fieldErrors.address)}
+                aria-describedby="address-error"
               />
+              <FieldMessage id="address-error" error={fieldErrors.address} />
             </label>
           </>
         ) : null}
@@ -568,13 +913,20 @@ export default function CreatePropertyPage() {
           <>
             <div className={ui.row2}>
               <label className={ui.field}>
-                <span className={ui.label}>Size</span>
+                <span className={ui.label}>
+                  Size
+                  <RequiredMark />
+                </span>
                 <input
-                  className={ui.input}
-                  type="number"
+                  className={`${ui.input} ${fieldErrors.size_value ? ui.inputInvalid : ""}`}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={form.size_value}
                   onChange={(e) => update("size_value", e.target.value)}
+                  aria-invalid={Boolean(fieldErrors.size_value)}
+                  aria-describedby="size-error"
                 />
+                <FieldMessage id="size-error" error={fieldErrors.size_value} />
               </label>
               <label className={ui.field}>
                 <span className={ui.label}>Unit</span>
@@ -587,51 +939,100 @@ export default function CreatePropertyPage() {
                   <option value="kanal">Kanal</option>
                   <option value="sqft">Sqft</option>
                 </select>
+                <FieldMessage />
               </label>
             </div>
             <div className={ui.row2}>
               <label className={ui.field}>
                 <span className={ui.label}>Bedrooms</span>
                 <input
-                  className={ui.input}
+                  className={`${ui.input} ${fieldErrors.bedrooms ? ui.inputInvalid : ""}`}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={form.bedrooms}
                   onChange={(e) => update("bedrooms", e.target.value)}
+                  aria-invalid={Boolean(fieldErrors.bedrooms)}
+                  aria-describedby="bedrooms-error"
+                />
+                <FieldMessage
+                  id="bedrooms-error"
+                  error={fieldErrors.bedrooms}
                 />
               </label>
               <label className={ui.field}>
                 <span className={ui.label}>Bathrooms</span>
                 <input
-                  className={ui.input}
+                  className={`${ui.input} ${fieldErrors.bathrooms ? ui.inputInvalid : ""}`}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={form.bathrooms}
                   onChange={(e) => update("bathrooms", e.target.value)}
+                  aria-invalid={Boolean(fieldErrors.bathrooms)}
+                  aria-describedby="bathrooms-error"
+                />
+                <FieldMessage
+                  id="bathrooms-error"
+                  error={fieldErrors.bathrooms}
                 />
               </label>
             </div>
             <div className={ui.row2}>
-              <label className={ui.field}>
-                <span className={ui.label}>Parking</span>
-                <input
-                  className={ui.input}
-                  value={form.parking}
-                  onChange={(e) => update("parking", e.target.value)}
+              <div className={`${ui.field} ${ui.parkingField}`}>
+                {/* Spacer matches Price label row so the toggle lines up with the input. */}
+                <span className={ui.parkingLabelSpacer} aria-hidden="true" />
+                <div className={ui.parkingInline}>
+                  <span className={ui.label}>Parking</span>
+                  <div className={ui.parkingControl}>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={form.parking === "Yes"}
+                      aria-label="Parking available"
+                      className={`${ui.parkingSwitch} ${form.parking === "Yes" ? ui.parkingSwitchOn : ""}`}
+                      onClick={() =>
+                        update(
+                          "parking",
+                          form.parking === "Yes" ? "No" : "Yes",
+                        )
+                      }
+                    >
+                      <span className={ui.parkingThumb} aria-hidden="true" />
+                    </button>
+                    <div className={ui.parkingScale} aria-hidden="true">
+                      <span>No</span>
+                      <span>Yes</span>
+                    </div>
+                  </div>
+                </div>
+                <FieldMessage />
+              </div>
+              <div className={ui.field}>
+                <span className={ui.label}>
+                  Price
+                  <RequiredMark />
+                </span>
+                <PriceCurrencyInput
+                  amount={form.price}
+                  currency={form.price_currency}
+                  onAmountChange={(value) => update("price", value)}
+                  onCurrencyChange={(value) => update("price_currency", value)}
+                  invalid={Boolean(fieldErrors.price)}
+                  aria-invalid={Boolean(fieldErrors.price)}
+                  aria-describedby="price-error"
                 />
-              </label>
-              <label className={ui.field}>
-                <span className={ui.label}>Price (PKR)</span>
-                <input
-                  className={ui.input}
-                  type="number"
-                  value={form.price}
-                  onChange={(e) => update("price", e.target.value)}
-                />
-              </label>
+                <FieldMessage id="price-error" error={fieldErrors.price} />
+              </div>
             </div>
           </>
         ) : null}
 
         {step === 3 ? (
           <>
-            <span className={ui.label}>Property Images</span>
+            <span className={ui.label}>
+              Property Images
+              <RequiredMark />
+            </span>
+            <FieldMessage id="images-error" error={fieldErrors.images} />
 
             {images.length > 0 ? (
               <>
@@ -656,7 +1057,10 @@ export default function CreatePropertyPage() {
                       </button>
                       <div className={ui.imageCardBody}>
                         <label className={ui.field}>
-                          <span className={ui.imageCardLabel}>Category</span>
+                          <span className={ui.imageCardLabel}>
+                            Category
+                            <RequiredMark />
+                          </span>
                           <ImageCategorySelect
                             className={ui.select}
                             inputClassName={ui.input}
@@ -766,6 +1170,7 @@ export default function CreatePropertyPage() {
         {step === 4 ? (
           <>
             <span className={ui.label}>Property Videos (Optional)</span>
+            <FieldMessage id="videos-error" error={fieldErrors.videos} />
 
             {videos.length > 0 ? (
               <>
@@ -780,13 +1185,17 @@ export default function CreatePropertyPage() {
                           playsInline
                           preload="metadata"
                         />
+                        <PropertyWatermark text={watermarkText} compact />
                         {item.isFeatured ? (
                           <span className={ui.featuredTag}>Featured</span>
                         ) : null}
                       </div>
                       <div className={ui.imageCardBody}>
                         <label className={ui.field}>
-                          <span className={ui.imageCardLabel}>Category</span>
+                          <span className={ui.imageCardLabel}>
+                            Category
+                            <RequiredMark />
+                          </span>
                           <ImageCategorySelect
                             className={ui.select}
                             inputClassName={ui.input}
@@ -897,7 +1306,7 @@ export default function CreatePropertyPage() {
             <p className={ui.muted}>
               Save as draft to continue later, or submit for admin approval.
               Drafts never appear on your public website. Submitting needs a
-              title, description, location, price, property type, and at least
+              title, property type, city, address, size, price, and at least
               one image.
             </p>
             <div className={ui.formActions}>
@@ -927,7 +1336,7 @@ export default function CreatePropertyPage() {
               <button
                 type="button"
                 className={ui.btnGhost}
-                onClick={() => setStep((s) => s - 1)}
+                onClick={handleBack}
               >
                 Back
               </button>

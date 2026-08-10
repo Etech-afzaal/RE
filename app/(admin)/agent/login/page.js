@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import PasswordInput from "@/components/PasswordInput";
+import { validateLoginInput } from "@/lib/validators/userValidator";
 import styles from "./page.module.css";
 
 export default function AgentLoginPage() {
@@ -30,9 +31,16 @@ export default function AgentLoginPage() {
     setError("");
     setAccountNotice(null);
 
+    const validated = validateLoginInput({ email, password });
+    if (!validated.ok) {
+      setError(validated.error);
+      setLoading(false);
+      return;
+    }
+
     const res = await signIn("credentials", {
-      email,
-      password,
+      email: validated.data.email,
+      password: validated.data.password,
       role: "agent",
       redirect: false,
     });
@@ -78,6 +86,19 @@ export default function AgentLoginPage() {
       return;
     }
 
+    if (
+      res?.error === "AUTH_DATABASE_UNAVAILABLE" ||
+      /EHOSTUNREACH|ECONNREFUSED|ENETUNREACH|timed out|Pool is closed/i.test(
+        String(res?.error || ""),
+      )
+    ) {
+      setLoading(false);
+      setError(
+        "Unable to reach the database. Check that MySQL is running and DB_HOST in .env is correct.",
+      );
+      return;
+    }
+
     if (res?.error) {
       setLoading(false);
       setError("Invalid email or password.");
@@ -90,7 +111,7 @@ export default function AgentLoginPage() {
     setLoading(false);
 
     if (handle) {
-      router.push(`/re/${encodeURIComponent(handle)}/adminarea`);
+      router.push(`/re/${encodeURIComponent(handle)}/dashboard`);
       return;
     }
 

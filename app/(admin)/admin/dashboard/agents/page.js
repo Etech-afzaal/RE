@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Ban, Building2, CirclePause, CirclePlay } from "lucide-react";
 import ActionMenu from "@/components/ActionMenu";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import Pagination from "@/components/Pagination";
 import BlockAgentDialog from "@/components/admin/BlockAgentDialog";
 import styles from "@/components/admin/adminUi.module.css";
@@ -217,7 +218,7 @@ export default function AdminAgentsPage() {
       {error && <p className={styles.errorText}>{error}</p>}
 
       {loading ? (
-        <div className={styles.loading}>Loading agents…</div>
+        <LoadingSpinner fullPage={false} label="Loading" hint="Fetching agents…" />
       ) : filtered.length === 0 ? (
         <div className={styles.emptyState}>No agents match your filters.</div>
       ) : (

@@ -2,12 +2,15 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { propertyPublicPath } from "@/lib/propertySlug";
+import { getPropertyUrl } from "@/lib/propertySlug";
 import { formatPropertyLocation } from "@/lib/propertyLocation";
+import { formatPropertyPrice } from "@/lib/formatPrice";
+import { sanitizeSearchInput } from "@/lib/validators/common";
+import { validateContactInput } from "@/lib/validators/inquiryValidator";
 import styles from "./EstatePageExtras.module.css";
 
-const formatPrice = (price) =>
-  price ? `PKR ${Number(price).toLocaleString()}` : "Price on request";
+const formatPrice = (price, currency) =>
+  formatPropertyPrice(price, currency, { fallback: "Price on request" });
 
 export function PropertySection({ properties, estateName }) {
   const [search, setSearch] = useState("");
@@ -50,7 +53,9 @@ export function PropertySection({ properties, estateName }) {
           <input
             type="search"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) =>
+              setSearch(sanitizeSearchInput(event.target.value).value)
+            }
             placeholder="Search by title, location, or size"
             className={styles.filterInput}
           />
@@ -94,7 +99,7 @@ export function PropertySection({ properties, estateName }) {
           {filteredProperties.map((property) => (
             <Link
               key={property.id}
-              href={propertyPublicPath(estateName, property)}
+              href={getPropertyUrl(property, estateName)}
               className={styles.propertyCard}
             >
               <div className={styles.propertyImageWrapper}>
@@ -127,7 +132,7 @@ export function PropertySection({ properties, estateName }) {
                     </span>
                   ) : null}
                   <span className={styles.propertyPrice}>
-                    {formatPrice(property.price)}
+                    {formatPrice(property.price, property.price_currency)}
                   </span>
                 </div>
               </div>
@@ -156,6 +161,20 @@ export function ContactSection({ agent }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
+
+    const validated = validateContactInput({
+      estate_name: agent.estate_name,
+      name: form.name,
+      email: form.email,
+      phone: form.phone,
+      message: form.message,
+    });
+    if (!validated.ok) {
+      setError(validated.error);
+      setStatus("error");
+      return;
+    }
+
     setStatus("sending");
 
     try {
@@ -163,11 +182,11 @@ export function ContactSection({ agent }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          estate_name: agent.estate_name,
-          name: form.name,
-          email: form.email,
-          phone: form.phone,
-          message: form.message,
+          estate_name: validated.data.estate_name,
+          name: validated.data.full_name,
+          email: validated.data.email,
+          phone: validated.data.phone,
+          message: validated.data.message,
         }),
       });
 

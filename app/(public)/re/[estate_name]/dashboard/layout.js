@@ -15,7 +15,7 @@ export default async function AgentAdminAreaLayout({ children, params }) {
   ).toLowerCase();
 
   if (tokenUsername && pathUsername !== tokenUsername) {
-    redirect(`/re/${encodeURIComponent(tokenUsername)}/adminarea`);
+    redirect(`/re/${encodeURIComponent(tokenUsername)}/dashboard`);
   }
 
   return children;

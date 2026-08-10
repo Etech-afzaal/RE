@@ -13,6 +13,7 @@ import {
   toClientAgentStatus,
   toDbAgentStatus,
 } from "@/lib/status";
+import { validateBlockReason } from "@/lib/validators/userValidator";
 
 export async function PATCH(req, { params }) {
   const { session, error } = await requireAdmin();
@@ -42,13 +43,21 @@ export async function PATCH(req, { params }) {
   }
 
   const nextStatus = toDbAgentStatus(requested);
-  const blockedReason = String(body?.blocked_reason || "").trim();
+  let blockedReason = "";
 
-  if (nextStatus === AGENT_STATUS.BLOCKED && !blockedReason) {
-    return NextResponse.json(
-      { error: "A reason is required to permanently block an agent." },
-      { status: 400 },
-    );
+  if (nextStatus === AGENT_STATUS.BLOCKED) {
+    const reasonCheck = validateBlockReason(body?.blocked_reason);
+    if (!reasonCheck.ok) {
+      return NextResponse.json(
+        {
+          error:
+            reasonCheck.error ||
+            "A reason is required to permanently block an agent.",
+        },
+        { status: 400 },
+      );
+    }
+    blockedReason = reasonCheck.value;
   }
 
   try {

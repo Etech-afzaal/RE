@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signOut } from "next-auth/react";
 import PasswordInput from "@/components/PasswordInput";
+import { validateNewPassword } from "@/lib/validators/userValidator";
 
 export default function ResetPasswordPage() {
   const [newPassword, setNewPassword] = useState("");
@@ -15,8 +16,9 @@ export default function ResetPasswordPage() {
     e.preventDefault();
     setError("");
 
-    if (newPassword.length < 8) {
-      setError("Password must be at least 8 characters.");
+    const passwordCheck = validateNewPassword(newPassword);
+    if (!passwordCheck.ok) {
+      setError(passwordCheck.error);
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -29,7 +31,7 @@ export default function ResetPasswordPage() {
     const res = await fetch("/api/agents/reset-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ newPassword }),
+      body: JSON.stringify({ newPassword: passwordCheck.value }),
     });
 
     setLoading(false);

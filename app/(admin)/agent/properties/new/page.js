@@ -13,6 +13,7 @@ export default function AgentNewPropertyPage() {
     size_value: "",
     size_unit: "marla",
     price: "",
+    price_currency: "PKR",
     location: "",
   });
   const [selectedImages, setSelectedImages] = useState([]);
@@ -118,13 +119,26 @@ export default function AgentNewPropertyPage() {
             <option value="sqft">Sqft</option>
           </select>
         </div>
-        <input
-          type="number"
-          placeholder="Price (PKR)"
-          value={form.price}
-          onChange={(e) => setForm({ ...form, price: e.target.value })}
-          style={inputStyle}
-        />
+        <div style={{ display: "flex", gap: 8 }}>
+          <input
+            type="number"
+            placeholder="Price"
+            value={form.price}
+            onChange={(e) => setForm({ ...form, price: e.target.value })}
+            style={{ ...inputStyle, flex: 1 }}
+          />
+          <select
+            value={form.price_currency}
+            onChange={(e) =>
+              setForm({ ...form, price_currency: e.target.value })
+            }
+            style={{ ...inputStyle, flex: "0 0 110px" }}
+            aria-label="Price currency"
+          >
+            <option value="PKR">PKR</option>
+            <option value="USD">$ USD</option>
+          </select>
+        </div>
         <input
           placeholder="Location"
           value={form.location}

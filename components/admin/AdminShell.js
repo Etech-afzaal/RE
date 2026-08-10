@@ -5,6 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import LogoutButton from "@/components/LogoutButton";
+import {
+  SidebarTooltip,
+  useSidebarTooltip,
+} from "@/components/SidebarTooltip";
 import { useSidebarCollapsed } from "@/lib/useSidebarCollapsed";
 import styles from "./AdminShell.module.css";
 
@@ -175,6 +179,7 @@ export default function AdminShell({ children }) {
   const { collapsed, toggleCollapsed } = useSidebarCollapsed(
     "admin.sidebarCollapsed",
   );
+  const { tip, tipHandlers, hideTooltip } = useSidebarTooltip(collapsed);
 
   const activeItem = NAV.find((item) => isActive(pathname, item));
   const pageTitle = activeItem?.label || "Admin";
@@ -206,8 +211,10 @@ export default function AdminShell({ children }) {
             type="button"
             className={styles.collapseBtn}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             onClick={toggleCollapsed}
+            {...tipHandlers(
+              collapsed ? "Expand sidebar" : "Collapse sidebar",
+            )}
           >
             <CollapseIcon collapsed={collapsed} />
           </button>
@@ -221,8 +228,11 @@ export default function AdminShell({ children }) {
                 key={item.href}
                 href={item.href}
                 className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`}
-                title={collapsed ? item.label : undefined}
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  hideTooltip();
+                  setOpen(false);
+                }}
+                {...tipHandlers(item.label)}
               >
                 <span className={styles.navIcon}>{item.icon}</span>
                 <span className={styles.navLabel}>{item.label}</span>
@@ -237,8 +247,11 @@ export default function AdminShell({ children }) {
             className={styles.viewSite}
             target="_blank"
             rel="noopener noreferrer"
-            title={collapsed ? "View public site" : undefined}
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              hideTooltip();
+              setOpen(false);
+            }}
+            {...tipHandlers("View public site")}
           >
             <span className={styles.footerIcon} aria-hidden="true">
               <svg viewBox="0 0 24 24">
@@ -258,9 +271,9 @@ export default function AdminShell({ children }) {
             <button
               type="button"
               className={styles.logoutBtn}
-              title="Logout"
               aria-label="Logout"
               onClick={() => signOut({ callbackUrl: "/admin/login" })}
+              {...tipHandlers("Logout")}
             >
               <span className={styles.footerIcon} aria-hidden="true">
                 <svg viewBox="0 0 24 24">
@@ -284,6 +297,8 @@ export default function AdminShell({ children }) {
           )}
         </div>
       </aside>
+
+      <SidebarTooltip tip={tip} />
 
       <div className={styles.main}>
         <header className={styles.topbar}>

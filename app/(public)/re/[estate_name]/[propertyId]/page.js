@@ -4,7 +4,7 @@ import Image from "next/image";
 import GalleryCarousel from "./GalleryCarousel";
 import HeroGallery from "./HeroGallery";
 import ExpandableText from "./ExpandableText";
-import PropertyWalkthroughPlayer from "./PropertyWalkthroughPlayer";
+import PropertyVideoGallery from "@/components/PropertyVideoGallery";
 import {
   getAgentByUsername,
   getPropertyByAgentAndSlug,
@@ -22,10 +22,11 @@ import {
   formatPropertyLocation,
   resolveLocationInfo,
 } from "@/lib/propertyLocation";
+import { formatPropertyPrice } from "@/lib/formatPrice";
 import styles from "./page.module.css";
 
-const formatPrice = (price) =>
-  price ? `PKR ${Number(price).toLocaleString()}` : "Price on request";
+const formatPrice = (price, currency) =>
+  formatPropertyPrice(price, currency, { fallback: "Price on request" });
 
 const formatSize = (value, unit) => {
   if (value == null || value === "") return null;
@@ -650,7 +651,9 @@ export default async function PropertyDetailPage({ params }) {
                   <span>{locationInfo.full}</span>
                 </p>
               ) : null}
-              <p className={styles.price}>{formatPrice(property.price)}</p>
+              <p className={styles.price}>
+                {formatPrice(property.price, property.price_currency)}
+              </p>
 
               {summaryChips.length > 0 ? (
                 <>
@@ -927,52 +930,51 @@ export default async function PropertyDetailPage({ params }) {
         {/* Property video tour */}
         <section className={styles.videoSection}>
           <div className={styles.sectionIntro}>
-            <p className={styles.sectionKicker}>Walkthrough</p>
-            <h2 className={styles.sectionTitle}>Property Walkthrough</h2>
+            <p className={styles.sectionKicker}>Video Tour</p>
+            <h2 className={styles.sectionTitle}>Property Video Tour</h2>
             <p className={styles.sectionLead}>
               Watch a complete tour of this property
             </p>
           </div>
-          <div className={styles.videoFrame}>
-            {propertyVideos.length > 0 ? (
-              <PropertyWalkthroughPlayer
-                videos={propertyVideos}
-                poster={heroImage?.image_url || undefined}
-              />
-            ) : (
-              <>
-                {heroImage ? (
-                  <Image
-                    src={heroImage.image_url}
-                    alt=""
-                    fill
-                    sizes="100vw"
-                    className={styles.videoPoster}
-                    aria-hidden="true"
-                  />
-                ) : null}
-                <div className={styles.videoScrim} />
-                <div className={styles.videoContent}>
-                  <span className={styles.videoPlay} aria-hidden="true">
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-                      <path d="M8 5.5v13l11-6.5-11-6.5z" fill="currentColor" />
-                    </svg>
-                  </span>
-                  <p className={styles.videoKicker}>Property Walkthrough</p>
-                  <h3 className={styles.videoTitle}>
-                    Video walkthrough available on request
-                  </h3>
-                  <p className={styles.videoText}>
-                    A filmed tour is not uploaded yet. Contact the agent to
-                    arrange a private viewing or live walkthrough.
-                  </p>
-                  <a href="#inquiry" className={styles.videoCta}>
-                    Request Viewing
-                  </a>
-                </div>
-              </>
-            )}
-          </div>
+          {propertyVideos.length > 0 ? (
+            <PropertyVideoGallery
+              videos={propertyVideos}
+              poster={heroImage?.image_url || undefined}
+              watermarkText={companyName}
+            />
+          ) : (
+            <div className={styles.videoFrame}>
+              {heroImage ? (
+                <Image
+                  src={heroImage.image_url}
+                  alt=""
+                  fill
+                  sizes="100vw"
+                  className={styles.videoPoster}
+                  aria-hidden="true"
+                />
+              ) : null}
+              <div className={styles.videoScrim} />
+              <div className={styles.videoContent}>
+                <span className={styles.videoPlay} aria-hidden="true">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                    <path d="M8 5.5v13l11-6.5-11-6.5z" fill="currentColor" />
+                  </svg>
+                </span>
+                <p className={styles.videoKicker}>Property Walkthrough</p>
+                <h3 className={styles.videoTitle}>
+                  Video walkthrough available on request
+                </h3>
+                <p className={styles.videoText}>
+                  A filmed tour is not uploaded yet. Contact the agent to
+                  arrange a private viewing or live walkthrough.
+                </p>
+                <a href="#inquiry" className={styles.videoCta}>
+                  Request Viewing
+                </a>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Agency branding */}

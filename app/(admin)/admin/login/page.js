@@ -5,6 +5,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import PasswordInput from "@/components/PasswordInput";
+import { validateLoginInput } from "@/lib/validators/userValidator";
 import styles from "./page.module.css";
 
 export default function LoginPage() {
@@ -20,9 +21,15 @@ export default function LoginPage() {
     setError("");
 
     try {
+      const validated = validateLoginInput({ email, password });
+      if (!validated.ok) {
+        setError(validated.error);
+        return;
+      }
+
       const res = await signIn("credentials", {
-        email,
-        password,
+        email: validated.data.email,
+        password: validated.data.password,
         role: "superadmin",
         redirect: false,
       });
@@ -30,6 +37,18 @@ export default function LoginPage() {
       if (res?.error === "ACCOUNT_REVOKED") {
         setError(
           "Your account access has been revoked. Contact the administrator to request access.",
+        );
+        return;
+      }
+
+      if (
+        res?.error === "AUTH_DATABASE_UNAVAILABLE" ||
+        /EHOSTUNREACH|ECONNREFUSED|ENETUNREACH|timed out|Pool is closed/i.test(
+          String(res?.error || ""),
+        )
+      ) {
+        setError(
+          "Unable to reach the database. Check that MySQL is running and DB_HOST in .env is correct.",
         );
         return;
       }

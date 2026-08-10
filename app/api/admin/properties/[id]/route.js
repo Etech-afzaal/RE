@@ -17,6 +17,7 @@ import {
   toClientPropertyStatus,
   toDbPropertyStatus,
 } from "@/lib/status";
+import { validateRejectionReason } from "@/lib/validators/userValidator";
 
 /** Short label stored in approved_by / rejected_by (the env admin has no row). */
 function adminIdentity(session) {
@@ -72,7 +73,59 @@ export async function GET(_req, { params }) {
       return { ...image, category, category_label: imageCategoryLabel(category) };
     });
 
-    return NextResponse.json({ property: { ...property, images } });
+    let videos = [];
+    try {
+      const videoRows = await query(
+        `SELECT id, video_url, category, is_featured, display_order, created_at
+         FROM property_videos
+         WHERE property_id = ?
+         ORDER BY is_featured DESC, display_order ASC, id ASC`,
+        [propertyId],
+      );
+      videos = videoRows.map((video) => {
+        const category = normalizeImageCategory(video.category);
+        return {
+          ...video,
+          category,
+          category_label: category ? imageCategoryLabel(category) : null,
+        };
+      });
+    } catch {
+      // Table may not exist yet on older DBs — fall back to legacy video_url.
+      videos = [];
+    }
+
+    if (
+      videos.length === 0 &&
+      property.video_url &&
+      String(property.video_url).trim()
+    ) {
+      videos = [
+        {
+          id: null,
+          video_url: property.video_url,
+          category: null,
+          category_label: null,
+          is_featured: true,
+          display_order: 0,
+          created_at: null,
+        },
+      ];
+    }
+
+    const featuredVideo =
+      videos.find((video) => video.is_featured) || videos[0] || null;
+    const displayVideoUrl =
+      featuredVideo?.video_url || property.video_url || null;
+
+    return NextResponse.json({
+      property: {
+        ...property,
+        video_url: displayVideoUrl,
+        images,
+        videos,
+      },
+    });
   } catch (err) {
     console.error("Failed to load property for review:", err);
     return NextResponse.json(
@@ -110,12 +163,16 @@ export async function PATCH(req, { params }) {
   }
 
   const nextStatus = toDbPropertyStatus(requested);
-  const reason = String(body?.rejected_reason ?? "").trim();
-  if (nextStatus === PROPERTY_STATUS.REJECTED && !reason) {
-    return NextResponse.json(
-      { error: "A rejection reason is required." },
-      { status: 400 },
-    );
+  let reason = "";
+  if (nextStatus === PROPERTY_STATUS.REJECTED) {
+    const reasonCheck = validateRejectionReason(body?.rejected_reason);
+    if (!reasonCheck.ok) {
+      return NextResponse.json(
+        { error: reasonCheck.error || "A rejection reason is required." },
+        { status: 400 },
+      );
+    }
+    reason = reasonCheck.value;
   }
 
   try {

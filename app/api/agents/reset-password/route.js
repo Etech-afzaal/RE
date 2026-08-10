@@ -2,16 +2,17 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { requireAgent } from "@/lib/adminAuth";
 import { query } from "@/lib/db";
+import { validateNewPassword } from "@/lib/validators/userValidator";
 
 export async function POST(req) {
   const { session, error } = await requireAgent();
   if (error) return error;
 
   const { newPassword } = await req.json();
-
-  if (!newPassword || newPassword.length < 8) {
+  const passwordCheck = validateNewPassword(newPassword);
+  if (!passwordCheck.ok) {
     return NextResponse.json(
-      { error: "Password must be at least 8 characters." },
+      { error: passwordCheck.error },
       { status: 400 },
     );
   }

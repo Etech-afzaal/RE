@@ -5,21 +5,19 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Archive, CircleCheck, Send } from "lucide-react";
 import ActionMenu from "@/components/ActionMenu";
 import ImagePreviewModal from "@/components/ImagePreviewModal";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import Pagination from "@/components/Pagination";
-import { propertyPublicPath } from "@/lib/propertySlug";
+import { getPropertyUrl } from "@/lib/propertySlug";
+import { formatPropertyPrice } from "@/lib/formatPrice";
 import styles from "@/components/admin/adminUi.module.css";
 
 const ITEMS_PER_PAGE = 8;
 
-function formatPrice(value) {
-  if (value == null || value === "") return "—";
-  const num = Number(value);
-  if (Number.isNaN(num)) return String(value);
-  return new Intl.NumberFormat("en-PK", {
-    style: "currency",
-    currency: "PKR",
-    maximumFractionDigits: 0,
-  }).format(num);
+function formatPrice(value, currency) {
+  return formatPropertyPrice(value, currency, {
+    fallback: "—",
+    variant: "admin",
+  });
 }
 
 const statusClass = {
@@ -241,7 +239,11 @@ export default function AdminPropertiesPage() {
       {error && <p className={styles.errorText}>{error}</p>}
 
       {loading ? (
-        <div className={styles.loading}>Loading properties…</div>
+        <LoadingSpinner
+          fullPage={false}
+          label="Loading"
+          hint="Fetching properties…"
+        />
       ) : filtered.length === 0 ? (
         <div className={styles.emptyState}>No properties match your filters.</div>
       ) : (
@@ -294,10 +296,7 @@ export default function AdminPropertiesPage() {
                         )}
                         <div>
                           <a
-                            href={propertyPublicPath(
-                              property.estate_name,
-                              property,
-                            )}
+                            href={getPropertyUrl(property)}
                             className={styles.titleLink}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -328,7 +327,9 @@ export default function AdminPropertiesPage() {
                         <p className={styles.listSecondary}>—</p>
                       )}
                     </td>
-                    <td data-label="Price">{formatPrice(property.price)}</td>
+                    <td data-label="Price">
+                      {formatPrice(property.price, property.price_currency)}
+                    </td>
                     <td data-label="Status">
                       <span
                         className={`${styles.badge} ${
@@ -350,10 +351,7 @@ export default function AdminPropertiesPage() {
                           isLiveProperty(property.status)
                             ? () =>
                                 window.open(
-                                  propertyPublicPath(
-                                    property.estate_name,
-                                    property,
-                                  ),
+                                  getPropertyUrl(property),
                                   "_blank",
                                   "noopener,noreferrer",
                                 )

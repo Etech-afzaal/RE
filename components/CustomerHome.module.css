@@ -774,6 +774,13 @@
   font-weight: 600;
 }
 
+.fieldError {
+  color: #b71c1c;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
 .contactInput,
 .contactTextarea {
   width: 100%;

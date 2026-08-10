@@ -4,8 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ImagePreviewModal from "@/components/ImagePreviewModal";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import Pagination from "@/components/Pagination";
+import PropertyVideoGallery from "@/components/PropertyVideoGallery";
 import RejectPropertyDialog from "@/components/admin/RejectPropertyDialog";
+import { companyNameFromAgent } from "@/lib/agentBranding";
+import { formatPropertyPrice } from "@/lib/formatPrice";
+import { getPropertyUrl } from "@/lib/propertySlug";
 import styles from "@/components/admin/adminUi.module.css";
 
 const STATUS_BADGE = {
@@ -17,15 +22,11 @@ const STATUS_BADGE = {
 
 const IMAGES_PER_PAGE = 10;
 
-function formatPrice(value) {
-  if (value == null || value === "") return "—";
-  const num = Number(value);
-  if (Number.isNaN(num)) return String(value);
-  return new Intl.NumberFormat("en-PK", {
-    style: "currency",
-    currency: "PKR",
-    maximumFractionDigits: 0,
-  }).format(num);
+function formatPrice(value, currency) {
+  return formatPropertyPrice(value, currency, {
+    fallback: "—",
+    variant: "admin",
+  });
 }
 
 function formatDateTime(value) {
@@ -115,7 +116,13 @@ export default function ReviewClient({ propertyId }) {
   }, [imageTotalPages]);
 
   if (loading) {
-    return <div className={styles.loading}>Loading property…</div>;
+    return (
+      <LoadingSpinner
+        fullPage={false}
+        label="Loading"
+        hint="Opening property review…"
+      />
+    );
   }
 
   if (!property) {
@@ -130,6 +137,7 @@ export default function ReviewClient({ propertyId }) {
   }
 
   const isPending = property.status === "pending_approval";
+  const publicUrl = getPropertyUrl(property);
   const safeImagePage = Math.min(imagePage, imageTotalPages);
   const imageStart =
     images.length === 0 ? 0 : (safeImagePage - 1) * IMAGES_PER_PAGE;
@@ -211,20 +219,26 @@ export default function ReviewClient({ propertyId }) {
             </div>
           </section>
 
-          {property.video_url ? (
+          {(property.videos?.length > 0 || property.video_url) ? (
             <section className={styles.panel}>
               <div className={styles.panelHeader}>
                 <h2 className={styles.panelTitle}>Walkthrough video</h2>
               </div>
               <div className={styles.panelBody}>
-                <video
-                  className={styles.reviewVideo}
-                  controls
-                  preload="metadata"
-                  src={property.video_url}
-                >
-                  Your browser does not support this video format.
-                </video>
+                <PropertyVideoGallery
+                  videos={
+                    property.videos?.length
+                      ? property.videos
+                      : [{ video_url: property.video_url }]
+                  }
+                  autoPlayOnView={false}
+                  compact
+                  watermarkText={companyNameFromAgent({
+                    company_name: property.agent_company,
+                    estate_name: property.estate_name,
+                    username: property.agent_username,
+                  })}
+                />
               </div>
             </section>
           ) : null}
@@ -299,12 +313,28 @@ export default function ReviewClient({ propertyId }) {
               <h2 className={styles.panelTitle}>Property</h2>
             </div>
             <div className={styles.panelBody}>
-              <InfoRow label="Price">{formatPrice(property.price)}</InfoRow>
+              <InfoRow label="Price">
+                {formatPrice(property.price, property.price_currency)}
+              </InfoRow>
               <InfoRow label="Location">{property.location}</InfoRow>
               <InfoRow label="Size">
                 {property.size_value
                   ? `${property.size_value} ${property.size_unit}`
                   : null}
+              </InfoRow>
+              <InfoRow label="Public URL">
+                {publicUrl !== "#" ? (
+                  <a
+                    href={publicUrl}
+                    className={styles.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {publicUrl}
+                  </a>
+                ) : (
+                  "—"
+                )}
               </InfoRow>
               <InfoRow label="Images">{images.length}</InfoRow>
               <InfoRow label="Submitted">

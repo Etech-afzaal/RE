@@ -1,17 +1,26 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir, rm, writeFile } from "fs/promises";
 import path from "path";
 import sharp from "sharp";
 import { nanoid } from "nanoid";
 import { requireAgent } from "@/lib/adminAuth";
 import { query } from "@/lib/db";
 import { imageFormatErrorMessage, isImageFile } from "@/lib/imageUpload";
+import { resolvePublicUploadPath } from "@/lib/uploadPath";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 function agentIdFromSession(session) {
   return Number(session.user.agent_id || session.user.id);
+}
+
+/** Only unlink files under this agent's own uploads folder. */
+async function removeOwnedAgentFile(publicUrl, agentId) {
+  const expectedPrefix = `/uploads/agents/${agentId}/`;
+  if (!String(publicUrl || "").startsWith(expectedPrefix)) return;
+  const localPath = resolvePublicUploadPath(publicUrl);
+  if (localPath) await rm(localPath, { force: true });
 }
 
 export async function GET() {
@@ -125,6 +134,45 @@ export async function POST(req) {
             ? imageFormatErrorMessage()
             : "Could not upload profile image. Please try again.",
       },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE() {
+  const { session, error } = await requireAgent();
+  if (error) return error;
+
+  const agentId = agentIdFromSession(session);
+
+  try {
+    const agents = await query(
+      "SELECT username, estate_name, profile_image FROM users WHERE id = ? AND user_type = 'agent' LIMIT 1",
+      [agentId],
+    );
+    const agent = agents[0];
+    if (!agent) {
+      return NextResponse.json({ error: "Agent not found." }, { status: 404 });
+    }
+
+    if (!agent.profile_image) {
+      return NextResponse.json({ success: true, profile_image: null });
+    }
+
+    await removeOwnedAgentFile(agent.profile_image, agentId);
+    await query(
+      "UPDATE users SET profile_image = NULL WHERE id = ? AND user_type = 'agent'",
+      [agentId],
+    );
+
+    revalidatePath("/");
+    revalidatePath(`/re/${agent.username || agent.estate_name}`);
+
+    return NextResponse.json({ success: true, profile_image: null });
+  } catch (err) {
+    console.error("Failed to remove agent profile image:", err);
+    return NextResponse.json(
+      { error: "Could not remove profile image. Please try again." },
       { status: 500 },
     );
   }

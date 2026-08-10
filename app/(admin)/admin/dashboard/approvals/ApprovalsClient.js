@@ -5,20 +5,19 @@ import { useRouter } from "next/navigation";
 import { CircleCheck, CircleX, Eye } from "lucide-react";
 import ActionMenu from "@/components/ActionMenu";
 import ImagePreviewModal from "@/components/ImagePreviewModal";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import RejectPropertyDialog from "@/components/admin/RejectPropertyDialog";
+import { formatPropertyPrice } from "@/lib/formatPrice";
+import { getPropertyUrl } from "@/lib/propertySlug";
 import styles from "@/components/admin/adminUi.module.css";
 
 const ITEMS_PER_PAGE = 8;
 
-function formatPrice(value) {
-  if (value == null || value === "") return "—";
-  const num = Number(value);
-  if (Number.isNaN(num)) return String(value);
-  return new Intl.NumberFormat("en-PK", {
-    style: "currency",
-    currency: "PKR",
-    maximumFractionDigits: 0,
-  }).format(num);
+function formatPrice(value, currency) {
+  return formatPropertyPrice(value, currency, {
+    fallback: "—",
+    variant: "admin",
+  });
 }
 
 function formatDate(value) {
@@ -119,7 +118,11 @@ export default function ApprovalsClient() {
       ) : null}
 
       {loading ? (
-        <div className={styles.loading}>Loading submissions…</div>
+        <LoadingSpinner
+          fullPage={false}
+          label="Loading"
+          hint="Fetching submissions…"
+        />
       ) : properties.length === 0 ? (
         <div className={styles.emptyState}>
           Nothing to review. Submitted listings will appear here.
@@ -173,7 +176,14 @@ export default function ApprovalsClient() {
                           </div>
                         )}
                         <div>
-                          <p className={styles.listPrimary}>{property.title}</p>
+                          <a
+                            href={getPropertyUrl(property)}
+                            className={styles.titleLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {property.title}
+                          </a>
                           <p className={styles.listSecondary}>
                             {property.location || "—"}
                           </p>
@@ -186,7 +196,9 @@ export default function ApprovalsClient() {
                         /re/{property.estate_name}
                       </p>
                     </td>
-                    <td data-label="Price">{formatPrice(property.price)}</td>
+                    <td data-label="Price">
+                      {formatPrice(property.price, property.price_currency)}
+                    </td>
                     <td data-label="Submitted">{formatDate(property.submitted_at)}</td>
                     <td data-label="Status">
                       <span className={`${styles.badge} ${styles.badgePending}`}>

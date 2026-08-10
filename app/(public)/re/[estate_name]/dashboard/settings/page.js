@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import PasswordInput from "@/components/PasswordInput";
 import ui from "@/components/agent-portal/portal.module.css";
+import { validateNewPassword } from "@/lib/validators/userValidator";
 
 export default function AgentSettingsPage() {
   const params = useParams();
@@ -25,15 +27,22 @@ export default function AgentSettingsPage() {
   }, [status, router]);
 
   if (status === "loading" || status === "unauthenticated") {
-    return null;
+    return (
+      <LoadingSpinner
+        fullPage
+        label="Loading"
+        hint="Preparing your workspace…"
+      />
+    );
   }
 
   async function changePassword(e) {
     e.preventDefault();
     setError("");
     setSuccess("");
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+    const passwordCheck = validateNewPassword(password);
+    if (!passwordCheck.ok) {
+      setError(passwordCheck.error);
       return;
     }
     if (password !== confirm) {
@@ -44,7 +53,7 @@ export default function AgentSettingsPage() {
     const res = await fetch("/api/agents/reset-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ newPassword: password }),
+      body: JSON.stringify({ newPassword: passwordCheck.value }),
     });
     const data = await res.json().catch(() => ({}));
     setSaving(false);

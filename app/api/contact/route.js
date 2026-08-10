@@ -2,16 +2,7 @@ import { NextResponse } from "next/server";
 import { sendMail } from "@/lib/mail";
 import { query } from "@/lib/db";
 import { AGENT_LIVE_STATUS } from "@/lib/status";
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function normalizeText(value) {
-  const text = String(value ?? "")
-    .replace(/[\r\n]+/g, " ")
-    .trim();
-
-  return text;
-}
+import { validateContactInput } from "@/lib/validators/inquiryValidator";
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -55,28 +46,19 @@ export async function POST(req) {
 
   console.log("Contact request received");
 
-  const estate_name = normalizeText(body?.estate_name);
-  const full_name = normalizeText(body?.full_name || body?.name);
-  const email = normalizeText(body?.email).toLowerCase();
-  const phone = normalizeText(body?.phone);
-  const subject = normalizeText(body?.subject);
-  const message = normalizeText(body?.message);
-
-  if (
-    !full_name ||
-    !email ||
-    !subject ||
-    !message ||
-    !EMAIL_REGEX.test(email) ||
-    message.length > 2000 ||
-    subject.length > 150 ||
-    full_name.length > 150
-  ) {
+  const validated = validateContactInput(body);
+  if (!validated.ok) {
     return NextResponse.json(
-      { error: "Unable to send your message. Please try again." },
+      {
+        error:
+          validated.error || "Unable to send your message. Please try again.",
+      },
       { status: 400 },
     );
   }
+
+  const { estate_name, full_name, email, phone, subject, message } =
+    validated.data;
 
   try {
     if (estate_name) {

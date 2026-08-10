@@ -19,6 +19,7 @@ import {
   PROPERTY_LOCKED_MESSAGE,
   PROPERTY_STATUS,
 } from "@/lib/status";
+import { validatePropertyDraftInput } from "@/lib/validators/propertyValidator";
 import { rm } from "fs/promises";
 import path from "path";
 
@@ -53,15 +54,40 @@ export async function GET(_req, { params }) {
   let videos = [];
   try {
     const videoRows = await query(
-      `SELECT id, video_url, category, is_featured, display_order
+      `SELECT id, video_url, category, is_featured, display_order, created_at
        FROM property_videos
        WHERE property_id = ?
        ORDER BY is_featured DESC, display_order ASC, id ASC`,
       [propertyId],
     );
-    videos = videoRows;
+    videos = videoRows.map((video) => {
+      const category = normalizeImageCategory(video.category);
+      return {
+        ...video,
+        category,
+        category_label: category ? imageCategoryLabel(category) : null,
+      };
+    });
   } catch {
     videos = [];
+  }
+
+  if (
+    videos.length === 0 &&
+    property.video_url &&
+    String(property.video_url).trim()
+  ) {
+    videos = [
+      {
+        id: null,
+        video_url: property.video_url,
+        category: null,
+        category_label: null,
+        is_featured: true,
+        display_order: 0,
+        created_at: null,
+      },
+    ];
   }
 
   const featuredVideo =
@@ -85,16 +111,28 @@ export async function PUT(req, { params }) {
 
   const propertyId = Number(params.id);
   const body = await req.json();
-  const { title, description, size_value, size_unit, price, status } = body;
-  const locationFields = normalizeLocationFields(body);
-
-  if (!title || !String(title).trim()) {
-    return NextResponse.json({ error: "Title is required." }, { status: 400 });
+  const validated = validatePropertyDraftInput(body);
+  if (!validated.ok) {
+    return NextResponse.json({ error: validated.error }, { status: 400 });
   }
+
+  const {
+    title,
+    description,
+    size_value,
+    size_unit,
+    price,
+    price_currency,
+  } = validated.data;
+  const status = body.status;
+  const locationFields = normalizeLocationFields({
+    ...body,
+    ...validated.data,
+  });
 
   const agentId = agentIdFrom(session);
   const existing = await query(
-    "SELECT id, status, approved_at, title FROM properties WHERE id = ? AND agent_id = ?",
+    "SELECT id, status, approved_at, title, price_currency FROM properties WHERE id = ? AND agent_id = ?",
     [propertyId, agentId],
   );
   if (existing.length === 0) {
@@ -143,19 +181,22 @@ export async function PUT(req, { params }) {
   }
 
   const trimmedTitle = String(title).trim();
+  const nextCurrency = price_currency || current.price_currency || "PKR";
 
   if (locationFields.hasStructured) {
     await query(
       `UPDATE properties
        SET title = ?, description = ?, size_value = ?, size_unit = ?, price = ?,
-           location = ?, city = ?, area = ?, phase = ?, address = ?, status = ?
+           price_currency = ?, location = ?, city = ?, area = ?, phase = ?,
+           address = ?, status = ?
        WHERE id = ? AND agent_id = ?`,
       [
         trimmedTitle,
         description || null,
-        size_value || null,
+        size_value ?? null,
         size_unit || "marla",
-        price || null,
+        price ?? null,
+        nextCurrency,
         locationFields.location,
         locationFields.city,
         locationFields.area,
@@ -170,14 +211,15 @@ export async function PUT(req, { params }) {
     await query(
       `UPDATE properties
        SET title = ?, description = ?, size_value = ?, size_unit = ?, price = ?,
-           location = ?, status = ?
+           price_currency = ?, location = ?, status = ?
        WHERE id = ? AND agent_id = ?`,
       [
         trimmedTitle,
         description || null,
-        size_value || null,
+        size_value ?? null,
         size_unit || "marla",
-        price || null,
+        price ?? null,
+        nextCurrency,
         locationFields.location,
         nextStatus,
         propertyId,

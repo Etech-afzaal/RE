@@ -5,7 +5,9 @@ import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import ui from "@/components/agent-portal/portal.module.css";
+import { validateCompanyBrandingInput } from "@/lib/validators/userValidator";
 
 export default function CompanyBrandingPage() {
   const params = useParams();
@@ -22,6 +24,8 @@ export default function CompanyBrandingPage() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [removingLogo, setRemovingLogo] = useState(false);
+  const [confirmRemoveLogo, setConfirmRemoveLogo] = useState(false);
   const [selectedLogo, setSelectedLogo] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
   const [error, setError] = useState("");
@@ -65,10 +69,21 @@ export default function CompanyBrandingPage() {
     setSaving(true);
     setError("");
     setSuccess("");
+
+    const validated = validateCompanyBrandingInput(form);
+    if (!validated.ok) {
+      setSaving(false);
+      setError(validated.error);
+      return;
+    }
+
     const res = await fetch("/api/agent/company-branding", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        ...form,
+        ...validated.data,
+      }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -99,6 +114,25 @@ export default function CompanyBrandingPage() {
     setSelectedLogo(file);
   }
 
+  async function removeCompanyLogo() {
+    setRemovingLogo(true);
+    setError("");
+    setSuccess("");
+    const res = await fetch("/api/agent/company-logo", { method: "DELETE" });
+    const data = await res.json().catch(() => ({}));
+    setRemovingLogo(false);
+    if (!res.ok) {
+      setError(data.error || "Could not remove company logo.");
+      return;
+    }
+    setForm((prev) => ({ ...prev, company_logo: null }));
+    setSelectedLogo(null);
+    setConfirmRemoveLogo(false);
+    setSuccess("Company logo removed successfully.");
+  }
+
+  const showRemoveLogo = Boolean(form.company_logo) && !selectedLogo;
+
   return (
     <AgentPortalShell
       username={username}
@@ -107,31 +141,56 @@ export default function CompanyBrandingPage() {
       subtitle="Control how your public estate website presents your agency"
     >
       <form className={ui.formCard} onSubmit={save}>
-        {loading ? <p className={ui.muted}>Loading…</p> : null}
+        {loading ? (
+          <LoadingSpinner
+            fullPage={false}
+            label="Loading"
+            hint="Loading branding…"
+          />
+        ) : null}
         {error ? <p className={ui.error}>{error}</p> : null}
         {success ? <p className={ui.success}>{success}</p> : null}
 
-        <div style={{ display: "flex", gap: "1rem", alignItems: "center", marginBottom: "1rem" }}>
-          {logoPreview || form.company_logo ? (
-            <Image
-              src={logoPreview || form.company_logo}
-              alt=""
-              width={72}
-              height={72}
-              style={{ borderRadius: 14, objectFit: "cover" }}
-            />
-          ) : (
-            <div className={ui.thumbFallback} style={{ width: 72, height: 72, borderRadius: 14 }}>
-              Co
-            </div>
-          )}
+        <div className={ui.brandAssetRow}>
+          <div
+            className={`${ui.brandAssetPreview} ${ui.brandAssetPreviewSquare}`}
+          >
+            {logoPreview || form.company_logo ? (
+              <Image
+                src={logoPreview || form.company_logo}
+                alt=""
+                width={72}
+                height={72}
+                style={{ borderRadius: 14, objectFit: "cover" }}
+              />
+            ) : (
+              <div className={ui.thumbFallback} style={{ width: 72, height: 72, borderRadius: 14 }}>
+                Co
+              </div>
+            )}
+            {showRemoveLogo ? (
+              <button
+                type="button"
+                className={ui.brandAssetRemove}
+                aria-label="Remove company logo"
+                disabled={saving || removingLogo}
+                onClick={() => {
+                  setError("");
+                  setSuccess("");
+                  setConfirmRemoveLogo(true);
+                }}
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
           <label className={ui.btnGhost} style={{ cursor: "pointer" }}>
             {selectedLogo ? "Logo selected" : "Upload company logo"}
             <input
               type="file"
               accept="image/*"
               hidden
-              disabled={saving}
+              disabled={saving || removingLogo}
               onChange={(e) => selectLogo(e.target.files?.[0])}
             />
           </label>
@@ -182,11 +241,49 @@ export default function CompanyBrandingPage() {
           />
         </label>
         <div className={ui.formActions}>
-          <button type="submit" className={ui.btnPrimary} disabled={saving}>
+          <button type="submit" className={ui.btnPrimary} disabled={saving || removingLogo}>
             {saving ? "Saving…" : "Save Branding"}
           </button>
         </div>
       </form>
+
+      {confirmRemoveLogo ? (
+        <div className={ui.dialogBackdrop} role="presentation">
+          <div
+            className={ui.dialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="remove-company-logo-title"
+            aria-describedby="remove-company-logo-description"
+          >
+            <h2 id="remove-company-logo-title" className={ui.dialogTitle}>
+              Remove Company Logo?
+            </h2>
+            <p id="remove-company-logo-description" className={ui.dialogText}>
+              Are you sure you want to remove this company logo? This action
+              cannot be undone.
+            </p>
+            <div className={ui.dialogActions}>
+              <button
+                type="button"
+                className={ui.btnGhost}
+                disabled={removingLogo}
+                onClick={() => setConfirmRemoveLogo(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={ui.btnDanger}
+                disabled={removingLogo}
+                onClick={removeCompanyLogo}
+              >
+                {removingLogo ? "Removing…" : "Remove"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </AgentPortalShell>
   );
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
 import ActionMenu from "@/components/ActionMenu";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { isAgentRole } from "@/lib/roles";
 
 export default function AgentDashboardPage() {
@@ -40,7 +41,7 @@ export default function AgentDashboardPage() {
 
       const handle = sessionUser.username || sessionUser.estate_name;
       if (handle) {
-        router.replace(`/re/${encodeURIComponent(handle)}/adminarea`);
+        router.replace(`/re/${encodeURIComponent(handle)}/dashboard`);
         return;
       }
 
@@ -134,7 +135,13 @@ export default function AgentDashboardPage() {
   }
 
   if (loading) {
-    return <p style={{ margin: "40px auto", maxWidth: 860 }}>Loading...</p>;
+    return (
+      <LoadingSpinner
+        fullPage
+        label="Loading"
+        hint="Preparing your workspace…"
+      />
+    );
   }
 
   return (

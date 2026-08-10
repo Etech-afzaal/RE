@@ -8,6 +8,9 @@ import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import ActionMenu from "@/components/ActionMenu";
 import ImagePreviewModal from "@/components/ImagePreviewModal";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { formatPropertyPrice } from "@/lib/formatPrice";
+import { getPropertyUrl } from "@/lib/propertySlug";
 import ui from "@/components/agent-portal/portal.module.css";
 
 /** `id` matches the stats payload key; `status` filters the properties list. */
@@ -25,10 +28,8 @@ function greeting() {
   return "Good Evening";
 }
 
-function formatPrice(value) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return "—";
-  return `PKR ${n.toLocaleString("en-PK")}`;
+function formatPrice(value, currency) {
+  return formatPropertyPrice(value, currency, { fallback: "—" });
 }
 
 /** Date-only label from properties.created_at, e.g. "30 Jul 2026". */
@@ -96,7 +97,7 @@ export default function AgentAdminDashboardPage() {
   }, [status, router]);
 
   const recent = properties.slice(0, 8);
-  const base = `/re/${encodeURIComponent(username)}/adminarea`;
+  const base = `/re/${encodeURIComponent(username)}/dashboard`;
 
   return (
     <AgentPortalShell
@@ -137,7 +138,11 @@ export default function AgentAdminDashboardPage() {
           </Link>
         </div>
         {loading ? (
-          <p className={ui.empty}>Loading properties…</p>
+          <LoadingSpinner
+            fullPage={false}
+            label="Loading"
+            hint="Fetching properties…"
+          />
         ) : recent.length === 0 ? (
           <div className={ui.empty}>
             <p className={ui.muted}>No properties yet.</p>
@@ -213,13 +218,18 @@ export default function AgentAdminDashboardPage() {
                           {statusLabel(property.status)}
                         </span>
                       </td>
-                      <td>{formatPrice(property.price)}</td>
+                      <td>{formatPrice(property.price, property.price_currency)}</td>
                       <td data-label="Actions">
                         <ActionMenu
                           ariaLabel={`Actions for ${property.title}`}
                           onView={
                             property.status === "approved"
-                              ? () => window.open(`/re/${encodeURIComponent(username)}/${property.id}`, "_blank", "noopener,noreferrer")
+                              ? () =>
+                                  window.open(
+                                    getPropertyUrl(property, username),
+                                    "_blank",
+                                    "noopener,noreferrer",
+                                  )
                               : () => router.push(`${base}/properties/${property.id}/edit`)
                           }
                           onEdit={

@@ -30,6 +30,7 @@ export async function GET(req) {
          p.id,
          p.title,
          p.price,
+         p.price_currency,
          p.location,
          p.size_value,
          p.size_unit,

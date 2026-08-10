@@ -5,6 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import { useIsMobile } from "@/lib/useIsMobile";
+import { validateContactInput } from "@/lib/validators/inquiryValidator";
+import { sanitizeSearchInput } from "@/lib/validators/common";
 import styles from "./CustomerHome.module.css";
 
 const DESKTOP_AGENT_PAGE_SIZE = 9;
@@ -222,6 +224,7 @@ export default function CustomerHome({ agents = [], areas = [] }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [openFaq, setOpenFaq] = useState(null);
   const [contactForm, setContactForm] = useState(EMPTY_CONTACT_FORM);
+  const [contactFieldErrors, setContactFieldErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState(false);
   const [errorMessage, setErrorMessage] = useState(false);
@@ -304,6 +307,13 @@ export default function CustomerHome({ agents = [], areas = [] }) {
     return (event) => {
       const value = event.target.value;
       setContactForm((prev) => ({ ...prev, [field]: value }));
+      if (contactFieldErrors[field]) {
+        setContactFieldErrors((prev) => {
+          const next = { ...prev };
+          delete next[field];
+          return next;
+        });
+      }
     };
   }
 
@@ -311,19 +321,28 @@ export default function CustomerHome({ agents = [], areas = [] }) {
     event.preventDefault();
     if (isSubmitting) return;
 
+    const validated = validateContactInput(contactForm);
+    if (!validated.ok) {
+      setContactFieldErrors(
+        validated.field ? { [validated.field]: validated.error } : {},
+      );
+      return;
+    }
+
     setIsSubmitting(true);
     clearFeedback();
+    setContactFieldErrors({});
 
     try {
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          full_name: contactForm.full_name,
-          email: contactForm.email,
-          phone: contactForm.phone,
-          subject: contactForm.subject,
-          message: contactForm.message,
+          full_name: validated.data.full_name,
+          email: validated.data.email,
+          phone: validated.data.phone,
+          subject: validated.data.subject,
+          message: validated.data.message,
         }),
       });
 
@@ -416,7 +435,9 @@ export default function CustomerHome({ agents = [], areas = [] }) {
                 <input
                   type="search"
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) =>
+                    setQuery(sanitizeSearchInput(e.target.value).value)
+                  }
                   placeholder="Search by name, agency, or expertise"
                   aria-label="Search agents"
                 />
@@ -602,6 +623,7 @@ export default function CustomerHome({ agents = [], areas = [] }) {
                   <form
                     className={styles.contactForm}
                     onSubmit={handleContactSubmit}
+                    noValidate
                   >
                     <div className={styles.contactFields}>
                       <label className={styles.formField}>
@@ -610,13 +632,19 @@ export default function CustomerHome({ agents = [], areas = [] }) {
                           type="text"
                           name="full_name"
                           required
-                          maxLength={150}
+                          maxLength={100}
                           value={contactForm.full_name}
                           onChange={handleContactFieldChange("full_name")}
                           placeholder="Full Name"
                           className={styles.contactInput}
                           disabled={isSubmitting}
+                          aria-invalid={Boolean(contactFieldErrors.full_name)}
                         />
+                        {contactFieldErrors.full_name ? (
+                          <span className={styles.fieldError}>
+                            {contactFieldErrors.full_name}
+                          </span>
+                        ) : null}
                       </label>
                       <label className={styles.formField}>
                         <span className={styles.formLabel}>Email Address</span>
@@ -629,19 +657,32 @@ export default function CustomerHome({ agents = [], areas = [] }) {
                           placeholder="Email Address"
                           className={styles.contactInput}
                           disabled={isSubmitting}
+                          aria-invalid={Boolean(contactFieldErrors.email)}
                         />
+                        {contactFieldErrors.email ? (
+                          <span className={styles.fieldError}>
+                            {contactFieldErrors.email}
+                          </span>
+                        ) : null}
                       </label>
                       <label className={styles.formField}>
                         <span className={styles.formLabel}>Phone Number</span>
                         <input
                           type="tel"
                           name="phone"
+                          maxLength={20}
                           value={contactForm.phone}
                           onChange={handleContactFieldChange("phone")}
                           placeholder="Phone Number"
                           className={styles.contactInput}
                           disabled={isSubmitting}
+                          aria-invalid={Boolean(contactFieldErrors.phone)}
                         />
+                        {contactFieldErrors.phone ? (
+                          <span className={styles.fieldError}>
+                            {contactFieldErrors.phone}
+                          </span>
+                        ) : null}
                       </label>
                       <label className={styles.formField}>
                         <span className={styles.formLabel}>Subject</span>
@@ -655,7 +696,13 @@ export default function CustomerHome({ agents = [], areas = [] }) {
                           placeholder="Buying, selling, or renting"
                           className={styles.contactInput}
                           disabled={isSubmitting}
+                          aria-invalid={Boolean(contactFieldErrors.subject)}
                         />
+                        {contactFieldErrors.subject ? (
+                          <span className={styles.fieldError}>
+                            {contactFieldErrors.subject}
+                          </span>
+                        ) : null}
                       </label>
                       <label className={`${styles.formField} ${styles.messageField}`}>
                         <span className={styles.formLabel}>Message</span>
@@ -663,13 +710,19 @@ export default function CustomerHome({ agents = [], areas = [] }) {
                           name="message"
                           rows="5"
                           required
-                          maxLength={2000}
+                          maxLength={1000}
                           value={contactForm.message}
                           onChange={handleContactFieldChange("message")}
                           placeholder="Write your message"
                           className={styles.contactTextarea}
                           disabled={isSubmitting}
+                          aria-invalid={Boolean(contactFieldErrors.message)}
                         />
+                        {contactFieldErrors.message ? (
+                          <span className={styles.fieldError}>
+                            {contactFieldErrors.message}
+                          </span>
+                        ) : null}
                       </label>
                     </div>
                     <button

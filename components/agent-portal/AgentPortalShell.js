@@ -4,6 +4,10 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import {
+  SidebarTooltip,
+  useSidebarTooltip,
+} from "@/components/SidebarTooltip";
 import { useSidebarCollapsed } from "@/lib/useSidebarCollapsed";
 import styles from "./AgentPortalShell.module.css";
 
@@ -167,7 +171,8 @@ export default function AgentPortalShell({
   const { collapsed, toggleCollapsed } = useSidebarCollapsed(
     "agent.sidebarCollapsed",
   );
-  const base = `/re/${encodeURIComponent(username)}/adminarea`;
+  const { tip, tipHandlers, hideTooltip } = useSidebarTooltip(collapsed);
+  const base = `/re/${encodeURIComponent(username)}/dashboard`;
   const items = useMemo(() => navItems(base), [base]);
   const activeItem = items.find((item) => isActive(pathname, item));
 
@@ -197,8 +202,10 @@ export default function AgentPortalShell({
             type="button"
             className={styles.collapseBtn}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             onClick={toggleCollapsed}
+            {...tipHandlers(
+              collapsed ? "Expand sidebar" : "Collapse sidebar",
+            )}
           >
             <CollapseIcon collapsed={collapsed} />
           </button>
@@ -212,8 +219,11 @@ export default function AgentPortalShell({
                 key={item.href}
                 href={item.href}
                 className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`}
-                title={collapsed ? item.label : undefined}
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  hideTooltip();
+                  setOpen(false);
+                }}
+                {...tipHandlers(item.label)}
               >
                 <span className={styles.navIcon}>{item.icon}</span>
                 <span className={styles.navLabel}>{item.label}</span>
@@ -228,7 +238,8 @@ export default function AgentPortalShell({
             className={styles.viewSite}
             target="_blank"
             rel="noopener noreferrer"
-            title={collapsed ? "View public website" : undefined}
+            onClick={hideTooltip}
+            {...tipHandlers("View public website")}
           >
             <span className={styles.footerIcon} aria-hidden="true">
               <svg viewBox="0 0 24 24">
@@ -247,9 +258,9 @@ export default function AgentPortalShell({
           <button
             type="button"
             className={styles.logoutBtn}
-            title={collapsed ? "Logout" : undefined}
             aria-label="Logout"
             onClick={() => signOut({ callbackUrl: "/agent/login" })}
+            {...tipHandlers("Logout")}
           >
             {collapsed ? (
               <span className={styles.footerIcon} aria-hidden="true">
@@ -270,6 +281,8 @@ export default function AgentPortalShell({
           </button>
         </div>
       </aside>
+
+      <SidebarTooltip tip={tip} />
 
       <div className={styles.main}>
         <header className={styles.topbar}>

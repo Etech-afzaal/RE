@@ -21,6 +21,7 @@ export async function POST(req) {
       email: body?.email,
       phone: body?.phone,
       message: body?.message,
+      page_url: body?.page_url,
     });
 
     if (!result.ok) {

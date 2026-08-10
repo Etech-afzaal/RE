@@ -3,16 +3,18 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { propertyPublicPath } from "@/lib/propertySlug";
+import { getPropertyUrl } from "@/lib/propertySlug";
 import { formatPropertyLocation } from "@/lib/propertyLocation";
+import { formatPropertyPrice } from "@/lib/formatPrice";
 import { useIsMobile } from "@/lib/useIsMobile";
+import { sanitizeSearchInput } from "@/lib/validators/common";
 import styles from "./HomeListings.module.css";
 
 const DESKTOP_PAGE_SIZE = 3;
 const MOBILE_PAGE_SIZE = 4;
 
-const formatPrice = (price) =>
-  price ? `PKR ${Number(price).toLocaleString()}` : "On request";
+const formatPrice = (price, currency) =>
+  formatPropertyPrice(price, currency, { fallback: "On request" });
 
 const formatSize = (value, unit) => {
   if (value == null || value === "") return null;
@@ -263,7 +265,7 @@ function PropertyCard({ property }) {
 
   return (
     <Link
-      href={propertyPublicPath(null, property)}
+      href={getPropertyUrl(property)}
       className={styles.card}
     >
       <div className={styles.media}>
@@ -327,7 +329,9 @@ function PropertyCard({ property }) {
         <div className={styles.footer}>
           <div className={styles.footerItem}>
             <span className={styles.footerLabel}>Price</span>
-            <span className={styles.footerValue}>{formatPrice(property.price)}</span>
+            <span className={styles.footerValue}>
+              {formatPrice(property.price, property.price_currency)}
+            </span>
           </div>
         </div>
       </div>
@@ -578,7 +582,9 @@ export default function HomeListings({ properties = [] }) {
           <input
             type="search"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) =>
+              setQuery(sanitizeSearchInput(e.target.value).value)
+            }
             placeholder="Search by area, title, or agent"
             aria-label="Search listings"
           />

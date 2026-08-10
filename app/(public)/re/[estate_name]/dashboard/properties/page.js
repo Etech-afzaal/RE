@@ -8,8 +8,11 @@ import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import ActionMenu from "@/components/ActionMenu";
 import ImagePreviewModal from "@/components/ImagePreviewModal";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import Pagination from "@/components/Pagination";
 import { formatPropertyLocation } from "@/lib/propertyLocation";
+import { formatPropertyPrice } from "@/lib/formatPrice";
+import { getPropertyUrl } from "@/lib/propertySlug";
 import ui from "@/components/agent-portal/portal.module.css";
 
 const TABS = [
@@ -21,10 +24,8 @@ const TABS = [
   { id: "sold", label: "Sold" },
 ];
 
-function formatPrice(value) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return "—";
-  return `PKR ${n.toLocaleString("en-PK")}`;
+function formatPrice(value, currency) {
+  return formatPropertyPrice(value, currency, { fallback: "—" });
 }
 
 /** Date-only label from properties.created_at, e.g. "30 Jul 2026". */
@@ -66,7 +67,7 @@ export default function AgentPropertiesPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const username = decodeURIComponent(params.estate_name || "");
-  const base = `/re/${encodeURIComponent(username)}/adminarea`;
+  const base = `/re/${encodeURIComponent(username)}/dashboard`;
   const [tab, setTab] = useState("all");
   const [properties, setProperties] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -236,7 +237,11 @@ export default function AgentPropertiesPage() {
         ) : null}
         {success ? <p className={ui.success}>{success}</p> : null}
         {loading ? (
-          <p className={ui.empty}>Loading…</p>
+          <LoadingSpinner
+            fullPage={false}
+            label="Loading"
+            hint="Fetching properties…"
+          />
         ) : properties.length === 0 ? (
           <p className={ui.empty}>No properties in this tab.</p>
         ) : (
@@ -321,13 +326,20 @@ export default function AgentPropertiesPage() {
                           </p>
                         ) : null}
                       </td>
-                      <td data-label="Price">{formatPrice(property.price)}</td>
+                      <td data-label="Price">
+                        {formatPrice(property.price, property.price_currency)}
+                      </td>
                       <td data-label="Actions">
                         <ActionMenu
                           ariaLabel={`Actions for ${property.title}`}
                           onView={
                             property.status === "approved"
-                              ? () => window.open(`/re/${encodeURIComponent(username)}/${property.id}`, "_blank", "noopener,noreferrer")
+                              ? () =>
+                                  window.open(
+                                    getPropertyUrl(property, username),
+                                    "_blank",
+                                    "noopener,noreferrer",
+                                  )
                               : isPending
                               ? () => router.push(editHref)
                               : undefined

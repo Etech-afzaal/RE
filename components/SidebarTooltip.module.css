@@ -1,0 +1,54 @@
+.tooltip {
+  position: fixed;
+  z-index: 120;
+  transform: translateY(-50%);
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #211b12;
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.32);
+  animation: sidebarTipIn 160ms ease forwards;
+}
+
+.arrow {
+  position: absolute;
+  left: -5px;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transform: translateY(-50%);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-right: 6px solid var(--gold, #f2bb46);
+}
+
+@keyframes sidebarTipIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+@media (max-width: 960px) {
+  .tooltip {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tooltip {
+    animation: none;
+    opacity: 1;
+  }
+}

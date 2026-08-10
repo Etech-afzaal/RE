@@ -1,6 +1,9 @@
 .shell {
   display: flex;
-  height: 100vh;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   background:
     radial-gradient(ellipse 70% 45% at 100% 0%, rgba(242, 187, 70, 0.12), transparent 55%),
@@ -18,15 +21,15 @@
 }
 
 .sidebar {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 50;
   display: flex;
   flex-direction: column;
   width: 260px;
-  height: 100vh;
+  height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 1.35rem 1rem 1.25rem;
   background: #2a2418;
   color: #f5f0e6;
@@ -290,8 +293,11 @@
 .main {
   flex: 1;
   min-width: 0;
-  height: 100vh;
+  min-height: 0;
+  height: 100%;
+  overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
 }
@@ -394,6 +400,9 @@
 @media (max-width: 960px) {
   /* Below the drawer breakpoint the page scrolls normally again. */
   .shell {
+    position: relative;
+    inset: auto;
+    width: 100%;
     min-height: 100vh;
     height: auto;
     overflow: visible;
@@ -452,7 +461,10 @@
 
   .main {
     height: auto;
+    min-height: 0;
+    overflow-x: visible;
     overflow-y: visible;
+    overscroll-behavior: auto;
   }
 
   .menuBtn {

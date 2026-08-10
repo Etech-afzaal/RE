@@ -8,6 +8,7 @@ import {
   getRequestIp,
 } from "@/lib/auditLogger";
 import { query } from "@/lib/db";
+import { validateAgentProfileInput } from "@/lib/validators/userValidator";
 
 function agentIdFrom(session) {
   return Number(session.user.agent_id || session.user.id);
@@ -36,16 +37,12 @@ export async function PATCH(req) {
 
   const agentId = agentIdFrom(session);
   const body = await req.json().catch(() => ({}));
-  const full_name = String(body.full_name || "").trim();
-  const phone = String(body.phone || "").trim();
-  const description =
-    body.description != null ? String(body.description).trim() : null;
-  const areas_served =
-    body.areas_served != null ? String(body.areas_served).trim() : null;
-
-  if (!full_name) {
-    return NextResponse.json({ error: "Name is required." }, { status: 400 });
+  const validated = validateAgentProfileInput(body);
+  if (!validated.ok) {
+    return NextResponse.json({ error: validated.error }, { status: 400 });
   }
+
+  const { full_name, phone, description, areas_served } = validated.data;
 
   // Email stays identity-bound; do not allow arbitrary email changes here.
   await query(

@@ -8,6 +8,7 @@ import {
   getRequestIp,
 } from "@/lib/auditLogger";
 import { query } from "@/lib/db";
+import { validateCompanyBrandingInput } from "@/lib/validators/userValidator";
 
 function agentIdFrom(session) {
   return Number(session.user.agent_id || session.user.id);
@@ -36,14 +37,18 @@ export async function PATCH(req) {
 
   const agentId = agentIdFrom(session);
   const body = await req.json().catch(() => ({}));
+  const validated = validateCompanyBrandingInput(body);
+  if (!validated.ok) {
+    return NextResponse.json({ error: validated.error }, { status: 400 });
+  }
 
-  const company_name = String(body.company_name || "").trim();
-  const description =
-    body.description != null ? String(body.description).trim() : null;
-  const office_address = String(body.office_address || "").trim();
-  const social_links = String(body.social_links || "").trim();
-  const areas_served =
-    body.areas_served != null ? String(body.areas_served).trim() : null;
+  const {
+    company_name,
+    description,
+    office_address,
+    social_links,
+    areas_served,
+  } = validated.data;
 
   await query(
     `UPDATE users

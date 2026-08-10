@@ -4,13 +4,51 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
+import PriceCurrencyInput from "@/components/agent-portal/PriceCurrencyInput";
 import ImageCategorySelect from "@/components/ImageCategorySelect";
 import ImagePreviewModal from "@/components/ImagePreviewModal";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import PropertyWatermark from "@/components/PropertyWatermark";
+import VideoPreviewModal from "@/components/VideoPreviewModal";
+import { companyNameFromAgent } from "@/lib/agentBranding";
 import {
   MAX_PROPERTY_IMAGES,
+  imageFormatErrorMessage,
   imageLimitErrorMessage,
+  imageSizeErrorMessage,
+  isImageFile,
+  MAX_PROPERTY_IMAGE_BYTES,
 } from "@/lib/imageUpload";
+import {
+  MAX_PROPERTY_VIDEOS,
+  MAX_PROPERTY_VIDEO_BYTES,
+  isVideoFile,
+  videoFormatErrorMessage,
+  videoLimitErrorMessage,
+  videoSizeErrorMessage,
+} from "@/lib/videoUpload";
+import {
+  DEFAULT_PRICE_CURRENCY,
+  validatePropertyDraftInput,
+} from "@/lib/validators/propertyValidator";
 import ui from "@/components/agent-portal/portal.module.css";
+
+function normalizePropertyVideos(property) {
+  const list = Array.isArray(property?.videos) ? property.videos : [];
+  if (list.length > 0) return list;
+  if (property?.video_url && String(property.video_url).trim()) {
+    return [{ id: null, video_url: property.video_url }];
+  }
+  return [];
+}
+
+function videoTitle(video, index) {
+  if (video?.category_label && video.category_label !== "Uncategorized") {
+    return video.category_label;
+  }
+  if (video?.category) return String(video.category);
+  return `Video ${index + 1}`;
+}
 
 export default function EditPropertyPage() {
   const params = useParams();
@@ -18,7 +56,7 @@ export default function EditPropertyPage() {
   const { data: session, status } = useSession();
   const username = decodeURIComponent(params.estate_name || "");
   const propertyId = params.id;
-  const base = `/re/${encodeURIComponent(username)}/adminarea`;
+  const base = `/re/${encodeURIComponent(username)}/dashboard`;
 
   const [form, setForm] = useState({
     title: "",
@@ -26,6 +64,7 @@ export default function EditPropertyPage() {
     size_value: "",
     size_unit: "marla",
     price: "",
+    price_currency: DEFAULT_PRICE_CURRENCY,
     city: "",
     area: "",
     phase: "",
@@ -45,11 +84,18 @@ export default function EditPropertyPage() {
   const [featuredKey, setFeaturedKey] = useState(null);
   const newImageKey = useRef(0);
   const newFileInputRef = useRef(null);
-  const [currentVideoUrl, setCurrentVideoUrl] = useState("");
-  const [newVideo, setNewVideo] = useState(null);
-  const [removeVideo, setRemoveVideo] = useState(false);
+  const newVideoKey = useRef(0);
+  const newVideoInputRef = useRef(null);
+  const [existingVideos, setExistingVideos] = useState([]);
+  const [newVideos, setNewVideos] = useState([]);
+  // "existing:<id|legacy>" or "new:<key>" — featured walkthrough video.
+  const [featuredVideoKey, setFeaturedVideoKey] = useState(null);
+  const [deletingVideoKey, setDeletingVideoKey] = useState(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(0);
+  const [videoPreviewOpen, setVideoPreviewOpen] = useState(false);
+  const [videoPreviewIndex, setVideoPreviewIndex] = useState(0);
+  const [watermarkText, setWatermarkText] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -59,13 +105,20 @@ export default function EditPropertyPage() {
     if (status !== "authenticated") return;
 
     (async () => {
-      const res = await fetch(`/api/properties/${propertyId}`);
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      const [propertyRes, brandingRes] = await Promise.all([
+        fetch(`/api/properties/${propertyId}`),
+        fetch("/api/agent/company-branding"),
+      ]);
+      const data = await propertyRes.json().catch(() => ({}));
+      if (!propertyRes.ok) {
         setError(data.error || "Property not found.");
         setLoading(false);
         return;
       }
+      const brandingData = await brandingRes.json().catch(() => ({}));
+      setWatermarkText(
+        companyNameFromAgent(brandingData.branding || session?.user),
+      );
       const p = data.property;
       const hasStructured = Boolean(p.city || p.area || p.phase || p.address);
       let city = p.city || "";
@@ -92,6 +145,7 @@ export default function EditPropertyPage() {
         size_value: p.size_value || "",
         size_unit: p.size_unit || "marla",
         price: p.price || "",
+        price_currency: p.price_currency || DEFAULT_PRICE_CURRENCY,
         city,
         area,
         phase,
@@ -108,14 +162,24 @@ export default function EditPropertyPage() {
       const featured =
         loadedImages.find((image) => image.is_featured) || loadedImages[0];
       setFeaturedKey(featured ? `existing:${featured.id}` : null);
-      setCurrentVideoUrl(p.video_url || "");
+      const loadedVideos = normalizePropertyVideos(p);
+      setExistingVideos(loadedVideos);
+      const featuredVideo =
+        loadedVideos.find((video) => video.is_featured) || loadedVideos[0];
+      setFeaturedVideoKey(
+        featuredVideo
+          ? `existing:${featuredVideo.id ?? "legacy"}`
+          : null,
+      );
+      setNewVideos([]);
       setLoading(false);
     })();
-  }, [status, propertyId, router]);
+  }, [status, propertyId, router, session?.user]);
 
   useEffect(() => {
     return () => {
       newImages.forEach((item) => URL.revokeObjectURL(item.url));
+      newVideos.forEach((item) => URL.revokeObjectURL(item.url));
     };
     // Previews are revoked when leaving the page, not on every list change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -134,7 +198,21 @@ export default function EditPropertyPage() {
     }
     if (remaining === 0) return;
 
-    const added = incoming.slice(0, remaining).map((file) => ({
+    const valid = [];
+    for (const file of incoming.slice(0, remaining)) {
+      if (!isImageFile(file)) {
+        setError(imageFormatErrorMessage());
+        continue;
+      }
+      if (Number(file.size) > MAX_PROPERTY_IMAGE_BYTES) {
+        setError(imageSizeErrorMessage());
+        continue;
+      }
+      valid.push(file);
+    }
+    if (valid.length === 0) return;
+
+    const added = valid.map((file) => ({
       key: `n${newImageKey.current++}`,
       file,
       url: URL.createObjectURL(file),
@@ -192,11 +270,144 @@ export default function EditPropertyPage() {
     if (newFileInputRef.current) newFileInputRef.current.value = "";
   }
 
+  function addVideos(fileList) {
+    const incoming = Array.from(fileList || []);
+    if (incoming.length === 0) return;
+
+    const currentTotal = existingVideos.length + newVideos.length;
+    const remaining = Math.max(0, MAX_PROPERTY_VIDEOS - currentTotal);
+    if (remaining === 0 || incoming.length > remaining) {
+      setError(videoLimitErrorMessage());
+    } else {
+      setError("");
+    }
+    if (remaining === 0) return;
+
+    const valid = [];
+    for (const file of incoming.slice(0, remaining)) {
+      if (!isVideoFile(file)) {
+        setError(videoFormatErrorMessage());
+        continue;
+      }
+      if (Number(file.size) > MAX_PROPERTY_VIDEO_BYTES) {
+        setError(videoSizeErrorMessage());
+        continue;
+      }
+      valid.push(file);
+    }
+    if (valid.length === 0) return;
+
+    const added = valid.map((file) => ({
+      key: `v${newVideoKey.current++}`,
+      file,
+      url: URL.createObjectURL(file),
+      category: "",
+    }));
+    setNewVideos((prev) => [...prev, ...added]);
+    setFeaturedVideoKey((prev) => prev ?? `new:${added[0].key}`);
+  }
+
+  function removeNewVideo(key) {
+    const confirmed = window.confirm(
+      "Delete this video?\n\nThis action cannot be undone.",
+    );
+    if (!confirmed) return;
+    setNewVideos((prev) => {
+      const target = prev.find((item) => item.key === key);
+      if (target) URL.revokeObjectURL(target.url);
+      return prev.filter((item) => item.key !== key);
+    });
+    setFeaturedVideoKey((prev) => {
+      if (prev !== `new:${key}`) return prev;
+      const remainingNew = newVideos.filter((item) => item.key !== key);
+      if (remainingNew[0]) return `new:${remainingNew[0].key}`;
+      if (existingVideos[0]) {
+        return `existing:${existingVideos[0].id ?? "legacy"}`;
+      }
+      return null;
+    });
+    setError("");
+  }
+
+  async function removeExistingVideo(video, index) {
+    const confirmed = window.confirm(
+      "Delete this video?\n\nThis action cannot be undone.",
+    );
+    if (!confirmed) return;
+
+    const rowKey = `existing:${video.id ?? "legacy"}`;
+    setDeletingVideoKey(rowKey);
+    setError("");
+
+    try {
+      let res;
+      if (video.id != null) {
+        res = await fetch(`/api/properties/${propertyId}/videos`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoIds: [video.id] }),
+        });
+      } else {
+        // Legacy single video_url row without a gallery id.
+        res = await fetch(`/api/properties/${propertyId}/video`, {
+          method: "DELETE",
+        });
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Could not remove property video.");
+        return;
+      }
+
+      setExistingVideos((prev) => {
+        if (video.id != null) {
+          return prev.filter((item) => item.id !== video.id);
+        }
+        return prev.filter((_, i) => i !== index);
+      });
+      setFeaturedVideoKey((prevKey) => {
+        if (prevKey !== rowKey) return prevKey;
+        const remaining = existingVideos.filter((item, i) =>
+          video.id != null ? item.id !== video.id : i !== index,
+        );
+        if (remaining[0]) {
+          return `existing:${remaining[0].id ?? "legacy"}`;
+        }
+        if (newVideos[0]) return `new:${newVideos[0].key}`;
+        return null;
+      });
+    } catch {
+      setError("Could not remove property video.");
+    } finally {
+      setDeletingVideoKey(null);
+    }
+  }
+
+  async function refreshVideosFromServer() {
+    const refreshed = await fetch(`/api/properties/${propertyId}`);
+    const refreshedData = await refreshed.json().catch(() => ({}));
+    if (!refreshed.ok) return;
+    const loadedVideos = normalizePropertyVideos(refreshedData.property);
+    setExistingVideos(loadedVideos);
+    const featuredVideo =
+      loadedVideos.find((video) => video.is_featured) || loadedVideos[0];
+    setFeaturedVideoKey(
+      featuredVideo ? `existing:${featuredVideo.id ?? "legacy"}` : null,
+    );
+  }
+
   async function handleSave({ submit = false } = {}) {
     setSaving(true);
     setError("");
     setErrorDetails([]);
     setSuccess("");
+
+    const validated = validatePropertyDraftInput(form);
+    if (!validated.ok) {
+      setError(validated.error);
+      setSaving(false);
+      return;
+    }
 
     // Status is never sent from here: submitting goes through the submit
     // endpoint so the listing is validated before an admin sees it.
@@ -204,15 +415,29 @@ export default function EditPropertyPage() {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        title: form.title,
-        description: form.description,
+        title: validated.data.title,
+        description: validated.data.description || form.description,
         city: String(form.city || "").trim() || null,
         area: String(form.area || "").trim() || null,
         phase: String(form.phase || "").trim() || null,
         address: String(form.address || "").trim() || null,
         size_unit: form.size_unit,
-        size_value: form.size_value ? Number(form.size_value) : null,
-        price: form.price ? Number(form.price) : null,
+        size_value:
+          validated.data.size_value != null
+            ? validated.data.size_value
+            : form.size_value
+              ? Number(form.size_value)
+              : null,
+        price:
+          validated.data.price != null
+            ? validated.data.price
+            : form.price
+              ? Number(form.price)
+              : null,
+        price_currency:
+          validated.data.price_currency ||
+          form.price_currency ||
+          DEFAULT_PRICE_CURRENCY,
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -295,35 +520,40 @@ export default function EditPropertyPage() {
       }
     }
 
-    if (removeVideo && currentVideoUrl) {
-      const removeRes = await fetch(`/api/properties/${propertyId}/video`, {
-        method: "DELETE",
-      });
-      const removeData = await removeRes.json().catch(() => ({}));
-      if (!removeRes.ok) {
-        setError(removeData.error || "Could not remove property video.");
-        setSaving(false);
-        return;
+    if (newVideos.length > 0) {
+      for (let i = 0; i < newVideos.length; i += 1) {
+        const category = newVideos[i].category;
+        if (!category || !String(category).trim()) {
+          setError("Please add a category for all new videos.");
+          setSaving(false);
+          return;
+        }
       }
-      setCurrentVideoUrl("");
-      setRemoveVideo(false);
-    }
 
-    if (newVideo) {
       const fd = new FormData();
-      fd.append("video", newVideo);
-      const videoRes = await fetch(`/api/properties/${propertyId}/video`, {
+      newVideos.forEach((item, index) => {
+        fd.append("videos", item.file);
+        fd.append("videoOrder", String(existingVideos.length + index));
+        fd.append("videoCategories", item.category || "");
+        fd.append(
+          "isFeatured",
+          featuredVideoKey === `new:${item.key}` ? "1" : "0",
+        );
+      });
+      const videoRes = await fetch(`/api/properties/${propertyId}/videos`, {
         method: "POST",
         body: fd,
       });
       const videoData = await videoRes.json().catch(() => ({}));
       if (!videoRes.ok) {
-        setError(videoData.error || "Could not upload property video.");
+        setError(videoData.error || "Could not upload property videos.");
         setSaving(false);
         return;
       }
-      setCurrentVideoUrl(videoData.videoUrl || "");
-      setNewVideo(null);
+      newVideos.forEach((item) => URL.revokeObjectURL(item.url));
+      setNewVideos([]);
+      if (newVideoInputRef.current) newVideoInputRef.current.value = "";
+      await refreshVideosFromServer();
     }
 
     setForm((prev) => ({ ...prev, status: data.status || prev.status }));
@@ -372,7 +602,13 @@ export default function EditPropertyPage() {
       }
     >
       <div className={ui.formCard}>
-        {loading ? <p className={ui.muted}>Loading…</p> : null}
+        {loading ? (
+          <LoadingSpinner
+            fullPage={false}
+            label="Loading"
+            hint="Opening property…"
+          />
+        ) : null}
         {error ? (
           <div className={ui.error}>
             <p className={ui.noticeTitle}>{error}</p>
@@ -418,33 +654,219 @@ export default function EditPropertyPage() {
               />
             </label>
             <div className={ui.field}>
-              <span className={ui.label}>Property Video (Optional)</span>
-              {currentVideoUrl && !removeVideo ? (
-                <>
-                  <video controls preload="metadata" src={currentVideoUrl} style={{ width: "100%", borderRadius: "12px" }}>
-                    Your browser does not support this video format.
-                  </video>
-                  <label className={ui.muted}>
-                    <input
-                      type="checkbox"
-                      checked={removeVideo}
-                      disabled={isPending}
-                      onChange={(e) => setRemoveVideo(e.target.checked)}
-                    />{" "}
-                    Remove current video
-                  </label>
-                </>
-              ) : currentVideoUrl ? (
-                <p className={ui.muted}>The current video will be removed when you save.</p>
+              <span className={ui.label}>Property Videos (Optional)</span>
+              {existingVideos.length === 0 && newVideos.length === 0 ? (
+                <p className={ui.muted}>No videos uploaded yet.</p>
               ) : null}
-              <input
-                className={ui.input}
-                type="file"
-                accept="video/mp4,video/webm,video/quicktime,video/ogg,.mp4,.webm,.mov,.ogg"
-                disabled={isPending}
-                onChange={(e) => setNewVideo(e.target.files?.[0] || null)}
-              />
-              <p className={ui.muted}>MP4, WebM, MOV, or OGG. One video only.</p>
+
+              {existingVideos.length > 0 ? (
+                <div className={ui.imageManager}>
+                  {existingVideos.map((video, index) => {
+                    const rowKey = `existing:${video.id ?? "legacy"}`;
+                    const title = videoTitle(video, index);
+                    const isFeatured =
+                      featuredVideoKey === rowKey ||
+                      (!featuredVideoKey && Boolean(video.is_featured));
+                    return (
+                      <div
+                        key={video.id ?? `legacy-${index}`}
+                        className={ui.imageCard}
+                      >
+                        <div className={ui.imageCardThumb}>
+                          <button
+                            type="button"
+                            className={ui.thumbPreviewBtn}
+                            aria-label={`Preview ${title}`}
+                            disabled={isPending}
+                            onClick={() => {
+                              setVideoPreviewIndex(index);
+                              setVideoPreviewOpen(true);
+                            }}
+                          >
+                            <video
+                              src={video.video_url}
+                              muted
+                              playsInline
+                              preload="metadata"
+                            />
+                            <PropertyWatermark text={watermarkText} compact />
+                            <span
+                              className={ui.thumbPlayOverlay}
+                              aria-hidden="true"
+                            >
+                              <svg viewBox="0 0 24 24" fill="none">
+                                <path
+                                  d="M8 5.5v13l11-6.5-11-6.5z"
+                                  fill="currentColor"
+                                />
+                              </svg>
+                            </span>
+                            {isFeatured ? (
+                              <span className={ui.featuredTag}>Featured</span>
+                            ) : null}
+                          </button>
+                          <button
+                            type="button"
+                            className={ui.thumbRemoveBtn}
+                            disabled={
+                              isPending || deletingVideoKey === rowKey
+                            }
+                            aria-label={`Delete ${title}`}
+                            onClick={() => removeExistingVideo(video, index)}
+                          >
+                            ×
+                          </button>
+                        </div>
+                        <div className={ui.imageCardBody}>
+                          <p className={ui.imageCardLabel}>{title}</p>
+                          <p className={ui.muted}>
+                            Saved video · Order {index + 1}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
+
+              {newVideos.length > 0 ? (
+                <>
+                  <span className={ui.label}>New videos (save to upload)</span>
+                  <div className={ui.imageManager}>
+                    {newVideos.map((item, index) => {
+                      const previewAt = existingVideos.length + index;
+                      return (
+                        <div key={item.key} className={ui.imageCard}>
+                          <div className={ui.imageCardThumb}>
+                            <button
+                              type="button"
+                              className={ui.thumbPreviewBtn}
+                              aria-label={`Preview new video ${index + 1}`}
+                              disabled={isPending}
+                              onClick={() => {
+                                setVideoPreviewIndex(previewAt);
+                                setVideoPreviewOpen(true);
+                              }}
+                            >
+                              <video
+                                src={item.url}
+                                muted
+                                playsInline
+                                preload="metadata"
+                              />
+                              <PropertyWatermark text={watermarkText} compact />
+                              <span
+                                className={ui.thumbPlayOverlay}
+                                aria-hidden="true"
+                              >
+                                <svg viewBox="0 0 24 24" fill="none">
+                                  <path
+                                    d="M8 5.5v13l11-6.5-11-6.5z"
+                                    fill="currentColor"
+                                  />
+                                </svg>
+                              </span>
+                              {featuredVideoKey === `new:${item.key}` ? (
+                                <span className={ui.featuredTag}>Featured</span>
+                              ) : null}
+                            </button>
+                            <button
+                              type="button"
+                              className={ui.thumbRemoveBtn}
+                              disabled={isPending}
+                              aria-label={`Delete new video ${index + 1}`}
+                              onClick={() => removeNewVideo(item.key)}
+                            >
+                              ×
+                            </button>
+                          </div>
+                          <div className={ui.imageCardBody}>
+                            <label className={ui.field}>
+                              <span className={ui.imageCardLabel}>
+                                Category
+                              </span>
+                              <ImageCategorySelect
+                                className={ui.select}
+                                inputClassName={ui.input}
+                                value={item.category}
+                                disabled={isPending}
+                                ariaLabel={`Category for new video ${index + 1}`}
+                                onChange={(category) =>
+                                  setNewVideos((prev) =>
+                                    prev.map((entry) =>
+                                      entry.key === item.key
+                                        ? {
+                                            ...entry,
+                                            category: category || "",
+                                          }
+                                        : entry,
+                                    ),
+                                  )
+                                }
+                              />
+                            </label>
+                            <div className={ui.imageCardMeta}>
+                              <label className={ui.imageCardCheck}>
+                                <input
+                                  type="radio"
+                                  name="featured-video"
+                                  checked={
+                                    featuredVideoKey === `new:${item.key}`
+                                  }
+                                  disabled={isPending}
+                                  onChange={() =>
+                                    setFeaturedVideoKey(`new:${item.key}`)
+                                  }
+                                />
+                                Featured video
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : null}
+
+              {existingVideos.length + newVideos.length < MAX_PROPERTY_VIDEOS ? (
+                <div className={ui.filePicker}>
+                  <input
+                    ref={newVideoInputRef}
+                    type="file"
+                    accept="video/mp4,video/webm,video/quicktime,video/ogg,.mp4,.webm,.mov,.ogg"
+                    multiple
+                    className={ui.srOnlyInput}
+                    disabled={isPending}
+                    onChange={(e) => {
+                      addVideos(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className={ui.filePickerBtn}
+                    disabled={isPending}
+                    onClick={() => newVideoInputRef.current?.click()}
+                  >
+                    + Upload More Videos
+                  </button>
+                  <span className={ui.filePickerStatus}>
+                    {existingVideos.length + newVideos.length === 0
+                      ? "No videos selected"
+                      : `${existingVideos.length + newVideos.length} of ${MAX_PROPERTY_VIDEOS} videos`}
+                  </span>
+                </div>
+              ) : (
+                <p className={ui.muted}>
+                  Maximum of {MAX_PROPERTY_VIDEOS} videos reached. Delete a video
+                  to upload another.
+                </p>
+              )}
+              <p className={ui.muted}>
+                MP4, WebM, MOV, or OGG. Maximum {MAX_PROPERTY_VIDEOS} videos.
+                New uploads are saved when you click Save.
+              </p>
             </div>
             <label className={ui.field}>
               <span className={ui.label}>Description</span>
@@ -526,16 +948,20 @@ export default function EditPropertyPage() {
                 </select>
               </label>
             </div>
-            <label className={ui.field}>
-              <span className={ui.label}>Price (PKR)</span>
-              <input
-                className={ui.input}
-                type="number"
-                value={form.price}
+            <div className={ui.field}>
+              <span className={ui.label}>Price</span>
+              <PriceCurrencyInput
+                amount={form.price}
+                currency={form.price_currency}
                 disabled={isPending}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                onAmountChange={(value) =>
+                  setForm({ ...form, price: value })
+                }
+                onCurrencyChange={(value) =>
+                  setForm({ ...form, price_currency: value })
+                }
               />
-            </label>
+            </div>
             <div className={ui.field}>
               <span className={ui.label}>Property Images</span>
               {existingImages.length === 0 ? (
@@ -785,6 +1211,25 @@ export default function EditPropertyPage() {
         currentIndex={previewIndex}
         isOpen={previewOpen}
         onClose={() => setPreviewOpen(false)}
+      />
+
+      <VideoPreviewModal
+        videos={[
+          ...existingVideos.map((video) => ({
+            ...video,
+            featured:
+              featuredVideoKey === `existing:${video.id ?? "legacy"}`,
+          })),
+          ...newVideos.map((item) => ({
+            url: item.url,
+            category: item.category,
+            featured: featuredVideoKey === `new:${item.key}`,
+          })),
+        ]}
+        currentIndex={videoPreviewIndex}
+        isOpen={videoPreviewOpen}
+        onClose={() => setVideoPreviewOpen(false)}
+        watermarkText={watermarkText}
       />
     </AgentPortalShell>
   );

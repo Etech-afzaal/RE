@@ -9,9 +9,8 @@ import { isAgentRole, isSuperAdmin } from "@/lib/roles";
  *   superadmin → /admin/dashboard/*
  *   AGENT       → /agent/dashboard, /agent/properties/*, /agent/reset-password
  *
- * Future patterns (matcher ready; pages not built in this phase):
- *   superadmin → /admin_dashboard/*
- *   AGENT       → /re/[username]/adminarea/*
+ * Estate agent portal:
+ *   AGENT       → /re/[username]/dashboard/*
  *
  * Public (no middleware): /, /re/[slug], /re/[slug]/[id], login/signup pages
  */
@@ -31,8 +30,8 @@ export default withAuth(
       path.startsWith("/agent/dashboard") ||
       path.startsWith("/agent/properties") ||
       isAgentResetPasswordRoute;
-    const adminAreaMatch = path.match(
-      /^\/re\/([^/]+)\/adminarea(?:\/|$)/,
+    const estateDashboardMatch = path.match(
+      /^\/re\/([^/]+)\/dashboard(?:\/|$)/,
     );
 
     // Agents that are not approved (or lost approval mid-session) → login.
@@ -51,7 +50,7 @@ export default withAuth(
       return NextResponse.redirect(
         new URL(
           handle
-            ? `/re/${encodeURIComponent(handle)}/adminarea`
+            ? `/re/${encodeURIComponent(handle)}/dashboard`
             : "/agent/dashboard",
           req.url,
         ),
@@ -68,12 +67,12 @@ export default withAuth(
       return NextResponse.redirect(new URL("/agent/login", req.url));
     }
 
-    // Future per-estate admin area: AGENT only, and username must match token.
-    if (adminAreaMatch) {
+    // Per-estate agent dashboard: AGENT only, and username must match token.
+    if (estateDashboardMatch) {
       if (!isAgent) {
         return NextResponse.redirect(new URL("/agent/login", req.url));
       }
-      const pathUsername = decodeURIComponent(adminAreaMatch[1]).toLowerCase();
+      const pathUsername = decodeURIComponent(estateDashboardMatch[1]).toLowerCase();
       const tokenUsername = String(
         token.username || token.estate_name || "",
       ).toLowerCase();
@@ -82,7 +81,7 @@ export default withAuth(
         return NextResponse.redirect(
           new URL(
             handle
-              ? `/re/${encodeURIComponent(handle)}/adminarea`
+              ? `/re/${encodeURIComponent(handle)}/dashboard`
               : "/agent/dashboard",
             req.url,
           ),
@@ -91,7 +90,7 @@ export default withAuth(
     }
 
     // Superadmins should not use agent-only tools.
-    if (isAdmin && (isAgentPortal || adminAreaMatch)) {
+    if (isAdmin && (isAgentPortal || estateDashboardMatch)) {
       return NextResponse.redirect(new URL("/admin/dashboard", req.url));
     }
 
@@ -122,8 +121,8 @@ export const config = {
     "/agent/dashboard/:path*",
     "/agent/properties",
     "/agent/properties/:path*",
-    // Future AGENT estate admin area (not implemented as pages yet)
-    "/re/:username/adminarea",
-    "/re/:username/adminarea/:path*",
+    // Per-estate AGENT dashboard
+    "/re/:username/dashboard",
+    "/re/:username/dashboard/:path*",
   ],
 };

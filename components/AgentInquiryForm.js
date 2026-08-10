@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { validateInquiryInput } from "@/lib/validators/inquiryValidator";
 import styles from "./AgentInquiryForm.module.css";
 
 const EMPTY_FORM = {
@@ -22,6 +23,7 @@ export default function AgentInquiryForm({
   kicker = "Send a message",
 }) {
   const [form, setForm] = useState(EMPTY_FORM);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState(false);
   const [errorMessage, setErrorMessage] = useState(false);
@@ -59,6 +61,13 @@ export default function AgentInquiryForm({
     return (event) => {
       const value = event.target.value;
       setForm((prev) => ({ ...prev, [field]: value }));
+      if (fieldErrors[field]) {
+        setFieldErrors((prev) => {
+          const next = { ...prev };
+          delete next[field];
+          return next;
+        });
+      }
     };
   }
 
@@ -66,14 +75,25 @@ export default function AgentInquiryForm({
     event.preventDefault();
     if (isSubmitting) return;
 
+    const validated = validateInquiryInput(form);
+    if (!validated.ok) {
+      setFieldErrors(
+        validated.field ? { [validated.field]: validated.error } : {},
+      );
+      return;
+    }
+
     setIsSubmitting(true);
     clearFeedback();
+    setFieldErrors({});
 
     const payload = {
-      name: form.name,
-      email: form.email,
-      phone: form.phone,
-      message: form.message,
+      name: validated.data.name,
+      email: validated.data.email,
+      phone: validated.data.phone,
+      message: validated.data.message,
+      page_url:
+        typeof window !== "undefined" ? window.location.pathname : null,
     };
 
     if (propertyId != null) payload.property_id = Number(propertyId);
@@ -109,20 +129,24 @@ export default function AgentInquiryForm({
       {kicker ? <p className={styles.kicker}>{kicker}</p> : null}
       {heading ? <h3 className={styles.heading}>{heading}</h3> : null}
 
-      <form className={styles.form} onSubmit={handleSubmit}>
+      <form className={styles.form} onSubmit={handleSubmit} noValidate>
         <label className={styles.field}>
           <span className={styles.label}>Full Name</span>
           <input
             type="text"
             name="name"
             required
-            maxLength={150}
+            maxLength={100}
             value={form.name}
             onChange={handleChange("name")}
             placeholder="Full Name"
             className={styles.input}
             disabled={isSubmitting}
+            aria-invalid={Boolean(fieldErrors.name)}
           />
+          {fieldErrors.name ? (
+            <span className={styles.fieldError}>{fieldErrors.name}</span>
+          ) : null}
         </label>
 
         <label className={styles.field}>
@@ -136,7 +160,11 @@ export default function AgentInquiryForm({
             placeholder="Email Address"
             className={styles.input}
             disabled={isSubmitting}
+            aria-invalid={Boolean(fieldErrors.email)}
           />
+          {fieldErrors.email ? (
+            <span className={styles.fieldError}>{fieldErrors.email}</span>
+          ) : null}
         </label>
 
         <label className={styles.field}>
@@ -144,12 +172,17 @@ export default function AgentInquiryForm({
           <input
             type="tel"
             name="phone"
+            maxLength={20}
             value={form.phone}
             onChange={handleChange("phone")}
             placeholder="Phone Number"
             className={styles.input}
             disabled={isSubmitting}
+            aria-invalid={Boolean(fieldErrors.phone)}
           />
+          {fieldErrors.phone ? (
+            <span className={styles.fieldError}>{fieldErrors.phone}</span>
+          ) : null}
         </label>
 
         <label className={styles.field}>
@@ -158,13 +191,17 @@ export default function AgentInquiryForm({
             name="message"
             rows={variant === "property" ? 4 : 5}
             required
-            maxLength={2000}
+            maxLength={1000}
             value={form.message}
             onChange={handleChange("message")}
             placeholder="Write your message"
             className={styles.textarea}
             disabled={isSubmitting}
+            aria-invalid={Boolean(fieldErrors.message)}
           />
+          {fieldErrors.message ? (
+            <span className={styles.fieldError}>{fieldErrors.message}</span>
+          ) : null}
         </label>
 
         <button

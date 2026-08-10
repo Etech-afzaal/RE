@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import Pagination from "@/components/Pagination";
 import styles from "@/components/admin/adminUi.module.css";
 
@@ -159,7 +160,7 @@ export default function AdminLogsPage() {
       {error ? <p className={styles.errorText}>{error}</p> : null}
 
       {loading ? (
-        <div className={styles.loading}>Loading logs…</div>
+        <LoadingSpinner fullPage={false} label="Loading" hint="Fetching logs…" />
       ) : logs.length === 0 ? (
         <div className={styles.emptyState}>
           No audit events match your filters.

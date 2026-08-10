@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS properties (
   size_value DECIMAL(10,2),
   size_unit ENUM('marla','kanal','sqft') DEFAULT 'marla',
   price DECIMAL(15,2),
+  price_currency ENUM('PKR','USD') NOT NULL DEFAULT 'PKR', -- amount is stored as-entered; no conversion
   location VARCHAR(255),                           -- denormalized display: "{area} {phase}, {city}"
   city VARCHAR(100) NULL,
   area VARCHAR(100) NULL,
@@ -143,6 +144,7 @@ CREATE TABLE IF NOT EXISTS customer_inquiries (
   customer_email VARCHAR(255) NOT NULL,
   customer_phone VARCHAR(50) NULL,
   message TEXT NOT NULL,
+  page_url VARCHAR(500) NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (agent_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE SET NULL

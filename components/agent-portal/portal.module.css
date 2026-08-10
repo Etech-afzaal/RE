@@ -388,6 +388,25 @@
   color: var(--muted);
   font-size: 0.75rem;
   font-weight: 700;
+  border: 1px solid transparent;
+  font-family: inherit;
+  line-height: 1.3;
+}
+
+button.stepPill {
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+button.stepPill:hover {
+  background: #ebe6da;
+  color: var(--ink-soft);
+}
+
+button.stepPill:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(242, 187, 70, 0.28);
 }
 
 .stepPillActive {
@@ -395,21 +414,67 @@
   color: var(--gold-deep);
 }
 
+button.stepPillActive:hover {
+  background: var(--gold-tint);
+  color: var(--gold-deep);
+}
+
+.stepPillCompleted:not(.stepPillActive) {
+  background: #e8f2ea;
+  color: #1f6b3a;
+  border-color: rgba(31, 107, 58, 0.18);
+}
+
+.stepPillCompleted:not(.stepPillActive)::after {
+  content: " ✓";
+  font-weight: 800;
+}
+
 .field {
   display: grid;
-  gap: 0.35rem;
-  margin-bottom: 0.95rem;
+  grid-template-rows: auto auto minmax(1.15rem, auto);
+  gap: 0.3rem;
+  margin-bottom: 0.75rem;
+  align-content: start;
 }
 
 .label {
+  display: block;
+  min-height: 1.1rem;
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 700;
+  line-height: 1.1rem;
+}
+
+.requiredMark {
+  color: #b91c1c;
+  font-weight: 800;
+}
+
+/* Reserved slot so errors never shift fields below. */
+.fieldMessage {
+  margin: 0;
+  min-height: 1.15rem;
+  color: #b91c1c;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.15rem;
+  overflow: hidden;
+}
+
+.fieldError {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.15rem;
 }
 
 .input,
 .select,
 .textarea {
+  box-sizing: border-box;
   width: 100%;
   border: 1px solid rgba(26, 26, 26, 0.12);
   border-radius: 12px;
@@ -418,10 +483,32 @@
   font-family: var(--font-body);
   font-size: 0.92rem;
   padding: 0.7rem 0.85rem;
+  line-height: 1.25;
+}
+
+.input,
+.select {
+  height: 2.75rem;
+  min-height: 2.75rem;
+}
+
+.inputInvalid,
+.select.inputInvalid,
+.textarea.inputInvalid {
+  border-color: rgba(185, 28, 28, 0.55);
+  background: #fff8f8;
+}
+
+.inputInvalid:focus,
+.select.inputInvalid:focus,
+.textarea.inputInvalid:focus {
+  border-color: #b91c1c;
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.14);
 }
 
 .textarea {
   min-height: 120px;
+  height: auto;
   resize: vertical;
 }
 
@@ -433,10 +520,239 @@
   box-shadow: 0 0 0 3px rgba(242, 187, 70, 0.16);
 }
 
+/* Combined price amount + currency selector (single bordered control). */
+.priceField {
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  height: 2.75rem;
+  min-height: 2.75rem;
+  border: 1px solid rgba(26, 26, 26, 0.12);
+  border-radius: 12px;
+  background: #faf9f6;
+  color: var(--ink);
+}
+
+.priceFieldOpen,
+.priceField:focus-within {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(242, 187, 70, 0.16);
+}
+
+.priceFieldInvalid {
+  border-color: rgba(185, 28, 28, 0.55);
+  background: #fff8f8;
+}
+
+.priceFieldInvalid.priceFieldOpen,
+.priceFieldInvalid:focus-within {
+  border-color: #b91c1c;
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.14);
+}
+
+.priceAmountInput {
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  line-height: 1.25;
+  padding: 0.7rem 0.85rem;
+}
+
+.priceAmountInput:focus {
+  outline: none;
+}
+
+.priceAmountInput:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.priceCurrencyWrap {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: stretch;
+}
+
+.priceCurrencyBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 4.4rem;
+  height: 100%;
+  padding: 0 0.7rem;
+  border: none;
+  border-left: 1px solid rgba(26, 26, 26, 0.12);
+  border-radius: 0 11px 11px 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.priceCurrencyBtn:hover:not(:disabled) {
+  background: rgba(242, 187, 70, 0.1);
+}
+
+.priceCurrencyBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.priceCurrencyCaret {
+  font-size: 0.55rem;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.priceCurrencyMenu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 30;
+  min-width: 5.75rem;
+  margin: 0;
+  padding: 0.3rem;
+  list-style: none;
+  border: 1px solid rgba(26, 26, 26, 0.12);
+  border-radius: 10px;
+  background: #fffef9;
+  box-shadow: 0 10px 28px rgba(26, 26, 26, 0.12);
+}
+
+.priceCurrencyOption {
+  display: block;
+  width: 100%;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.45rem 0.55rem;
+  cursor: pointer;
+}
+
+.priceCurrencyOption:hover,
+.priceCurrencyOptionActive {
+  background: rgba(242, 187, 70, 0.18);
+}
+
 .row2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.85rem;
+  align-items: start;
+}
+
+.parkingField {
+  /* Spacer → inline control → message (aligns with Price label/input/message). */
+  grid-template-rows: auto auto minmax(1.15rem, auto);
+}
+
+.parkingLabelSpacer {
+  display: block;
+  min-height: 1.1rem;
+  line-height: 1.1rem;
+}
+
+.parkingInline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.85rem;
+  min-height: 2.75rem;
+}
+
+.parkingInline .label {
+  margin: 0;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.55rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.parkingControl {
+  display: grid;
+  gap: 0.2rem;
+  justify-items: stretch;
+  flex: 0 0 auto;
+  min-width: 7.5rem;
+  width: 7.5rem;
+}
+
+.parkingSwitch {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  height: 1.55rem;
+  padding: 0;
+  border: 1px solid rgba(26, 26, 26, 0.12);
+  border-radius: 999px;
+  background: #e8e4da;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.parkingSwitch:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(242, 187, 70, 0.28);
+}
+
+.parkingSwitchOn {
+  background: var(--gold);
+  border-color: rgba(184, 134, 11, 0.35);
+}
+
+.parkingThumb {
+  position: absolute;
+  top: 50%;
+  left: 0.15rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(26, 26, 26, 0.22);
+  transform: translateY(-50%);
+  transition: left 0.18s ease;
+  pointer-events: none;
+}
+
+.parkingSwitchOn .parkingThumb {
+  left: calc(100% - 1.35rem);
+}
+
+.parkingScale {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0 0.1rem;
 }
 
 .formActions {
@@ -524,6 +840,85 @@
 
 .dialogSuccess .dialogActions {
   justify-content: center;
+}
+
+/* --- Brand asset preview (profile image / company logo) ------------------ */
+
+.brandAssetRow {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.brandAssetPreview {
+  position: relative;
+  flex: 0 0 auto;
+  width: 72px;
+  height: 72px;
+}
+
+.brandAssetPreviewRound {
+  border-radius: 50%;
+}
+
+.brandAssetPreviewSquare {
+  border-radius: 14px;
+}
+
+.brandAssetPreview img,
+.brandAssetPreview .thumbFallback {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.brandAssetPreviewRound img {
+  border-radius: 50%;
+}
+
+.brandAssetPreviewSquare img,
+.brandAssetPreviewSquare .thumbFallback {
+  border-radius: 14px;
+}
+
+.brandAssetRemove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  padding: 0;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(26, 26, 26, 0.18);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.brandAssetRemove:hover:not(:disabled) {
+  background: #b91c1c;
+  transform: scale(1.06);
+}
+
+.brandAssetRemove:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.brandAssetRemove:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
 }
 
 /* --- Property image manager ---------------------------------------------- */
@@ -679,8 +1074,26 @@
   border-color: var(--gold);
 }
 
+.thumbPreviewBtn {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+  display: block;
+  color: inherit;
+  font: inherit;
+}
+
 .imageCardThumb img,
-.imageCardThumb video {
+.imageCardThumb video,
+.thumbPreviewBtn img,
+.thumbPreviewBtn video {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -766,6 +1179,60 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  z-index: 1;
+}
+
+.thumbPlayOverlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.28);
+  color: #fff;
+  pointer-events: none;
+  transition: background 160ms ease;
+}
+
+.imageCardThumb:hover .thumbPlayOverlay {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.thumbPlayOverlay svg {
+  width: 1.55rem;
+  height: 1.55rem;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+}
+
+.thumbRemoveBtn {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.78);
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.thumbRemoveBtn:hover:not(:disabled) {
+  background: #b91c1c;
+  transform: scale(1.05);
+}
+
+.thumbRemoveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .previewGrid {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { validateSignupInput } from "@/lib/validators/userValidator";
 import styles from "./page.module.css";
 
 export default function AgentSignupPage() {
@@ -20,10 +21,17 @@ export default function AgentSignupPage() {
     setStatus("submitting");
     setErrorMsg("");
 
+    const validated = validateSignupInput(form);
+    if (!validated.ok) {
+      setErrorMsg(validated.error || "Please fill in all required fields correctly.");
+      setStatus("error");
+      return;
+    }
+
     const res = await fetch("/api/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify(validated.data),
     });
 
     if (res.ok) {
@@ -69,9 +77,10 @@ export default function AgentSignupPage() {
             discovered by buyers looking for trusted professionals.
           </p>
 
-          <form onSubmit={handleSubmit} className={styles.signupForm}>
+          <form onSubmit={handleSubmit} className={styles.signupForm} noValidate>
             <input
               required
+              maxLength={100}
               placeholder="Full name"
               value={form.full_name}
               onChange={(e) => setForm({ ...form, full_name: e.target.value })}
@@ -79,6 +88,7 @@ export default function AgentSignupPage() {
             />
             <input
               required
+              maxLength={100}
               placeholder="Estate / Agency name"
               value={form.estate_name}
               onChange={(e) =>
@@ -99,6 +109,7 @@ export default function AgentSignupPage() {
             />
             <input
               placeholder="Phone"
+              maxLength={20}
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
               className={styles.signupInput}
@@ -108,6 +119,7 @@ export default function AgentSignupPage() {
               value={form.message}
               onChange={(e) => setForm({ ...form, message: e.target.value })}
               rows={4}
+              maxLength={1000}
               className={styles.signupTextarea}
             />
             {errorMsg ? <p className={styles.errorText}>{errorMsg}</p> : null}
