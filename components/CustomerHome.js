@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import AgentAvatar from "@/components/AgentAvatar";
 import SiteHeader from "@/components/SiteHeader";
 import { useIsMobile } from "@/lib/useIsMobile";
 import { validateContactInput } from "@/lib/validators/inquiryValidator";
@@ -194,9 +195,14 @@ function AgentCard({ agent }) {
               className={styles.agentImage}
             />
           ) : (
-            <div className={styles.agentFallback} aria-hidden="true">
-              {(agent.full_name || "A").charAt(0).toUpperCase()}
-            </div>
+            <AgentAvatar
+              src={null}
+              alt=""
+              fill
+              sizes="(max-width: 768px) 72px, 110px"
+              className={styles.agentImage}
+              aria-hidden="true"
+            />
           )}
         </div>
       </div>
