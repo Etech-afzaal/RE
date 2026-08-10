@@ -886,7 +886,7 @@ export default function EditPropertyPage() {
                 value={form.city}
                 disabled={isPending}
                 onChange={(e) => setForm({ ...form, city: e.target.value })}
-                placeholder="Lahore"
+                placeholder="e.g. Lahore"
               />
             </label>
             <label className={ui.field}>
@@ -896,7 +896,7 @@ export default function EditPropertyPage() {
                 value={form.area}
                 disabled={isPending}
                 onChange={(e) => setForm({ ...form, area: e.target.value })}
-                placeholder="DHA"
+                placeholder="e.g. DHA,Gulberg"
               />
             </label>
             <label className={ui.field}>
@@ -906,7 +906,7 @@ export default function EditPropertyPage() {
                 value={form.phase}
                 disabled={isPending}
                 onChange={(e) => setForm({ ...form, phase: e.target.value })}
-                placeholder="Phase 5"
+                placeholder="e.g. Phase 6 / Sector B"
               />
             </label>
             <label className={ui.field}>

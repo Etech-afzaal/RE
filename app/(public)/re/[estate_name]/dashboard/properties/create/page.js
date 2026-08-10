@@ -861,7 +861,7 @@ export default function CreatePropertyPage() {
                 className={`${ui.input} ${fieldErrors.city ? ui.inputInvalid : ""}`}
                 value={form.city}
                 onChange={(e) => update("city", e.target.value)}
-                placeholder="Lahore"
+                placeholder="e.g. Lahore"
                 aria-invalid={Boolean(fieldErrors.city)}
                 aria-describedby="city-error"
               />
@@ -873,19 +873,19 @@ export default function CreatePropertyPage() {
                 className={`${ui.input} ${fieldErrors.area ? ui.inputInvalid : ""}`}
                 value={form.area}
                 onChange={(e) => update("area", e.target.value)}
-                placeholder="DHA"
+                placeholder="e.g. DHA,Gulberg"
                 aria-invalid={Boolean(fieldErrors.area)}
                 aria-describedby="area-error"
               />
               <FieldMessage id="area-error" error={fieldErrors.area} />
             </label>
             <label className={ui.field}>
-              <span className={ui.label}>Phase</span>
+              <span className={ui.label}>Phase/Sector</span>
               <input
                 className={`${ui.input} ${fieldErrors.phase ? ui.inputInvalid : ""}`}
                 value={form.phase}
                 onChange={(e) => update("phase", e.target.value)}
-                placeholder="Phase 5"
+                placeholder="e.g. Phase 6 / Sector B"
                 aria-invalid={Boolean(fieldErrors.phase)}
                 aria-describedby="phase-error"
               />
