@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import PasswordInput from "@/components/PasswordInput";
 import { validateLoginInput } from "@/lib/validators/userValidator";
 import styles from "./page.module.css";
@@ -27,6 +28,8 @@ export default function AgentLoginPage() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (loading) return;
+
     setLoading(true);
     setError("");
     setAccountNotice(null);
@@ -224,6 +227,7 @@ export default function AgentLoginPage() {
           </div>
         </div>
       ) : null}
+      {loading ? <LoadingSpinner fullPage label="Loading" /> : null}
     </div>
   );
 }
