@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { mkdir, rm } from "fs/promises";
+import { mkdir, rm, writeFile } from "fs/promises";
 import path from "path";
-import sharp from "sharp";
 import { nanoid } from "nanoid";
 import { requireAgent } from "@/lib/adminAuth";
 import {
@@ -12,10 +11,13 @@ import {
   getRequestIp,
 } from "@/lib/auditLogger";
 import { query } from "@/lib/db";
-import { imageFormatErrorMessage, isImageFile } from "@/lib/imageUpload";
+import {
+  IMAGE_KINDS,
+  imageProcessErrorMessage,
+  validateImageUploadFile,
+} from "@/lib/imageUpload";
+import { validateAndCompressImageBuffer } from "@/lib/serverImageProcess";
 import { resolvePublicUploadPath } from "@/lib/uploadPath";
-
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 function agentIdFrom(session) {
   return Number(session.user.agent_id || session.user.id);
@@ -40,19 +42,15 @@ export async function POST(req) {
   if (!(image instanceof File) || image.size === 0) {
     return NextResponse.json({ error: "Please select an image." }, { status: 400 });
   }
-  if (!isImageFile(image)) {
-    return NextResponse.json({ error: imageFormatErrorMessage() }, { status: 400 });
-  }
-  if (image.size > MAX_FILE_SIZE) {
-    return NextResponse.json(
-      { error: "Logo images must be 5 MB or smaller." },
-      { status: 400 },
-    );
+
+  const validated = validateImageUploadFile(image, IMAGE_KINDS.COMPANY_LOGO);
+  if (!validated.ok) {
+    return NextResponse.json({ error: validated.error }, { status: 400 });
   }
 
   try {
     const agents = await query(
-      "SELECT username, estate_name, full_name FROM users WHERE id = ? AND user_type = 'agent' LIMIT 1",
+      "SELECT username, estate_name, full_name, company_logo FROM users WHERE id = ? AND user_type = 'agent' LIMIT 1",
       [agentId],
     );
     const agent = agents[0];
@@ -69,15 +67,19 @@ export async function POST(req) {
     );
     await mkdir(uploadDir, { recursive: true });
 
-    const filename = `company-logo-${nanoid(8)}.jpg`;
-    const outputPath = path.join(uploadDir, filename);
     const imageBuffer = Buffer.from(await image.arrayBuffer());
+    const processed = await validateAndCompressImageBuffer(imageBuffer, {
+      maxWidth: 600,
+      maxHeight: 600,
+    });
 
-    await sharp(imageBuffer, { failOn: "none" })
-      .rotate()
-      .resize(600, 600, { fit: "inside", withoutEnlargement: true })
-      .jpeg({ quality: 88, mozjpeg: true })
-      .toFile(outputPath);
+    if (!processed.ok) {
+      return NextResponse.json({ error: processed.error }, { status: 400 });
+    }
+
+    const filename = `company-logo-${nanoid(8)}.webp`;
+    const outputPath = path.join(uploadDir, filename);
+    await writeFile(outputPath, processed.buffer);
 
     const companyLogo = `/uploads/agents/${agentId}/${filename}`;
     await query("UPDATE users SET company_logo = ? WHERE id = ? AND user_type = 'agent'", [
@@ -85,6 +87,9 @@ export async function POST(req) {
       agentId,
     ]);
 
+    if (agent.company_logo && agent.company_logo !== companyLogo) {
+      await removeOwnedAgentFile(agent.company_logo, agentId);
+    }
     const handle = agent.username || agent.estate_name;
     revalidatePath("/");
     revalidatePath(`/re/${handle}`);
@@ -110,7 +115,7 @@ export async function POST(req) {
   } catch (err) {
     console.error("Failed to upload company logo:", err);
     return NextResponse.json(
-      { error: "Could not upload company logo. Please try again." },
+      { error: imageProcessErrorMessage() },
       { status: 500 },
     );
   }

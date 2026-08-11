@@ -8,6 +8,12 @@ import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ui from "@/components/agent-portal/portal.module.css";
 import { validateCompanyBrandingInput } from "@/lib/validators/userValidator";
+import {
+  IMAGE_KINDS,
+  imageProcessErrorMessage,
+  validateImageUploadFile,
+} from "@/lib/imageUpload";
+import { compressImageForUpload } from "@/lib/clientImageCompress";
 
 export default function CompanyBrandingPage() {
   const params = useParams();
@@ -108,10 +114,22 @@ export default function CompanyBrandingPage() {
     setSuccess("Company branding updated.");
   }
 
-  function selectLogo(file) {
+  async function selectLogo(file) {
     if (!file) return;
     setError("");
-    setSelectedLogo(file);
+
+    const validated = validateImageUploadFile(file, IMAGE_KINDS.COMPANY_LOGO);
+    if (!validated.ok) {
+      setError(validated.error);
+      return;
+    }
+
+    try {
+      const compressed = await compressImageForUpload(file);
+      setSelectedLogo(compressed);
+    } catch {
+      setError(imageProcessErrorMessage());
+    }
   }
 
   async function removeCompanyLogo() {

@@ -33,30 +33,50 @@ export async function POST(req) {
       );
     }
 
-    await query("UPDATE users SET status = 'approved' WHERE email = ? AND user_type = 'agent'", [
-      signupRequest.email,
-    ]);
+    const agentRows = await query(
+      `SELECT id, full_name, username, estate_name, status
+       FROM users WHERE email = ? AND user_type = 'agent' LIMIT 1`,
+      [signupRequest.email],
+    );
+    const agent = agentRows[0];
+    if (!agent) {
+      return NextResponse.json(
+        { error: "Matching agent account was not found." },
+        { status: 404 },
+      );
+    }
+    if (agent.status === "blocked") {
+      return NextResponse.json(
+        {
+          error:
+            "This agent is permanently blocked. Unblock them from Agent Management first.",
+        },
+        { status: 409 },
+      );
+    }
+
+    // Re-enable only disabled agents (revoke flow). Never clear a block here.
+    await query(
+      `UPDATE users
+       SET status = 'approved'
+       WHERE id = ? AND user_type = 'agent' AND status = 'disabled'`,
+      [agent.id],
+    );
 
     await query("UPDATE signup_requests SET status = 'approved' WHERE id = ?", [
       requestId,
     ]);
 
-    const agentRows = await query(
-      `SELECT id, full_name, username, estate_name
-       FROM users WHERE email = ? AND user_type = 'agent' LIMIT 1`,
-      [signupRequest.email],
-    );
-    const agent = agentRows[0];
     await createAuditLog({
       userId: Number(session?.user?.id) || null,
       action: AUDIT_ACTIONS.AGENT_ENABLED,
       entityType: AUDIT_ENTITY_TYPES.USER,
-      entityId: agent?.id || null,
+      entityId: agent.id,
       description: `Re-enabled agent ${signupRequest.full_name}`,
       metadata: {
         actor_name: session?.user?.name || "Superadmin",
         agent_name: signupRequest.full_name,
-        agent_username: agent?.username || agent?.estate_name || signupRequest.estate_name,
+        agent_username: agent.username || agent.estate_name || signupRequest.estate_name,
         estate_name: signupRequest.estate_name,
         signup_request_id: Number(requestId),
       },

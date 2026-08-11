@@ -5,6 +5,12 @@ import { useRouter, useParams } from "next/navigation";
 import BackButton from "@/components/BackButton";
 import ImageCategorySelect from "@/components/ImageCategorySelect";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import {
+  IMAGE_KINDS,
+  imageProcessErrorMessage,
+  validateImageUploadFile,
+} from "@/lib/imageUpload";
+import { compressImageForUpload } from "@/lib/clientImageCompress";
 
 export default function AgentEditPropertyPage() {
   const router = useRouter();
@@ -53,6 +59,37 @@ export default function AgentEditPropertyPage() {
 
     loadProperty();
   }, [params.id]);
+
+  async function handleNewImagesSelect(e) {
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (files.length === 0) return;
+
+    setError("");
+    const nextImages = [];
+    for (let index = 0; index < files.length; index += 1) {
+      const file = files[index];
+      const validated = validateImageUploadFile(file, IMAGE_KINDS.PROPERTY);
+      if (!validated.ok) {
+        setError(validated.error);
+        continue;
+      }
+      try {
+        const compressed = await compressImageForUpload(file);
+        nextImages.push({
+          file: compressed,
+          title:
+            compressed.name.replace(/\.[^.]+$/, "") || `Image ${nextImages.length + 1}`,
+          category: "",
+          isFeatured: false,
+        });
+      } catch {
+        setError(imageProcessErrorMessage());
+      }
+    }
+    if (nextImages.length === 0) return;
+    setNewImages(nextImages);
+  }
 
   function updateExistingImage(imageId, changes) {
     setExistingImages((current) => {
@@ -361,17 +398,7 @@ export default function AgentEditPropertyPage() {
             type="file"
             multiple
             accept="image/*"
-            onChange={(e) => {
-              const files = Array.from(e.target.files || []);
-              const nextImages = files.map((file, index) => ({
-                file,
-                title:
-                  file.name.replace(/\.[^.]+$/, "") || `Image ${index + 1}`,
-                category: "",
-                isFeatured: false,
-              }));
-              setNewImages(nextImages);
-            }}
+            onChange={handleNewImagesSelect}
             style={{ marginTop: 6 }}
           />
         </label>

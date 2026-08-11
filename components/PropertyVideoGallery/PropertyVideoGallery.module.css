@@ -103,6 +103,64 @@
   display: block;
 }
 
+.thumbPlaceholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(145deg, #2a2a2a 0%, #111 100%);
+}
+
+.lazyPoster {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: #000;
+  cursor: pointer;
+  display: block;
+  color: #fff;
+}
+
+.lazyPoster:focus-visible {
+  outline: 2px solid var(--gold, #f2bb46);
+  outline-offset: -2px;
+}
+
+.lazyPosterImg,
+.lazyPosterFallback {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  background: #000;
+}
+
+.lazyPosterFallback {
+  background: linear-gradient(145deg, #2a2a2a 0%, #111 100%);
+}
+
+.lazyPlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.32);
+}
+
+.lazyPlay svg {
+  width: 3.25rem;
+  height: 3.25rem;
+  padding: 0.85rem 0.75rem 0.85rem 0.95rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
 .thumbPlay,
 .thumbNow {
   position: absolute;

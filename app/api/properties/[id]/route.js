@@ -53,17 +53,30 @@ export async function GET(_req, { params }) {
 
   let videos = [];
   try {
-    const videoRows = await query(
-      `SELECT id, video_url, category, is_featured, display_order, created_at
-       FROM property_videos
-       WHERE property_id = ?
-       ORDER BY is_featured DESC, display_order ASC, id ASC`,
-      [propertyId],
-    );
+    let videoRows;
+    try {
+      videoRows = await query(
+        `SELECT id, video_url, thumbnail_url, category, is_featured, display_order, created_at
+         FROM property_videos
+         WHERE property_id = ?
+         ORDER BY is_featured DESC, display_order ASC, id ASC`,
+        [propertyId],
+      );
+    } catch {
+      videoRows = await query(
+        `SELECT id, video_url, category, is_featured, display_order, created_at
+         FROM property_videos
+         WHERE property_id = ?
+         ORDER BY is_featured DESC, display_order ASC, id ASC`,
+        [propertyId],
+      );
+    }
     videos = videoRows.map((video) => {
       const category = normalizeImageCategory(video.category);
       return {
         ...video,
+        thumbnail_url: video.thumbnail_url || null,
+        thumbnail: video.thumbnail_url || null,
         category,
         category_label: category ? imageCategoryLabel(category) : null,
       };
@@ -81,6 +94,8 @@ export async function GET(_req, { params }) {
       {
         id: null,
         video_url: property.video_url,
+        thumbnail_url: null,
+        thumbnail: null,
         category: null,
         category_label: null,
         is_featured: true,
@@ -278,6 +293,10 @@ export async function DELETE(req, { params }) {
     await query("DELETE FROM property_images WHERE property_id = ?", [
       propertyId,
     ]);
+    // Explicitly clear videos (do not rely solely on FK CASCADE for older DBs).
+    await query("DELETE FROM property_videos WHERE property_id = ?", [
+      propertyId,
+    ]).catch(() => {});
     await query("DELETE FROM properties WHERE id = ? AND agent_id = ?", [
       propertyId,
       agentId,

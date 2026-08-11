@@ -11,7 +11,15 @@ import { sendMail, newSignupRequestEmail } from "@/lib/mail";
 import { validateSignupInput } from "@/lib/validators/userValidator";
 
 export async function POST(req) {
-  const body = await req.json();
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid request body." },
+      { status: 400 },
+    );
+  }
   const parsed = validateSignupInput(body);
 
   if (!parsed.ok) {

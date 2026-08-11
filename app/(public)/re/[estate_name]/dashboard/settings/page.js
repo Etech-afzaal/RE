@@ -16,6 +16,7 @@ export default function AgentSettingsPage() {
   const username = decodeURIComponent(params.estate_name || "");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -40,6 +41,10 @@ export default function AgentSettingsPage() {
     e.preventDefault();
     setError("");
     setSuccess("");
+    if (!currentPassword) {
+      setError("Current password is required.");
+      return;
+    }
     const passwordCheck = validateNewPassword(password);
     if (!passwordCheck.ok) {
       setError(passwordCheck.error);
@@ -50,20 +55,29 @@ export default function AgentSettingsPage() {
       return;
     }
     setSaving(true);
-    const res = await fetch("/api/agents/reset-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ newPassword: passwordCheck.value }),
-    });
-    const data = await res.json().catch(() => ({}));
-    setSaving(false);
-    if (!res.ok) {
-      setError(data.error || "Could not update password.");
-      return;
+    try {
+      const res = await fetch("/api/agents/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword: passwordCheck.value,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Could not update password.");
+        return;
+      }
+      setCurrentPassword("");
+      setPassword("");
+      setConfirm("");
+      setSuccess("Password updated.");
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setSaving(false);
     }
-    setPassword("");
-    setConfirm("");
-    setSuccess("Password updated.");
   }
 
   return (
@@ -79,6 +93,16 @@ export default function AgentSettingsPage() {
         </h2>
         {error ? <p className={ui.error}>{error}</p> : null}
         {success ? <p className={ui.success}>{success}</p> : null}
+        <label className={ui.field}>
+          <span className={ui.label}>Current password</span>
+          <PasswordInput
+            className={ui.input}
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            autoComplete="current-password"
+            required
+          />
+        </label>
         <label className={ui.field}>
           <span className={ui.label}>New password</span>
           <PasswordInput

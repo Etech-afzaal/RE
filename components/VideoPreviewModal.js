@@ -41,6 +41,7 @@ export function normalizePreviewVideos(videos = []) {
       return {
         id: video.id ?? `video-${index}`,
         src,
+        poster: video.thumbnail || video.thumbnail_url || video.poster || null,
         title,
         category,
         featured: Boolean(
@@ -165,6 +166,7 @@ export default function VideoPreviewModal({
               playsInline
               preload="metadata"
               src={current.src}
+              poster={current.poster || undefined}
             >
               Your browser does not support this video format.
             </video>

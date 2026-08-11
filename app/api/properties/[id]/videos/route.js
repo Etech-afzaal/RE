@@ -8,6 +8,7 @@ import {
 } from "@/lib/auditLogger";
 import { query } from "@/lib/db";
 import { normalizeImageCategory } from "@/lib/imageCategories";
+import { validateAndProcessVideoBuffer } from "@/lib/serverVideoProcess";
 import {
   isPropertyLockedForAgent,
   PROPERTY_LOCKED_MESSAGE,
@@ -32,6 +33,7 @@ async function ensurePropertyVideosTable() {
       id INT AUTO_INCREMENT PRIMARY KEY,
       property_id INT NOT NULL,
       video_url VARCHAR(500) NOT NULL,
+      thumbnail_url VARCHAR(500) NULL,
       category VARCHAR(100) NULL,
       is_featured BOOLEAN DEFAULT FALSE,
       display_order INT DEFAULT 0,
@@ -40,6 +42,15 @@ async function ensurePropertyVideosTable() {
       FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
     )
   `);
+
+  const thumbColumn = await query(
+    "SHOW COLUMNS FROM property_videos LIKE 'thumbnail_url'",
+  );
+  if (thumbColumn.length === 0) {
+    await query(
+      "ALTER TABLE property_videos ADD COLUMN thumbnail_url VARCHAR(500) NULL AFTER video_url",
+    );
+  }
 }
 
 /** Videos may only be touched by the agent who owns the listing. */
@@ -62,6 +73,26 @@ function lockedResponse() {
     { error: PROPERTY_LOCKED_MESSAGE },
     { status: 409 },
   );
+}
+
+async function removeLocalUpload(publicUrl) {
+  const localPath = videoLocalPath(publicUrl);
+  if (localPath) await rm(localPath, { force: true }).catch(() => {});
+}
+
+/** Remove files and DB rows for videos already inserted in a failed batch. */
+async function rollbackSavedVideos(propertyId, saved) {
+  if (!saved.length) return;
+  const urls = saved.map((item) => item.videoUrl);
+  for (const item of saved) {
+    await removeLocalUpload(item.videoUrl);
+    await removeLocalUpload(item.thumbnailUrl);
+  }
+  await query(
+    `DELETE FROM property_videos
+     WHERE property_id = ? AND video_url IN (${urls.map(() => "?").join(", ")})`,
+    [propertyId, ...urls],
+  ).catch(() => {});
 }
 
 /** Keep properties.video_url in sync with the featured gallery video. */
@@ -151,12 +182,26 @@ export async function POST(req, { params }) {
     for (let i = 0; i < files.length; i += 1) {
       const file = files[i];
       const extension = getVideoExtension(file);
-      const filename = `${nanoid(10)}.${extension}`;
-      const publicUrl = `/uploads/videos/${propertyId}/${filename}`;
+      const inputBuffer = Buffer.from(await file.arrayBuffer());
 
+      const processed = await validateAndProcessVideoBuffer(inputBuffer, {
+        extension,
+      });
+      if (!processed.ok) {
+        await rollbackSavedVideos(propertyId, saved);
+        return NextResponse.json({ error: processed.error }, { status: 400 });
+      }
+
+      const id = nanoid(10);
+      const filename = `${id}.mp4`;
+      const thumbFilename = `${id}_thumbnail.webp`;
+      const publicUrl = `/uploads/videos/${propertyId}/${filename}`;
+      const thumbnailUrl = `/uploads/videos/${propertyId}/${thumbFilename}`;
+
+      await writeFile(path.join(uploadDir, filename), processed.videoBuffer);
       await writeFile(
-        path.join(uploadDir, filename),
-        Buffer.from(await file.arrayBuffer()),
+        path.join(uploadDir, thumbFilename),
+        processed.thumbnailBuffer,
       );
 
       const displayOrder = Number.isFinite(videoOrders[i]) ? videoOrders[i] : i;
@@ -165,12 +210,18 @@ export async function POST(req, { params }) {
 
       await query(
         `INSERT INTO property_videos
-          (property_id, video_url, category, is_featured, display_order)
-         VALUES (?, ?, ?, ?, ?)`,
-        [propertyId, publicUrl, category, isFeatured, displayOrder],
+          (property_id, video_url, thumbnail_url, category, is_featured, display_order)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [propertyId, publicUrl, thumbnailUrl, category, isFeatured, displayOrder],
       );
 
-      saved.push({ videoUrl: publicUrl, category, isFeatured, displayOrder });
+      saved.push({
+        videoUrl: publicUrl,
+        thumbnailUrl,
+        category,
+        isFeatured,
+        displayOrder,
+      });
     }
 
     // Exactly one featured video per property after this upload batch.
@@ -196,10 +247,7 @@ export async function POST(req, { params }) {
 
     await syncLegacyVideoUrl(propertyId);
   } catch (err) {
-    for (const item of saved) {
-      const localPath = videoLocalPath(item.videoUrl);
-      if (localPath) await rm(localPath, { force: true }).catch(() => {});
-    }
+    await rollbackSavedVideos(propertyId, saved);
     console.error("Failed to save property videos:", err);
     return NextResponse.json(
       { error: "Could not upload the property videos." },
@@ -234,6 +282,7 @@ export async function POST(req, { params }) {
   return NextResponse.json({
     success: true,
     videos: saved.map((item) => item.videoUrl),
+    thumbnails: saved.map((item) => item.thumbnailUrl),
   });
 }
 
@@ -258,14 +307,14 @@ export async function DELETE(req, { params }) {
 
   const rows = clearAll
     ? await query(
-        "SELECT id, video_url, is_featured FROM property_videos WHERE property_id = ?",
+        "SELECT id, video_url, thumbnail_url, is_featured FROM property_videos WHERE property_id = ?",
         [propertyId],
       )
     : (
         await Promise.all(
           videoIds.map(async (videoId) => {
             const found = await query(
-              "SELECT id, video_url, is_featured FROM property_videos WHERE id = ? AND property_id = ?",
+              "SELECT id, video_url, thumbnail_url, is_featured FROM property_videos WHERE id = ? AND property_id = ?",
               [Number(videoId), propertyId],
             );
             return found[0] || null;
@@ -274,8 +323,8 @@ export async function DELETE(req, { params }) {
       ).filter(Boolean);
 
   for (const video of rows) {
-    const localPath = videoLocalPath(video.video_url);
-    if (localPath) await rm(localPath, { force: true });
+    await removeLocalUpload(video.video_url);
+    await removeLocalUpload(video.thumbnail_url);
     await query(
       "DELETE FROM property_videos WHERE id = ? AND property_id = ?",
       [video.id, propertyId],

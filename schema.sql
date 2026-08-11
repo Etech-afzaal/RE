@@ -104,6 +104,7 @@ CREATE TABLE IF NOT EXISTS property_videos (
   id INT AUTO_INCREMENT PRIMARY KEY,
   property_id INT NOT NULL,
   video_url VARCHAR(500) NOT NULL,
+  thumbnail_url VARCHAR(500) NULL,         -- poster frame for lazy-loaded players
   category VARCHAR(100) NULL,               -- same room/area labels as property_images
   is_featured BOOLEAN DEFAULT FALSE,       -- main walkthrough for the property page
   display_order INT DEFAULT 0,

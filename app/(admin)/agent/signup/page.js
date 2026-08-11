@@ -28,17 +28,22 @@ export default function AgentSignupPage() {
       return;
     }
 
-    const res = await fetch("/api/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(validated.data),
-    });
+    try {
+      const res = await fetch("/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validated.data),
+      });
 
-    if (res.ok) {
-      setStatus("done");
-    } else {
-      const data = await res.json().catch(() => ({}));
-      setErrorMsg(data.error || "Something went wrong. Please try again.");
+      if (res.ok) {
+        setStatus("done");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setErrorMsg(data.error || "Something went wrong. Please try again.");
+        setStatus("error");
+      }
+    } catch {
+      setErrorMsg("Network error. Please check your connection and try again.");
       setStatus("error");
     }
   }

@@ -4,6 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import BackButton from "@/components/BackButton";
 import ImageCategorySelect from "@/components/ImageCategorySelect";
+import {
+  IMAGE_KINDS,
+  imageProcessErrorMessage,
+  validateImageUploadFile,
+} from "@/lib/imageUpload";
+import { compressImageForUpload } from "@/lib/clientImageCompress";
 
 export default function AgentNewPropertyPage() {
   const router = useRouter();
@@ -19,6 +25,38 @@ export default function AgentNewPropertyPage() {
   const [selectedImages, setSelectedImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  async function handleImageSelect(e) {
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (files.length === 0) return;
+
+    setError("");
+    const nextImages = [];
+    for (let index = 0; index < files.length; index += 1) {
+      const file = files[index];
+      const validated = validateImageUploadFile(file, IMAGE_KINDS.PROPERTY);
+      if (!validated.ok) {
+        setError(validated.error);
+        continue;
+      }
+      try {
+        const compressed = await compressImageForUpload(file);
+        nextImages.push({
+          file: compressed,
+          title:
+            compressed.name.replace(/\.[^.]+$/, "") || `Image ${nextImages.length + 1}`,
+          order: nextImages.length,
+          category: "",
+          isFeatured: nextImages.length === 0,
+        });
+      } catch {
+        setError(imageProcessErrorMessage());
+      }
+    }
+    if (nextImages.length === 0) return;
+    setSelectedImages(nextImages);
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -151,18 +189,7 @@ export default function AgentNewPropertyPage() {
             type="file"
             multiple
             accept="image/*"
-            onChange={(e) => {
-              const files = Array.from(e.target.files || []);
-              const nextImages = files.map((file, index) => ({
-                file,
-                title:
-                  file.name.replace(/\.[^.]+$/, "") || `Image ${index + 1}`,
-                order: index,
-                category: "",
-                isFeatured: index === 0,
-              }));
-              setSelectedImages(nextImages);
-            }}
+            onChange={handleImageSelect}
             style={{ marginTop: 6 }}
           />
         </label>

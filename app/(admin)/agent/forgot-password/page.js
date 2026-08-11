@@ -1,6 +1,5 @@
 import Link from "next/link";
 import styles from "../login/page.module.css";
-import { query } from "@/lib/db";
 
 export const metadata = {
   title: "Forgot password — Dhalahore Properties",
@@ -8,13 +7,12 @@ export const metadata = {
 
 /**
  * There is no self-service reset yet, so this points agents at the
- * database-backed administrator who can issue a new temporary password.
+ * configured admin contact who can issue a new temporary password.
+ * Uses ADMIN_EMAIL from env — never exposes the live superadmin DB row.
  */
-export default async function AgentForgotPasswordPage() {
-  const admins = await query(
-    "SELECT email FROM users WHERE user_type = 'superadmin' LIMIT 1",
-  );
-  const contactEmail = admins[0]?.email || "admin@example.com";
+export default function AgentForgotPasswordPage() {
+  const contactEmail =
+    String(process.env.ADMIN_EMAIL || "").trim() || "admin@example.com";
   const mailtoHref = `mailto:${contactEmail}?subject=${encodeURIComponent(
     "Agent password reset request",
   )}&body=${encodeURIComponent(

@@ -13,12 +13,12 @@ import VideoPreviewModal from "@/components/VideoPreviewModal";
 import { companyNameFromAgent } from "@/lib/agentBranding";
 import {
   MAX_PROPERTY_IMAGES,
-  imageFormatErrorMessage,
+  IMAGE_KINDS,
   imageLimitErrorMessage,
-  imageSizeErrorMessage,
-  isImageFile,
-  MAX_PROPERTY_IMAGE_BYTES,
+  imageProcessErrorMessage,
+  validateImageUploadFile,
 } from "@/lib/imageUpload";
+import { compressImageForUpload } from "@/lib/clientImageCompress";
 import {
   MAX_PROPERTY_VIDEOS,
   MAX_PROPERTY_VIDEO_BYTES,
@@ -185,7 +185,7 @@ export default function EditPropertyPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function addFiles(fileList) {
+  async function addFiles(fileList) {
     const incoming = Array.from(fileList || []);
     if (incoming.length === 0) return;
 
@@ -200,27 +200,43 @@ export default function EditPropertyPage() {
 
     const valid = [];
     for (const file of incoming.slice(0, remaining)) {
-      if (!isImageFile(file)) {
-        setError(imageFormatErrorMessage());
+      const validated = validateImageUploadFile(file, IMAGE_KINDS.PROPERTY);
+      if (!validated.ok) {
+        setError(validated.error);
         continue;
       }
-      if (Number(file.size) > MAX_PROPERTY_IMAGE_BYTES) {
-        setError(imageSizeErrorMessage());
-        continue;
+
+      try {
+        const compressed = await compressImageForUpload(file);
+        valid.push(compressed);
+      } catch {
+        setError(imageProcessErrorMessage());
       }
-      valid.push(file);
     }
     if (valid.length === 0) return;
 
-    const added = valid.map((file) => ({
-      key: `n${newImageKey.current++}`,
-      file,
-      url: URL.createObjectURL(file),
-      category: "",
-    }));
-    if (added.length === 0) return;
-    setNewImages((prev) => [...prev, ...added]);
-    setFeaturedKey((prev) => prev ?? `new:${added[0].key}`);
+    let firstAddedKey = null;
+    setNewImages((prev) => {
+      const room = Math.max(
+        0,
+        MAX_PROPERTY_IMAGES - existingImages.length - prev.length,
+      );
+      const accepted = valid.slice(0, room).map((file) => {
+        const key = `n${newImageKey.current++}`;
+        if (!firstAddedKey) firstAddedKey = key;
+        return {
+          key,
+          file,
+          url: URL.createObjectURL(file),
+          category: "",
+        };
+      });
+      if (accepted.length === 0) return prev;
+      return [...prev, ...accepted];
+    });
+    if (firstAddedKey) {
+      setFeaturedKey((prev) => prev ?? `new:${firstAddedKey}`);
+    }
   }
 
   function updateExistingImage(id, changes) {
@@ -683,12 +699,20 @@ export default function EditPropertyPage() {
                               setVideoPreviewOpen(true);
                             }}
                           >
-                            <video
-                              src={video.video_url}
-                              muted
-                              playsInline
-                              preload="metadata"
-                            />
+                            {video.thumbnail_url || video.thumbnail ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={video.thumbnail_url || video.thumbnail}
+                                alt=""
+                              />
+                            ) : (
+                              <video
+                                src={video.video_url}
+                                muted
+                                playsInline
+                                preload="none"
+                              />
+                            )}
                             <PropertyWatermark text={watermarkText} compact />
                             <span
                               className={ui.thumbPlayOverlay}
@@ -834,7 +858,7 @@ export default function EditPropertyPage() {
                   <input
                     ref={newVideoInputRef}
                     type="file"
-                    accept="video/mp4,video/webm,video/quicktime,video/ogg,.mp4,.webm,.mov,.ogg"
+                    accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
                     multiple
                     className={ui.srOnlyInput}
                     disabled={isPending}
@@ -864,7 +888,7 @@ export default function EditPropertyPage() {
                 </p>
               )}
               <p className={ui.muted}>
-                MP4, WebM, MOV, or OGG. Maximum {MAX_PROPERTY_VIDEOS} videos.
+                MP4, WebM, or MOV. Maximum {MAX_PROPERTY_VIDEOS} videos.
                 New uploads are saved when you click Save.
               </p>
             </div>

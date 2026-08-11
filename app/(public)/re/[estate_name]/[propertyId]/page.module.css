@@ -51,7 +51,8 @@
   align-items: center;
   gap: 1rem;
   padding: 0.5rem 0 1rem;
-  margin-bottom: var(--section-gap);
+  /* Match agent public site hero top spacing (HeroSlider wrap margin-top) */
+  margin-bottom: 1.5rem;
   border-bottom: 1px solid rgba(242, 187, 70, 0.22);
 }
 

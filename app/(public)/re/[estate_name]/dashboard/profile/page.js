@@ -8,6 +8,12 @@ import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ui from "@/components/agent-portal/portal.module.css";
 import { validateAgentProfileInput } from "@/lib/validators/userValidator";
+import {
+  IMAGE_KINDS,
+  imageProcessErrorMessage,
+  validateImageUploadFile,
+} from "@/lib/imageUpload";
+import { compressImageForUpload } from "@/lib/clientImageCompress";
 
 export default function AgentProfilePage() {
   const params = useParams();
@@ -108,10 +114,22 @@ export default function AgentProfilePage() {
     setSuccess("Profile updated.");
   }
 
-  function selectImage(file) {
+  async function selectImage(file) {
     if (!file) return;
     setError("");
-    setSelectedImage(file);
+
+    const validated = validateImageUploadFile(file, IMAGE_KINDS.PROFILE);
+    if (!validated.ok) {
+      setError(validated.error);
+      return;
+    }
+
+    try {
+      const compressed = await compressImageForUpload(file);
+      setSelectedImage(compressed);
+    } catch {
+      setError(imageProcessErrorMessage());
+    }
   }
 
   async function removeProfileImage() {

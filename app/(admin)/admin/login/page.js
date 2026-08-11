@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import PasswordInput from "@/components/PasswordInput";
 import { validateLoginInput } from "@/lib/validators/userValidator";
 import styles from "./page.module.css";
@@ -17,6 +18,8 @@ export default function LoginPage() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (loading) return;
+
     setLoading(true);
     setError("");
 
@@ -24,6 +27,7 @@ export default function LoginPage() {
       const validated = validateLoginInput({ email, password });
       if (!validated.ok) {
         setError(validated.error);
+        setLoading(false);
         return;
       }
 
@@ -38,6 +42,7 @@ export default function LoginPage() {
         setError(
           "Your account access has been revoked. Contact the administrator to request access.",
         );
+        setLoading(false);
         return;
       }
 
@@ -50,18 +55,20 @@ export default function LoginPage() {
         setError(
           "Unable to reach the database. Check that MySQL is running and DB_HOST in .env is correct.",
         );
+        setLoading(false);
         return;
       }
 
       if (res?.error) {
         setError("Invalid email or password.");
+        setLoading(false);
         return;
       }
 
+      // Keep spinner until navigation completes.
       router.push("/admin/dashboard");
     } catch {
       setError("Unable to sign in. Please try again.");
-    } finally {
       setLoading(false);
     }
   }
@@ -103,6 +110,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className={styles.loginInput}
+              disabled={loading}
             />
             <PasswordInput
               required
@@ -111,6 +119,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               className={styles.loginInput}
               autoComplete="current-password"
+              disabled={loading}
             />
             {error ? <p className={styles.errorText}>{error}</p> : null}
             <button
@@ -130,6 +139,7 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+      {loading ? <LoadingSpinner fullPage label="Loading" /> : null}
     </div>
   );
 }

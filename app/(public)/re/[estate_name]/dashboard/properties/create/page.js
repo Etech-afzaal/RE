@@ -13,12 +13,12 @@ import { companyNameFromAgent } from "@/lib/agentBranding";
 import { needsCustomImageCategory } from "@/lib/imageCategories";
 import {
   MAX_PROPERTY_IMAGES,
-  imageFormatErrorMessage,
+  IMAGE_KINDS,
   imageLimitErrorMessage,
-  imageSizeErrorMessage,
-  isImageFile,
-  MAX_PROPERTY_IMAGE_BYTES,
+  imageProcessErrorMessage,
+  validateImageUploadFile,
 } from "@/lib/imageUpload";
+import { compressImageForUpload } from "@/lib/clientImageCompress";
 import {
   MAX_PROPERTY_VIDEOS,
   videoFormatErrorMessage,
@@ -326,7 +326,7 @@ export default function CreatePropertyPage() {
     setError(result.error || "Please complete the required fields.");
   }
 
-  function addFiles(fileList) {
+  async function addFiles(fileList) {
     const incoming = Array.from(fileList || []);
     if (incoming.length === 0) return;
 
@@ -340,20 +340,24 @@ export default function CreatePropertyPage() {
 
     const valid = [];
     for (const file of incoming.slice(0, remaining)) {
-      if (!isImageFile(file)) {
-        setError(imageFormatErrorMessage());
+      const validated = validateImageUploadFile(file, IMAGE_KINDS.PROPERTY);
+      if (!validated.ok) {
+        setError(validated.error);
         continue;
       }
-      if (Number(file.size) > MAX_PROPERTY_IMAGE_BYTES) {
-        setError(imageSizeErrorMessage());
-        continue;
+
+      try {
+        const compressed = await compressImageForUpload(file);
+        valid.push(compressed);
+      } catch {
+        setError(imageProcessErrorMessage());
       }
-      valid.push(file);
     }
     if (valid.length === 0) return;
 
     setImages((prev) => {
-      const accepted = valid.map((file) => ({
+      const room = Math.max(0, MAX_PROPERTY_IMAGES - prev.length);
+      const accepted = valid.slice(0, room).map((file) => ({
         file,
         url: URL.createObjectURL(file),
         category: "",
@@ -727,7 +731,10 @@ export default function CreatePropertyPage() {
         });
         const submitData = await submitRes.json().catch(() => ({}));
         if (!submitRes.ok) {
-          setError("Unable to submit property. Please try again.");
+          setError(
+            submitData.error ||
+              "Unable to submit property. Please try again.",
+          );
           setErrorDetails(
             Array.isArray(submitData.errors) ? submitData.errors : [],
           );
@@ -739,11 +746,12 @@ export default function CreatePropertyPage() {
 
       router.push(`${base}/properties`);
     } catch (err) {
-      if (submit) {
-        setError("Unable to submit property. Please try again.");
-      } else {
-        setError(err.message || "Something went wrong.");
-      }
+      setError(
+        err?.message ||
+          (submit
+            ? "Unable to submit property. Please try again."
+            : "Something went wrong."),
+      );
     } finally {
       setBusyAction(null);
     }
@@ -1260,7 +1268,7 @@ export default function CreatePropertyPage() {
                 <input
                   ref={videoInputRef}
                   type="file"
-                  accept="video/mp4,video/webm,video/quicktime,video/ogg,.mp4,.webm,.mov,.ogg"
+                  accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
                   multiple
                   className={ui.srOnlyInput}
                   onChange={(e) => {

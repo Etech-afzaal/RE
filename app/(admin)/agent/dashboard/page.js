@@ -5,8 +5,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
 import ActionMenu from "@/components/ActionMenu";
+import AgentAvatar from "@/components/AgentAvatar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { isAgentRole } from "@/lib/roles";
+import {
+  IMAGE_KINDS,
+  imageProcessErrorMessage,
+  validateImageUploadFile,
+} from "@/lib/imageUpload";
+import { compressImageForUpload } from "@/lib/clientImageCompress";
 
 export default function AgentDashboardPage() {
   const router = useRouter();
@@ -100,7 +107,21 @@ export default function AgentDashboardPage() {
     if (!image) return;
 
     setProfileImageError("");
-    setSelectedProfileImage(image);
+
+    const validated = validateImageUploadFile(image, IMAGE_KINDS.PROFILE);
+    if (!validated.ok) {
+      setProfileImageError(validated.error);
+      e.target.value = "";
+      return;
+    }
+
+    try {
+      const compressed = await compressImageForUpload(image);
+      setSelectedProfileImage(compressed);
+    } catch {
+      setProfileImageError(imageProcessErrorMessage());
+    }
+
     e.target.value = "";
   }
 
@@ -252,7 +273,7 @@ export default function AgentDashboardPage() {
       >
         <h2 style={{ margin: "0 0 8px", fontSize: 18 }}>Profile picture</h2>
         <p style={{ margin: "0 0 14px", color: "#64748b", fontSize: 14 }}>
-          Use an image up to 5 MB. It appears on your public profile and agent
+          Use an image up to 2 MB. It appears on your public profile and agent
           cards.
         </p>
         <div

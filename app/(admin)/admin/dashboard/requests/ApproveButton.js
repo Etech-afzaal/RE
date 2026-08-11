@@ -16,23 +16,34 @@ export default function RequestActions({ request, onStatusChange }) {
     setLoading(true);
     setError("");
 
-    const res = await fetch(`/api/agents/${action}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requestId: request.id }),
-    });
+    try {
+      const res = await fetch(`/api/agents/${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId: request.id }),
+      });
 
-    setLoading(false);
-
-    if (res.ok) {
-      let nextStatus = "revoked";
-      if (action === "approve" || action === "grant") nextStatus = "approved";
-      if (action === "reject") nextStatus = "rejected";
-      setStatus(nextStatus);
-      onStatusChange?.(request.id, nextStatus);
-    } else {
       const data = await res.json().catch(() => ({}));
-      setError(data.error || "Action failed.");
+
+      if (res.ok) {
+        let nextStatus = "revoked";
+        if (action === "approve" || action === "grant") nextStatus = "approved";
+        if (action === "reject") nextStatus = "rejected";
+        setStatus(nextStatus);
+        onStatusChange?.(request.id, nextStatus);
+        if (data.warning) {
+          const tempHint = data.tempPassword
+            ? ` Temporary password: ${data.tempPassword}`
+            : "";
+          setError(`${data.warning}${tempHint}`);
+        }
+      } else {
+        setError(data.error || "Action failed.");
+      }
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
     }
   }
 

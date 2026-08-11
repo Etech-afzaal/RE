@@ -2,14 +2,17 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { mkdir, rm, writeFile } from "fs/promises";
 import path from "path";
-import sharp from "sharp";
 import { nanoid } from "nanoid";
 import { requireAgent } from "@/lib/adminAuth";
 import { query } from "@/lib/db";
-import { imageFormatErrorMessage, isImageFile } from "@/lib/imageUpload";
+import {
+  IMAGE_KINDS,
+  imageFormatErrorMessage,
+  imageProcessErrorMessage,
+  validateImageUploadFile,
+} from "@/lib/imageUpload";
+import { validateAndCompressImageBuffer } from "@/lib/serverImageProcess";
 import { resolvePublicUploadPath } from "@/lib/uploadPath";
-
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 function agentIdFromSession(session) {
   return Number(session.user.agent_id || session.user.id);
@@ -52,20 +55,14 @@ export async function POST(req) {
     return NextResponse.json({ error: "Please select an image." }, { status: 400 });
   }
 
-  if (!isImageFile(image)) {
-    return NextResponse.json({ error: imageFormatErrorMessage() }, { status: 400 });
-  }
-
-  if (image.size > MAX_FILE_SIZE) {
-    return NextResponse.json(
-      { error: "Profile images must be 5 MB or smaller." },
-      { status: 400 },
-    );
+  const validated = validateImageUploadFile(image, IMAGE_KINDS.PROFILE);
+  if (!validated.ok) {
+    return NextResponse.json({ error: validated.error }, { status: 400 });
   }
 
   try {
     const agents = await query(
-      "SELECT username, estate_name FROM users WHERE id = ? AND user_type = 'agent' LIMIT 1",
+      "SELECT username, estate_name, profile_image FROM users WHERE id = ? AND user_type = 'agent' LIMIT 1",
       [agentId],
     );
     const agent = agents[0];
@@ -82,38 +79,16 @@ export async function POST(req) {
     );
     await mkdir(uploadDir, { recursive: true });
 
-    const sourceFilename = path.basename(String(image.name || ""));
-    const safeBase = sourceFilename
-      .replace(/[^a-zA-Z0-9._-]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 80);
-    if (!safeBase) {
-      return NextResponse.json(
-        { error: imageFormatErrorMessage() },
-        { status: 400 },
-      );
-    }
-
-    const filename = `${nanoid(10)}-${safeBase}`;
-    const outputPath = path.join(uploadDir, filename);
     const imageBuffer = Buffer.from(await image.arrayBuffer());
+    const processed = await validateAndCompressImageBuffer(imageBuffer);
 
-    const metadata = await sharp(imageBuffer, {
-      animated: true,
-      failOn: "none",
-    }).metadata();
-
-    // Uploaded SVGs are not enabled in the Next.js image configuration.
-    if (!metadata.format || metadata.format === "svg") {
-      return NextResponse.json(
-        { error: imageFormatErrorMessage() },
-        { status: 400 },
-      );
+    if (!processed.ok) {
+      return NextResponse.json({ error: processed.error }, { status: 400 });
     }
 
-    // Keep the original file and filename so the URL stored in the database
-    // points to the same image format the agent uploaded.
-    await writeFile(outputPath, imageBuffer);
+    const filename = `${nanoid(10)}.webp`;
+    const outputPath = path.join(uploadDir, filename);
+    await writeFile(outputPath, processed.buffer);
 
     const profileImage = `/uploads/agents/${agentId}/${filename}`;
     await query("UPDATE users SET profile_image = ? WHERE id = ? AND user_type = 'agent'", [
@@ -121,6 +96,9 @@ export async function POST(req) {
       agentId,
     ]);
 
+    if (agent.profile_image && agent.profile_image !== profileImage) {
+      await removeOwnedAgentFile(agent.profile_image, agentId);
+    }
     revalidatePath("/");
     revalidatePath(`/re/${agent.username || agent.estate_name}`);
 
@@ -132,7 +110,7 @@ export async function POST(req) {
         error:
           err?.message?.includes("unsupported") || err?.message?.includes("Input")
             ? imageFormatErrorMessage()
-            : "Could not upload profile image. Please try again.",
+            : imageProcessErrorMessage(),
       },
       { status: 500 },
     );

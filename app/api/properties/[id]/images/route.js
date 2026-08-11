@@ -10,13 +10,14 @@ import {
 import { query } from "@/lib/db";
 import {
   MAX_PROPERTY_IMAGES,
-  MAX_PROPERTY_IMAGE_BYTES,
+  IMAGE_KINDS,
   imageFormatErrorMessage,
   imageLimitErrorMessage,
-  imageSizeErrorMessage,
-  isImageFile,
+  imageProcessErrorMessage,
+  validateImageUploadFile,
 } from "@/lib/imageUpload";
 import { normalizeImageCategory } from "@/lib/imageCategories";
+import { validateImageBuffer } from "@/lib/serverImageProcess";
 import {
   isPropertyLockedForAgent,
   PROPERTY_LOCKED_MESSAGE,
@@ -132,16 +133,14 @@ export async function POST(req, { params }) {
     return NextResponse.json({ error: "No images provided." }, { status: 400 });
   }
 
-  const invalid = files.find((file) => !(file instanceof File) || !isImageFile(file));
-  if (invalid) {
-    return NextResponse.json({ error: imageFormatErrorMessage() }, { status: 400 });
-  }
-
-  const oversized = files.find(
-    (file) => file instanceof File && file.size > MAX_PROPERTY_IMAGE_BYTES,
-  );
-  if (oversized) {
-    return NextResponse.json({ error: imageSizeErrorMessage() }, { status: 400 });
+  for (const file of files) {
+    if (!(file instanceof File)) {
+      return NextResponse.json({ error: imageFormatErrorMessage() }, { status: 400 });
+    }
+    const validated = validateImageUploadFile(file, IMAGE_KINDS.PROPERTY);
+    if (!validated.ok) {
+      return NextResponse.json({ error: validated.error }, { status: 400 });
+    }
   }
 
   const existing = await query(
@@ -168,27 +167,49 @@ export async function POST(req, { params }) {
 
   const savedUrls = [];
 
+  async function cleanupSavedFiles() {
+    await Promise.all(
+      savedUrls.map(async (url) => {
+        const localPath = resolvePublicUploadPath(url);
+        if (localPath) await rm(localPath, { force: true }).catch(() => {});
+      }),
+    );
+  }
+
   try {
     for (const file of files) {
       const arrayBuffer = await file.arrayBuffer();
       const inputBuffer = Buffer.from(arrayBuffer);
 
-      // Watermark once at upload; stored file is the final branded copy.
+      // Reject corrupted / unsupported payloads before watermarking.
+      const integrity = await validateImageBuffer(inputBuffer);
+      if (!integrity.ok) {
+        await cleanupSavedFiles();
+        return NextResponse.json({ error: integrity.error }, { status: 400 });
+      }
+
+      // Watermark once at upload; stored file is the final branded + compressed copy.
       // PUT/metadata edits never re-process images, so duplicates are avoided.
       const watermarked = await applyWatermark(inputBuffer, {
         text: watermarkText,
       });
 
-      const filename = `${nanoid(10)}.jpg`;
+      const filename = `${nanoid(10)}.webp`;
       await writeFile(path.join(uploadDir, filename), watermarked);
 
       const publicUrl = `/uploads/${propertyId}/${filename}`;
       savedUrls.push(publicUrl);
     }
   } catch (err) {
+    await cleanupSavedFiles();
     console.error("Failed to process property images:", err);
     return NextResponse.json(
-      { error: imageFormatErrorMessage() },
+      {
+        error:
+          err?.message?.includes("unsupported") || err?.message?.includes("Input")
+            ? imageFormatErrorMessage()
+            : imageProcessErrorMessage(),
+      },
       { status: 400 },
     );
   }

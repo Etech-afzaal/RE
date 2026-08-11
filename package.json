@@ -22,10 +22,12 @@
     "migrate:property-location": "node scripts/migrate-property-location-fields.js",
     "migrate:property-price-currency": "node scripts/migrate-property-price-currency.js",
     "migrate:audit-logs": "node scripts/migrate-audit-logs.js",
-    "migrate:inquiry-page-url": "node scripts/migrate-inquiry-page-url.js"
+    "migrate:inquiry-page-url": "node scripts/migrate-inquiry-page-url.js",
+    "migrate:property-video-thumbnails": "node scripts/migrate-property-video-thumbnails.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "compress.js": "^2.1.2",
     "lucide-react": "^0.468.0",
     "mysql2": "^3.10.0",
     "nanoid": "^5.0.7",

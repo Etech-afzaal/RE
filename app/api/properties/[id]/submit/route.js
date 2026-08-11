@@ -67,9 +67,31 @@ export async function POST(req, { params }) {
     `UPDATE properties
      SET status = ?, submitted_at = NOW(),
          rejected_reason = NULL, rejected_at = NULL, rejected_by = NULL
-     WHERE id = ? AND agent_id = ?`,
-    [PROPERTY_STATUS.PENDING_APPROVAL, propertyId, agentId],
+     WHERE id = ? AND agent_id = ?
+       AND status IN (?, ?)`,
+    [
+      PROPERTY_STATUS.PENDING_APPROVAL,
+      propertyId,
+      agentId,
+      PROPERTY_STATUS.DRAFT,
+      PROPERTY_STATUS.REJECTED,
+    ],
   );
+
+  // Re-read so a concurrent admin status change is not reported as pending.
+  const [fresh] = await query(
+    "SELECT status FROM properties WHERE id = ? AND agent_id = ? LIMIT 1",
+    [propertyId, agentId],
+  );
+  if (!fresh || fresh.status !== PROPERTY_STATUS.PENDING_APPROVAL) {
+    return NextResponse.json(
+      {
+        error:
+          "Could not submit this property because its status changed. Please refresh and try again.",
+      },
+      { status: 409 },
+    );
+  }
 
   const agentName = session.user.name || "Agent";
   const agentHandle = session.user.username || session.user.estate_name || null;

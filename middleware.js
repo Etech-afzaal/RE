@@ -1,4 +1,4 @@
-import { withAuth } from "next-auth/middleware";
+import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import { isAgentRole, isSuperAdmin } from "@/lib/roles";
 
@@ -13,39 +13,82 @@ import { isAgentRole, isSuperAdmin } from "@/lib/roles";
  *   AGENT       → /re/[username]/dashboard/*
  *
  * Public (no middleware): /, /re/[slug], /re/[slug]/[id], login/signup pages
+ *
+ * Unauthenticated redirects are role-aware (admin area → /admin/login,
+ * agent surfaces → /agent/login) so agents are not sent to the admin login.
  */
-export default withAuth(
-  function middleware(req) {
-    const token = req.nextauth.token;
-    const path = req.nextUrl.pathname;
-    const role = token?.role;
-    const isAgent = isAgentRole(role);
-    const isAdmin = isSuperAdmin(role);
+export async function middleware(req) {
+  const token = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+  const path = req.nextUrl.pathname;
+  const isAgentResetPasswordRoute = path === "/agent/reset-password";
+  const isAdminArea =
+    path.startsWith("/admin/dashboard") ||
+    path.startsWith("/admin_dashboard");
+  const isAgentPortal =
+    path.startsWith("/agent/dashboard") ||
+    path.startsWith("/agent/properties") ||
+    isAgentResetPasswordRoute;
+  const estateDashboardMatch = path.match(
+    /^\/re\/([^/]+)\/dashboard(?:\/|$)/,
+  );
 
-    const isAgentResetPasswordRoute = path === "/agent/reset-password";
-    const isAdminArea =
-      path.startsWith("/admin/dashboard") ||
-      path.startsWith("/admin_dashboard");
-    const isAgentPortal =
-      path.startsWith("/agent/dashboard") ||
-      path.startsWith("/agent/properties") ||
-      isAgentResetPasswordRoute;
-    const estateDashboardMatch = path.match(
-      /^\/re\/([^/]+)\/dashboard(?:\/|$)/,
+  if (!token) {
+    const signInPath = isAdminArea ? "/admin/login" : "/agent/login";
+    const url = new URL(signInPath, req.url);
+    url.searchParams.set("callbackUrl", `${path}${req.nextUrl.search}`);
+    return NextResponse.redirect(url);
+  }
+
+  const role = token?.role;
+  const isAgent = isAgentRole(role);
+  const isAdmin = isSuperAdmin(role);
+
+  // Agents that are not approved (or lost approval mid-session) → login.
+  if (isAgent && token.isActive === false) {
+    return NextResponse.redirect(new URL("/agent/login", req.url));
+  }
+
+  // Temp password must be changed before using agent tools.
+  if (isAgent && token.mustResetPassword && !isAgentResetPasswordRoute) {
+    return NextResponse.redirect(new URL("/agent/reset-password", req.url));
+  }
+
+  // Agents never access admin surfaces.
+  if (isAgent && isAdminArea) {
+    const handle = token.username || token.estate_name;
+    return NextResponse.redirect(
+      new URL(
+        handle
+          ? `/re/${encodeURIComponent(handle)}/dashboard`
+          : "/agent/dashboard",
+        req.url,
+      ),
     );
+  }
 
-    // Agents that are not approved (or lost approval mid-session) → login.
-    if (isAgent && token.isActive === false) {
+  // Admin dashboard: superadmin only.
+  if (isAdminArea && !isAdmin) {
+    return NextResponse.redirect(new URL("/admin/login", req.url));
+  }
+
+  // Existing agent routes: AGENT only.
+  if (isAgentPortal && !isAgent) {
+    return NextResponse.redirect(new URL("/agent/login", req.url));
+  }
+
+  // Per-estate agent dashboard: AGENT only, and username must match token.
+  if (estateDashboardMatch) {
+    if (!isAgent) {
       return NextResponse.redirect(new URL("/agent/login", req.url));
     }
-
-    // Temp password must be changed before using agent tools.
-    if (isAgent && token.mustResetPassword && !isAgentResetPasswordRoute) {
-      return NextResponse.redirect(new URL("/agent/reset-password", req.url));
-    }
-
-    // Agents never access admin surfaces.
-    if (isAgent && isAdminArea) {
+    const pathUsername = decodeURIComponent(estateDashboardMatch[1]).toLowerCase();
+    const tokenUsername = String(
+      token.username || token.estate_name || "",
+    ).toLowerCase();
+    if (tokenUsername && pathUsername !== tokenUsername) {
       const handle = token.username || token.estate_name;
       return NextResponse.redirect(
         new URL(
@@ -56,56 +99,15 @@ export default withAuth(
         ),
       );
     }
+  }
 
-    // Admin dashboard: superadmin only.
-    if (isAdminArea && !isAdmin) {
-      return NextResponse.redirect(new URL("/admin/login", req.url));
-    }
+  // Superadmins should not use agent-only tools.
+  if (isAdmin && (isAgentPortal || estateDashboardMatch)) {
+    return NextResponse.redirect(new URL("/admin/dashboard", req.url));
+  }
 
-    // Existing agent routes: AGENT only.
-    if (isAgentPortal && !isAgent) {
-      return NextResponse.redirect(new URL("/agent/login", req.url));
-    }
-
-    // Per-estate agent dashboard: AGENT only, and username must match token.
-    if (estateDashboardMatch) {
-      if (!isAgent) {
-        return NextResponse.redirect(new URL("/agent/login", req.url));
-      }
-      const pathUsername = decodeURIComponent(estateDashboardMatch[1]).toLowerCase();
-      const tokenUsername = String(
-        token.username || token.estate_name || "",
-      ).toLowerCase();
-      if (tokenUsername && pathUsername !== tokenUsername) {
-        const handle = token.username || token.estate_name;
-        return NextResponse.redirect(
-          new URL(
-            handle
-              ? `/re/${encodeURIComponent(handle)}/dashboard`
-              : "/agent/dashboard",
-            req.url,
-          ),
-        );
-      }
-    }
-
-    // Superadmins should not use agent-only tools.
-    if (isAdmin && (isAgentPortal || estateDashboardMatch)) {
-      return NextResponse.redirect(new URL("/admin/dashboard", req.url));
-    }
-
-    return NextResponse.next();
-  },
-  {
-    pages: {
-      signIn: "/admin/login",
-    },
-    callbacks: {
-      // withAuth already requires a token for matched routes; keep explicit.
-      authorized: ({ token }) => !!token,
-    },
-  },
-);
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [

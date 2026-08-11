@@ -68,6 +68,7 @@ export async function POST(req) {
       requestId,
     ]);
 
+    let emailSent = true;
     try {
       await sendMail(
         signupRequest.email,
@@ -80,6 +81,7 @@ export async function POST(req) {
         }),
       );
     } catch (err) {
+      emailSent = false;
       console.error("Failed to send agent credentials email:", err);
     }
 
@@ -97,6 +99,7 @@ export async function POST(req) {
         estate_name: estateName,
         signup_request_id: Number(requestId),
         email: signupRequest.email,
+        credentials_email_sent: emailSent,
       },
       ipAddress: getRequestIp(req),
     });
@@ -104,6 +107,12 @@ export async function POST(req) {
     return NextResponse.json({
       success: true,
       estate_name: estateName,
+      emailSent,
+      warning: emailSent
+        ? undefined
+        : "Agent account was created, but the credentials email could not be sent. Share the temporary password manually or resend from your mail system.",
+      // Only returned when email failed so an admin can still onboard the agent.
+      tempPassword: emailSent ? undefined : tempPassword,
     });
   } catch (err) {
     console.error("Failed to approve signup request:", err);

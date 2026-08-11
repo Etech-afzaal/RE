@@ -34,91 +34,96 @@ export default function AgentLoginPage() {
     setError("");
     setAccountNotice(null);
 
-    const validated = validateLoginInput({ email, password });
-    if (!validated.ok) {
-      setError(validated.error);
-      setLoading(false);
-      return;
-    }
-
-    const res = await signIn("credentials", {
-      email: validated.data.email,
-      password: validated.data.password,
-      role: "agent",
-      redirect: false,
-    });
-
-    if (res?.error === "ACCOUNT_BLOCKED") {
-      setLoading(false);
-      let reason = "No reason was recorded.";
-      try {
-        const infoRes = await fetch("/api/agents/block-info", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        });
-        const info = await infoRes.json().catch(() => ({}));
-        if (info.blocked && info.reason) reason = info.reason;
-      } catch {
-        // Fall through with the default reason text.
+    try {
+      const validated = validateLoginInput({ email, password });
+      if (!validated.ok) {
+        setError(validated.error);
+        setLoading(false);
+        return;
       }
-      setAccountNotice({
-        title: "Account Permanently Blocked",
-        body: "Your account has been blocked by the administrator.",
-        reason,
-        support:
-          "Please contact support.",
+
+      const res = await signIn("credentials", {
+        email: validated.data.email,
+        password: validated.data.password,
+        role: "agent",
+        redirect: false,
       });
-      return;
-    }
 
-    if (res?.error === "ACCOUNT_DISABLED") {
+      if (res?.error === "ACCOUNT_BLOCKED") {
+        setLoading(false);
+        let reason = "No reason was recorded.";
+        try {
+          const infoRes = await fetch("/api/agents/block-info", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+          });
+          const info = await infoRes.json().catch(() => ({}));
+          if (info.blocked && info.reason) reason = info.reason;
+        } catch {
+          // Fall through with the default reason text.
+        }
+        setAccountNotice({
+          title: "Account Permanently Blocked",
+          body: "Your account has been blocked by the administrator.",
+          reason,
+          support:
+            "Please contact support.",
+        });
+        return;
+      }
+
+      if (res?.error === "ACCOUNT_DISABLED") {
+        setLoading(false);
+        setAccountNotice({
+          title: "Account Temporarily Disabled",
+          body: "Your account is currently disabled. Please contact the administrator.",
+        });
+        return;
+      }
+
+      if (res?.error === "ACCOUNT_REVOKED") {
+        setLoading(false);
+        setError(
+          "Your account access has been revoked. Contact the administrator to request access.",
+        );
+        return;
+      }
+
+      if (
+        res?.error === "AUTH_DATABASE_UNAVAILABLE" ||
+        /EHOSTUNREACH|ECONNREFUSED|ENETUNREACH|timed out|Pool is closed/i.test(
+          String(res?.error || ""),
+        )
+      ) {
+        setLoading(false);
+        setError(
+          "Unable to reach the database. Check that MySQL is running and DB_HOST in .env is correct.",
+        );
+        return;
+      }
+
+      if (res?.error) {
+        setLoading(false);
+        setError("Invalid email or password.");
+        return;
+      }
+
+      const session = await getSession();
+      const handle =
+        session?.user?.username || session?.user?.estate_name || null;
+
+      // Keep spinner until navigation completes.
+      if (handle) {
+        router.push(`/re/${encodeURIComponent(handle)}/dashboard`);
+        return;
+      }
+
+      router.push("/agent/dashboard");
+    } catch {
       setLoading(false);
-      setAccountNotice({
-        title: "Account Temporarily Disabled",
-        body: "Your account is currently disabled. Please contact the administrator.",
-      });
-      return;
+      setError("Something went wrong. Please try again.");
     }
-
-    if (res?.error === "ACCOUNT_REVOKED") {
-      setLoading(false);
-      setError(
-        "Your account access has been revoked. Contact the administrator to request access.",
-      );
-      return;
-    }
-
-    if (
-      res?.error === "AUTH_DATABASE_UNAVAILABLE" ||
-      /EHOSTUNREACH|ECONNREFUSED|ENETUNREACH|timed out|Pool is closed/i.test(
-        String(res?.error || ""),
-      )
-    ) {
-      setLoading(false);
-      setError(
-        "Unable to reach the database. Check that MySQL is running and DB_HOST in .env is correct.",
-      );
-      return;
-    }
-
-    if (res?.error) {
-      setLoading(false);
-      setError("Invalid email or password.");
-      return;
-    }
-
-    const session = await getSession();
-    const handle =
-      session?.user?.username || session?.user?.estate_name || null;
-    setLoading(false);
-
-    if (handle) {
-      router.push(`/re/${encodeURIComponent(handle)}/dashboard`);
-      return;
-    }
-
-    router.push("/agent/dashboard");
   }
 
   return (
@@ -140,6 +145,7 @@ export default function AgentLoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className={styles.loginInput}
+              disabled={loading}
             />
             <PasswordInput
               required
@@ -148,6 +154,7 @@ export default function AgentLoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               className={styles.loginInput}
               autoComplete="current-password"
+              disabled={loading}
             />
             <div className={styles.forgotRow}>
               <Link href="/agent/forgot-password" className={styles.forgotLink}>
