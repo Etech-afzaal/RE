@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CircleCheck } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
@@ -386,7 +387,7 @@ export default function AgentPropertiesPage() {
                               ? [{ label: isRejected ? "Resubmit" : "Submit For Approval", onSelect: () => submitForApproval(property), disabled: busyId === property.id }]
                               : []),
                             ...(property.status === "approved" || property.status === "hidden"
-                              ? [{ label: "Mark as sold", onSelect: () => markAsSold(property), disabled: busyId === property.id }]
+                              ? [{ label: "Mark as sold", icon: CircleCheck,  onSelect: () => markAsSold(property), disabled: busyId === property.id }]
                               : []),
                           ]}
                         />

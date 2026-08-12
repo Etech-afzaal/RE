@@ -103,7 +103,7 @@ export default function AgentSignupPage() {
               className={styles.signupInput}
             />
             <p className={styles.signupNote}>
-              Your public page will use a URL-safe version of this name.
+              Your public page address will be created from this name.
             </p>
             <input
               required
