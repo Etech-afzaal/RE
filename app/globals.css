@@ -84,6 +84,7 @@
 
 html {
   scroll-behavior: smooth;
+  scrollbar-color: var(--gold) var(--surface-sunken);
 }
 
 html,
@@ -204,12 +205,12 @@ button:disabled {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--line);
+  background: var(--gold);
   border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--muted);
+  background: var(--gold-deep);
 }
 
 /* Selection */

@@ -1,6 +1,7 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect } from "react";
 import AgentAvatar from "@/components/AgentAvatar";
-import { PUBLIC_SITE_LOGO_DIMENSIONS } from "@/components/publicSiteLogo";
 import { agentPublicUsername } from "@/lib/propertySlug";
 import styles from "./AgentBrandProfile.module.css";
 
@@ -21,15 +22,6 @@ function companyNameFromAgent(agent) {
   return `${base} Properties`;
 }
 
-function companyInitials(companyName) {
-  const words = String(companyName || "")
-    .split(/\s+/)
-    .filter(Boolean);
-  if (words.length === 0) return "RE";
-  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
-  return `${words[0][0] || ""}${words[1][0] || ""}`.toUpperCase();
-}
-
 function agentDesignation(agent) {
   const areas = String(agent.areas_served || "")
     .split(",")
@@ -47,6 +39,15 @@ function parseAreas(areasServed) {
 }
 
 export default function AgentBrandProfile({ agent }) {
+  useEffect(() => {
+    if (typeof window === "undefined" || window.location.hash !== "#agent") {
+      return;
+    }
+    const target = document.getElementById("agent");
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
   if (!agent) return null;
 
   const companyName = companyNameFromAgent(agent);
@@ -64,23 +65,6 @@ export default function AgentBrandProfile({ agent }) {
     >
       <div className={styles.card}>
         <div className={styles.companyBlock}>
-          <div className={styles.logoWrap}>
-            {agent.company_logo ? (
-              <Image
-                src={agent.company_logo}
-                alt={`${companyName} logo`}
-                width={PUBLIC_SITE_LOGO_DIMENSIONS.width}
-                height={PUBLIC_SITE_LOGO_DIMENSIONS.height}
-                quality={PUBLIC_SITE_LOGO_DIMENSIONS.quality}
-                sizes={PUBLIC_SITE_LOGO_DIMENSIONS.sizes}
-                className={styles.logoImage}
-              />
-            ) : (
-              <div className={styles.logoFallback} aria-hidden="true">
-                {companyInitials(companyName)}
-              </div>
-            )}
-          </div>
           <h2 className={styles.companyName}>{companyName}</h2>
           <p className={styles.companyRole}>Real Estate Consultant</p>
         </div>

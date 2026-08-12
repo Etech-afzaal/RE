@@ -5,9 +5,9 @@ import PropertyWatermark from "@/components/PropertyWatermark";
 import styles from "./PropertyVideoGallery.module.css";
 
 /**
- * Property video tour gallery (max 3).
+ * Property video tour gallery (max 5).
  * 1 video → full-width player.
- * 2–3 videos → playlist + player (desktop) / player + horizontal strip (mobile).
+ * 2–5 videos → playlist + player (desktop) / player + horizontal strip (mobile).
  *
  * Expects items shaped like `{ id?, video_url, category_label?, title?, thumbnail?, thumbnail_url? }`.
  * Falls back to `url` if `video_url` is absent.

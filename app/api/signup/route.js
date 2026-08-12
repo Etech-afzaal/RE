@@ -61,20 +61,37 @@ export async function POST(req) {
     );
   }
 
-  const existingAgentsWithEstate = await query(
-    "SELECT estate_name FROM users WHERE user_type = 'agent'",
+  const existingAgents = await query(
+    "SELECT estate_name, username, company_name FROM users WHERE user_type = 'agent'",
   );
-  const existingSignupRequestsWithEstate = await query(
+  const existingSignupRequests = await query(
     "SELECT estate_name FROM signup_requests",
   );
-  const takenEstateNames = [
-    ...existingAgentsWithEstate,
-    ...existingSignupRequestsWithEstate,
-  ].map((row) => normalizeEstateValue(row.estate_name));
 
-  if (takenEstateNames.includes(normalizedEstateName)) {
+  const takenEstateNames = new Set(
+    [
+      ...existingAgents.map((row) => normalizeEstateValue(row.estate_name)),
+      ...existingAgents.map((row) => normalizeEstateValue(row.company_name)),
+      ...existingSignupRequests.map((row) =>
+        normalizeEstateValue(row.estate_name),
+      ),
+    ].filter(Boolean),
+  );
+  const takenUsernames = new Set(
+    existingAgents
+      .map((row) => normalizeEstateValue(row.username))
+      .filter(Boolean),
+  );
+
+  if (takenEstateNames.has(normalizedEstateName)) {
     return NextResponse.json(
-      { error: "This name already exists. Please choose a different one." },
+      { error: "Estate name already exists. Please choose a different estate name." },
+      { status: 409 },
+    );
+  }
+  if (takenUsernames.has(normalizedEstateName)) {
+    return NextResponse.json(
+      { error: "Username already exists. Please choose a different user name." },
       { status: 409 },
     );
   }

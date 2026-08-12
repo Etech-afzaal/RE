@@ -1291,7 +1291,7 @@ export default function CreatePropertyPage() {
                 </span>
               </div>
               <p className={ui.muted}>
-                Upload MP4, WebM, MOV videos. Maximum 3 videos allowed.
+                Upload MP4, WebM, MOV videos. Maximum 5 videos allowed.
               </p>
             </div>
 

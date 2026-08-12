@@ -36,6 +36,7 @@ export default function AgentProfilePage() {
   const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [successPopup, setSuccessPopup] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -75,6 +76,7 @@ export default function AgentProfilePage() {
     setSaving(true);
     setError("");
     setSuccess("");
+    setSuccessPopup("");
 
     const validated = validateAgentProfileInput(form);
     if (!validated.ok) {
@@ -111,7 +113,7 @@ export default function AgentProfilePage() {
       setSelectedImage(null);
     }
     setSaving(false);
-    setSuccess("Profile updated.");
+    setSuccessPopup("Profile updated successfully");
   }
 
   async function selectImage(file) {
@@ -252,6 +254,33 @@ export default function AgentProfilePage() {
           </button>
         </div>
       </form>
+
+      {successPopup ? (
+        <div className={ui.dialogBackdrop} role="presentation">
+          <div
+            className={`${ui.dialog} ${ui.dialogSuccess}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="profile-success-title"
+          >
+            <div className={ui.dialogSuccessIcon} aria-hidden="true">
+              ✓
+            </div>
+            <h2 id="profile-success-title" className={ui.dialogTitle}>
+              {successPopup}
+            </h2>
+            <div className={ui.dialogActions}>
+              <button
+                type="button"
+                className={ui.btnPrimary}
+                onClick={() => setSuccessPopup("")}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {confirmRemoveImage ? (
         <div className={ui.dialogBackdrop} role="presentation">

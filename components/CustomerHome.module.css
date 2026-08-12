@@ -848,9 +848,12 @@
 }
 
 .contactTextarea {
+  height: 118px;
   min-height: 118px;
+  max-height: 118px;
   padding: 0.8rem 0.85rem;
-  resize: vertical;
+  resize: none;
+  overflow-y: auto;
 }
 
 .contactInput::placeholder,

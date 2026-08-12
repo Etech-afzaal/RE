@@ -36,6 +36,7 @@ export default function CompanyBrandingPage() {
   const [logoPreview, setLogoPreview] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [successPopup, setSuccessPopup] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -75,6 +76,7 @@ export default function CompanyBrandingPage() {
     setSaving(true);
     setError("");
     setSuccess("");
+    setSuccessPopup("");
 
     const validated = validateCompanyBrandingInput(form);
     if (!validated.ok) {
@@ -111,7 +113,7 @@ export default function CompanyBrandingPage() {
       setSelectedLogo(null);
     }
     setSaving(false);
-    setSuccess("Company branding updated.");
+    setSuccessPopup("Company info updated successfully");
   }
 
   async function selectLogo(file) {
@@ -264,6 +266,33 @@ export default function CompanyBrandingPage() {
           </button>
         </div>
       </form>
+
+      {successPopup ? (
+        <div className={ui.dialogBackdrop} role="presentation">
+          <div
+            className={`${ui.dialog} ${ui.dialogSuccess}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="branding-success-title"
+          >
+            <div className={ui.dialogSuccessIcon} aria-hidden="true">
+              ✓
+            </div>
+            <h2 id="branding-success-title" className={ui.dialogTitle}>
+              {successPopup}
+            </h2>
+            <div className={ui.dialogActions}>
+              <button
+                type="button"
+                className={ui.btnPrimary}
+                onClick={() => setSuccessPopup("")}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {confirmRemoveLogo ? (
         <div className={ui.dialogBackdrop} role="presentation">

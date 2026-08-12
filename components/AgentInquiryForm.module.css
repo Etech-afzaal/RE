@@ -83,12 +83,17 @@
 }
 
 .textarea {
+  height: 118px;
   min-height: 118px;
-  resize: vertical;
+  max-height: 118px;
+  resize: none;
+  overflow-y: auto;
 }
 
 .panelProperty .textarea {
+  height: 96px;
   min-height: 96px;
+  max-height: 96px;
 }
 
 .submit {

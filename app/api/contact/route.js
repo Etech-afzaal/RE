@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { sendMail } from "@/lib/mail";
 import { query } from "@/lib/db";
 import { AGENT_LIVE_STATUS } from "@/lib/status";
-import { validateContactInput } from "@/lib/validators/inquiryValidator";
+import {
+  normalizeInquiryPageUrl,
+  validateContactInput,
+} from "@/lib/validators/inquiryValidator";
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -11,6 +14,42 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+async function resolveAdminInquiryAgentId() {
+  const rows = await query(
+    "SELECT id FROM users WHERE user_type = 'superadmin' ORDER BY id ASC LIMIT 1",
+  );
+  return rows[0]?.id ?? null;
+}
+
+async function saveContactInquiry({
+  agentId,
+  name,
+  email,
+  phone,
+  subject,
+  message,
+  pageUrl,
+}) {
+  const storedMessage = subject
+    ? `Subject: ${subject}\n\n${message}`
+    : message;
+  const insert = await query(
+    `INSERT INTO customer_inquiries
+      (agent_id, property_id, customer_name, customer_email, customer_phone, message, page_url)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [
+      agentId,
+      null,
+      name,
+      email,
+      phone || null,
+      storedMessage,
+      normalizeInquiryPageUrl(pageUrl) || "/",
+    ],
+  );
+  return insert.insertId;
 }
 
 function buildAdminMailHtml(payload) {
@@ -59,11 +98,12 @@ export async function POST(req) {
 
   const { estate_name, full_name, email, phone, subject, message } =
     validated.data;
+  const pageUrl = body?.page_url;
 
   try {
     if (estate_name) {
       const agents = await query(
-        "SELECT full_name, email, phone FROM users WHERE estate_name = ? AND status = ? AND user_type = 'agent'",
+        "SELECT id, full_name, email, phone FROM users WHERE estate_name = ? AND status = ? AND user_type = 'agent'",
         [estate_name, AGENT_LIVE_STATUS],
       );
       const agent = agents[0];
@@ -74,6 +114,16 @@ export async function POST(req) {
           { status: 404 },
         );
       }
+
+      const inquiryId = await saveContactInquiry({
+        agentId: agent.id,
+        name: full_name,
+        email,
+        phone,
+        subject,
+        message,
+        pageUrl: pageUrl || `/re/${estate_name}`,
+      });
 
       const html = `
         <h2>New contact request for ${escapeHtml(agent.full_name)}</h2>
@@ -86,9 +136,16 @@ export async function POST(req) {
         </p>
       `;
 
-      console.log("Attempting to send email to agent...", agent.email);
-      await sendMail(agent.email, `New inquiry for ${agent.full_name}`, html);
-      console.log("Email sent successfully to agent.");
+      try {
+        console.log("Attempting to send email to agent...", agent.email);
+        await sendMail(agent.email, `New inquiry for ${agent.full_name}`, html);
+        console.log("Email sent successfully to agent.");
+      } catch (err) {
+        await query("DELETE FROM customer_inquiries WHERE id = ?", [
+          inquiryId,
+        ]).catch(() => {});
+        throw err;
+      }
       return NextResponse.json({ success: true });
     }
 
@@ -96,6 +153,21 @@ export async function POST(req) {
     if (!adminEmail) {
       throw new Error("ADMIN_EMAIL is not configured.");
     }
+
+    const adminAgentId = await resolveAdminInquiryAgentId();
+    if (!adminAgentId) {
+      throw new Error("No admin account available to store the inquiry.");
+    }
+
+    const inquiryId = await saveContactInquiry({
+      agentId: adminAgentId,
+      name: full_name,
+      email,
+      phone,
+      subject,
+      message,
+      pageUrl: pageUrl || "/",
+    });
 
     const html = buildAdminMailHtml({
       full_name,
@@ -105,13 +177,20 @@ export async function POST(req) {
       message,
     });
 
-    console.log("Attempting to send email to admin...", adminEmail);
-    await sendMail(
-      adminEmail,
-      `New Contact Form Submission - ${subject}`,
-      html,
-    );
-    console.log("Email sent successfully to admin.");
+    try {
+      console.log("Attempting to send email to admin...", adminEmail);
+      await sendMail(
+        adminEmail,
+        `New Contact Form Submission - ${subject}`,
+        html,
+      );
+      console.log("Email sent successfully to admin.");
+    } catch (err) {
+      await query("DELETE FROM customer_inquiries WHERE id = ?", [
+        inquiryId,
+      ]).catch(() => {});
+      throw err;
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {

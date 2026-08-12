@@ -255,7 +255,7 @@ export default function SiteHeader({
       <div className={styles.topBar}>
         <div className={styles.inner}>
           <Link
-            href="/"
+            href={logoScrollTarget ? `#${logoScrollTarget}` : "/"}
             onClick={handleLogoClick}
             className={styles.logoGroup}
           >

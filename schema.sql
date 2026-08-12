@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS property_images (
   FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE
 );
 
--- Optional walkthrough videos (max 3 per property in the add flow).
+-- Optional walkthrough videos (max 5 per property in the add flow).
 -- properties.video_url stays as a legacy mirror of the featured video.
 CREATE TABLE IF NOT EXISTS property_videos (
   id INT AUTO_INCREMENT PRIMARY KEY,

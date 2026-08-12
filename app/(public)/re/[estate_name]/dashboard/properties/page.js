@@ -146,6 +146,31 @@ export default function AgentPropertiesPage() {
     load(1, nextTab);
   }
 
+  async function markAsSold(property) {
+    setBusyId(property.id);
+    setError("");
+    setErrorDetails([]);
+    setSuccess("");
+    try {
+      const res = await fetch(`/api/properties/${property.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "sold" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Could not mark this property as sold.");
+        return;
+      }
+      setSuccess("Property marked as sold.");
+      await load();
+    } catch {
+      setError("Could not mark this property as sold.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function submitForApproval(property) {
     setBusyId(property.id);
     setError("");
@@ -356,11 +381,14 @@ export default function AgentPropertiesPage() {
                                 }
                           }
                           deleteDisabled={busyId === property.id}
-                          additionalActions={
-                            property.status === "draft" || isRejected
+                          additionalActions={[
+                            ...(property.status === "draft" || isRejected
                               ? [{ label: isRejected ? "Resubmit" : "Submit For Approval", onSelect: () => submitForApproval(property), disabled: busyId === property.id }]
-                              : []
-                          }
+                              : []),
+                            ...(property.status === "approved" || property.status === "hidden"
+                              ? [{ label: "Mark as sold", onSelect: () => markAsSold(property), disabled: busyId === property.id }]
+                              : []),
+                          ]}
                         />
                       </td>
                     </tr>

@@ -311,7 +311,16 @@ export default function CustomerHome({ agents = [], areas = [] }) {
 
   function handleContactFieldChange(field) {
     return (event) => {
-      const value = event.target.value;
+      let value = event.target.value;
+      if (field === "full_name") {
+        value = value.replace(/[^\p{L}\s'-]/gu, "").slice(0, 30);
+      } else if (field === "phone") {
+        const hasPlus = value.trimStart().startsWith("+");
+        const digits = value.replace(/\D/g, "").slice(0, 15);
+        value = hasPlus ? `+${digits}` : digits;
+      } else if (field === "subject") {
+        value = value.slice(0, 50);
+      }
       setContactForm((prev) => ({ ...prev, [field]: value }));
       if (contactFieldErrors[field]) {
         setContactFieldErrors((prev) => {
@@ -349,6 +358,8 @@ export default function CustomerHome({ agents = [], areas = [] }) {
           phone: validated.data.phone,
           subject: validated.data.subject,
           message: validated.data.message,
+          page_url:
+            typeof window !== "undefined" ? window.location.pathname : "/",
         }),
       });
 
@@ -638,7 +649,7 @@ export default function CustomerHome({ agents = [], areas = [] }) {
                           type="text"
                           name="full_name"
                           required
-                          maxLength={100}
+                          maxLength={30}
                           value={contactForm.full_name}
                           onChange={handleContactFieldChange("full_name")}
                           placeholder="Full Name"
@@ -676,7 +687,7 @@ export default function CustomerHome({ agents = [], areas = [] }) {
                         <input
                           type="tel"
                           name="phone"
-                          maxLength={20}
+                          maxLength={16}
                           value={contactForm.phone}
                           onChange={handleContactFieldChange("phone")}
                           placeholder="Phone Number"
@@ -696,7 +707,7 @@ export default function CustomerHome({ agents = [], areas = [] }) {
                           type="text"
                           name="subject"
                           required
-                          maxLength={150}
+                          maxLength={50}
                           value={contactForm.subject}
                           onChange={handleContactFieldChange("subject")}
                           placeholder="Buying, selling, or renting"
@@ -799,11 +810,11 @@ export default function CustomerHome({ agents = [], areas = [] }) {
               <a href="#agents">Find agents</a>
               <a href="#why-us">Why us</a>
               <Link href="/agent/signup">Become an agent</Link>
+              <Link href="/privacy-policy">Privacy Policy</Link>
             </div>
             <div className={styles.footerCol}>
               <h4>Accounts</h4>
               <Link href="/agent/login">Agent login</Link>
-              <Link href="/admin/login">Admin login</Link>
               <Link href="/agent/signup">Register</Link>
             </div>
             <div className={styles.footerCol}>

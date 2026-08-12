@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { validateSignupInput } from "@/lib/validators/userValidator";
 import styles from "./page.module.css";
 
@@ -162,6 +163,9 @@ export default function AgentSignupPage() {
           </div>
         </div>
       </div>
+      {status === "submitting" ? (
+        <LoadingSpinner fullPage label="Loading" />
+      ) : null}
     </div>
   );
 }

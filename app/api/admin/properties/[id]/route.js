@@ -178,6 +178,13 @@ export async function PATCH(req, { params }) {
   }
 
   const nextStatus = toDbPropertyStatus(requested);
+  if (nextStatus === PROPERTY_STATUS.SOLD) {
+    return NextResponse.json(
+      { error: "Only the listing agent can mark a property as sold." },
+      { status: 403 },
+    );
+  }
+
   let reason = "";
   if (nextStatus === PROPERTY_STATUS.REJECTED) {
     const reasonCheck = validateRejectionReason(body?.rejected_reason);

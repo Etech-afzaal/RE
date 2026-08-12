@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Archive, CircleCheck, Send } from "lucide-react";
+import { Archive, CircleCheck } from "lucide-react";
 import ActionMenu from "@/components/ActionMenu";
 import ImagePreviewModal from "@/components/ImagePreviewModal";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -364,9 +364,6 @@ export default function AdminPropertiesPage() {
                                 ...(property.status !== "draft"
                                   ? [{ label: "Unpublish", icon: Archive, destructive: true, disabled: busyId === property.id, onSelect: () => updateStatus(property, "draft") }]
                                   : [{ label: "Publish", icon: CircleCheck, disabled: busyId === property.id, onSelect: () => updateStatus(property, "active") }]),
-                                ...(property.status !== "sold"
-                                  ? [{ label: "Mark sold", icon: Send, disabled: busyId === property.id, onSelect: () => updateStatus(property, "sold") }]
-                                  : []),
                               ]
                         }
                       />

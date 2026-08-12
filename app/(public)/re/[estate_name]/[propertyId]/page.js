@@ -833,10 +833,6 @@ export default async function PropertyDetailPage({ params }) {
 
           <aside className={styles.agentCard}>
             <div className={styles.agentBrandBlock}>
-              <CompanyLogo
-                src={agent.company_logo}
-                companyName={companyName}
-              />
               <p className={styles.agentCompanyName}>{companyName}</p>
             </div>
 
@@ -998,7 +994,7 @@ export default async function PropertyDetailPage({ params }) {
               <p className={styles.brandManaged}>
                 Managed by <strong>{agent.full_name}</strong>
               </p>
-              <Link href={agentProfileHref} className={styles.brandProfileBtn}>
+              <Link href={`${agentProfileHref}#agent`} className={styles.brandProfileBtn}>
                 View Agent Profile
               </Link>
             </div>

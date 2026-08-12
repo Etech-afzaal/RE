@@ -265,6 +265,77 @@ export async function PUT(req, { params }) {
   return NextResponse.json({ success: true, status: nextStatus });
 }
 
+export async function PATCH(req, { params }) {
+  const { session, error } = await requireAgent();
+  if (error) return error;
+
+  const propertyId = Number(params.id);
+  if (!Number.isInteger(propertyId) || propertyId <= 0) {
+    return NextResponse.json({ error: "Invalid property id." }, { status: 400 });
+  }
+
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+  }
+
+  if (body?.status !== PROPERTY_STATUS.SOLD) {
+    return NextResponse.json(
+      { error: "Only marking a property as sold is allowed." },
+      { status: 400 },
+    );
+  }
+
+  const agentId = agentIdFrom(session);
+  const existing = await query(
+    "SELECT id, status, title FROM properties WHERE id = ? AND agent_id = ?",
+    [propertyId, agentId],
+  );
+  if (existing.length === 0) {
+    return NextResponse.json({ error: "Property not found." }, { status: 404 });
+  }
+
+  const current = existing[0];
+  if (current.status === PROPERTY_STATUS.SOLD) {
+    return NextResponse.json({ success: true, status: PROPERTY_STATUS.SOLD });
+  }
+  if (!canAgentTransition(current.status, PROPERTY_STATUS.SOLD)) {
+    return NextResponse.json(
+      { error: "Only an approved listing can be marked as sold." },
+      { status: 403 },
+    );
+  }
+
+  await query("UPDATE properties SET status = ? WHERE id = ? AND agent_id = ?", [
+    PROPERTY_STATUS.SOLD,
+    propertyId,
+    agentId,
+  ]);
+
+  const agentName = session.user.name || "Agent";
+  const agentHandle = session.user.username || session.user.estate_name || null;
+  await createAuditLog({
+    userId: agentId,
+    action: AUDIT_ACTIONS.PROPERTY_UPDATED,
+    entityType: AUDIT_ENTITY_TYPES.PROPERTY,
+    entityId: propertyId,
+    description: `${agentName} marked property "${current.title}" as sold`,
+    metadata: {
+      property_title: current.title,
+      agent_name: agentName,
+      agent_username: agentHandle,
+      estate_name: session.user.estate_name || agentHandle,
+      old_status: current.status,
+      new_status: PROPERTY_STATUS.SOLD,
+    },
+    ipAddress: getRequestIp(req),
+  });
+
+  return NextResponse.json({ success: true, status: PROPERTY_STATUS.SOLD });
+}
+
 export async function DELETE(req, { params }) {
   const { session, error } = await requireAgent();
   if (error) return error;

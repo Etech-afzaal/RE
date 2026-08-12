@@ -59,7 +59,14 @@ export default function AgentInquiryForm({
 
   function handleChange(field) {
     return (event) => {
-      const value = event.target.value;
+      let value = event.target.value;
+      if (field === "name") {
+        value = value.replace(/[^\p{L}\s'-]/gu, "").slice(0, 30);
+      } else if (field === "phone") {
+        const hasPlus = value.trimStart().startsWith("+");
+        const digits = value.replace(/\D/g, "").slice(0, 15);
+        value = hasPlus ? `+${digits}` : digits;
+      }
       setForm((prev) => ({ ...prev, [field]: value }));
       if (fieldErrors[field]) {
         setFieldErrors((prev) => {
@@ -136,7 +143,7 @@ export default function AgentInquiryForm({
             type="text"
             name="name"
             required
-            maxLength={100}
+            maxLength={30}
             value={form.name}
             onChange={handleChange("name")}
             placeholder="Full Name"
@@ -172,7 +179,7 @@ export default function AgentInquiryForm({
           <input
             type="tel"
             name="phone"
-            maxLength={20}
+            maxLength={16}
             value={form.phone}
             onChange={handleChange("phone")}
             placeholder="Phone Number"
