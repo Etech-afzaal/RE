@@ -35,17 +35,18 @@ function navItems(base) {
       icon: (
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path
-            d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9.5Z"
+            d="M4 20V7.5L12 4l8 3.5V20H4Z"
             fill="none"
             stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinejoin="round"
+             strokeWidth="1.8"
+             strokeLinejoin="round"
           />
           <path
-            d="M9 21v-7h6v7"
+            d="M8 20v-5h8v5M8 9h.01M12 9h.01M16 9h.01"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.8"
+            strokeLinecap="round"
             strokeLinejoin="round"
           />
         </svg>
@@ -86,15 +87,22 @@ function navItems(base) {
       href: `${base}/company-branding`,
       label: "Company Branding",
       icon: (
-        <svg viewBox="0 0 24 24" aria-hidden="true">
+       <svg viewBox="0 0 24 24" aria-hidden="true">
           <path
-            d="M4 20V8.5L12 4l8 4.5V20H4Z"
+            d="M4 7.5h16v12H4v-12Z"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.8"
             strokeLinejoin="round"
           />
-          <path d="M9 20v-6h6v6" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <path
+            d="M7 7.5 8.5 4h7L17 7.5M8 11h8M8 14.5h5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+           />
         </svg>
       ),
     },
