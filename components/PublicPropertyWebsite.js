@@ -15,10 +15,10 @@ import styles from "@/app/page.module.css";
 
 const AGENT_PUBLIC_NAV = [
   { label: "Home", href: "/" },
-  { label: "Sale", href: "#sale" },
-  { label: "Rent", href: "#rent" },
+  { label: "For Sale", href: "#sale" },
+  { label: "For Rent", href: "#rent" },
   { label: "Plots", href: "#plots" },
-  { label: "Areas", href: "#areas" },
+  { label: "Search Areas", href: "#areas" },
 ];
 
 /**
@@ -32,6 +32,7 @@ export default function PublicPropertyWebsite({
   stats,
   locations = [],
   agent = null,
+  agentStats = null,
 }) {
   const trustBackground =
     properties.find((property) => property.featuredImage?.image_url)
@@ -53,7 +54,7 @@ export default function PublicPropertyWebsite({
     <div className={styles.wrapper}>
       <SiteHeader
         navLinks={AGENT_PUBLIC_NAV}
-        ctaLabel="Schedule a Tour"
+        ctaLabel="Sell your property"
         ctaHref="#contact"
         logoSrc={agent?.company_logo || "/logo.svg"}
         logoAlt={
@@ -65,7 +66,11 @@ export default function PublicPropertyWebsite({
       />
       <HeroSlider slides={heroSlides} />
       <div className={styles.container}>
-        {agent ? <AgentBrandProfile agent={agent} /> : <AboutDHALahore />}
+        {agent ? (
+          <AgentBrandProfile agent={agent} stats={agentStats} />
+        ) : (
+          <AboutDHALahore />
+        )}
       </div>
 
       <main className={styles.main}>
@@ -272,8 +277,8 @@ export default function PublicPropertyWebsite({
 
             <div className={styles.footerCol}>
               <h4>Properties</h4>
-              <Link href="#sale">Sale</Link>
-              <Link href="#rent">Rent</Link>
+              <Link href="#sale">For Sale</Link>
+              <Link href="#rent">For Rent</Link>
               <Link href="#plots">Plots</Link>
               <Link href="#why-us">How it works</Link>
             </div>

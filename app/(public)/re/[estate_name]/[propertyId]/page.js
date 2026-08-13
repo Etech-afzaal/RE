@@ -643,7 +643,12 @@ export default async function PropertyDetailPage({ params }) {
           <div className={styles.overviewMain}>
             {/* 1. Property summary */}
             <article className={styles.summaryCard}>
-              <p className={styles.statusLabel}>{statusLabel}</p>
+              <div className={styles.summaryTop}>
+                <p className={styles.statusLabel}>{statusLabel}</p>
+                {listedDate ? (
+                  <p className={styles.listedOn}>Listed : {listedDate}</p>
+                ) : null}
+              </div>
               <h1 className={styles.title}>{property.title}</h1>
               {locationInfo.full ? (
                 <p className={styles.locationLine}>

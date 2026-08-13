@@ -57,7 +57,7 @@ export default function PrivacyPolicyPage() {
             <h3>Real estate agents</h3>
             <p>If you register or operate an agent account, we may also collect:</p>
             <ul>
-              <li>Full name, estate or agency name, email, phone number, and signup message</li>
+              <li>Full name, estate or agency name, email, phone number, licence number, and signup message</li>
               <li>Login credentials and session information</li>
               <li>Profile photo, company logo, company name, description, and areas served</li>
               <li>Property listings you publish, including photos, walkthrough videos, prices, locations, and descriptions</li>

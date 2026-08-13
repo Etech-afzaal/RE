@@ -112,7 +112,7 @@ export default function HeroSlider({ slides = [] }) {
                   strokeLinejoin="round"
                 />
               </svg>
-              Find Property
+              View Details
             </Link>
 {/* 
             <div className={styles.trust}>

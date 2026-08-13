@@ -143,10 +143,18 @@
   border-top: 3px solid var(--gold);
 }
 
+.summaryTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin: 0 0 0.85rem;
+}
+
 .statusLabel {
   display: inline-flex;
   align-items: center;
-  margin: 0 0 0.85rem;
+  margin: 0;
   padding: 0.28rem 0.7rem;
   border-radius: 999px;
   background: var(--gold-tint);
@@ -156,6 +164,16 @@
   letter-spacing: 0.12em;
   font-size: 0.7rem;
   font-weight: 800;
+}
+
+.listedOn {
+  margin: 0;
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 .title {
@@ -218,13 +236,6 @@
   font-weight: 700;
   color: var(--ink);
   letter-spacing: -0.01em;
-}
-
-.listedOn {
-  margin: 1rem 0 0;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--muted);
 }
 
 /* ---------- Shared content cards (left column) ---------- */
@@ -867,9 +878,9 @@
   justify-content: center;
   padding: 0.7rem 1.15rem;
   border-radius: 12px;
-  border: 1px solid rgba(26, 26, 26, 0.12);
-  background: #fff;
-  color: var(--ink);
+  border: 1px solid var(--gold);
+  background: var(--gold);
+  color: #1a1a1a;
   font-weight: 700;
   text-decoration: none;
   font-size: 0.92rem;
@@ -877,8 +888,8 @@
 }
 
 .brandProfileBtn:hover {
-  border-color: var(--gold);
-  background: var(--gold-tint);
+  border-color: var(--gold-soft);
+  background: var(--gold-soft);
 }
 
 /* ---------- Trust ---------- */

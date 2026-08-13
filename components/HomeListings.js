@@ -449,11 +449,22 @@ export default function HomeListings({ properties = [] }) {
   }, [pageSize]);
 
   const locations = useMemo(() => {
-    const set = new Set(
-      properties.map((p) => formatPropertyLocation(p)).filter(Boolean),
-    );
+    const set = new Set();
+    for (const property of properties) {
+      const display = formatPropertyLocation(property);
+      if (display) set.add(display);
+      const area = String(property?.area || "").trim();
+      if (area) set.add(area);
+    }
     return ["all", ...Array.from(set)];
   }, [properties]);
+
+  const locationOptions = useMemo(() => {
+    if (location !== "all" && !locations.includes(location)) {
+      return [...locations, location];
+    }
+    return locations;
+  }, [locations, location]);
 
   useEffect(() => {
     const scrollToSale = () => {
@@ -485,10 +496,12 @@ export default function HomeListings({ properties = [] }) {
       if (!card) return;
 
       event.preventDefault();
-      const selectedLocation = card.dataset.location;
+      const selectedLocation = String(card.dataset.location || "").trim();
       if (!selectedLocation) return;
 
+      setQuery("");
       setLocation(selectedLocation);
+      setPages({ sale: 1, rent: 1, plot: 1 });
       scrollToSale();
     };
 
@@ -514,8 +527,15 @@ export default function HomeListings({ properties = [] }) {
 
     const base = properties.filter((p) => {
       const displayLocation = formatPropertyLocation(p) || "";
+      const propertyArea = String(p.area || "").trim();
+      const selected = String(location || "").trim();
+      const selectedLower = selected.toLowerCase();
       const matchesLocation =
-        location === "all" || displayLocation === location;
+        selected === "all" ||
+        displayLocation === selected ||
+        (propertyArea && propertyArea.toLowerCase() === selectedLower) ||
+        (selectedLower &&
+          displayLocation.toLowerCase().includes(selectedLower));
       const haystack =
         `${p.title} ${displayLocation} ${p.city || ""} ${p.area || ""} ${p.phase || ""} ${p.agent_name || ""}`.toLowerCase();
       return matchesLocation && (!q || haystack.includes(q));
@@ -596,7 +616,7 @@ export default function HomeListings({ properties = [] }) {
             onChange={(e) => setLocation(e.target.value)}
             aria-label="Filter by location"
           >
-            {locations.map((loc) => (
+            {locationOptions.map((loc) => (
               <option key={loc} value={loc}>
                 {loc === "all" ? "All locations" : loc}
               </option>

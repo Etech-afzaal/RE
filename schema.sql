@@ -14,9 +14,10 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 CREATE TABLE IF NOT EXISTS signup_requests (
   id INT AUTO_INCREMENT PRIMARY KEY,
   full_name VARCHAR(255) NOT NULL,
-  estate_name VARCHAR(20) NOT NULL,
+  estate_name VARCHAR(30) NOT NULL,
   email VARCHAR(255) NOT NULL,
   phone VARCHAR(50),
+  licence_number VARCHAR(25) NULL,
   message TEXT,
   status ENUM('pending','approved','rejected','revoked') DEFAULT 'pending',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -32,7 +33,7 @@ CREATE TABLE IF NOT EXISTS signup_requests (
 --   company_logo — brand logo
 CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  estate_name VARCHAR(20) UNIQUE NULL,             -- URL slug; required for agents, NULL for superadmins
+  estate_name VARCHAR(30) UNIQUE NULL,             -- URL slug; required for agents, NULL for superadmins
   username VARCHAR(100) UNIQUE,                    -- optional public handle (kept for compatibility)
   full_name VARCHAR(255) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,

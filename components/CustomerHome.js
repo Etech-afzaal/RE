@@ -228,7 +228,7 @@ export default function CustomerHome({ agents = [], areas = [] }) {
   const [area, setArea] = useState("all");
   const [city, setCity] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [openFaq, setOpenFaq] = useState(null);
+  const [openFaqs, setOpenFaqs] = useState(() => new Set());
   const [contactForm, setContactForm] = useState(EMPTY_CONTACT_FORM);
   const [contactFieldErrors, setContactFieldErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -307,6 +307,25 @@ export default function CustomerHome({ agents = [], areas = [] }) {
     document
       .getElementById("agents")
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function toggleFaq(index) {
+    setOpenFaqs((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  }
+
+  const allFaqsExpanded = openFaqs.size === CONTACT_FAQS.length;
+
+  function toggleExpandAllFaqs() {
+    if (allFaqsExpanded) {
+      setOpenFaqs(new Set());
+      return;
+    }
+    setOpenFaqs(new Set(CONTACT_FAQS.map((_, index) => index)));
   }
 
   function handleContactFieldChange(field) {
@@ -599,21 +618,29 @@ export default function CustomerHome({ agents = [], areas = [] }) {
             <div className={styles.contactCard}>
               <div className={styles.contactGrid}>
                 <div className={styles.contactInfo}>
-                  <h2 className={styles.contactHeading}>
-                    Frequently Asked Questions
-                  </h2>
+                  <div className={styles.faqHeader}>
+                    <h2 className={styles.contactHeading}>
+                      Frequently Asked Questions
+                    </h2>
+                    <button
+                      type="button"
+                      className={styles.faqExpandAll}
+                      onClick={toggleExpandAllFaqs}
+                      aria-expanded={allFaqsExpanded}
+                    >
+                      {allFaqsExpanded ? "Collapse all" : "Expand all"}
+                    </button>
+                  </div>
                   <div className={styles.faqList}>
                     {CONTACT_FAQS.map((item, index) => {
-                      const isOpen = openFaq === index;
+                      const isOpen = openFaqs.has(index);
                       return (
                         <div key={item.question} className={styles.faqItem}>
                           <button
                             type="button"
                             className={`${styles.faqQuestion}${isOpen ? ` ${styles.faqQuestionActive}` : ""}`}
                             aria-expanded={isOpen}
-                            onClick={() =>
-                              setOpenFaq(isOpen ? null : index)
-                            }
+                            onClick={() => toggleFaq(index)}
                           >
                             <span className={styles.faqQuestionText}>
                               {item.question}
@@ -623,7 +650,7 @@ export default function CustomerHome({ agents = [], areas = [] }) {
                             </span>
                           </button>
                           {isOpen ? (
-                            <div className={styles.faqAnswerPanel} key={index}>
+                            <div className={styles.faqAnswerPanel}>
                               <p className={styles.faqAnswerText}>
                                 {item.answer}
                               </p>
@@ -809,13 +836,12 @@ export default function CustomerHome({ agents = [], areas = [] }) {
               <h4>Explore</h4>
               <a href="#agents">Find agents</a>
               <a href="#why-us">Why us</a>
-              <Link href="/agent/signup">Become an agent</Link>
               <Link href="/privacy-policy">Privacy Policy</Link>
             </div>
             <div className={styles.footerCol}>
               <h4>Accounts</h4>
               <Link href="/agent/login">Agent login</Link>
-              <Link href="/agent/signup">Register</Link>
+              <Link href="/agent/signup">Become an agent</Link>
             </div>
             <div className={styles.footerCol}>
               <h4>Contact</h4>

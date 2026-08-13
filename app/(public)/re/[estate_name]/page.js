@@ -5,6 +5,7 @@ import {
   getHeroSlidesForAgent,
   getPopularLocationsForAgent,
   getPublicStatsForAgent,
+  getAgentBrandStats,
 } from "@/lib/queries";
 import { agentPublicUsername } from "@/lib/propertySlug";
 import PublicPropertyWebsite from "@/components/PublicPropertyWebsite";
@@ -30,12 +31,14 @@ export default async function AgentPublicWebsitePage({ params }) {
   const agent = await getAgentByUsername(params.estate_name);
   if (!agent) return notFound();
 
-  const [properties, heroSlides, stats, locations] = await Promise.all([
-    getApprovedPropertiesByAgent(agent.id),
-    getHeroSlidesForAgent(agent.id, 5),
-    getPublicStatsForAgent(agent.id),
-    getPopularLocationsForAgent(agent.id, 24),
-  ]);
+  const [properties, heroSlides, stats, locations, agentStats] =
+    await Promise.all([
+      getApprovedPropertiesByAgent(agent.id),
+      getHeroSlidesForAgent(agent.id, 5),
+      getPublicStatsForAgent(agent.id),
+      getPopularLocationsForAgent(agent.id, 24),
+      getAgentBrandStats(agent.id),
+    ]);
 
   return (
     <PublicPropertyWebsite
@@ -44,6 +47,7 @@ export default async function AgentPublicWebsitePage({ params }) {
       heroSlides={heroSlides}
       stats={stats}
       locations={locations}
+      agentStats={agentStats}
     />
   );
 }

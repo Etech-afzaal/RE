@@ -23,7 +23,8 @@
     "migrate:property-price-currency": "node scripts/migrate-property-price-currency.js",
     "migrate:audit-logs": "node scripts/migrate-audit-logs.js",
     "migrate:inquiry-page-url": "node scripts/migrate-inquiry-page-url.js",
-    "migrate:property-video-thumbnails": "node scripts/migrate-property-video-thumbnails.js"
+    "migrate:property-video-thumbnails": "node scripts/migrate-property-video-thumbnails.js",
+    "migrate:signup-licence": "node scripts/migrate-signup-licence.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

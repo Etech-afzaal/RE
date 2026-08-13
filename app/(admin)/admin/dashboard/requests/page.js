@@ -163,6 +163,12 @@ export default function RequestsPage() {
                       <span>{request.phone || "—"}</span>
                     </div>
                     <div className={styles.metaItem}>
+                      <label>Licence</label>
+                      <span className={styles.mono}>
+                        {request.licence_number || "—"}
+                      </span>
+                    </div>
+                    <div className={styles.metaItem}>
                       <label>Submitted</label>
                       <span>
                         {new Date(request.created_at).toLocaleDateString()}

@@ -6,16 +6,53 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { validateSignupInput } from "@/lib/validators/userValidator";
 import styles from "./page.module.css";
 
+const SIGNUP_LIMITS = {
+  full_name: 30,
+  estate_name: 30,
+  phoneDigits: 15,
+  licence_number: 25,
+  message: 1000,
+};
+
+function sanitizeLicenceInput(raw) {
+  return String(raw ?? "")
+    .replace(/[^A-Za-z0-9-]/g, "")
+    .slice(0, SIGNUP_LIMITS.licence_number);
+}
+
+function sanitizePhoneInput(raw) {
+  const text = String(raw ?? "");
+  const hasPlus = text.trim().startsWith("+");
+  const digits = text.replace(/\D/g, "").slice(0, SIGNUP_LIMITS.phoneDigits);
+  if (!digits) return hasPlus ? "+" : "";
+  return hasPlus ? `+${digits}` : digits;
+}
+
 export default function AgentSignupPage() {
   const [form, setForm] = useState({
     full_name: "",
     estate_name: "",
     email: "",
     phone: "",
+    licence_number: "",
     message: "",
   });
   const [status, setStatus] = useState("idle");
   const [errorMsg, setErrorMsg] = useState("");
+
+  function updateField(field, value) {
+    let next = value;
+    if (field === "full_name" || field === "estate_name") {
+      next = String(value ?? "").slice(0, SIGNUP_LIMITS[field]);
+    } else if (field === "phone") {
+      next = sanitizePhoneInput(value);
+    } else if (field === "licence_number") {
+      next = sanitizeLicenceInput(value);
+    } else if (field === "message") {
+      next = String(value ?? "").slice(0, SIGNUP_LIMITS.message);
+    }
+    setForm((prev) => ({ ...prev, [field]: next }));
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -86,20 +123,18 @@ export default function AgentSignupPage() {
           <form onSubmit={handleSubmit} className={styles.signupForm} noValidate>
             <input
               required
-              maxLength={100}
+              maxLength={SIGNUP_LIMITS.full_name}
               placeholder="Full name"
               value={form.full_name}
-              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+              onChange={(e) => updateField("full_name", e.target.value)}
               className={styles.signupInput}
             />
             <input
               required
-              maxLength={100}
+              maxLength={SIGNUP_LIMITS.estate_name}
               placeholder="Estate / Agency name"
               value={form.estate_name}
-              onChange={(e) =>
-                setForm({ ...form, estate_name: e.target.value })
-              }
+              onChange={(e) => updateField("estate_name", e.target.value)}
               className={styles.signupInput}
             />
             <p className={styles.signupNote}>
@@ -107,25 +142,36 @@ export default function AgentSignupPage() {
             </p>
             <input
               required
+              maxLength={SIGNUP_LIMITS.licence_number}
+              placeholder="Licence number"
+              value={form.licence_number}
+              onChange={(e) => updateField("licence_number", e.target.value)}
+              className={styles.signupInput}
+              autoComplete="off"
+            />
+            <input
+              required
               type="email"
               placeholder="Email"
               value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              onChange={(e) => updateField("email", e.target.value)}
               className={styles.signupInput}
             />
             <input
+              required
               placeholder="Phone"
-              maxLength={20}
+              inputMode="tel"
+              maxLength={SIGNUP_LIMITS.phoneDigits + 1}
               value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              onChange={(e) => updateField("phone", e.target.value)}
               className={styles.signupInput}
             />
             <textarea
               placeholder="Anything else we should know? (optional)"
               value={form.message}
-              onChange={(e) => setForm({ ...form, message: e.target.value })}
+              onChange={(e) => updateField("message", e.target.value)}
               rows={4}
-              maxLength={1000}
+              maxLength={SIGNUP_LIMITS.message}
               className={styles.signupTextarea}
             />
             {errorMsg ? <p className={styles.errorText}>{errorMsg}</p> : null}

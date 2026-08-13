@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 
-export const DEFAULT_AGENT_AVATAR = "/images/default-agent-avatar.svg";
+export const DEFAULT_AGENT_AVATAR = "/images/default-agent-avatar.png";
 
 function hasUsableAgentProfileImage(src) {
   if (typeof src !== "string") return false;

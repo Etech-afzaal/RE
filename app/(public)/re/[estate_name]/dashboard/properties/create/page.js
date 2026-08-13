@@ -31,6 +31,7 @@ import {
   DEFAULT_PRICE_CURRENCY,
   PROPERTY_WIZARD_STEPS,
   WIZARD_DIGIT_LIMITS,
+  WIZARD_TEXT_LIMITS,
   getPropertyWizardFieldError,
   propertyFieldToWizardStep,
   sanitizeWizardCityInput,
@@ -225,23 +226,43 @@ export default function CreatePropertyPage() {
     const prevOpts = { previous };
 
     if (field === "city") {
-      const sanitized = sanitizeWizardCityInput(rawValue, 100, prevOpts);
+      const sanitized = sanitizeWizardCityInput(
+        rawValue,
+        WIZARD_TEXT_LIMITS.city,
+        prevOpts,
+      );
       value = sanitized.value;
       limitError = sanitized.limitError;
     } else if (field === "area" || field === "phase") {
-      const sanitized = sanitizeWizardTextInput(rawValue, 100, prevOpts);
+      const sanitized = sanitizeWizardTextInput(
+        rawValue,
+        WIZARD_TEXT_LIMITS[field],
+        prevOpts,
+      );
       value = sanitized.value;
       limitError = sanitized.limitError;
     } else if (field === "address") {
-      const sanitized = sanitizeWizardTextInput(rawValue, 300, prevOpts);
+      const sanitized = sanitizeWizardTextInput(
+        rawValue,
+        WIZARD_TEXT_LIMITS.address,
+        prevOpts,
+      );
       value = sanitized.value;
       limitError = sanitized.limitError;
     } else if (field === "title") {
-      const sanitized = sanitizeWizardTextInput(rawValue, 150, prevOpts);
+      const sanitized = sanitizeWizardTextInput(
+        rawValue,
+        WIZARD_TEXT_LIMITS.title,
+        prevOpts,
+      );
       value = sanitized.value;
       limitError = sanitized.limitError;
     } else if (field === "description") {
-      const sanitized = sanitizeWizardTextInput(rawValue, 2000, prevOpts);
+      const sanitized = sanitizeWizardTextInput(
+        rawValue,
+        WIZARD_TEXT_LIMITS.description,
+        prevOpts,
+      );
       value = sanitized.value;
       limitError = sanitized.limitError;
     } else if (
@@ -814,6 +835,7 @@ export default function CreatePropertyPage() {
                 value={form.title}
                 onChange={(e) => update("title", e.target.value)}
                 placeholder="10 Marla House in DHA Phase 5"
+                maxLength={WIZARD_TEXT_LIMITS.title}
                 aria-invalid={Boolean(fieldErrors.title)}
                 aria-describedby="title-error"
               />
@@ -847,6 +869,7 @@ export default function CreatePropertyPage() {
                 value={form.description}
                 onChange={(e) => update("description", e.target.value)}
                 placeholder="Describe the property"
+                maxLength={WIZARD_TEXT_LIMITS.description}
                 aria-invalid={Boolean(fieldErrors.description)}
                 aria-describedby="description-error"
               />
@@ -870,6 +893,7 @@ export default function CreatePropertyPage() {
                 value={form.city}
                 onChange={(e) => update("city", e.target.value)}
                 placeholder="e.g. Lahore"
+                maxLength={WIZARD_TEXT_LIMITS.city}
                 aria-invalid={Boolean(fieldErrors.city)}
                 aria-describedby="city-error"
               />
@@ -882,6 +906,7 @@ export default function CreatePropertyPage() {
                 value={form.area}
                 onChange={(e) => update("area", e.target.value)}
                 placeholder="e.g. DHA,Gulberg"
+                maxLength={WIZARD_TEXT_LIMITS.area}
                 aria-invalid={Boolean(fieldErrors.area)}
                 aria-describedby="area-error"
               />
@@ -894,6 +919,7 @@ export default function CreatePropertyPage() {
                 value={form.phase}
                 onChange={(e) => update("phase", e.target.value)}
                 placeholder="e.g. Phase 6 / Sector B"
+                maxLength={WIZARD_TEXT_LIMITS.phase}
                 aria-invalid={Boolean(fieldErrors.phase)}
                 aria-describedby="phase-error"
               />
@@ -909,6 +935,7 @@ export default function CreatePropertyPage() {
                 value={form.address}
                 onChange={(e) => update("address", e.target.value)}
                 placeholder="House number, street, block, road, full address"
+                maxLength={WIZARD_TEXT_LIMITS.address}
                 aria-invalid={Boolean(fieldErrors.address)}
                 aria-describedby="address-error"
               />

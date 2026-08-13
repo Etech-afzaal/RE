@@ -29,7 +29,8 @@ export async function POST(req) {
     );
   }
 
-  const { full_name, estate_name, email, phone, message } = parsed.data;
+  const { full_name, estate_name, email, phone, licence_number, message } =
+    parsed.data;
   const normalizedEstateName = String(estate_name)
     .trim()
     .toLowerCase()
@@ -39,6 +40,13 @@ export async function POST(req) {
   if (!normalizedEstateName) {
     return NextResponse.json(
       { error: "Please enter a valid company / estate name." },
+      { status: 400 },
+    );
+  }
+
+  if (normalizedEstateName.length > 30) {
+    return NextResponse.json(
+      { error: "Maximum 30 characters allowed for estate name." },
       { status: 400 },
     );
   }
@@ -98,8 +106,15 @@ export async function POST(req) {
 
   try {
     const insertResult = await query(
-      "INSERT INTO signup_requests (full_name, estate_name, email, phone, message) VALUES (?, ?, ?, ?, ?)",
-      [full_name, normalizedEstateName, email, phone || null, message || null],
+      "INSERT INTO signup_requests (full_name, estate_name, email, phone, licence_number, message) VALUES (?, ?, ?, ?, ?, ?)",
+      [
+        full_name,
+        normalizedEstateName,
+        email,
+        phone || null,
+        licence_number || null,
+        message || null,
+      ],
     );
     revalidatePath("/admin/dashboard/requests");
 
@@ -115,6 +130,7 @@ export async function POST(req) {
         estate_name: normalizedEstateName,
         email,
         phone: phone || null,
+        licence_number: licence_number || null,
       },
       ipAddress: getRequestIp(req),
     });
@@ -133,7 +149,7 @@ export async function POST(req) {
     await sendMail(
       admins[0]?.email,
       `New agent signup request: ${full_name}`,
-      newSignupRequestEmail({ full_name, email, phone }),
+      newSignupRequestEmail({ full_name, email, phone, licence_number }),
     );
   } catch (err) {
     // Don't fail the request just because the notification email failed —
