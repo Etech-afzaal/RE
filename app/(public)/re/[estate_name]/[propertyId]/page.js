@@ -23,6 +23,11 @@ import {
   resolveLocationInfo,
 } from "@/lib/propertyLocation";
 import { formatPropertyPrice } from "@/lib/formatPrice";
+import {
+  inferPropertyTypeFromText,
+  PROPERTY_TYPE_LISTING_LABELS,
+  propertySubtypeLabel,
+} from "@/lib/propertyTaxonomy";
 import styles from "./page.module.css";
 
 const formatPrice = (price, currency) =>
@@ -134,14 +139,33 @@ function parsePropertyAttributes(property) {
 }
 
 function inferPropertyTypeLabel(property) {
+  const subtypeLabel = propertySubtypeLabel(property.property_subtype);
+  if (subtypeLabel) return subtypeLabel;
+
   const text = `${property.title || ""} ${property.description || ""}`.toLowerCase();
-  if (text.includes("plot")) return "Plot";
+  if (text.includes("plot")) {
+    if (/\bcommercial\b/.test(text)) return "Commercial Plot";
+    if (/\bresidential\b/.test(text)) return "Residential Plot";
+    return "Plot";
+  }
   if (text.includes("apartment") || text.includes("flat")) return "Apartment";
+  if (text.includes("shop")) return "Shop";
   if (text.includes("bungalow")) return "Bungalow";
   if (text.includes("villa")) return "Villa";
-  if (text.includes("shop") || text.includes("commercial")) return "Commercial";
+  if (text.includes("commercial")) return "Commercial";
   if (/\brent\b/.test(text)) return "Rental";
   return "House";
+}
+
+function listingTypeLabel(property) {
+  if (property.status === "sold") return "Sold";
+  if (property.status === "draft") return "Draft";
+  const type = inferPropertyTypeFromText(property);
+  if (type && PROPERTY_TYPE_LISTING_LABELS[type]) {
+    return PROPERTY_TYPE_LISTING_LABELS[type];
+  }
+  const isRent = /\brent\b/i.test(fullSearchText(property));
+  return isRent ? "For Rent" : "For Sale";
 }
 
 function fullSearchText(property) {
@@ -470,15 +494,8 @@ export default async function PropertyDetailPage({ params }) {
   const locationInfo = resolveLocationInfo(property);
   const attrs = parsePropertyAttributes(property);
   const propertyTypeLabel = inferPropertyTypeLabel(property);
-  const isRent = /\brent\b/i.test(fullSearchText(property));
-  const statusLabel =
-    property.status === "sold"
-      ? "Sold"
-      : property.status === "draft"
-        ? "Draft"
-        : isRent
-          ? "For Rent"
-          : "For Sale";
+  const statusLabel = listingTypeLabel(property);
+  const isRent = inferPropertyTypeFromText(property) === "rent";
 
   const gallery = property.images || [];
   const heroImage = property.featuredImage || gallery[0] || null;

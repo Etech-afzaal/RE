@@ -57,6 +57,8 @@ export async function POST(req) {
     size_unit,
     price,
     price_currency,
+    property_type,
+    property_subtype,
   } = validated.data;
   const { city, area, phase, address, location } = normalizeLocationFields({
     ...body,
@@ -68,15 +70,21 @@ export async function POST(req) {
   // approval via POST /api/properties/:id/submit once uploads finish.
   const status = PROPERTY_STATUS.DRAFT;
   const trimmedTitle = String(title).trim();
+  const nextType =
+    property_type || validated.data.propertyType || null;
+  const nextSubtype =
+    property_subtype || validated.data.propertySubtype || null;
 
   const result = await query(
     `INSERT INTO properties
-      (agent_id, title, description, size_value, size_unit, price, price_currency,
+      (agent_id, title, property_type, property_subtype, description, size_value, size_unit, price, price_currency,
        location, city, area, phase, address, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       agentId,
       trimmedTitle,
+      nextType,
+      nextSubtype,
       description || null,
       size_value ?? null,
       size_unit || "marla",

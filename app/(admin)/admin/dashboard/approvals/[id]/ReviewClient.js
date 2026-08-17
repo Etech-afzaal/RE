@@ -10,6 +10,7 @@ import PropertyVideoGallery from "@/components/PropertyVideoGallery";
 import RejectPropertyDialog from "@/components/admin/RejectPropertyDialog";
 import { companyNameFromAgent } from "@/lib/agentBranding";
 import { formatPropertyPrice } from "@/lib/formatPrice";
+import { propertySubtypeLabel } from "@/lib/propertyTaxonomy";
 import { getPropertyUrl } from "@/lib/propertySlug";
 import styles from "@/components/admin/adminUi.module.css";
 
@@ -219,18 +220,14 @@ export default function ReviewClient({ propertyId }) {
             </div>
           </section>
 
-          {(property.videos?.length > 0 || property.video_url) ? (
+          {property.videos?.length > 0 ? (
             <section className={styles.panel}>
               <div className={styles.panelHeader}>
                 <h2 className={styles.panelTitle}>Walkthrough video</h2>
               </div>
               <div className={styles.panelBody}>
                 <PropertyVideoGallery
-                  videos={
-                    property.videos?.length
-                      ? property.videos
-                      : [{ video_url: property.video_url }]
-                  }
+                  videos={property.videos}
                   autoPlayOnView={false}
                   compact
                   watermarkText={companyNameFromAgent({
@@ -313,6 +310,18 @@ export default function ReviewClient({ propertyId }) {
               <h2 className={styles.panelTitle}>Property</h2>
             </div>
             <div className={styles.panelBody}>
+              <InfoRow label="Type">
+                {property.property_type === "sale"
+                  ? "For Sale"
+                  : property.property_type === "rent"
+                    ? "For Rent"
+                    : property.property_type === "plot"
+                      ? "Plot"
+                      : property.property_type || "—"}
+              </InfoRow>
+              <InfoRow label="Category">
+                {propertySubtypeLabel(property.property_subtype) || "—"}
+              </InfoRow>
               <InfoRow label="Price">
                 {formatPrice(property.price, property.price_currency)}
               </InfoRow>

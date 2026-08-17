@@ -40,6 +40,10 @@ import {
   validatePropertyWizardFields,
   validatePropertyWizardStep,
 } from "@/lib/validators/propertyValidator";
+import {
+  isValidPropertyTypeSubtype,
+  subtypesForType,
+} from "@/lib/propertyTaxonomy";
 import ui from "@/components/agent-portal/portal.module.css";
 
 const STEPS = [
@@ -144,6 +148,7 @@ export default function CreatePropertyPage() {
   const [form, setForm] = useState({
     title: "",
     propertyType: "sale",
+    propertySubtype: "",
     description: "",
     city: "",
     area: "",
@@ -281,15 +286,43 @@ export default function CreatePropertyPage() {
     }
 
     const nextForm = { ...form, [field]: value };
+
+    // Reset subtype when it is no longer valid for the new top-level type.
+    if (field === "propertyType") {
+      if (!isValidPropertyTypeSubtype(value, form.propertySubtype)) {
+        nextForm.propertySubtype = "";
+      }
+    }
+
     setForm(nextForm);
 
-    // Property type changes only need to re-check their own field error.
+    // Property type changes only need to re-check type + subtype field errors.
     if (field === "propertyType") {
       setFieldErrors((prev) => {
         const next = { ...prev };
         const typeError = getPropertyWizardFieldError("propertyType", nextForm);
         if (typeError) next.propertyType = typeError;
         else delete next.propertyType;
+        const subtypeError = getPropertyWizardFieldError(
+          "propertySubtype",
+          nextForm,
+        );
+        if (subtypeError) next.propertySubtype = subtypeError;
+        else delete next.propertySubtype;
+        return next;
+      });
+      return;
+    }
+
+    if (field === "propertySubtype") {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        const subtypeError = getPropertyWizardFieldError(
+          "propertySubtype",
+          nextForm,
+        );
+        if (subtypeError) next.propertySubtype = subtypeError;
+        else delete next.propertySubtype;
         return next;
       });
       return;
@@ -663,6 +696,8 @@ export default function CreatePropertyPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title,
+            propertyType: form.propertyType,
+            propertySubtype: form.propertySubtype,
             description: buildDescription(form),
             city: String(form.city || "").trim() || null,
             area: String(form.area || "").trim() || null,
@@ -688,6 +723,8 @@ export default function CreatePropertyPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title,
+            propertyType: form.propertyType,
+            propertySubtype: form.propertySubtype,
             description: buildDescription(form),
             city: String(form.city || "").trim() || null,
             area: String(form.area || "").trim() || null,
@@ -860,6 +897,30 @@ export default function CreatePropertyPage() {
               <FieldMessage
                 id="propertyType-error"
                 error={fieldErrors.propertyType}
+              />
+            </label>
+            <label className={ui.field}>
+              <span className={ui.label}>
+                Property subtype
+                <RequiredMark />
+              </span>
+              <select
+                className={`${ui.select} ${fieldErrors.propertySubtype ? ui.inputInvalid : ""}`}
+                value={form.propertySubtype}
+                onChange={(e) => update("propertySubtype", e.target.value)}
+                aria-invalid={Boolean(fieldErrors.propertySubtype)}
+                aria-describedby="propertySubtype-error"
+              >
+                <option value="">Select subtype</option>
+                {subtypesForType(form.propertyType).map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <FieldMessage
+                id="propertySubtype-error"
+                error={fieldErrors.propertySubtype}
               />
             </label>
             <label className={ui.field}>

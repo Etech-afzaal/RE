@@ -1,6 +1,6 @@
 .heroWrap {
   width: min(1240px, calc(100% - 2rem));
-  margin: 1.5rem auto 2rem;
+  margin: 0 auto 2rem;
 }
 
 .hero {
@@ -289,7 +289,7 @@
 @media (max-width: 768px) {
   .heroWrap {
     width: calc(100% - 1.5rem);
-    margin: 1.25rem auto 24px;
+    margin: 0 auto 24px;
   }
 
   .hero {

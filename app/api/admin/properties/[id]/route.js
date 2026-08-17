@@ -104,34 +104,12 @@ export async function GET(_req, { params }) {
         };
       });
     } catch {
-      // Table may not exist yet on older DBs — fall back to legacy video_url.
       videos = [];
-    }
-
-    if (
-      videos.length === 0 &&
-      property.video_url &&
-      String(property.video_url).trim()
-    ) {
-      videos = [
-        {
-          id: null,
-          video_url: property.video_url,
-          thumbnail_url: null,
-          thumbnail: null,
-          category: null,
-          category_label: null,
-          is_featured: true,
-          display_order: 0,
-          created_at: null,
-        },
-      ];
     }
 
     const featuredVideo =
       videos.find((video) => video.is_featured) || videos[0] || null;
-    const displayVideoUrl =
-      featuredVideo?.video_url || property.video_url || null;
+    const displayVideoUrl = featuredVideo?.video_url || null;
 
     return NextResponse.json({
       property: {

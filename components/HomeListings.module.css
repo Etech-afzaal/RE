@@ -3,13 +3,23 @@
   scroll-margin-top: 110px;
 }
 
+.searchSection {
+  width: min(1240px, calc(100% - 2rem));
+  margin: 1.5rem auto;
+}
+
+.listingsWrap {
+  width: min(1240px, calc(100% - 2rem));
+  margin: 0 auto;
+}
+
 .searchBar {
   display: grid;
   grid-template-columns: 1fr minmax(150px, 200px) minmax(160px, 200px) auto;
   gap: 0.75rem;
   align-items: center;
   padding: 0.9rem;
-  margin: 3rem auto 2rem;
+  margin: 0;
   background: #fff;
   border: 1px solid rgba(242, 187, 70, 0.28);
   border-radius: 18px;
@@ -345,6 +355,14 @@
   letter-spacing: -0.02em;
 }
 
+/* Supplementary unit label — never compete with primary price */
+.footerValueConversion {
+  font-size: 0.68em;
+  font-weight: 400;
+  color: #9ca3af;
+  letter-spacing: 0;
+}
+
 .empty {
   padding: 2.5rem 1.5rem;
   text-align: center;
@@ -381,7 +399,7 @@
   .searchBar {
     grid-template-columns: 1fr;
     gap: 0.5rem;
-    margin: 0 auto 24px;
+    margin: 0;
     padding: 0.65rem;
     border-radius: 16px;
     box-shadow: 0 12px 28px rgba(16, 24, 40, 0.07);

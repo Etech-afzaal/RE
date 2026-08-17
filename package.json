@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test:price-conversion": "node --experimental-default-type=module --test lib/formatPropertyPriceConversion.test.js",
     "seed": "node scripts/seed.js",
     "seed:spaces": "node scripts/seed-space-images.js",
     "migrate:phase1": "node scripts/migrate-phase1.js",
@@ -24,7 +25,10 @@
     "migrate:audit-logs": "node scripts/migrate-audit-logs.js",
     "migrate:inquiry-page-url": "node scripts/migrate-inquiry-page-url.js",
     "migrate:property-video-thumbnails": "node scripts/migrate-property-video-thumbnails.js",
-    "migrate:signup-licence": "node scripts/migrate-signup-licence.js"
+    "migrate:signup-licence": "node scripts/migrate-signup-licence.js",
+    "migrate:property-type-subtype": "node scripts/migrate-property-type-subtype.js",
+    "migrate:drop-properties-video-url": "node scripts/migrate-drop-properties-video-url.js",
+    "migrate:property-is-featured": "node scripts/migrate-property-is-featured.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

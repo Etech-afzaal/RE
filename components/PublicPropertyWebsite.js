@@ -15,9 +15,37 @@ import styles from "@/app/page.module.css";
 
 const AGENT_PUBLIC_NAV = [
   { label: "Home", href: "/" },
-  { label: "For Sale", href: "#sale" },
-  { label: "For Rent", href: "#rent" },
-  { label: "Plots", href: "#plots" },
+  {
+    label: "For Sale",
+    href: "#sale",
+    type: "sale",
+    children: [
+      { label: "Houses", subtype: "house" },
+      { label: "Apartments", subtype: "apartment" },
+      { label: "Shops", subtype: "shop" },
+      { label: "Commercial", subtype: "commercial" },
+    ],
+  },
+  {
+    label: "For Rent",
+    href: "#rent",
+    type: "rent",
+    children: [
+      { label: "Houses", subtype: "house" },
+      { label: "Apartments", subtype: "apartment" },
+      { label: "Shops", subtype: "shop" },
+      { label: "Commercial", subtype: "commercial" },
+    ],
+  },
+  {
+    label: "Plots",
+    href: "#plots",
+    type: "plot",
+    children: [
+      { label: "Residential", subtype: "residential_plot" },
+      { label: "Commercial", subtype: "commercial_plot" },
+    ],
+  },
   { label: "Search Areas", href: "#areas" },
 ];
 
@@ -62,21 +90,20 @@ export default function PublicPropertyWebsite({
             ? `${agent.company_name} logo`
             : "Dhalahore Properties"
         }
-        logoScrollTarget={agent ? "hero" : undefined}
       />
-      <HeroSlider slides={heroSlides} />
-      <div className={styles.container}>
-        {agent ? (
-          <AgentBrandProfile agent={agent} stats={agentStats} />
-        ) : (
-          <AboutDHALahore />
-        )}
-      </div>
+      <HomeListings properties={properties}>
+        <HeroSlider slides={heroSlides} />
+        <div className={styles.container}>
+          {agent ? (
+            <AgentBrandProfile agent={agent} stats={agentStats} />
+          ) : (
+            <AboutDHALahore />
+          )}
+        </div>
+      </HomeListings>
 
       <main className={styles.main}>
         <div className={styles.container}>
-          <HomeListings properties={properties} />
-
           <TrustStats stats={stats} backgroundImage={trustBackground} />
 
           {locations.length > 0 ? (

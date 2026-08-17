@@ -61,6 +61,8 @@ CREATE TABLE IF NOT EXISTS properties (
   id INT AUTO_INCREMENT PRIMARY KEY,
   agent_id INT NOT NULL,
   title VARCHAR(255) NOT NULL,
+  property_type ENUM('sale','rent','plot') NULL,  -- top-level listing class
+  property_subtype VARCHAR(32) NULL,              -- house|apartment|shop|commercial|residential_plot|commercial_plot
   description TEXT,
   size_value DECIMAL(10,2),
   size_unit ENUM('marla','kanal','sqft') DEFAULT 'marla',
@@ -71,10 +73,10 @@ CREATE TABLE IF NOT EXISTS properties (
   area VARCHAR(100) NULL,
   phase VARCHAR(100) NULL,
   address VARCHAR(255) NULL,
-  video_url VARCHAR(500) NULL,                     -- optional property walkthrough video
   -- Workflow: draft → pending_approval → approved | rejected; plus sold | hidden
   -- Only 'approved' is publicly visible, so new listings start as drafts.
   status ENUM('draft','pending_approval','approved','rejected','sold','hidden') NOT NULL DEFAULT 'draft',
+  is_featured BOOLEAN NOT NULL DEFAULT FALSE,       -- agent homepage hero (max 10 approved per agent)
   submitted_at DATETIME NULL,                      -- set when the agent submits for review
   approved_by VARCHAR(100) NULL,                   -- admin identifier (env admin has no users row)
   approved_at DATETIME NULL,
@@ -100,7 +102,7 @@ CREATE TABLE IF NOT EXISTS property_images (
 );
 
 -- Optional walkthrough videos (max 5 per property in the add flow).
--- properties.video_url stays as a legacy mirror of the featured video.
+-- Source of truth for property videos; do not store video URLs on properties.
 CREATE TABLE IF NOT EXISTS property_videos (
   id INT AUTO_INCREMENT PRIMARY KEY,
   property_id INT NOT NULL,
@@ -116,6 +118,7 @@ CREATE TABLE IF NOT EXISTS property_videos (
 
 CREATE INDEX idx_properties_agent ON properties(agent_id);
 CREATE INDEX idx_properties_status ON properties(status);
+CREATE INDEX idx_properties_agent_featured ON properties(agent_id, is_featured, status);
 
 -- Platform audit trail (superadmin Logs page + Overview recent activities).
 CREATE TABLE IF NOT EXISTS audit_logs (

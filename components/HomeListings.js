@@ -1,11 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { getPropertyUrl } from "@/lib/propertySlug";
 import { formatPropertyLocation } from "@/lib/propertyLocation";
 import { formatPropertyPrice } from "@/lib/formatPrice";
+import { formatPropertyPriceConversion } from "@/lib/formatPropertyPriceConversion";
+import {
+  normalizePropertySubtype,
+  normalizePropertyType,
+  propertySubtypeLabel,
+} from "@/lib/propertyTaxonomy";
 import { useIsMobile } from "@/lib/useIsMobile";
 import { sanitizeSearchInput } from "@/lib/validators/common";
 import styles from "./HomeListings.module.css";
@@ -123,27 +130,34 @@ const SORT_OPTIONS = [
 ];
 
 function getCategory(property) {
-  const type =
-    String(property.property_type || property.purpose || property.listing_type || property.category || "")
-      .toLowerCase();
+  const stored = normalizePropertyType(
+    property.property_type ||
+      property.purpose ||
+      property.listing_type ||
+      property.category,
+  );
+  if (stored) return stored;
+
   const title = String(property.title || "").toLowerCase();
   const description = String(property.description || "").toLowerCase();
 
-  if (type.includes("plot") || title.includes("plot") || description.includes("plot")) {
+  if (title.includes("plot") || description.includes("plot")) {
     return "plot";
   }
-  if (type.includes("rent") || title.includes("rent") || description.includes("rent")) {
+  if (title.includes("rent") || description.includes("rent")) {
     return "rent";
   }
-  if (type.includes("sale")) {
+  if (title.includes("sale") || description.includes("sale")) {
     return "sale";
   }
 
-  const isExplicitRent = title.includes("rent") || description.includes("rent");
-  const isExplicitPlot = title.includes("plot") || description.includes("plot");
-  if (isExplicitPlot) return "plot";
-  if (isExplicitRent) return "rent";
   return "sale";
+}
+
+function getSubtype(property) {
+  const stored = normalizePropertySubtype(property.property_subtype);
+  if (stored) return stored;
+  return null;
 }
 
 /** Prefer numeric field when present; otherwise null. */
@@ -262,6 +276,11 @@ function PropertyCard({ property }) {
   const isPlot = category === "plot";
   const { beds, baths } = parseRoomCounts(property);
   const plotFeatures = isPlot ? parsePlotFeatures(property) : [];
+  const subtypeLabel = propertySubtypeLabel(getSubtype(property));
+  const priceConversion = formatPropertyPriceConversion(
+    property.price,
+    property.price_currency,
+  );
 
   return (
     <Link
@@ -302,12 +321,30 @@ function PropertyCard({ property }) {
             </span>
           ) : null}
           {isPlot
-            ? plotFeatures.map((feature) => (
-                <span key={feature} className={styles.attr}>
-                  <FeatureIcon />
-                  {feature}
-                </span>
-              ))
+            ? (
+                <>
+                  {subtypeLabel ? (
+                    <span className={styles.attr}>
+                      <FeatureIcon />
+                      {subtypeLabel}
+                    </span>
+                  ) : null}
+                  {plotFeatures
+                    .filter(
+                      (feature) =>
+                        !subtypeLabel ||
+                        feature.toLowerCase() !==
+                          String(subtypeLabel).toLowerCase().replace(/ plot$/i, ""),
+                    )
+                    .slice(0, subtypeLabel ? 1 : 2)
+                    .map((feature) => (
+                      <span key={feature} className={styles.attr}>
+                        <FeatureIcon />
+                        {feature}
+                      </span>
+                    ))}
+                </>
+              )
             : (
                 <>
                   {beds != null ? (
@@ -322,6 +359,12 @@ function PropertyCard({ property }) {
                       {baths} {baths === 1 ? "Bath" : "Baths"}
                     </span>
                   ) : null}
+                  {subtypeLabel ? (
+                    <span className={styles.attr}>
+                      <FeatureIcon />
+                      {subtypeLabel}
+                    </span>
+                  ) : null}
                 </>
               )}
         </div>
@@ -331,6 +374,12 @@ function PropertyCard({ property }) {
             <span className={styles.footerLabel}>Price</span>
             <span className={styles.footerValue}>
               {formatPrice(property.price, property.price_currency)}
+              {priceConversion ? (
+                <span className={styles.footerValueConversion}>
+                  {" "}
+                  ({priceConversion})
+                </span>
+              ) : null}
             </span>
           </div>
         </div>
@@ -435,18 +484,47 @@ function PropertySection({
   );
 }
 
-export default function HomeListings({ properties = [] }) {
+export default function HomeListings({ properties = [], children }) {
   const isMobile = useIsMobile(768);
   const pageSize = isMobile ? MOBILE_PAGE_SIZE : DESKTOP_PAGE_SIZE;
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("all");
   const [sort, setSort] = useState("default");
   const [pages, setPages] = useState({ sale: 1, rent: 1, plot: 1 });
+  // Local filter state — updated via history.replaceState + custom events so
+  // subtype changes do not trigger App Router navigations / loading UI.
+  const [activeType, setActiveType] = useState(null);
+  const [activeSubtype, setActiveSubtype] = useState(null);
 
   // Reset to page 1 when mobile/desktop page size changes so slices stay valid
   useEffect(() => {
     setPages({ sale: 1, rent: 1, plot: 1 });
   }, [pageSize]);
+
+  useEffect(() => {
+    const readFiltersFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      setActiveType(normalizePropertyType(params.get("type")));
+      setActiveSubtype(normalizePropertySubtype(params.get("subtype")));
+    };
+
+    readFiltersFromUrl();
+
+    const onTypeFilter = (event) => {
+      // Commit filter DOM before SiteHeader scrollIntoView in the same click.
+      flushSync(() => {
+        setActiveType(normalizePropertyType(event.detail?.type));
+        setActiveSubtype(normalizePropertySubtype(event.detail?.subtype));
+      });
+    };
+
+    window.addEventListener("dhalahorePropertiesTypeFilter", onTypeFilter);
+    window.addEventListener("popstate", readFiltersFromUrl);
+    return () => {
+      window.removeEventListener("dhalahorePropertiesTypeFilter", onTypeFilter);
+      window.removeEventListener("popstate", readFiltersFromUrl);
+    };
+  }, []);
 
   const locations = useMemo(() => {
     const set = new Set();
@@ -474,11 +552,23 @@ export default function HomeListings({ properties = [] }) {
       }
     };
 
+    const clearTypeFilters = () => {
+      const params = new URLSearchParams(window.location.search);
+      params.delete("type");
+      params.delete("subtype");
+      const qs = params.toString();
+      const next = `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash || ""}`;
+      window.history.replaceState(window.history.state, "", next);
+      setActiveType(null);
+      setActiveSubtype(null);
+    };
+
     const resetFilters = () => {
       setQuery("");
       setLocation("all");
       setSort("default");
       setPages({ sale: 1, rent: 1, plot: 1 });
+      clearTypeFilters();
     };
 
     const handleDocumentClick = (event) => {
@@ -520,7 +610,7 @@ export default function HomeListings({ properties = [] }) {
 
   useEffect(() => {
     setPages({ sale: 1, rent: 1, plot: 1 });
-  }, [query, location, sort]);
+  }, [query, location, sort, activeType, activeSubtype]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -538,7 +628,17 @@ export default function HomeListings({ properties = [] }) {
           displayLocation.toLowerCase().includes(selectedLower));
       const haystack =
         `${p.title} ${displayLocation} ${p.city || ""} ${p.area || ""} ${p.phase || ""} ${p.agent_name || ""}`.toLowerCase();
-      return matchesLocation && (!q || haystack.includes(q));
+      const matchesQuery = !q || haystack.includes(q);
+      const category = getCategory(p);
+      const subtype = getSubtype(p);
+      const matchesType = !activeType || category === activeType;
+      const matchesSubtype = !activeSubtype || subtype === activeSubtype;
+      return (
+        matchesLocation &&
+        matchesQuery &&
+        matchesType &&
+        matchesSubtype
+      );
     });
 
     const priceOf = (p) =>
@@ -569,7 +669,7 @@ export default function HomeListings({ properties = [] }) {
     }
 
     return base;
-  }, [properties, query, location, sort]);
+  }, [properties, query, location, sort, activeType, activeSubtype]);
 
   const saleProperties = useMemo(
     () => filtered.filter((property) => getCategory(property) === "sale"),
@@ -587,91 +687,96 @@ export default function HomeListings({ properties = [] }) {
   );
 
   return (
-    <div>
-      <div className={styles.searchBar}>
-        <div className={styles.searchField}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-            <path
-              d="M20 20l-3.5-3.5"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
+    <>
+      <div className={styles.searchSection}>
+        <div className={styles.searchBar}>
+          <div className={styles.searchField}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+              <path
+                d="M20 20l-3.5-3.5"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+            <input
+              type="search"
+              value={query}
+              onChange={(e) =>
+                setQuery(sanitizeSearchInput(e.target.value).value)
+              }
+              placeholder="Search by area, title or type"
+              aria-label="Search listings"
             />
-          </svg>
-          <input
-            type="search"
-            value={query}
-            onChange={(e) =>
-              setQuery(sanitizeSearchInput(e.target.value).value)
-            }
-            placeholder="Search by area, title, or agent"
-            aria-label="Search listings"
-          />
+          </div>
+          <label className={styles.selectField}>
+            <span className={styles.srOnly}>Location</span>
+            <select
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              aria-label="Filter by location"
+            >
+              {locationOptions.map((loc) => (
+                <option key={loc} value={loc}>
+                  {loc === "all" ? "All locations" : loc}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={styles.selectField}>
+            <span className={styles.srOnly}>Sort by price</span>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              aria-label="Sort listings"
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="button" className={styles.searchBtn}>
+            Search
+          </button>
         </div>
-        <label className={styles.selectField}>
-          <span className={styles.srOnly}>Location</span>
-          <select
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            aria-label="Filter by location"
-          >
-            {locationOptions.map((loc) => (
-              <option key={loc} value={loc}>
-                {loc === "all" ? "All locations" : loc}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className={styles.selectField}>
-          <span className={styles.srOnly}>Sort by price</span>
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            aria-label="Sort listings"
-          >
-            {SORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button type="button" className={styles.searchBtn}>
-          Search
-        </button>
       </div>
 
-      <PropertySection
-        id="sale"
-        title="For Sale"
-        kicker="Homes for sale"
-        properties={saleProperties}
-        currentPage={pages.sale}
-        pageSize={pageSize}
-        onPageChange={(page) => setPages((prev) => ({ ...prev, sale: page }))}
-      />
+      {children}
 
-      <PropertySection
-        id="rent"
-        title="For Rent"
-        kicker="Homes for rent"
-        properties={rentProperties}
-        currentPage={pages.rent}
-        pageSize={pageSize}
-        onPageChange={(page) => setPages((prev) => ({ ...prev, rent: page }))}
-      />
+      <div className={styles.listingsWrap}>
+        <PropertySection
+          id="sale"
+          title="For Sale"
+          kicker="Homes for sale"
+          properties={saleProperties}
+          currentPage={pages.sale}
+          pageSize={pageSize}
+          onPageChange={(page) => setPages((prev) => ({ ...prev, sale: page }))}
+        />
 
-      <PropertySection
-        id="plots"
-        title="Plots"
-        kicker="Land listings"
-        properties={plotProperties}
-        currentPage={pages.plot}
-        pageSize={pageSize}
-        onPageChange={(page) => setPages((prev) => ({ ...prev, plot: page }))}
-      />
+        <PropertySection
+          id="rent"
+          title="For Rent"
+          kicker="Homes for rent"
+          properties={rentProperties}
+          currentPage={pages.rent}
+          pageSize={pageSize}
+          onPageChange={(page) => setPages((prev) => ({ ...prev, rent: page }))}
+        />
 
-    </div>
+        <PropertySection
+          id="plots"
+          title="Plots"
+          kicker="Land listings"
+          properties={plotProperties}
+          currentPage={pages.plot}
+          pageSize={pageSize}
+          onPageChange={(page) => setPages((prev) => ({ ...prev, plot: page }))}
+        />
+      </div>
+    </>
   );
 }

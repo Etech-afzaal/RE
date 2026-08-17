@@ -174,9 +174,9 @@ const AYESHA_PROPERTIES = [
     price: 45500000,
     location: "DHA Phase 5, Lahore",
     images: [
-      { file: "sale-1.jpg", title: "Front elevation", featured: true },
-      { file: "dining-room.jpg", title: "Dining room", featured: false },
-      { file: "washroom.jpg", title: "Attached bath", featured: false },
+      { file: "sale-1.jpg", category: "front_view", featured: true },
+      { file: "dining-room.jpg", category: "dining_area", featured: false },
+      { file: "washroom.jpg", category: "bathroom", featured: false },
     ],
   },
   {
@@ -188,8 +188,8 @@ const AYESHA_PROPERTIES = [
     price: 19500000,
     location: "Johar Town, Lahore",
     images: [
-      { file: "sale-2.jpg", title: "Street view", featured: true },
-      { file: "dining-room.jpg", title: "Lounge", featured: false },
+      { file: "sale-2.jpg", category: "street_view", featured: true },
+      { file: "dining-room.jpg", category: "living_room", featured: false },
     ],
   },
   {
@@ -201,9 +201,9 @@ const AYESHA_PROPERTIES = [
     price: 88000000,
     location: "Model Town, Lahore",
     images: [
-      { file: "sale-3.jpg", title: "Luxury exterior", featured: true },
-      { file: "house-front.jpg", title: "Front lawn", featured: false },
-      { file: "dining-room.jpg", title: "Formal dining", featured: false },
+      { file: "sale-3.jpg", category: "front_view", featured: true },
+      { file: "house-front.jpg", category: "garden", featured: false },
+      { file: "dining-room.jpg", category: "dining_area", featured: false },
     ],
   },
   {
@@ -215,8 +215,8 @@ const AYESHA_PROPERTIES = [
     price: 72000000,
     location: "Gulberg III, Lahore",
     images: [
-      { file: "sale-3.jpeg", title: "Designer elevation", featured: true },
-      { file: "washroom.jpg", title: "Master bath", featured: false },
+      { file: "sale-3.jpeg", category: "front_view", featured: true },
+      { file: "washroom.jpg", category: "bathroom", featured: false },
     ],
   },
   {
@@ -228,8 +228,8 @@ const AYESHA_PROPERTIES = [
     price: 24200000,
     location: "WAPDA Town, Lahore",
     images: [
-      { file: "sale-4.jpg", title: "Modern front", featured: true },
-      { file: "dining-room.jpg", title: "Living area", featured: false },
+      { file: "sale-4.jpg", category: "front_view", featured: true },
+      { file: "dining-room.jpg", category: "living_room", featured: false },
     ],
   },
   {
@@ -241,8 +241,8 @@ const AYESHA_PROPERTIES = [
     price: 38500000,
     location: "Bahria Town, Lahore",
     images: [
-      { file: "sale-6.jpeg", title: "Bahria elevation", featured: true },
-      { file: "house-front.jpg", title: "Approach view", featured: false },
+      { file: "sale-6.jpeg", category: "front_view", featured: true },
+      { file: "house-front.jpg", category: "street_view", featured: false },
     ],
   },
   {
@@ -254,8 +254,8 @@ const AYESHA_PROPERTIES = [
     price: 18900000,
     location: "Valencia Town, Lahore",
     images: [
-      { file: "sale-7.jpeg", title: "Corner house", featured: true },
-      { file: "dining-room.jpg", title: "Interior", featured: false },
+      { file: "sale-7.jpeg", category: "front_view", featured: true },
+      { file: "dining-room.jpg", category: "living_room", featured: false },
     ],
   },
   // RENT (5)
@@ -268,8 +268,8 @@ const AYESHA_PROPERTIES = [
     price: 85000,
     location: "Johar Town, Lahore",
     images: [
-      { file: "rent-1.jpeg", title: "Living area", featured: true },
-      { file: "dining-room.jpg", title: "Dining", featured: false },
+      { file: "rent-1.jpeg", category: "living_room", featured: true },
+      { file: "dining-room.jpg", category: "dining_area", featured: false },
     ],
   },
   {
@@ -281,8 +281,8 @@ const AYESHA_PROPERTIES = [
     price: 135000,
     location: "DHA Phase 4, Lahore",
     images: [
-      { file: "rent-2.jpeg", title: "Furnished lounge", featured: true },
-      { file: "washroom.jpg", title: "Bathroom", featured: false },
+      { file: "rent-2.jpeg", category: "tv_lounge", featured: true },
+      { file: "washroom.jpg", category: "bathroom", featured: false },
     ],
   },
   {
@@ -294,8 +294,8 @@ const AYESHA_PROPERTIES = [
     price: 95000,
     location: "Model Town, Lahore",
     images: [
-      { file: "rent-3.jpeg", title: "Upper portion", featured: true },
-      { file: "dining-room.jpg", title: "Lounge", featured: false },
+      { file: "rent-3.jpeg", category: "front_view", featured: true },
+      { file: "dining-room.jpg", category: "living_room", featured: false },
     ],
   },
   {
@@ -307,8 +307,8 @@ const AYESHA_PROPERTIES = [
     price: 250000,
     location: "Gulberg III, Lahore",
     images: [
-      { file: "rent4.jpeg", title: "House exterior", featured: true },
-      { file: "house-front.jpg", title: "Front", featured: false },
+      { file: "rent4.jpeg", category: "front_view", featured: true },
+      { file: "house-front.jpg", category: "front_view", featured: false },
     ],
   },
   {
@@ -320,8 +320,8 @@ const AYESHA_PROPERTIES = [
     price: 48000,
     location: "Lahore Cantt",
     images: [
-      { file: "rent-5.jpeg", title: "Studio interior", featured: true },
-      { file: "rent-6.jpeg", title: "Alternate view", featured: false },
+      { file: "rent-5.jpeg", category: "living_room", featured: true },
+      { file: "rent-6.jpeg", category: "living_room", featured: false },
     ],
   },
   // PLOT (5)
@@ -334,8 +334,8 @@ const AYESHA_PROPERTIES = [
     price: 42000000,
     location: "DHA Phase 8, Lahore",
     images: [
-      { file: "plot-1.jpeg", title: "Plot overview", featured: true },
-      { file: "plot-2.jpeg", title: "Road access", featured: false },
+      { file: "plot-1.jpeg", category: "street_view", featured: true },
+      { file: "plot-2.jpeg", category: "street_view", featured: false },
     ],
   },
   {
@@ -347,8 +347,8 @@ const AYESHA_PROPERTIES = [
     price: 9800000,
     location: "Bahria Town, Lahore",
     images: [
-      { file: "plot-2.jpeg", title: "Corner plot", featured: true },
-      { file: "plot-3.jpeg", title: "Levelled ground", featured: false },
+      { file: "plot-2.jpeg", category: "street_view", featured: true },
+      { file: "plot-3.jpeg", category: "street_view", featured: false },
     ],
   },
   {
@@ -360,8 +360,8 @@ const AYESHA_PROPERTIES = [
     price: 18500000,
     location: "Lake City, Lahore",
     images: [
-      { file: "plot-3.jpeg", title: "Levelled plot", featured: true },
-      { file: "plot-1.jpeg", title: "Site view", featured: false },
+      { file: "plot-3.jpeg", category: "street_view", featured: true },
+      { file: "plot-1.jpeg", category: "street_view", featured: false },
     ],
   },
   {
@@ -373,8 +373,8 @@ const AYESHA_PROPERTIES = [
     price: 22500000,
     location: "Johar Town, Lahore",
     images: [
-      { file: "plot-5.jpg", title: "Residential plot", featured: true },
-      { file: "plot-4.jpeg", title: "Approach", featured: false },
+      { file: "plot-5.jpg", category: "street_view", featured: true },
+      { file: "plot-4.jpeg", category: "street_view", featured: false },
     ],
   },
   {
@@ -386,8 +386,8 @@ const AYESHA_PROPERTIES = [
     price: 26500000,
     location: "Township, Lahore",
     images: [
-      { file: "plot-4.jpeg", title: "Commercial frontage", featured: true },
-      { file: "plot-5.jpg", title: "Plot depth", featured: false },
+      { file: "plot-4.jpeg", category: "street_view", featured: true },
+      { file: "plot-5.jpg", category: "street_view", featured: false },
     ],
   },
 ];
@@ -563,9 +563,9 @@ async function main() {
       const publicUrl = `/uploads/${propertyId}/${filename}`;
       await conn.query(
         `INSERT INTO property_images
-          (property_id, image_url, image_title, is_featured, sort_order)
+          (property_id, image_url, category, is_featured, sort_order)
          VALUES (?, ?, ?, ?, ?)`,
-        [propertyId, publicUrl, img.title, img.featured, i],
+        [propertyId, publicUrl, img.category, img.featured, i],
       );
       imagePaths.push(publicUrl);
     }

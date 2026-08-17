@@ -95,21 +95,6 @@ async function rollbackSavedVideos(propertyId, saved) {
   ).catch(() => {});
 }
 
-/** Keep properties.video_url in sync with the featured gallery video. */
-async function syncLegacyVideoUrl(propertyId) {
-  const featured = await query(
-    `SELECT video_url FROM property_videos
-     WHERE property_id = ?
-     ORDER BY is_featured DESC, display_order ASC, id ASC
-     LIMIT 1`,
-    [propertyId],
-  );
-  await query("UPDATE properties SET video_url = ? WHERE id = ?", [
-    featured[0]?.video_url || null,
-    propertyId,
-  ]);
-}
-
 export async function POST(req, { params }) {
   const { session, error } = await requireAgent();
   if (error) return error;
@@ -245,7 +230,6 @@ export async function POST(req, { params }) {
       );
     }
 
-    await syncLegacyVideoUrl(propertyId);
   } catch (err) {
     await rollbackSavedVideos(propertyId, saved);
     console.error("Failed to save property videos:", err);
@@ -349,8 +333,6 @@ export async function DELETE(req, { params }) {
       );
     }
   }
-
-  await syncLegacyVideoUrl(propertyId);
 
   return NextResponse.json({ success: true });
 }

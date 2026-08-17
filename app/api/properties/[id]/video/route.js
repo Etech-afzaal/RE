@@ -46,7 +46,7 @@ async function ensurePropertyVideosTable() {
 
 async function getOwnedProperty(propertyId, agentId) {
   const rows = await query(
-    "SELECT id, status, video_url FROM properties WHERE id = ? AND agent_id = ?",
+    "SELECT id, status FROM properties WHERE id = ? AND agent_id = ?",
     [propertyId, agentId],
   );
   return rows[0] || null;
@@ -61,7 +61,7 @@ async function removeLocalUpload(publicUrl) {
   if (localPath) await rm(localPath, { force: true }).catch(() => {});
 }
 
-/** Remove gallery rows + files, then clear legacy video_url. */
+/** Remove gallery rows + files for this property. */
 async function clearPropertyVideos(propertyId) {
   await ensurePropertyVideosTable();
   const rows = await query(
@@ -77,9 +77,6 @@ async function clearPropertyVideos(propertyId) {
       propertyId,
     ]);
   }
-  await query("UPDATE properties SET video_url = NULL WHERE id = ?", [
-    propertyId,
-  ]);
 }
 
 export async function POST(req, { params }) {
@@ -133,11 +130,8 @@ export async function POST(req, { params }) {
       return NextResponse.json({ error: processed.error }, { status: 400 });
     }
 
-    // Keep property_videos in sync so public walkthroughs reflect this replace.
+    // Replace walkthrough: clear gallery, then insert the new featured video.
     await clearPropertyVideos(propertyId);
-    if (property.video_url) {
-      await removeLocalUpload(property.video_url);
-    }
 
     await mkdir(uploadDir, { recursive: true });
     await writeFile(path.join(uploadDir, filename), processed.videoBuffer);
@@ -152,10 +146,6 @@ export async function POST(req, { params }) {
        VALUES (?, ?, ?, NULL, TRUE, 0)`,
       [propertyId, publicUrl, thumbnailUrl],
     );
-    await query("UPDATE properties SET video_url = ? WHERE id = ?", [
-      publicUrl,
-      propertyId,
-    ]);
   } catch (err) {
     await removeLocalUpload(publicUrl);
     await removeLocalUpload(thumbnailUrl);
@@ -191,9 +181,6 @@ export async function DELETE(_req, { params }) {
   }
 
   try {
-    if (property.video_url) {
-      await removeLocalUpload(property.video_url);
-    }
     await clearPropertyVideos(propertyId);
   } catch (err) {
     console.error("Failed to remove property video:", err);

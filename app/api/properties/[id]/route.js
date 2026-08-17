@@ -85,30 +85,9 @@ export async function GET(_req, { params }) {
     videos = [];
   }
 
-  if (
-    videos.length === 0 &&
-    property.video_url &&
-    String(property.video_url).trim()
-  ) {
-    videos = [
-      {
-        id: null,
-        video_url: property.video_url,
-        thumbnail_url: null,
-        thumbnail: null,
-        category: null,
-        category_label: null,
-        is_featured: true,
-        display_order: 0,
-        created_at: null,
-      },
-    ];
-  }
-
   const featuredVideo =
     videos.find((video) => video.is_featured) || videos[0] || null;
-  const displayVideoUrl =
-    featuredVideo?.video_url || property.video_url || null;
+  const displayVideoUrl = featuredVideo?.video_url || null;
 
   return NextResponse.json({
     property: {
@@ -138,6 +117,8 @@ export async function PUT(req, { params }) {
     size_unit,
     price,
     price_currency,
+    property_type,
+    property_subtype,
   } = validated.data;
   const status = body.status;
   const locationFields = normalizeLocationFields({
@@ -147,7 +128,7 @@ export async function PUT(req, { params }) {
 
   const agentId = agentIdFrom(session);
   const existing = await query(
-    "SELECT id, status, approved_at, title, price_currency FROM properties WHERE id = ? AND agent_id = ?",
+    "SELECT id, status, approved_at, title, price_currency, property_type, property_subtype FROM properties WHERE id = ? AND agent_id = ?",
     [propertyId, agentId],
   );
   if (existing.length === 0) {
@@ -197,16 +178,29 @@ export async function PUT(req, { params }) {
 
   const trimmedTitle = String(title).trim();
   const nextCurrency = price_currency || current.price_currency || "PKR";
+  const typeProvided =
+    body.propertyType != null ||
+    body.property_type != null ||
+    body.propertySubtype != null ||
+    body.property_subtype != null;
+  const resolvedType = typeProvided
+    ? property_type || validated.data.propertyType || null
+    : current.property_type || null;
+  const resolvedSubtype = typeProvided
+    ? property_subtype || validated.data.propertySubtype || null
+    : current.property_subtype || null;
 
   if (locationFields.hasStructured) {
     await query(
       `UPDATE properties
-       SET title = ?, description = ?, size_value = ?, size_unit = ?, price = ?,
+       SET title = ?, property_type = ?, property_subtype = ?, description = ?, size_value = ?, size_unit = ?, price = ?,
            price_currency = ?, location = ?, city = ?, area = ?, phase = ?,
            address = ?, status = ?
        WHERE id = ? AND agent_id = ?`,
       [
         trimmedTitle,
+        resolvedType,
+        resolvedSubtype,
         description || null,
         size_value ?? null,
         size_unit || "marla",
@@ -225,11 +219,13 @@ export async function PUT(req, { params }) {
   } else {
     await query(
       `UPDATE properties
-       SET title = ?, description = ?, size_value = ?, size_unit = ?, price = ?,
+       SET title = ?, property_type = ?, property_subtype = ?, description = ?, size_value = ?, size_unit = ?, price = ?,
            price_currency = ?, location = ?, status = ?
        WHERE id = ? AND agent_id = ?`,
       [
         trimmedTitle,
+        resolvedType,
+        resolvedSubtype,
         description || null,
         size_value ?? null,
         size_unit || "marla",

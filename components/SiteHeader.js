@@ -9,9 +9,37 @@ import styles from "./SiteHeader.module.css";
 
 const DEFAULT_NAV_LINKS = [
   { label: "Home", href: "/" },
-  { label: "Sale", href: "#sale" },
-  { label: "Rent", href: "#rent" },
-  { label: "Plots", href: "#plots" },
+  {
+    label: "Sale",
+    href: "#sale",
+    type: "sale",
+    children: [
+      { label: "Houses", subtype: "house" },
+      { label: "Apartments", subtype: "apartment" },
+      { label: "Shops", subtype: "shop" },
+      { label: "Commercial", subtype: "commercial" },
+    ],
+  },
+  {
+    label: "Rent",
+    href: "#rent",
+    type: "rent",
+    children: [
+      { label: "Houses", subtype: "house" },
+      { label: "Apartments", subtype: "apartment" },
+      { label: "Shops", subtype: "shop" },
+      { label: "Commercial", subtype: "commercial" },
+    ],
+  },
+  {
+    label: "Plots",
+    href: "#plots",
+    type: "plot",
+    children: [
+      { label: "Residential", subtype: "residential_plot" },
+      { label: "Commercial", subtype: "commercial_plot" },
+    ],
+  },
   { label: "Areas", href: "#areas" },
   { label: "Contact Us", href: "#contact" },
 ];
@@ -39,6 +67,11 @@ function getProbeY() {
   return Math.max(headerHeight + 8, 120);
 }
 
+function sectionIdFromType(type) {
+  if (type === "plot") return "plots";
+  return type || "";
+}
+
 export default function SiteHeader({
   navLinks = DEFAULT_NAV_LINKS,
   ctaLabel = "Become an agent",
@@ -63,6 +96,12 @@ export default function SiteHeader({
   const [menuEntered, setMenuEntered] = useState(false);
   const [menuMounted, setMenuMounted] = useState(false);
   const [activeHref, setActiveHref] = useState(homeHref);
+  const [openMobileGroup, setOpenMobileGroup] = useState(null);
+  // Desktop category menus: only one open at a time; independent of filter/URL.
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  // After a click, ignore hover-open until the pointer leaves the nav item.
+  // Prevents scrollIntoView under the sticky header from re-firing mouseEnter.
+  const [hoverArmed, setHoverArmed] = useState(true);
   const lockedHrefRef = useRef(null);
   const lockTimerRef = useRef(0);
   const closeTimerRef = useRef(0);
@@ -83,6 +122,7 @@ export default function SiteHeader({
     }
 
     setMenuEntered(false);
+    setOpenMobileGroup(null);
     closeTimerRef.current = window.setTimeout(() => {
       setMenuMounted(false);
     }, 420);
@@ -160,12 +200,48 @@ export default function SiteHeader({
 
   const isHomeLink = (href) => href === homeHref || href === "/";
 
+  const applyListingFilter = ({ type, subtype, hash }) => {
+    const params = new URLSearchParams(window.location.search);
+    if (type) params.set("type", type);
+    else params.delete("type");
+    if (subtype) params.set("subtype", subtype);
+    else params.delete("subtype");
+    const qs = params.toString();
+    const nextHash = hash || "";
+    const next = `${pathname}${qs ? `?${qs}` : ""}${nextHash}`;
+    // Client-side filter only — avoid router.replace so App Router loading.js /
+    // NavigationLoader are not triggered on every subtype change.
+    window.history.replaceState(window.history.state, "", next);
+    window.dispatchEvent(
+      new CustomEvent("dhalahorePropertiesTypeFilter", {
+        detail: {
+          type: type || null,
+          subtype: subtype || null,
+        },
+      }),
+    );
+  };
+
   const handleLogoClick = async (event) => {
     event.preventDefault();
     lockedHrefRef.current = null;
     window.clearTimeout(lockTimerRef.current);
     setMenuOpen(false);
     window.dispatchEvent(new Event("dhalahorePropertiesResetFilters"));
+
+    // Agent public site: go to /re/{handle} (no #hero) so the search bar stays in view.
+    if (homeHref.startsWith("/re/")) {
+      if (pathname !== homeHref) {
+        await router.push(homeHref);
+      } else {
+        if (window.location.hash || window.location.search) {
+          window.history.replaceState(null, "", homeHref);
+        }
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      setActiveHref(homeHref);
+      return;
+    }
 
     if (logoScrollTarget) {
       const target = document.getElementById(logoScrollTarget);
@@ -186,35 +262,34 @@ export default function SiteHeader({
     lockedHrefRef.current = null;
     window.clearTimeout(lockTimerRef.current);
     setMenuOpen(false);
+    window.dispatchEvent(new Event("dhalahorePropertiesResetFilters"));
 
     if (homeHref.startsWith("/re/")) {
-      window.dispatchEvent(new Event("dhalahorePropertiesResetFilters"));
-      const heroTarget = `${homeHref}#hero`;
       if (pathname !== homeHref) {
-        await router.push(heroTarget);
+        await router.push(homeHref);
       } else {
-        const hero = document.getElementById("hero");
-        if (hero) {
-          hero.scrollIntoView({ behavior: "smooth", block: "start" });
-          if (window.location.hash !== "#hero") {
-            window.history.pushState(null, "", "#hero");
-          }
-        } else {
-          window.scrollTo({ top: 0, behavior: "smooth" });
+        if (window.location.hash || window.location.search) {
+          window.history.replaceState(null, "", homeHref);
         }
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
       setActiveHref(homeHref);
       return;
     }
 
-    window.dispatchEvent(new Event("dhalahorePropertiesResetFilters"));
     await router.replace("/");
     window.scrollTo({ top: 0, behavior: "smooth" });
     setActiveHref("/");
   };
 
-  const handleSectionClick = (event, href) => {
+  const handleSectionClick = (event, href, filter = null) => {
     event.preventDefault();
+    // Clicks close any open category dropdown; filter/scroll must not reopen it.
+    setActiveDropdown(null);
+    setHoverArmed(false);
+    if (typeof document !== "undefined" && document.activeElement?.blur) {
+      document.activeElement.blur();
+    }
     const element = document.getElementById(href.slice(1));
     lockedHrefRef.current = href;
     setActiveHref(href);
@@ -224,19 +299,196 @@ export default function SiteHeader({
       lockedHrefRef.current = null;
     }, 1200);
 
+    if (filter?.clear) {
+      applyListingFilter({ type: null, subtype: null, hash: href });
+    } else if (filter?.type || filter?.subtype) {
+      applyListingFilter({
+        type: filter.type || null,
+        subtype: filter.subtype || null,
+        hash: href,
+      });
+    }
+
     if (!element) {
       return;
     }
 
     element.scrollIntoView({ behavior: "smooth", block: "start" });
-    if (window.location.hash !== href) {
-      window.history.pushState(null, "", href);
+    if (!filter?.type && !filter?.subtype && !filter?.clear) {
+      if (window.location.hash !== href) {
+        window.history.pushState(null, "", href);
+      }
     }
   };
 
-  const homeLinkHref = homeHref.startsWith("/re/")
-    ? `${homeHref}#hero`
-    : homeHref;
+  const homeLinkHref = homeHref;
+
+  const renderDesktopLink = (link) => {
+    const active = isActiveLink(link.href);
+    const isHash = link.href.startsWith("#");
+    const hasChildren = Array.isArray(link.children) && link.children.length > 0;
+
+    if (!hasChildren) {
+      return (
+        <Link
+          key={link.label}
+          href={isHomeLink(link.href) ? homeLinkHref : link.href}
+          className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`.trim()}
+          onClick={
+            isHomeLink(link.href)
+              ? handleHomeClick
+              : isHash
+                ? (event) => handleSectionClick(event, link.href)
+                : () => setMenuOpen(false)
+          }
+        >
+          {link.label}
+        </Link>
+      );
+    }
+
+    const dropdownId = link.type || link.label;
+    const dropdownOpen = activeDropdown === dropdownId;
+
+    return (
+      <div
+        key={link.label}
+        className={`${styles.navItem} ${active ? styles.navLinkActive : ""} ${dropdownOpen ? styles.navItemOpen : ""}`.trim()}
+        onMouseEnter={() => {
+          if (!hoverArmed) return;
+          setActiveDropdown(dropdownId);
+        }}
+        onMouseLeave={() => {
+          setHoverArmed(true);
+          setActiveDropdown((current) =>
+            current === dropdownId ? null : current,
+          );
+        }}
+      >
+        <Link
+          href={link.href}
+          className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`.trim()}
+          onClick={(event) =>
+            handleSectionClick(event, link.href, { clear: true })
+          }
+        >
+          {link.label}
+        </Link>
+        <div className={styles.navDropdown} role="menu">
+          {link.children.map((child) => {
+            const childHash = `#${sectionIdFromType(link.type)}`;
+            return (
+              <Link
+                key={`${link.label}-${child.label}`}
+                href={childHash}
+                className={styles.navDropdownLink}
+                role="menuitem"
+                tabIndex={dropdownOpen ? 0 : -1}
+                onClick={(event) =>
+                  handleSectionClick(event, childHash, {
+                    type: link.type,
+                    subtype: child.subtype,
+                  })
+                }
+              >
+                {child.label}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const renderMobileLink = (link, index) => {
+    const active = isActiveLink(link.href);
+    const isHash = link.href.startsWith("#");
+    const hasChildren = Array.isArray(link.children) && link.children.length > 0;
+    const groupOpen = openMobileGroup === link.label;
+
+    if (!hasChildren) {
+      return (
+        <Link
+          key={link.label}
+          href={isHomeLink(link.href) ? homeLinkHref : link.href}
+          className={`${styles.mobileLink} ${active ? styles.navLinkActive : ""}`.trim()}
+          style={{ "--stagger": `${index * 50}ms` }}
+          tabIndex={menuEntered ? 0 : -1}
+          onClick={(event) => {
+            if (isHomeLink(link.href)) {
+              handleHomeClick(event);
+              return;
+            }
+            if (isHash) {
+              handleSectionClick(event, link.href);
+              return;
+            }
+            setMenuOpen(false);
+          }}
+        >
+          {link.label}
+        </Link>
+      );
+    }
+
+    return (
+      <div
+        key={link.label}
+        className={styles.mobileGroup}
+        style={{ "--stagger": `${index * 50}ms` }}
+      >
+        <button
+          type="button"
+          className={`${styles.mobileGroupToggle} ${active ? styles.navLinkActive : ""}`.trim()}
+          aria-expanded={groupOpen}
+          tabIndex={menuEntered ? 0 : -1}
+          onClick={() =>
+            setOpenMobileGroup((prev) =>
+              prev === link.label ? null : link.label,
+            )
+          }
+        >
+          <span>{link.label}</span>
+          <span className={styles.mobileChevron} aria-hidden="true">
+            {groupOpen ? "▾" : "▸"}
+          </span>
+        </button>
+        {groupOpen ? (
+          <div className={styles.mobileSubmenu}>
+            <Link
+              href={link.href}
+              className={styles.mobileSubLink}
+              tabIndex={menuEntered ? 0 : -1}
+              onClick={(event) =>
+                handleSectionClick(event, link.href, { clear: true })
+              }
+            >
+              All {link.label.replace(/^For\s+/i, "")}
+            </Link>
+            {link.children.map((child) => {
+              const childHash = `#${sectionIdFromType(link.type)}`;
+              return (
+                <Link
+                  key={`${link.label}-${child.label}`}
+                  href={childHash}
+                  className={styles.mobileSubLink}
+                  tabIndex={menuEntered ? 0 : -1}
+                  onClick={(event) =>
+                    handleSectionClick(event, childHash, {
+                      type: link.type,
+                      subtype: child.subtype,
+                    })
+                  }
+                >
+                  {child.label}
+                </Link>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
+    );
+  };
 
   return (
     <header
@@ -255,7 +507,7 @@ export default function SiteHeader({
       <div className={styles.topBar}>
         <div className={styles.inner}>
           <Link
-            href={logoScrollTarget ? `#${logoScrollTarget}` : "/"}
+            href={homeHref.startsWith("/re/") ? homeHref : logoScrollTarget ? `#${logoScrollTarget}` : "/"}
             onClick={handleLogoClick}
             className={styles.logoGroup}
           >
@@ -272,26 +524,7 @@ export default function SiteHeader({
           </Link>
 
           <nav className={styles.mainNav} aria-label="Main">
-            {resolvedNavLinks.map((link) => {
-              const active = isActiveLink(link.href);
-              const isHash = link.href.startsWith("#");
-              return (
-                <Link
-                  key={link.label}
-                  href={isHomeLink(link.href) ? homeLinkHref : link.href}
-                  className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`.trim()}
-                  onClick={
-                    isHomeLink(link.href)
-                      ? handleHomeClick
-                      : isHash
-                        ? (event) => handleSectionClick(event, link.href)
-                        : () => setMenuOpen(false)
-                  }
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
+            {resolvedNavLinks.map((link) => renderDesktopLink(link))}
           </nav>
 
           <div className={styles.actions}>
@@ -357,32 +590,9 @@ export default function SiteHeader({
           aria-label="Mobile"
           aria-hidden={!menuEntered}
         >
-          {resolvedNavLinks.map((link, index) => {
-            const active = isActiveLink(link.href);
-            const isHash = link.href.startsWith("#");
-            return (
-              <Link
-                key={link.label}
-                href={isHomeLink(link.href) ? homeLinkHref : link.href}
-                className={`${styles.mobileLink} ${active ? styles.navLinkActive : ""}`.trim()}
-                style={{ "--stagger": `${index * 50}ms` }}
-                tabIndex={menuEntered ? 0 : -1}
-                onClick={(event) => {
-                  if (isHomeLink(link.href)) {
-                    handleHomeClick(event);
-                    return;
-                  }
-                  if (isHash) {
-                    handleSectionClick(event, link.href);
-                    return;
-                  }
-                  setMenuOpen(false);
-                }}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
+          {resolvedNavLinks.map((link, index) =>
+            renderMobileLink(link, index),
+          )}
           <Link
             href={ctaHref}
             className={styles.mobileCta}

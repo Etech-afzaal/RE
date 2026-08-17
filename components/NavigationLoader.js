@@ -77,10 +77,9 @@ export default function NavigationLoader() {
       }
 
       if (url.origin !== window.location.origin) return;
-      if (
-        url.pathname === window.location.pathname &&
-        url.search === window.location.search
-      ) {
+      // Same-path query updates (e.g. listing type/subtype filters) are not
+      // full route transitions — do not show the navigation loader.
+      if (url.pathname === window.location.pathname) {
         return;
       }
 

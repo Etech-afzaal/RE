@@ -172,71 +172,71 @@ FROM users WHERE estate_name = 'johar-living';
 -- ---------------------------------------------------------------------------
 
 -- SALE galleries
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/sale-1.jpg', 'Front elevation', TRUE, 0 FROM properties WHERE title = '10 Marla House for Sale in DHA Phase 6';
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/dining-room.jpg', 'Dining room', FALSE, 1 FROM properties WHERE title = '10 Marla House for Sale in DHA Phase 6';
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/washroom.jpg', 'Attached bath', FALSE, 2 FROM properties WHERE title = '10 Marla House for Sale in DHA Phase 6';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/sale-1.jpg', 'front_view', TRUE, 0 FROM properties WHERE title = '10 Marla House for Sale in DHA Phase 6';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/dining-room.jpg', 'dining_area', FALSE, 1 FROM properties WHERE title = '10 Marla House for Sale in DHA Phase 6';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/washroom.jpg', 'bathroom', FALSE, 2 FROM properties WHERE title = '10 Marla House for Sale in DHA Phase 6';
 
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/sale-2.jpg', 'Street view', TRUE, 0 FROM properties WHERE title = '5 Marla House for Sale in Bahria Town Sector C';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/sale-2.jpg', 'street_view', TRUE, 0 FROM properties WHERE title = '5 Marla House for Sale in Bahria Town Sector C';
 
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/sale-3.jpg', 'Luxury exterior', TRUE, 0 FROM properties WHERE title = '1 Kanal Luxury House for Sale in Gulberg III';
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/dining-room.jpg', 'Formal dining', FALSE, 1 FROM properties WHERE title = '1 Kanal Luxury House for Sale in Gulberg III';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/sale-3.jpg', 'front_view', TRUE, 0 FROM properties WHERE title = '1 Kanal Luxury House for Sale in Gulberg III';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/dining-room.jpg', 'dining_area', FALSE, 1 FROM properties WHERE title = '1 Kanal Luxury House for Sale in Gulberg III';
 
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/sale-3.jpeg', 'New build exterior', TRUE, 0 FROM properties WHERE title = '7 Marla Brand New House for Sale in Johar Town';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/sale-3.jpeg', 'front_view', TRUE, 0 FROM properties WHERE title = '7 Marla Brand New House for Sale in Johar Town';
 
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/sale-4.jpg', 'Double storey front', TRUE, 0 FROM properties WHERE title = '10 Marla Double Storey for Sale in Model Town';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/sale-4.jpg', 'front_view', TRUE, 0 FROM properties WHERE title = '10 Marla Double Storey for Sale in Model Town';
 
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/sale-6.jpeg', 'Cantt bungalow', TRUE, 0 FROM properties WHERE title = '1 Kanal Bungalow for Sale in Lahore Cantt';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/sale-6.jpeg', 'front_view', TRUE, 0 FROM properties WHERE title = '1 Kanal Bungalow for Sale in Lahore Cantt';
 
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/sale-7.jpeg', 'Modern Valencia home', TRUE, 0 FROM properties WHERE title = '5 Marla Modern House for Sale in Valencia Town';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/sale-7.jpeg', 'front_view', TRUE, 0 FROM properties WHERE title = '5 Marla Modern House for Sale in Valencia Town';
 
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/house-front.jpg', 'Lake City elevation', TRUE, 0 FROM properties WHERE title = '8 Marla Designer House for Sale in Lake City';
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/dining-room.jpg', 'Dining area', FALSE, 1 FROM properties WHERE title = '8 Marla Designer House for Sale in Lake City';
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/washroom.jpg', 'Bathroom', FALSE, 2 FROM properties WHERE title = '8 Marla Designer House for Sale in Lake City';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/house-front.jpg', 'front_view', TRUE, 0 FROM properties WHERE title = '8 Marla Designer House for Sale in Lake City';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/dining-room.jpg', 'dining_area', FALSE, 1 FROM properties WHERE title = '8 Marla Designer House for Sale in Lake City';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/washroom.jpg', 'bathroom', FALSE, 2 FROM properties WHERE title = '8 Marla Designer House for Sale in Lake City';
 
 -- RENT
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/rent-1.jpeg', 'Living area', TRUE, 0 FROM properties WHERE title = '3 Bed Apartment for Rent in DHA Phase 5';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/rent-1.jpeg', 'living_room', TRUE, 0 FROM properties WHERE title = '3 Bed Apartment for Rent in DHA Phase 5';
 
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/rent-2.jpeg', 'Furnished lounge', TRUE, 0 FROM properties WHERE title = 'Fully Furnished House for Rent in Bahria Town';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/rent-2.jpeg', 'tv_lounge', TRUE, 0 FROM properties WHERE title = 'Fully Furnished House for Rent in Bahria Town';
 
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/rent-3.jpeg', 'Flat interior', TRUE, 0 FROM properties WHERE title = '2 Bed Flat for Rent near MM Alam Road';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/rent-3.jpeg', 'living_room', TRUE, 0 FROM properties WHERE title = '2 Bed Flat for Rent near MM Alam Road';
 
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/rent4.jpeg', 'Upper portion', TRUE, 0 FROM properties WHERE title = 'Upper Portion for Rent in Johar Town Block H';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/rent4.jpeg', 'front_view', TRUE, 0 FROM properties WHERE title = 'Upper Portion for Rent in Johar Town Block H';
 
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/rent-5.jpeg', 'House exterior', TRUE, 0 FROM properties WHERE title = '5 Marla House for Rent in Model Town';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/rent-5.jpeg', 'front_view', TRUE, 0 FROM properties WHERE title = '5 Marla House for Rent in Model Town';
 
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/rent-6.jpeg', 'Studio view', TRUE, 0 FROM properties WHERE title = 'Studio Apartment for Rent in Lahore Cantt';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/rent-6.jpeg', 'living_room', TRUE, 0 FROM properties WHERE title = 'Studio Apartment for Rent in Lahore Cantt';
 
 -- PLOT
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/plot-1.jpeg', 'Plot overview', TRUE, 0 FROM properties WHERE title = '10 Marla Residential Plot in Bahria Town';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/plot-1.jpeg', 'street_view', TRUE, 0 FROM properties WHERE title = '10 Marla Residential Plot in Bahria Town';
 
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/plot-2.jpeg', 'Corner plot', TRUE, 0 FROM properties WHERE title = '1 Kanal Corner Plot in DHA Phase 7';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/plot-2.jpeg', 'street_view', TRUE, 0 FROM properties WHERE title = '1 Kanal Corner Plot in DHA Phase 7';
 
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/plot-3.jpeg', 'Levelled plot', TRUE, 0 FROM properties WHERE title = '5 Marla Plot for Sale in Lake City';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/plot-3.jpeg', 'street_view', TRUE, 0 FROM properties WHERE title = '5 Marla Plot for Sale in Lake City';
 
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/plot-4.jpeg', 'Commercial frontage', TRUE, 0 FROM properties WHERE title = '10 Marla Commercial Plot in Valencia Town';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/plot-4.jpeg', 'street_view', TRUE, 0 FROM properties WHERE title = '10 Marla Commercial Plot in Valencia Town';
 
-INSERT INTO property_images (property_id, image_url, image_title, is_featured, sort_order)
-SELECT id, '/uploads/demo/plot-5.jpg', 'Residential plot', TRUE, 0 FROM properties WHERE title = '7 Marla Residential Plot in Johar Town';
+INSERT INTO property_images (property_id, image_url, category, is_featured, sort_order)
+SELECT id, '/uploads/demo/plot-5.jpg', 'street_view', TRUE, 0 FROM properties WHERE title = '7 Marla Residential Plot in Johar Town';

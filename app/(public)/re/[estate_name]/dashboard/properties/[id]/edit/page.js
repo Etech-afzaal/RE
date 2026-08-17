@@ -31,15 +31,37 @@ import {
   DEFAULT_PRICE_CURRENCY,
   validatePropertyDraftInput,
 } from "@/lib/validators/propertyValidator";
+import {
+  inferPropertySubtypeFromText,
+  inferPropertyTypeFromText,
+  isValidPropertyTypeSubtype,
+  subtypesForType,
+} from "@/lib/propertyTaxonomy";
 import ui from "@/components/agent-portal/portal.module.css";
 
-function normalizePropertyVideos(property) {
-  const list = Array.isArray(property?.videos) ? property.videos : [];
-  if (list.length > 0) return list;
-  if (property?.video_url && String(property.video_url).trim()) {
-    return [{ id: null, video_url: property.video_url }];
+function buildTitle(title, propertyType) {
+  const t = String(title || "").trim();
+  if (!t) return "";
+  const lower = t.toLowerCase();
+  if (propertyType === "rent" && !lower.includes("rent")) {
+    return `${t} for Rent`;
   }
-  return [];
+  if (propertyType === "plot" && !lower.includes("plot")) {
+    return `${t} Plot`;
+  }
+  if (
+    propertyType === "sale" &&
+    !lower.includes("sale") &&
+    !lower.includes("rent") &&
+    !lower.includes("plot")
+  ) {
+    return `${t} for Sale`;
+  }
+  return t;
+}
+
+function normalizePropertyVideos(property) {
+  return Array.isArray(property?.videos) ? property.videos : [];
 }
 
 function videoTitle(video, index) {
@@ -60,6 +82,8 @@ export default function EditPropertyPage() {
 
   const [form, setForm] = useState({
     title: "",
+    propertyType: "sale",
+    propertySubtype: "",
     description: "",
     size_value: "",
     size_unit: "marla",
@@ -139,8 +163,18 @@ export default function EditPropertyPage() {
           area = parts[0] || "";
         }
       }
+      const inferredType =
+        p.property_type ||
+        inferPropertyTypeFromText(p) ||
+        "sale";
+      const inferredSubtype =
+        p.property_subtype ||
+        inferPropertySubtypeFromText(inferredType, p) ||
+        "";
       setForm({
         title: p.title || "",
+        propertyType: inferredType,
+        propertySubtype: inferredSubtype,
         description: p.description || "",
         size_value: p.size_value || "",
         size_unit: p.size_unit || "marla",
@@ -418,7 +452,11 @@ export default function EditPropertyPage() {
     setErrorDetails([]);
     setSuccess("");
 
-    const validated = validatePropertyDraftInput(form);
+    const payload = {
+      ...form,
+      title: buildTitle(form.title, form.propertyType),
+    };
+    const validated = validatePropertyDraftInput(payload);
     if (!validated.ok) {
       setError(validated.error);
       setSaving(false);
@@ -432,6 +470,8 @@ export default function EditPropertyPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title: validated.data.title,
+        propertyType: form.propertyType,
+        propertySubtype: form.propertySubtype,
         description: validated.data.description || form.description,
         city: String(form.city || "").trim() || null,
         area: String(form.area || "").trim() || null,
@@ -668,6 +708,49 @@ export default function EditPropertyPage() {
                 disabled={isPending}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
               />
+            </label>
+            <label className={ui.field}>
+              <span className={ui.label}>Property type</span>
+              <select
+                className={ui.select}
+                value={form.propertyType}
+                disabled={isPending}
+                onChange={(e) => {
+                  const propertyType = e.target.value;
+                  setForm((prev) => ({
+                    ...prev,
+                    propertyType,
+                    propertySubtype: isValidPropertyTypeSubtype(
+                      propertyType,
+                      prev.propertySubtype,
+                    )
+                      ? prev.propertySubtype
+                      : "",
+                  }));
+                }}
+              >
+                <option value="sale">Sale</option>
+                <option value="rent">Rent</option>
+                <option value="plot">Plot</option>
+              </select>
+            </label>
+            <label className={ui.field}>
+              <span className={ui.label}>Property subtype</span>
+              <select
+                className={ui.select}
+                value={form.propertySubtype}
+                disabled={isPending}
+                onChange={(e) =>
+                  setForm({ ...form, propertySubtype: e.target.value })
+                }
+              >
+                <option value="">Select subtype</option>
+                {subtypesForType(form.propertyType).map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </label>
             <div className={ui.field}>
               <span className={ui.label}>Property Videos (Optional)</span>

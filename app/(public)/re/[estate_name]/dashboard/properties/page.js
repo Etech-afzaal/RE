@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CircleCheck } from "lucide-react";
+import { CircleCheck, Star, StarOff } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
@@ -63,6 +63,14 @@ function statusNote(status) {
   return null;
 }
 
+function isFeaturedProperty(property) {
+  return (
+    property?.is_featured === true ||
+    property?.is_featured === 1 ||
+    property?.is_featured === "1"
+  );
+}
+
 export default function AgentPropertiesPage() {
   const params = useParams();
   const router = useRouter();
@@ -74,6 +82,8 @@ export default function AgentPropertiesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProperties, setTotalProperties] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [featuredCount, setFeaturedCount] = useState(0);
+  const [featuredLimit, setFeaturedLimit] = useState(10);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
   const [propertyToDelete, setPropertyToDelete] = useState(null);
@@ -101,6 +111,8 @@ export default function AgentPropertiesPage() {
       setCurrentPage(data.currentPage || 1);
       setTotalProperties(Number(data.totalProperties) || 0);
       setTotalPages(Number(data.totalPages) || 1);
+      setFeaturedCount(Number(data.featuredCount) || 0);
+      setFeaturedLimit(Number(data.featuredLimit) || 10);
     } catch (err) {
       setError(err.message || "Could not load properties.");
     } finally {
@@ -196,6 +208,56 @@ export default function AgentPropertiesPage() {
     }
   }
 
+  async function addToFeatured(property) {
+    setBusyId(property.id);
+    setError("");
+    setErrorDetails([]);
+    setSuccess("");
+    try {
+      const res = await fetch(`/api/properties/${property.id}/featured`, {
+        method: "POST",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Could not add this property to featured.");
+        return;
+      }
+      setSuccess(
+        data.already_featured
+          ? "Property is already featured."
+          : "Property added to featured.",
+      );
+      await load();
+    } catch {
+      setError("Could not add this property to featured.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function removeFromFeatured(property) {
+    setBusyId(property.id);
+    setError("");
+    setErrorDetails([]);
+    setSuccess("");
+    try {
+      const res = await fetch(`/api/properties/${property.id}/featured`, {
+        method: "DELETE",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Could not remove this property from featured.");
+        return;
+      }
+      setSuccess("Property removed from featured.");
+      await load();
+    } catch {
+      setError("Could not remove this property from featured.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function deleteProperty() {
     if (!propertyToDelete) return;
 
@@ -276,6 +338,8 @@ export default function AgentPropertiesPage() {
               Showing {(currentPage - 1) * 10 + 1}&ndash;
               {Math.min(currentPage * 10, totalProperties)} of {totalProperties}{" "}
               properties
+              {" · "}
+              Featured: {featuredCount} / {featuredLimit}
             </p>
             <div className={ui.tableWrap}>
               <table className={ui.table}>
@@ -297,6 +361,7 @@ export default function AgentPropertiesPage() {
                   const editHref = `${base}/properties/${property.id}/edit`;
                   const isPending = property.status === "pending_approval";
                   const isRejected = property.status === "rejected";
+                  const featured = isFeaturedProperty(property);
                   const note = statusNote(property.status);
                   const addedOn = formatAddedDate(property.created_at);
                   return (
@@ -332,6 +397,9 @@ export default function AgentPropertiesPage() {
                             <p className={ui.propTitle}>{property.title}</p>
                             {addedOn ? (
                               <p className={ui.propMeta}>Added: {addedOn}</p>
+                            ) : null}
+                            {featured && property.status === "approved" ? (
+                              <p className={ui.propMeta}>Featured</p>
                             ) : null}
                           </div>
                         </div>
@@ -385,6 +453,12 @@ export default function AgentPropertiesPage() {
                           additionalActions={[
                             ...(property.status === "draft" || isRejected
                               ? [{ label: isRejected ? "Resubmit" : "Submit For Approval", onSelect: () => submitForApproval(property), disabled: busyId === property.id }]
+                              : []),
+                            ...(property.status === "approved" && !featured
+                              ? [{ label: "Add to Featured", icon: Star, onSelect: () => addToFeatured(property), disabled: busyId === property.id }]
+                              : []),
+                            ...(property.status === "approved" && featured
+                              ? [{ label: "Remove from Featured", icon: StarOff, onSelect: () => removeFromFeatured(property), disabled: busyId === property.id }]
                               : []),
                             ...(property.status === "approved" || property.status === "hidden"
                               ? [{ label: "Mark as sold", icon: CircleCheck,  onSelect: () => markAsSold(property), disabled: busyId === property.id }]
