@@ -1,13 +1,13 @@
 /**
- * Apply the property image category migration.
- * Run with `npm run migrate:image-category` (add `-- --down` to roll back).
+ * Drop unused property_images.image_title.
+ * The category column is the source of truth for image labels.
+ * Run with `npm run migrate:drop-image-title` (add `-- --down` to roll back).
  */
 const fs = require("fs");
 const path = require("path");
 const mysql = require("mysql2/promise");
 
-const MIGRATION_ID = "004_property_image_category";
-const INDEX_NAME = "idx_images_category";
+const MIGRATION_ID = "021_drop_property_image_title";
 
 function loadEnv() {
   const envPath = path.join(__dirname, "..", ".env");
@@ -29,66 +29,45 @@ function loadEnv() {
   }
 }
 
-async function columnExists(conn, column) {
+async function columnExists(conn, table, column) {
   const [rows] = await conn.query(
     `SELECT 1 FROM information_schema.COLUMNS
-     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'property_images'
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?
        AND COLUMN_NAME = ? LIMIT 1`,
-    [column],
-  );
-  return rows.length > 0;
-}
-
-async function indexExists(conn, index) {
-  const [rows] = await conn.query(
-    `SELECT 1 FROM information_schema.STATISTICS
-     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'property_images'
-       AND INDEX_NAME = ? LIMIT 1`,
-    [index],
+    [table, column],
   );
   return rows.length > 0;
 }
 
 async function migrateUp(conn) {
-  if (!(await columnExists(conn, "category"))) {
-    await conn.query(
-      `ALTER TABLE property_images ADD COLUMN category VARCHAR(40) NULL`,
-    );
-    console.log("+ property_images.category");
+  if (!(await columnExists(conn, "property_images", "image_title"))) {
+    console.log("= property_images.image_title already absent");
+  } else {
+    await conn.query("ALTER TABLE property_images DROP COLUMN image_title");
+    console.log("- property_images.image_title");
   }
-
-  if (!(await indexExists(conn, INDEX_NAME))) {
-    await conn.query(
-      `CREATE INDEX ${INDEX_NAME} ON property_images(property_id, category)`,
-    );
-    console.log(`+ ${INDEX_NAME}`);
-  }
-
-  const [rows] = await conn.query(
-    "SELECT COUNT(*) AS total, SUM(category IS NULL) AS uncategorized FROM property_images",
-  );
-  console.log(
-    `  ${rows[0].total} image(s) preserved, ${rows[0].uncategorized} uncategorized`,
-  );
 
   await conn.query(
     "INSERT INTO schema_migrations (id) VALUES (?) ON DUPLICATE KEY UPDATE applied_at = applied_at",
     [MIGRATION_ID],
   );
-  console.log("Property image category migration complete.");
+  console.log("Drop property_images.image_title migration complete.");
 }
 
 async function migrateDown(conn) {
-  if (await indexExists(conn, INDEX_NAME)) {
-    await conn.query(`DROP INDEX ${INDEX_NAME} ON property_images`);
-    console.log(`- ${INDEX_NAME}`);
+  if (await columnExists(conn, "property_images", "image_title")) {
+    console.log("= property_images.image_title already exists");
+  } else {
+    await conn.query(
+      "ALTER TABLE property_images ADD COLUMN image_title VARCHAR(255) NULL AFTER image_url",
+    );
+    console.log("+ property_images.image_title");
   }
-  if (await columnExists(conn, "category")) {
-    await conn.query("ALTER TABLE property_images DROP COLUMN category");
-    console.log("- property_images.category");
-  }
-  await conn.query("DELETE FROM schema_migrations WHERE id = ?", [MIGRATION_ID]);
-  console.log("Property image category migration rolled back.");
+
+  await conn.query("DELETE FROM schema_migrations WHERE id = ?", [
+    MIGRATION_ID,
+  ]);
+  console.log("Drop property_images.image_title migration rolled back.");
 }
 
 async function main() {

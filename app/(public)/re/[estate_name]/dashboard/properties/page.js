@@ -377,7 +377,7 @@ export default function AgentPropertiesPage() {
                                 const gallery =
                                   property.images?.length > 0
                                     ? property.images
-                                    : [{ image_url: image, image_title: property.title }];
+                                    : [{ image_url: image, category: null }];
                                 setPreviewImages(gallery);
                                 setPreviewOpen(true);
                               }}

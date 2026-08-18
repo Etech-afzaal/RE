@@ -155,7 +155,7 @@ export default function ApprovalsClient() {
                               setPreviewImages([
                                 {
                                   image_url: property.image_url,
-                                  image_title: property.title,
+                                  category: null,
                                 },
                               ]);
                               setPreviewOpen(true);

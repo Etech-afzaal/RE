@@ -77,7 +77,7 @@ export default function HeroSlider({ slides = [] }) {
             >
               <Image
                 src={slide.image_url}
-                alt={slide.image_title || slide.title || "Property"}
+                alt={slide.image_category || slide.title || "Property"}
                 fill
                 priority={index === 0}
                 quality={90}

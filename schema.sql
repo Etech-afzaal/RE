@@ -92,9 +92,9 @@ CREATE TABLE IF NOT EXISTS property_images (
   id INT AUTO_INCREMENT PRIMARY KEY,
   property_id INT NOT NULL,
   image_url VARCHAR(500) NOT NULL,          -- watermarked, public-facing
-  image_title VARCHAR(255),                -- optional title for the property detail gallery
   category VARCHAR(100) NULL,               -- room/area label, e.g. master_bedroom or custom "Swimming Pool"
   is_featured BOOLEAN DEFAULT FALSE,       -- marked as the main image for the property page
+  hero_display ENUM('yes','no') NOT NULL DEFAULT 'no',  -- shown on Property Details hero (multiple allowed)
   sort_order INT DEFAULT 0,                -- display order within the gallery
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

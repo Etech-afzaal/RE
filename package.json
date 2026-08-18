@@ -28,7 +28,9 @@
     "migrate:signup-licence": "node scripts/migrate-signup-licence.js",
     "migrate:property-type-subtype": "node scripts/migrate-property-type-subtype.js",
     "migrate:drop-properties-video-url": "node scripts/migrate-drop-properties-video-url.js",
-    "migrate:property-is-featured": "node scripts/migrate-property-is-featured.js"
+    "migrate:property-is-featured": "node scripts/migrate-property-is-featured.js",
+    "migrate:image-hero-display": "node scripts/migrate-property-image-hero-display.js",
+    "migrate:drop-image-title": "node scripts/migrate-drop-property-image-title.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

@@ -121,7 +121,6 @@ export default function AgentEditPropertyPage() {
       .filter((image) => !image.pendingDelete)
       .map((image, index) => ({
         id: image.id,
-        title: image.image_title || "",
         category: image.category || null,
         sortOrder: index,
         isFeatured: Boolean(image.is_featured),
@@ -165,7 +164,6 @@ export default function AgentEditPropertyPage() {
       const formData = new FormData();
       newImages.forEach((item) => {
         formData.append("images", item.file);
-        formData.append("imageTitles", item.title.trim());
         formData.append("imageCategories", item.category || "");
         formData.append("isFeatured", item.isFeatured ? "1" : "0");
       });
@@ -309,7 +307,7 @@ export default function AgentEditPropertyPage() {
                   >
                     <img
                       src={image.image_url}
-                      alt={image.image_title || "Existing property image"}
+                      alt="Existing property image"
                       style={{
                         width: 90,
                         height: 70,
@@ -319,16 +317,6 @@ export default function AgentEditPropertyPage() {
                       }}
                     />
                     <div style={{ flex: 1, minWidth: 220 }}>
-                      <input
-                        placeholder="Image title"
-                        value={image.image_title || ""}
-                        onChange={(e) =>
-                          updateExistingImage(image.id, {
-                            image_title: e.target.value,
-                          })
-                        }
-                        style={{ ...inputStyle, width: "100%" }}
-                      />
                       <ImageCategorySelect
                         value={image.category}
                         ariaLabel={`Category for image ${index + 1}`}
@@ -430,16 +418,6 @@ export default function AgentEditPropertyPage() {
                     borderRadius: 8,
                     border: "1px solid #e2e8f0",
                   }}
-                />
-                <input
-                  placeholder={`Title for image ${index + 1}`}
-                  value={item.title}
-                  onChange={(e) => {
-                    const next = [...newImages];
-                    next[index] = { ...next[index], title: e.target.value };
-                    setNewImages(next);
-                  }}
-                  style={inputStyle}
                 />
                 <ImageCategorySelect
                   value={item.category}

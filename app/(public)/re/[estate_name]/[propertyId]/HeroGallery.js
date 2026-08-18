@@ -122,7 +122,6 @@ export default function HeroGallery({ images = [], title = "Property" }) {
   }
 
   const label =
-    current.image_title ||
     current.category_label ||
     current.label ||
     title;
@@ -165,7 +164,7 @@ export default function HeroGallery({ images = [], title = "Property" }) {
             {safeIndex + 1} / {count}
           </span>
 
-          {current.category_label || current.image_title ? (
+          {current.category_label ? (
             <span className={styles.spaceTag}>{label}</span>
           ) : null}
         </div>
@@ -196,7 +195,7 @@ export default function HeroGallery({ images = [], title = "Property" }) {
         <div className={styles.thumbs} ref={thumbsRef} role="tablist">
           {images.map((img, i) => {
             const thumbLabel =
-              img.image_title || img.category_label || img.label || title;
+              img.category_label || img.label || title;
             return (
               <button
                 key={img.id || img.image_url || i}

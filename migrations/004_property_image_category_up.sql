@@ -4,7 +4,7 @@
 USE real_estate;
 
 ALTER TABLE property_images
-  ADD COLUMN category VARCHAR(40) NULL AFTER image_title;
+  ADD COLUMN category VARCHAR(40) NULL;
 
 CREATE INDEX idx_images_category ON property_images(property_id, category);
 

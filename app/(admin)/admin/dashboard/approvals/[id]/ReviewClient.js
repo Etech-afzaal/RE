@@ -190,7 +190,7 @@ export default function ReviewClient({ propertyId }) {
                           key={image.id}
                           type="button"
                           className={styles.galleryItem}
-                          aria-label={`Open preview: ${image.image_title || image.category_label || "Property image"}`}
+                          aria-label={`Open preview: ${image.category_label || "Property image"}`}
                           onClick={() => {
                             setPreviewIndex(absoluteIndex);
                             setPreviewOpen(true);
@@ -199,7 +199,7 @@ export default function ReviewClient({ propertyId }) {
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={image.image_url}
-                            alt={image.image_title || ""}
+                            alt={image.category_label || ""}
                           />
                           {image.is_featured ? (
                             <span className={styles.galleryFlag}>Featured</span>

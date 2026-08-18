@@ -416,6 +416,7 @@ export default function CreatePropertyPage() {
         url: URL.createObjectURL(file),
         category: "",
         isFeatured: false,
+        heroDisplay: false,
       }));
       if (accepted.length === 0) return prev;
       const next = [...prev, ...accepted];
@@ -750,6 +751,7 @@ export default function CreatePropertyPage() {
           fd.append("imageOrder", String(index));
           fd.append("imageCategories", item.category || "");
           fd.append("isFeatured", item.isFeatured ? "1" : "0");
+          fd.append("heroDisplay", item.heroDisplay ? "1" : "0");
         });
         const imageRes = await fetch(`/api/properties/${propertyId}/images`, {
           method: "POST",
@@ -1176,6 +1178,19 @@ export default function CreatePropertyPage() {
                               onChange={() => setFeatured(index)}
                             />
                             Featured image
+                          </label>
+                          <label className={ui.imageCardCheck}>
+                            <input
+                              type="checkbox"
+                              checked={Boolean(item.isFeatured || item.heroDisplay)}
+                              disabled={Boolean(item.isFeatured)}
+                              onChange={() =>
+                                updateImage(index, {
+                                  heroDisplay: !item.heroDisplay,
+                                })
+                              }
+                            />
+                            Display on hero
                           </label>
                           <span className={ui.imageCardLabel}>
                             Order {index + 1}

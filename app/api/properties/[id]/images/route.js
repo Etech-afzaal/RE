@@ -47,21 +47,21 @@ async function getAgentWatermarkText(session) {
 }
 
 async function ensureImageColumns() {
-  const titleColumn = await query(
-    "SHOW COLUMNS FROM property_images LIKE 'image_title'",
-  );
-  if (titleColumn.length === 0) {
-    await query(
-      "ALTER TABLE property_images ADD COLUMN image_title VARCHAR(255) NULL",
-    );
-  }
-
   const featuredColumn = await query(
     "SHOW COLUMNS FROM property_images LIKE 'is_featured'",
   );
   if (featuredColumn.length === 0) {
     await query(
       "ALTER TABLE property_images ADD COLUMN is_featured BOOLEAN DEFAULT FALSE",
+    );
+  }
+
+  const heroDisplayColumn = await query(
+    "SHOW COLUMNS FROM property_images LIKE 'hero_display'",
+  );
+  if (heroDisplayColumn.length === 0) {
+    await query(
+      "ALTER TABLE property_images ADD COLUMN hero_display ENUM('yes','no') NOT NULL DEFAULT 'no' AFTER is_featured",
     );
   }
 
@@ -115,14 +115,14 @@ export async function POST(req, { params }) {
 
   const formData = await req.formData();
   const files = formData.getAll("images");
-  const imageTitles = formData
-    .getAll("imageTitles")
-    .map((title) => String(title || "").trim());
   const imageOrders = formData
     .getAll("imageOrder")
     .map((value) => Number(value));
   const featuredFlags = formData
     .getAll("isFeatured")
+    .map((value) => value === "1");
+  const heroDisplayFlags = formData
+    .getAll("heroDisplay")
     .map((value) => value === "1");
   // Unknown or missing values normalize to null, i.e. "Uncategorized".
   const imageCategories = formData
@@ -215,13 +215,15 @@ export async function POST(req, { params }) {
   }
 
   for (let i = 0; i < savedUrls.length; i++) {
-    const title = imageTitles[i] || null;
     const sortOrder = Number.isFinite(imageOrders[i]) ? imageOrders[i] : i;
     const isFeatured = Boolean(featuredFlags[i]);
+    // Featured images always qualify for the hero; agent may independently
+    // select additional hero-display images via the heroDisplay flag.
+    const heroDisplay = isFeatured ? "yes" : heroDisplayFlags[i] ? "yes" : "no";
     const category = imageCategories[i] ?? null;
     await query(
-      "INSERT INTO property_images (property_id, image_url, sort_order, image_title, is_featured, category) VALUES (?, ?, ?, ?, ?, ?)",
-      [propertyId, savedUrls[i], sortOrder, title, isFeatured, category],
+      "INSERT INTO property_images (property_id, image_url, sort_order, is_featured, category, hero_display) VALUES (?, ?, ?, ?, ?, ?)",
+      [propertyId, savedUrls[i], sortOrder, isFeatured, category, heroDisplay],
     );
   }
 
@@ -287,15 +289,30 @@ export async function PUT(req, { params }) {
     if (!imageId) continue;
 
     const imageRows = await query(
-      "SELECT id FROM property_images WHERE id = ? AND property_id = ?",
+      "SELECT id, is_featured FROM property_images WHERE id = ? AND property_id = ?",
       [imageId, propertyId],
     );
     if (imageRows.length === 0) continue;
+    const currentImage = imageRows[0];
 
-    // Only touch what the caller sent, so older screens that post just a title
-    // and featured flag cannot wipe an image's category or position.
-    const fields = ["image_title = ?", "is_featured = ?"];
-    const values = [update.title || null, Boolean(update.isFeatured)];
+    // Only touch what the caller sent, so older screens that post just a
+    // featured flag cannot wipe an image's category or position.
+    const fields = ["is_featured = ?"];
+    const values = [Boolean(update.isFeatured)];
+
+    // Feature safety rule: featured images always qualify for the hero.
+    // Explicit heroDisplay from the caller wins, but featured overrides.
+    // No heroDisplay sent: preserve stored value unless the image just
+    // became featured (then force 'yes').
+    const isNowFeatured = Boolean(update.isFeatured);
+    if ("heroDisplay" in update) {
+      const heroDisplay = isNowFeatured ? "yes" : update.heroDisplay ? "yes" : "no";
+      fields.push("hero_display = ?");
+      values.push(heroDisplay);
+    } else if (isNowFeatured && currentImage.is_featured !== 1) {
+      fields.push("hero_display = ?");
+      values.push("yes");
+    }
 
     if ("category" in update) {
       fields.push("category = ?");

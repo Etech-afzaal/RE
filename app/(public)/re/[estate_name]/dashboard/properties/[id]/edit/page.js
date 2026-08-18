@@ -263,6 +263,7 @@ export default function EditPropertyPage() {
           file,
           url: URL.createObjectURL(file),
           category: "",
+          heroDisplay: false,
         };
       });
       if (accepted.length === 0) return prev;
@@ -511,10 +512,12 @@ export default function EditPropertyPage() {
         body: JSON.stringify({
           updates: existingImages.map((image, index) => ({
             id: image.id,
-            title: image.image_title || "",
             category: image.category || null,
             sortOrder: index,
             isFeatured: featuredKey === `existing:${image.id}`,
+            heroDisplay:
+              featuredKey === `existing:${image.id}` ||
+              image.hero_display === "yes",
           })),
         }),
       });
@@ -548,6 +551,7 @@ export default function EditPropertyPage() {
         fd.append("imageOrder", String(existingImages.length + index));
         fd.append("imageCategories", item.category || "");
         fd.append("isFeatured", featuredKey === `new:${item.key}` ? "1" : "0");
+        fd.append("heroDisplay", item.heroDisplay ? "1" : "0");
       });
       const imageRes = await fetch(`/api/properties/${propertyId}/images`, {
         method: "POST",
@@ -1087,7 +1091,7 @@ export default function EditPropertyPage() {
                         }}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={image.image_url} alt={image.image_title || ""} />
+                        <img src={image.image_url} alt="" />
                         {featuredKey === `existing:${image.id}` ? (
                           <span className={ui.featuredTag}>Featured</span>
                         ) : null}
@@ -1118,6 +1122,23 @@ export default function EditPropertyPage() {
                               }
                             />
                             Featured image
+                          </label>
+                          <label className={ui.imageCardCheck}>
+                            <input
+                              type="checkbox"
+                              checked={
+                                featuredKey === `existing:${image.id}` ||
+                                image.hero_display === "yes"
+                              }
+                              disabled={isPending || featuredKey === `existing:${image.id}`}
+                              onChange={() =>
+                                updateExistingImage(image.id, {
+                                  hero_display:
+                                    image.hero_display === "yes" ? "no" : "yes",
+                                })
+                              }
+                            />
+                            Display on hero
                           </label>
                           <span className={ui.imageCardLabel}>
                             Order {index + 1}
@@ -1213,6 +1234,23 @@ export default function EditPropertyPage() {
                             onChange={() => setFeaturedKey(`new:${item.key}`)}
                           />
                           Featured image
+                        </label>
+                        <label className={ui.imageCardCheck}>
+                          <input
+                            type="checkbox"
+                            checked={Boolean(item.heroDisplay)}
+                            disabled={isPending}
+                            onChange={() =>
+                              setNewImages((prev) =>
+                                prev.map((entry) =>
+                                  entry.key === item.key
+                                    ? { ...entry, heroDisplay: !entry.heroDisplay }
+                                    : entry,
+                                ),
+                              )
+                            }
+                          />
+                          Display on hero
                         </label>
                         <div className={ui.imageCardActions}>
                           <button

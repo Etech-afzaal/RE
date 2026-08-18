@@ -34,7 +34,7 @@ export function normalizePreviewImages(images = []) {
       return {
         id: img.id ?? `img-${index}`,
         src,
-        alt: img.alt || img.image_title || img.label || category || "",
+        alt: img.alt || img.label || category || "",
         category,
         featured: Boolean(img.is_featured || img.featured),
       };

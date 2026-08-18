@@ -82,7 +82,6 @@ export default function AgentNewPropertyPage() {
       const formData = new FormData();
       selectedImages.forEach((item, index) => {
         formData.append("images", item.file);
-        formData.append("imageTitles", item.title.trim());
         formData.append("imageOrder", String(index));
         formData.append("imageCategories", item.category || "");
         formData.append("isFeatured", item.isFeatured ? "1" : "0");
@@ -230,20 +229,10 @@ export default function AgentNewPropertyPage() {
                       background: "#f8fafc",
                     }}
                   />
-                  <div style={{ flex: 1, minWidth: 220 }}>
+                    <div style={{ flex: 1, minWidth: 220 }}>
                     <span style={{ fontSize: 13, color: "#64748b" }}>
                       {item.file.name}
                     </span>
-                    <input
-                      placeholder={`Title for image ${index + 1}`}
-                      value={item.title}
-                      onChange={(e) => {
-                        const next = [...selectedImages];
-                        next[index] = { ...next[index], title: e.target.value };
-                        setSelectedImages(next);
-                      }}
-                      style={{ ...inputStyle, marginTop: 6, width: "100%" }}
-                    />
                     <ImageCategorySelect
                       value={item.category}
                       ariaLabel={`Category for image ${index + 1}`}

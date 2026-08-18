@@ -62,7 +62,7 @@ export async function GET(_req, { params }) {
     }
 
     const imageRows = await query(
-      `SELECT id, image_url, image_title, category, is_featured, sort_order
+      `SELECT id, image_url, category, is_featured, sort_order
        FROM property_images
        WHERE property_id = ?
        ORDER BY is_featured DESC, sort_order ASC, id ASC`,

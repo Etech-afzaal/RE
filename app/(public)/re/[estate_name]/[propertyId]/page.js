@@ -510,29 +510,17 @@ export default async function PropertyDetailPage({ params }) {
     "terrace",
     "community_view",
   ]);
+  // Hero shows images marked for hero display (plus the featured image
+  // as a safety fallback for existing/inconsistent data).
+  // Ordering follows the existing property image sort_order.
   const heroImages = (() => {
-    const primary = gallery.filter((img) => HERO_PRIMARY.has(img.category));
-    const fill = gallery.filter((img) => HERO_FILL.has(img.category));
-    const picked = [];
-    const push = (img) => {
-      if (!img || picked.length >= 3) return;
-      if (picked.some((p) => p.id === img.id)) return;
-      picked.push(img);
-    };
-
-    if (
-      heroImage &&
-      (HERO_PRIMARY.has(heroImage.category) ||
-        HERO_FILL.has(heroImage.category))
-    ) {
-      push(heroImage);
-    }
-    for (const img of primary) push(img);
-    for (const img of fill) push(img);
-
-    if (picked.length === 0 && heroImage) push(heroImage);
-    if (picked.length === 0 && gallery[0]) push(gallery[0]);
-    return picked;
+    const candidates = gallery.filter(
+      (img) => img.hero_display === "yes" || img.is_featured,
+    );
+    if (candidates.length > 0) return candidates;
+    if (heroImage) return [heroImage];
+    if (gallery[0]) return [gallery[0]];
+    return [];
   })();
 
   const telHref = agent.phone
@@ -620,9 +608,7 @@ export default async function PropertyDetailPage({ params }) {
   const spaceSlides = gallery.map((img) => ({
     id: `db-${img.id}`,
     image: img.image_url,
-    label:
-      img.image_title ||
-      (img.category ? img.category_label : property.title),
+    label: img.category ? img.category_label : property.title,
     category: img.category,
     categoryLabel: img.category_label,
     copy: null,

@@ -236,7 +236,7 @@ async function main() {
 
     for (const property of properties) {
       const [images] = await conn.query(
-        `SELECT id, image_url, image_title, category, sort_order
+        `SELECT id, image_url, category, sort_order
          FROM property_images WHERE property_id = ?
          ORDER BY sort_order, id`,
         [property.id],
@@ -261,13 +261,13 @@ async function main() {
         const category = known ? known.category : image.category;
         if (category) have.set(category, (have.get(category) || 0) + 1);
         if (!known) continue;
-        if (image.category === known.category && image.image_title === known.title) {
+        if (image.category === known.category) {
           continue;
         }
         if (!dryRun) {
           await conn.query(
-            "UPDATE property_images SET category = ?, image_title = ? WHERE id = ?",
-            [known.category, known.title, image.id],
+            "UPDATE property_images SET category = ? WHERE id = ?",
+            [known.category, image.id],
           );
         }
         relabelled += 1;
@@ -310,9 +310,9 @@ async function main() {
         if (!dryRun) {
           await conn.query(
             `INSERT INTO property_images
-               (property_id, image_url, image_title, category, is_featured, sort_order)
-             VALUES (?, ?, ?, ?, 0, ?)`,
-            [property.id, pick.url, pick.title, pick.category, nextOrder],
+               (property_id, image_url, category, is_featured, sort_order)
+             VALUES (?, ?, ?, 0, ?)`,
+            [property.id, pick.url, pick.category, nextOrder],
           );
         }
         nextOrder += 1;
