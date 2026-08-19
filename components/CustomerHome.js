@@ -6,6 +6,7 @@ import Link from "next/link";
 import AgentAvatar from "@/components/AgentAvatar";
 import SiteHeader from "@/components/SiteHeader";
 import { useIsMobile } from "@/lib/useIsMobile";
+import { useLocationDetection } from "@/lib/useLocationDetection";
 import { validateContactInput } from "@/lib/validators/inquiryValidator";
 import { sanitizeSearchInput } from "@/lib/validators/common";
 import styles from "./CustomerHome.module.css";
@@ -221,12 +222,19 @@ const EMPTY_CONTACT_FORM = {
   message: "",
 };
 
-export default function CustomerHome({ agents = [], areas = [] }) {
+export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
   const isMobile = useIsMobile(768);
   const pageSize = isMobile ? MOBILE_AGENT_PAGE_SIZE : DESKTOP_AGENT_PAGE_SIZE;
   const [query, setQuery] = useState("");
   const [area, setArea] = useState("all");
   const [city, setCity] = useState("all");
+  const [detectedArea, setDetectedArea] = useState(null);
+  const [noMatchArea, setNoMatchArea] = useState(null);
+  const [locationFilterActive, setLocationFilterActive] = useState(false);
+  const { selectedArea, status, detectedLabel } = useLocationDetection({
+    areas,
+    enabled: typeof window !== "undefined",
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [openFaqs, setOpenFaqs] = useState(() => new Set());
   const [contactForm, setContactForm] = useState(EMPTY_CONTACT_FORM);
@@ -235,15 +243,18 @@ export default function CustomerHome({ agents = [], areas = [] }) {
   const [successMessage, setSuccessMessage] = useState(false);
   const [errorMessage, setErrorMessage] = useState(false);
   const feedbackTimerRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const locationDetectionHandledRef = useRef(false);
 
   const filtered = useMemo(() => {
+    if (locationFilterActive && noMatchArea) return [];
     return agents.filter(
       (agent) =>
         agentMatchesQuery(agent, query) &&
         agentMatchesArea(agent, area) &&
         agentMatchesCity(agent, city),
     );
-  }, [agents, query, area, city]);
+  }, [agents, query, area, city, locationFilterActive, noMatchArea]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
@@ -265,6 +276,24 @@ export default function CustomerHome({ agents = [], areas = [] }) {
 
     return Array.from({ length: end - start + 1 }, (_, index) => start + index);
   };
+
+  // Detection runs once; manual controls always take ownership afterward.
+  useEffect(() => {
+    if (locationDetectionHandledRef.current) return;
+
+    if (status === "no_match" && detectedLabel) {
+      locationDetectionHandledRef.current = true;
+      setNoMatchArea(detectedLabel);
+      setLocationFilterActive(true);
+      return;
+    }
+    if (status === "resolved" && selectedArea) {
+      locationDetectionHandledRef.current = true;
+      setArea(selectedArea);
+      setDetectedArea(selectedArea);
+      setLocationFilterActive(true);
+    }
+  }, [status, selectedArea, detectedLabel]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -307,6 +336,24 @@ export default function CustomerHome({ agents = [], areas = [] }) {
     document
       .getElementById("agents")
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function findAllAgents() {
+    setQuery("");
+    setArea("all");
+    setCity("all");
+    setDetectedArea(null);
+    setNoMatchArea(null);
+    setLocationFilterActive(false);
+  }
+
+  function searchAllAgents() {
+    findAllAgents();
+    searchInputRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+    searchInputRef.current?.focus({ preventScroll: true });
   }
 
   function toggleFaq(index) {
@@ -425,11 +472,15 @@ export default function CustomerHome({ agents = [], areas = [] }) {
               />
             </svg>
             <input
+              ref={searchInputRef}
               type="search"
               value={query}
-              onChange={(e) =>
-                setQuery(sanitizeSearchInput(e.target.value).value)
-              }
+              onChange={(e) => {
+                setQuery(sanitizeSearchInput(e.target.value).value);
+                setDetectedArea(null);
+                setNoMatchArea(null);
+                setLocationFilterActive(false);
+              }}
               placeholder="Search by name, agency, or expertise"
               aria-label="Search agents"
             />
@@ -438,7 +489,12 @@ export default function CustomerHome({ agents = [], areas = [] }) {
             <span className={styles.srOnly}>Area</span>
             <select
               value={area}
-              onChange={(e) => setArea(e.target.value)}
+              onChange={(e) => {
+                setArea(e.target.value);
+                setDetectedArea(null);
+                setNoMatchArea(null);
+                setLocationFilterActive(false);
+              }}
               aria-label="Filter by area"
             >
               <option value="all">All areas</option>
@@ -453,13 +509,20 @@ export default function CustomerHome({ agents = [], areas = [] }) {
             <span className={styles.srOnly}>City</span>
             <select
               value={city}
-              onChange={(e) => setCity(e.target.value)}
+              onChange={(e) => {
+                setCity(e.target.value);
+                setDetectedArea(null);
+                setNoMatchArea(null);
+                setLocationFilterActive(false);
+              }}
               aria-label="Filter by city"
             >
               <option value="all">All cities</option>
-              <option value="Lahore">Lahore</option>
-              <option value="DHA">DHA</option>
-              <option value="Bahria">Bahria</option>
+              {cities.map((item) => (
+                <option key={item.name} value={item.name}>
+                  {item.name}
+                </option>
+              ))}
             </select>
           </label>
           <button
@@ -523,8 +586,35 @@ export default function CustomerHome({ agents = [], areas = [] }) {
 
             {filtered.length === 0 ? (
               <div className={styles.empty}>
-                No agents match your filters. Try another area or{" "}
-                <Link href="/agent/signup">become an agent</Link>.
+                {locationFilterActive && (detectedArea || noMatchArea) ? (
+                  <>
+                    <p className={styles.emptyTitle}>No agents in your area</p>
+                    <p className={styles.emptyCopy}>
+                      We couldn't find any agents in {detectedArea || noMatchArea} yet.
+                    </p>
+                    <div className={styles.emptyActions}>
+                      <button
+                        type="button"
+                        className={styles.pageButton}
+                        onClick={findAllAgents}
+                      >
+                        Find All Agents
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.pageButton}
+                        onClick={searchAllAgents}
+                      >
+                        Search All Agents
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    No agents match your filters. Try another area or{" "}
+                    <Link href="/agent/signup">become an agent</Link>.
+                  </>
+                )}
               </div>
             ) : (
               <>
