@@ -73,6 +73,13 @@ function videoTitle(video, index) {
   return `Video ${index + 1}`;
 }
 
+function focusField(field) {
+  const el = document.getElementById(`field-${field}`);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  el.querySelector("input, select, textarea")?.focus({ preventScroll: true });
+}
+
 export default function EditPropertyPage() {
   const params = useParams();
   const router = useRouter();
@@ -105,7 +112,9 @@ export default function EditPropertyPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [errorDetails, setErrorDetails] = useState([]);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [success, setSuccess] = useState("");
+  const [successPopup, setSuccessPopup] = useState("");
   const [existingImages, setExistingImages] = useState([]);
   const [deletedImageIds, setDeletedImageIds] = useState([]);
   const [newImages, setNewImages] = useState([]);
@@ -462,10 +471,20 @@ export default function EditPropertyPage() {
     );
   }
 
+  function clearFieldError(field) {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  }
+
   async function handleSave({ submit = false } = {}) {
     setSaving(true);
     setError("");
     setErrorDetails([]);
+    setFieldErrors({});
     setSuccess("");
 
     const payload = {
@@ -475,6 +494,10 @@ export default function EditPropertyPage() {
     const validated = validatePropertyDraftInput(payload);
     if (!validated.ok) {
       setError(validated.error);
+      if (validated.field) {
+        setFieldErrors({ [validated.field]: validated.error });
+        focusField(validated.field);
+      }
       setSaving(false);
       return;
     }
@@ -655,12 +678,12 @@ export default function EditPropertyPage() {
       }
       setForm((prev) => ({ ...prev, status: "pending_approval" }));
       setRejection(null);
-      setSuccess("Property submitted for approval.");
+      setSuccessPopup("Property submitted for approval.");
       setSaving(false);
       return;
     }
 
-    setSuccess("Property saved.");
+    setSuccessPopup("Property updated successfully.");
     setSaving(false);
   }
 
@@ -723,19 +746,25 @@ export default function EditPropertyPage() {
             <p className={ui.muted}>
               Current status: <strong>{String(form.status).replace(/_/g, " ")}</strong>
             </p>
-            <label className={ui.field}>
+            <label id="field-title" className={ui.field}>
               <span className={ui.label}>Title</span>
               <input
-                className={ui.input}
+                className={`${ui.input} ${fieldErrors.title ? ui.inputInvalid : ""}`}
                 value={form.title}
                 disabled={isPending}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                onChange={(e) => {
+                  setForm({ ...form, title: e.target.value });
+                  clearFieldError("title");
+                }}
               />
+              {fieldErrors.title ? (
+                <p className={ui.fieldError}>{fieldErrors.title}</p>
+              ) : null}
             </label>
-            <label className={ui.field}>
+            <label id="field-propertyType" className={ui.field}>
               <span className={ui.label}>Property type</span>
               <select
-                className={ui.select}
+                className={`${ui.select} ${fieldErrors.propertyType ? ui.inputInvalid : ""}`}
                 value={form.propertyType}
                 disabled={isPending}
                 onChange={(e) => {
@@ -750,22 +779,27 @@ export default function EditPropertyPage() {
                       ? prev.propertySubtype
                       : "",
                   }));
+                  clearFieldError("propertyType");
                 }}
               >
                 <option value="sale">Sale</option>
                 <option value="rent">Rent</option>
                 <option value="plot">Plot</option>
               </select>
+              {fieldErrors.propertyType ? (
+                <p className={ui.fieldError}>{fieldErrors.propertyType}</p>
+              ) : null}
             </label>
-            <label className={ui.field}>
+            <label id="field-propertySubtype" className={ui.field}>
               <span className={ui.label}>Property subtype</span>
               <select
-                className={ui.select}
+                className={`${ui.select} ${fieldErrors.propertySubtype ? ui.inputInvalid : ""}`}
                 value={form.propertySubtype}
                 disabled={isPending}
-                onChange={(e) =>
-                  setForm({ ...form, propertySubtype: e.target.value })
-                }
+                onChange={(e) => {
+                  setForm({ ...form, propertySubtype: e.target.value });
+                  clearFieldError("propertySubtype");
+                }}
               >
                 <option value="">Select subtype</option>
                 {subtypesForType(form.propertyType).map((option) => (
@@ -774,6 +808,9 @@ export default function EditPropertyPage() {
                   </option>
                 ))}
               </select>
+              {fieldErrors.propertySubtype ? (
+                <p className={ui.fieldError}>{fieldErrors.propertySubtype}</p>
+              ) : null}
             </label>
             <div className={ui.field}>
               <span className={ui.label}>Property Videos (Optional)</span>
@@ -998,71 +1035,103 @@ export default function EditPropertyPage() {
                 New uploads are saved when you click Save.
               </p>
             </div>
-            <label className={ui.field}>
+            <label id="field-description" className={ui.field}>
               <span className={ui.label}>Description</span>
               <textarea
-                className={ui.textarea}
+                className={`${ui.textarea} ${fieldErrors.description ? ui.inputInvalid : ""}`}
                 value={form.description}
                 disabled={isPending}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
-                }
+                onChange={(e) => {
+                  setForm({ ...form, description: e.target.value });
+                  clearFieldError("description");
+                }}
               />
+              {fieldErrors.description ? (
+                <p className={ui.fieldError}>{fieldErrors.description}</p>
+              ) : null}
             </label>
-            <label className={ui.field}>
+            <label id="field-city" className={ui.field}>
               <span className={ui.label}>City</span>
               <input
-                className={ui.input}
+                className={`${ui.input} ${fieldErrors.city ? ui.inputInvalid : ""}`}
                 value={form.city}
                 disabled={isPending}
-                onChange={(e) => setForm({ ...form, city: e.target.value })}
+                onChange={(e) => {
+                  setForm({ ...form, city: e.target.value });
+                  clearFieldError("city");
+                }}
                 placeholder="e.g. Lahore"
               />
+              {fieldErrors.city ? (
+                <p className={ui.fieldError}>{fieldErrors.city}</p>
+              ) : null}
             </label>
-            <label className={ui.field}>
+            <label id="field-area" className={ui.field}>
               <span className={ui.label}>Area</span>
               <input
-                className={ui.input}
+                className={`${ui.input} ${fieldErrors.area ? ui.inputInvalid : ""}`}
                 value={form.area}
                 disabled={isPending}
-                onChange={(e) => setForm({ ...form, area: e.target.value })}
+                onChange={(e) => {
+                  setForm({ ...form, area: e.target.value });
+                  clearFieldError("area");
+                }}
                 placeholder="e.g. DHA,Gulberg"
               />
+              {fieldErrors.area ? (
+                <p className={ui.fieldError}>{fieldErrors.area}</p>
+              ) : null}
             </label>
-            <label className={ui.field}>
+            <label id="field-phase" className={ui.field}>
               <span className={ui.label}>Phase</span>
               <input
-                className={ui.input}
+                className={`${ui.input} ${fieldErrors.phase ? ui.inputInvalid : ""}`}
                 value={form.phase}
                 disabled={isPending}
-                onChange={(e) => setForm({ ...form, phase: e.target.value })}
+                onChange={(e) => {
+                  setForm({ ...form, phase: e.target.value });
+                  clearFieldError("phase");
+                }}
                 placeholder="e.g. Phase 6 / Sector B"
               />
+              {fieldErrors.phase ? (
+                <p className={ui.fieldError}>{fieldErrors.phase}</p>
+              ) : null}
             </label>
-            <label className={ui.field}>
+            <label id="field-address" className={ui.field}>
               <span className={ui.label}>Address</span>
               <input
-                className={ui.input}
+                className={`${ui.input} ${fieldErrors.address ? ui.inputInvalid : ""}`}
                 value={form.address}
                 disabled={isPending}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
+                onChange={(e) => {
+                  setForm({ ...form, address: e.target.value });
+                  clearFieldError("address");
+                }}
                 placeholder="House number, street, block, road, full address"
               />
+              {fieldErrors.address ? (
+                <p className={ui.fieldError}>{fieldErrors.address}</p>
+              ) : null}
             </label>
             <div className={ui.row2}>
-              <label className={ui.field}>
+              <label id="field-size_value" className={ui.field}>
                 <span className={ui.label}>Size</span>
                 <input
-                  className={ui.input}
+                  className={`${ui.input} ${fieldErrors.size_value ? ui.inputInvalid : ""}`}
                   type="number"
                   value={form.size_value}
                   disabled={isPending}
-                  onChange={(e) =>
-                    setForm({ ...form, size_value: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setForm({ ...form, size_value: e.target.value });
+                    clearFieldError("size_value");
+                  }}
                 />
+                {fieldErrors.size_value ? (
+                  <p className={ui.fieldError}>{fieldErrors.size_value}</p>
+                ) : null}
               </label>
-              <label className={ui.field}>
+              <label id="field-size_unit" className={ui.field}>
                 <span className={ui.label}>Unit</span>
                 <select
                   className={ui.select}
@@ -1078,19 +1147,24 @@ export default function EditPropertyPage() {
                 </select>
               </label>
             </div>
-            <div className={ui.field}>
+            <div id="field-price" className={ui.field}>
               <span className={ui.label}>Price</span>
               <PriceCurrencyInput
                 amount={form.price}
                 currency={form.price_currency}
                 disabled={isPending}
-                onAmountChange={(value) =>
-                  setForm({ ...form, price: value })
-                }
+                invalid={Boolean(fieldErrors.price)}
+                onAmountChange={(value) => {
+                  setForm({ ...form, price: value });
+                  clearFieldError("price");
+                }}
                 onCurrencyChange={(value) =>
                   setForm({ ...form, price_currency: value })
                 }
               />
+              {fieldErrors.price ? (
+                <p className={ui.fieldError}>{fieldErrors.price}</p>
+              ) : null}
             </div>
             <div className={ui.field}>
               <span className={ui.label}>Property Images</span>
@@ -1362,6 +1436,33 @@ export default function EditPropertyPage() {
           </>
         ) : null}
       </div>
+
+      {successPopup ? (
+        <div className={ui.dialogBackdrop} role="presentation">
+          <div
+            className={`${ui.dialog} ${ui.dialogSuccess}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="property-success-title"
+          >
+            <div className={ui.dialogSuccessIcon} aria-hidden="true">
+              ✓
+            </div>
+            <h2 id="property-success-title" className={ui.dialogTitle}>
+              {successPopup}
+            </h2>
+            <div className={ui.dialogActions}>
+              <button
+                type="button"
+                className={ui.btnPrimary}
+                onClick={() => setSuccessPopup("")}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <ImagePreviewModal
         images={[
