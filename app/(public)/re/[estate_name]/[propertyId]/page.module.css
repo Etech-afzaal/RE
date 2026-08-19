@@ -303,10 +303,22 @@
 }
 
 /* ---------- Property details rows ---------- */
+.detailsCard {
+  --details-image-width: 50%;
+  position: relative;
+  overflow: hidden;
+  padding-right: calc(var(--details-image-width) + 1.5rem);
+}
+
+.detailsLayout {
+  display: block;
+  margin: 1rem 0 0;
+}
+
 .detailsList {
   display: flex;
   flex-direction: column;
-  margin: 1rem 0 0;
+  margin: 0;
   padding: 0;
 }
 
@@ -341,6 +353,22 @@
   color: var(--ink);
   text-align: right;
   word-break: break-word;
+}
+
+.detailsImage {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--details-image-width);
+  overflow: hidden;
+  border-left: 1px solid rgba(242, 187, 70, 0.2);
+  background: var(--gold-tint);
+}
+
+.detailsImageAsset {
+  object-fit: cover;
+  object-position: center;
 }
 
 /* ---------- Check lists (lifestyle / investment) ---------- */
@@ -1039,6 +1067,31 @@
 }
 
 @media (max-width: 768px) {
+  .detailsCard {
+    padding-right: 1.2rem;
+  }
+
+  .detailsLayout {
+    display: block;
+    margin: 1rem 0 0;
+  }
+
+  .detailsList {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+  }
+
+  .detailsRow {
+    order: initial;
+    grid-column: auto;
+  }
+
+  .detailsImage {
+    display: none;
+  }
+
   .page {
     --section-gap: 24px;
     padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));

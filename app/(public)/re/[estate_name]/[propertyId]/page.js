@@ -771,21 +771,34 @@ export default async function PropertyDetailPage({ params }) {
             {/* 4. Property details */}
             {detailRows.length > 0 ? (
               <section
-                className={styles.contentCard}
+                className={`${styles.contentCard} ${styles.detailsCard}`}
                 aria-labelledby="details-heading"
               >
                 <p className={styles.sectionKicker}>Facts</p>
                 <h2 id="details-heading" className={styles.sectionTitle}>
                   Property Details
                 </h2>
-                <dl className={styles.detailsList}>
-                  {detailRows.map((row) => (
-                    <div key={row.label} className={styles.detailsRow}>
-                      <dt>{row.label}</dt>
-                      <dd>{row.value}</dd>
+                <div className={styles.detailsLayout}>
+                  <dl className={styles.detailsList}>
+                    {detailRows.map((row) => (
+                      <div key={row.label} className={styles.detailsRow}>
+                        <dt>{row.label}</dt>
+                        <dd>{row.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  {heroImage ? (
+                    <div className={styles.detailsImage} aria-hidden="true">
+                      <Image
+                        src={heroImage.image_url}
+                        alt=""
+                        fill
+                        sizes="(max-width: 768px) 0px, 22vw"
+                        className={styles.detailsImageAsset}
+                      />
                     </div>
-                  ))}
-                </dl>
+                  ) : null}
+                </div>
               </section>
             ) : null}
 
