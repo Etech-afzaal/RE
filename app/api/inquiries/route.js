@@ -20,6 +20,7 @@ export async function POST(req) {
       name: body?.name || body?.full_name,
       email: body?.email,
       phone: body?.phone,
+      subject: body?.subject,
       message: body?.message,
       page_url: body?.page_url,
     });

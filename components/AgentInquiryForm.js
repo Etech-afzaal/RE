@@ -8,6 +8,7 @@ const EMPTY_FORM = {
   name: "",
   email: "",
   phone: "",
+  subject: "",
   message: "",
 };
 
@@ -66,6 +67,8 @@ export default function AgentInquiryForm({
         const hasPlus = value.trimStart().startsWith("+");
         const digits = value.replace(/\D/g, "").slice(0, 15);
         value = hasPlus ? `+${digits}` : digits;
+      } else if (field === "subject") {
+        value = value.slice(0, 50);
       }
       setForm((prev) => ({ ...prev, [field]: value }));
       if (fieldErrors[field]) {
@@ -82,7 +85,9 @@ export default function AgentInquiryForm({
     event.preventDefault();
     if (isSubmitting) return;
 
-    const validated = validateInquiryInput(form);
+    const validated = validateInquiryInput(form, {
+      requireSubject: variant === "website",
+    });
     if (!validated.ok) {
       setFieldErrors(
         validated.field ? { [validated.field]: validated.error } : {},
@@ -98,6 +103,7 @@ export default function AgentInquiryForm({
       name: validated.data.name,
       email: validated.data.email,
       phone: validated.data.phone,
+      subject: validated.data.subject,
       message: validated.data.message,
       page_url:
         typeof window !== "undefined" ? window.location.pathname : null,
@@ -192,7 +198,32 @@ export default function AgentInquiryForm({
           ) : null}
         </label>
 
-        <label className={styles.field}>
+        {variant === "website" ? (
+          <label className={styles.field}>
+            <span className={styles.label}>Subject</span>
+            <input
+              type="text"
+              name="subject"
+              required
+              maxLength={50}
+              value={form.subject}
+              onChange={handleChange("subject")}
+              placeholder="Buying, selling, or renting"
+              className={styles.input}
+              disabled={isSubmitting}
+              aria-invalid={Boolean(fieldErrors.subject)}
+            />
+            {fieldErrors.subject ? (
+              <span className={styles.fieldError}>{fieldErrors.subject}</span>
+            ) : null}
+          </label>
+        ) : null}
+
+        <label
+          className={`${styles.field} ${
+            variant === "website" ? styles.messageField : ""
+          }`}
+        >
           <span className={styles.label}>Message</span>
           <textarea
             name="message"
