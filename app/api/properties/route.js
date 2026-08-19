@@ -15,6 +15,7 @@ import { normalizeLocationFields } from "@/lib/propertyLocation";
 import { PROPERTY_STATUS } from "@/lib/status";
 import { sanitizeSearchInput } from "@/lib/validators/common";
 import { validatePropertyDraftInput } from "@/lib/validators/propertyValidator";
+import { normalizeMarketingSections } from "@/lib/propertyMarketingSections";
 
 export async function GET(req) {
   const { session, error } = await requireAgent();
@@ -49,6 +50,16 @@ export async function POST(req) {
   if (!validated.ok) {
     return NextResponse.json({ error: validated.error }, { status: 400 });
   }
+  const marketing = normalizeMarketingSections(body);
+  if (!marketing.ok) {
+    return NextResponse.json({ error: marketing.error }, { status: 400 });
+  }
+  const {
+    property_highlights,
+    why_this_home,
+    location_advantages,
+    investment_insights,
+  } = marketing.data;
 
   const {
     title,
@@ -78,8 +89,9 @@ export async function POST(req) {
   const result = await query(
     `INSERT INTO properties
       (agent_id, title, property_type, property_subtype, description, size_value, size_unit, price, price_currency,
-       location, city, area, phase, address, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       location, city, area, phase, address, status,
+       property_highlights, why_this_home, location_advantages, investment_insights)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       agentId,
       trimmedTitle,
@@ -96,6 +108,10 @@ export async function POST(req) {
       phase,
       address,
       status,
+      property_highlights ? JSON.stringify(property_highlights) : null,
+      why_this_home ? JSON.stringify(why_this_home) : null,
+      location_advantages ? JSON.stringify(location_advantages) : null,
+      investment_insights ? JSON.stringify(investment_insights) : null,
     ],
   );
 

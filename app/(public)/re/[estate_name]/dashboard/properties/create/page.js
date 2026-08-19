@@ -45,6 +45,7 @@ import {
   subtypesForType,
 } from "@/lib/propertyTaxonomy";
 import ui from "@/components/agent-portal/portal.module.css";
+import PropertyMarketingSectionsEditor from "@/components/agent-portal/PropertyMarketingSectionsEditor";
 
 const STEPS = [
   "Basic Information",
@@ -161,6 +162,10 @@ export default function CreatePropertyPage() {
     parking: "No",
     price: "",
     price_currency: DEFAULT_PRICE_CURRENCY,
+    property_highlights: [],
+    why_this_home: [],
+    location_advantages: [],
+    investment_insights: [],
   });
 
   useEffect(() => {
@@ -709,6 +714,10 @@ export default function CreatePropertyPage() {
             size_unit: form.size_unit || "marla",
             price: form.price ? Number(form.price) : null,
             price_currency: form.price_currency || DEFAULT_PRICE_CURRENCY,
+            property_highlights: form.property_highlights,
+            why_this_home: form.why_this_home,
+            location_advantages: form.location_advantages,
+            investment_insights: form.investment_insights,
           }),
         });
         const createData = await createRes.json().catch(() => ({}));
@@ -736,6 +745,10 @@ export default function CreatePropertyPage() {
             size_unit: form.size_unit || "marla",
             price: form.price ? Number(form.price) : null,
             price_currency: form.price_currency || DEFAULT_PRICE_CURRENCY,
+            property_highlights: form.property_highlights,
+            why_this_home: form.why_this_home,
+            location_advantages: form.location_advantages,
+            investment_insights: form.investment_insights,
           }),
         });
         const updateData = await updateRes.json().catch(() => ({}));
@@ -1420,6 +1433,7 @@ export default function CreatePropertyPage() {
               title, property type, city, address, size, price, and at least
               one image.
             </p>
+            <PropertyMarketingSectionsEditor form={form} setForm={setForm} />
             <div className={ui.formActions}>
               <button
                 type="button"

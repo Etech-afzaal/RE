@@ -38,6 +38,7 @@ import {
   subtypesForType,
 } from "@/lib/propertyTaxonomy";
 import ui from "@/components/agent-portal/portal.module.css";
+import PropertyMarketingSectionsEditor from "@/components/agent-portal/PropertyMarketingSectionsEditor";
 
 function buildTitle(title, propertyType) {
   const t = String(title || "").trim();
@@ -94,6 +95,10 @@ export default function EditPropertyPage() {
     phase: "",
     address: "",
     status: "draft",
+    property_highlights: [],
+    why_this_home: [],
+    location_advantages: [],
+    investment_insights: [],
   });
   const [rejection, setRejection] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -185,6 +190,16 @@ export default function EditPropertyPage() {
         phase,
         address,
         status: p.status || "draft",
+        property_highlights: Array.isArray(p.property_highlights)
+          ? p.property_highlights
+          : [],
+        why_this_home: Array.isArray(p.why_this_home) ? p.why_this_home : [],
+        location_advantages: Array.isArray(p.location_advantages)
+          ? p.location_advantages
+          : [],
+        investment_insights: Array.isArray(p.investment_insights)
+          ? p.investment_insights
+          : [],
       });
       setRejection(
         p.status === "rejected"
@@ -495,6 +510,10 @@ export default function EditPropertyPage() {
           validated.data.price_currency ||
           form.price_currency ||
           DEFAULT_PRICE_CURRENCY,
+        property_highlights: form.property_highlights,
+        why_this_home: form.why_this_home,
+        location_advantages: form.location_advantages,
+        investment_insights: form.investment_insights,
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -1308,6 +1327,9 @@ export default function EditPropertyPage() {
               ) : null}
             </div>
 
+            {isPending ? null : (
+              <PropertyMarketingSectionsEditor form={form} setForm={setForm} />
+            )}
             <div className={ui.formActions}>
               {isPending ? null : (
                 <button

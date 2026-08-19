@@ -1374,3 +1374,46 @@ button.stepPillActive:hover {
     width: 100%;
   }
 }
+
+/* ---------- Property marketing sections editor ---------- */
+.suggestionChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0.55rem 0 0.85rem;
+}
+
+.suggestionChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.38rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-sunken, #f7f4ec);
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.suggestionChip:hover:not(:disabled) {
+  border-color: var(--gold);
+  background: var(--gold-tint);
+}
+
+.suggestionChip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.marketingItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.75rem;
+  margin-bottom: 0.6rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: #fff;
+}

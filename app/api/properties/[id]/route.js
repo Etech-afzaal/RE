@@ -20,6 +20,7 @@ import {
   PROPERTY_STATUS,
 } from "@/lib/status";
 import { validatePropertyDraftInput } from "@/lib/validators/propertyValidator";
+import { normalizeMarketingSections } from "@/lib/propertyMarketingSections";
 import { rm } from "fs/promises";
 import path from "path";
 
@@ -109,6 +110,16 @@ export async function PUT(req, { params }) {
   if (!validated.ok) {
     return NextResponse.json({ error: validated.error }, { status: 400 });
   }
+  const marketing = normalizeMarketingSections(body);
+  if (!marketing.ok) {
+    return NextResponse.json({ error: marketing.error }, { status: 400 });
+  }
+  const {
+    property_highlights,
+    why_this_home,
+    location_advantages,
+    investment_insights,
+  } = marketing.data;
 
   const {
     title,
@@ -160,7 +171,6 @@ export async function PUT(req, { params }) {
         { status: 400 },
       );
     }
-    // Re-listing is only for something an admin already cleared once.
     if (status === PROPERTY_STATUS.APPROVED && !current.approved_at) {
       return NextResponse.json(
         { error: "Only an admin can approve a property." },
@@ -190,12 +200,20 @@ export async function PUT(req, { params }) {
     ? property_subtype || validated.data.propertySubtype || null
     : current.property_subtype || null;
 
+  const marketingSQL = `, property_highlights = ?, why_this_home = ?, location_advantages = ?, investment_insights = ?`;
+  const marketingParams = [
+    property_highlights ? JSON.stringify(property_highlights) : null,
+    why_this_home ? JSON.stringify(why_this_home) : null,
+    location_advantages ? JSON.stringify(location_advantages) : null,
+    investment_insights ? JSON.stringify(investment_insights) : null,
+  ];
+
   if (locationFields.hasStructured) {
     await query(
       `UPDATE properties
        SET title = ?, property_type = ?, property_subtype = ?, description = ?, size_value = ?, size_unit = ?, price = ?,
            price_currency = ?, location = ?, city = ?, area = ?, phase = ?,
-           address = ?, status = ?
+           address = ?, status = ?${marketingSQL}
        WHERE id = ? AND agent_id = ?`,
       [
         trimmedTitle,
@@ -212,6 +230,7 @@ export async function PUT(req, { params }) {
         locationFields.phase,
         locationFields.address,
         nextStatus,
+        ...marketingParams,
         propertyId,
         agentId,
       ],
@@ -220,7 +239,7 @@ export async function PUT(req, { params }) {
     await query(
       `UPDATE properties
        SET title = ?, property_type = ?, property_subtype = ?, description = ?, size_value = ?, size_unit = ?, price = ?,
-           price_currency = ?, location = ?, status = ?
+           price_currency = ?, location = ?, status = ?${marketingSQL}
        WHERE id = ? AND agent_id = ?`,
       [
         trimmedTitle,
@@ -233,6 +252,7 @@ export async function PUT(req, { params }) {
         nextCurrency,
         locationFields.location,
         nextStatus,
+        ...marketingParams,
         propertyId,
         agentId,
       ],
@@ -360,7 +380,6 @@ export async function DELETE(req, { params }) {
     await query("DELETE FROM property_images WHERE property_id = ?", [
       propertyId,
     ]);
-    // Explicitly clear videos (do not rely solely on FK CASCADE for older DBs).
     await query("DELETE FROM property_videos WHERE property_id = ?", [
       propertyId,
     ]).catch(() => {});

@@ -477,6 +477,29 @@ const NEARBY_ITEMS = [
   "Hospitals",
 ];
 
+/**
+ * Parse the optional agent-edited marketing JSON columns. MySQL returns JSON
+ * as parsed objects with mysql2, but scripts/older rows may store a string.
+ * When a field is absent (NULL) we return `present: false` so callers can keep
+ * the existing generated fallback for properties created before this feature.
+ * When the agent saved an empty array, the field is still `present: true` so
+ * the section is intentionally hidden.
+ */
+function savedMarketingSection(value) {
+  if (Array.isArray(value)) {
+    return { present: true, value };
+  }
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return { present: true, value: parsed };
+    } catch {
+      // fall through — treat as absent
+    }
+  }
+  return { present: false, value: [] };
+}
+
 export default async function PropertyDetailPage({ params }) {
   const agent = await getAgentByUsername(params.estate_name);
   if (!agent) return notFound();
@@ -546,13 +569,24 @@ export default async function PropertyDetailPage({ params }) {
     propertyTypeLabel,
   ].filter(Boolean);
 
-  const highlights = buildHighlights({
-    property,
-    attrs,
-    locationInfo,
-    sizeLabel,
-    propertyTypeLabel,
-  });
+  // Agent-edited marketing sections take priority. Fields that were never set
+  // (existing properties) fall back to the existing generated content; a saved
+  // empty array intentionally hides the section.
+  const savedHighlightsData = savedMarketingSection(property.property_highlights);
+  const highlights = savedHighlightsData.present
+    ? savedHighlightsData.value.map((item, index) => ({
+        id: `db-${index}`,
+        title: item.title || "",
+        copy: item.description || "",
+        icon: item.icon || "home",
+      }))
+    : buildHighlights({
+        property,
+        attrs,
+        locationInfo,
+        sizeLabel,
+        propertyTypeLabel,
+      });
 
   const detailRows = [
     { label: "Property Type", value: propertyTypeLabel },
@@ -591,19 +625,34 @@ export default async function PropertyDetailPage({ params }) {
   ].filter(Boolean);
 
   const amenities = buildAmenities(attrs, property);
-  const lifestylePoints = buildLifestylePoints({
-    attrs,
-    locationInfo,
-    propertyTypeLabel,
-  });
-  const investmentPoints = buildInvestmentPoints({
-    attrs,
-    propertyTypeLabel,
-    isRent,
-  });
+  const savedWhyData = savedMarketingSection(property.why_this_home);
+  const lifestylePoints = savedWhyData.present
+    ? savedWhyData.value
+    : buildLifestylePoints({
+        attrs,
+        locationInfo,
+        propertyTypeLabel,
+      });
+  const savedInvestmentsData = savedMarketingSection(
+    property.investment_insights,
+  );
+  const investmentPoints = savedInvestmentsData.present
+    ? savedInvestmentsData.value
+    : buildInvestmentPoints({
+        attrs,
+        propertyTypeLabel,
+        isRent,
+      });
   const showInvestment =
     Boolean(locationInfo.full || locationInfo.city) &&
     investmentPoints.length > 0;
+  const savedLocationData = savedMarketingSection(property.location_advantages);
+  const locationAdvantageItems = savedLocationData.present
+    ? savedLocationData.value.map((item) => ({
+        name: item.name || "",
+        description: item.description || "",
+      }))
+    : NEARBY_ITEMS.map((name) => ({ name, description: "" }));
 
   const spaceSlides = gallery.map((img) => ({
     id: `db-${img.id}`,
@@ -787,7 +836,7 @@ export default async function PropertyDetailPage({ params }) {
             ) : null}
 
             {/* 7. Location advantage */}
-            {locationInfo.full ? (
+            {locationInfo.full && locationAdvantageItems.length > 0 ? (
               <section
                 className={styles.contentCard}
                 aria-labelledby="location-adv-heading"
@@ -801,8 +850,12 @@ export default async function PropertyDetailPage({ params }) {
                 </p>
                 <p className={styles.nearbyLabel}>Nearby</p>
                 <ul className={styles.nearbyBulletList}>
-                  {NEARBY_ITEMS.map((item) => (
-                    <li key={item}>{item}</li>
+                  {locationAdvantageItems.map((item) => (
+                    <li key={item.name}>
+                      {item.description
+                        ? `${item.name} — ${item.description}`
+                        : item.name}
+                    </li>
                   ))}
                 </ul>
               </section>

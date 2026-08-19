@@ -76,6 +76,10 @@ CREATE TABLE IF NOT EXISTS properties (
   -- Workflow: draft → pending_approval → approved | rejected; plus sold | hidden
   -- Only 'approved' is publicly visible, so new listings start as drafts.
   status ENUM('draft','pending_approval','approved','rejected','sold','hidden') NOT NULL DEFAULT 'draft',
+  property_highlights JSON NULL,        -- agent-editable marketing highlights (title/description/icon)
+  why_this_home JSON NULL,              -- agent-editable lifestyle checklist
+  location_advantages JSON NULL,        -- agent-editable nearby places (name/description)
+  investment_insights JSON NULL,        -- agent-editable investment checklist
   is_featured BOOLEAN NOT NULL DEFAULT FALSE,       -- agent homepage hero (max 10 approved per agent)
   submitted_at DATETIME NULL,                      -- set when the agent submits for review
   approved_by VARCHAR(100) NULL,                   -- admin identifier (env admin has no users row)
