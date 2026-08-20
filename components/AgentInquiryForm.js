@@ -208,7 +208,7 @@ export default function AgentInquiryForm({
               maxLength={50}
               value={form.subject}
               onChange={handleChange("subject")}
-              placeholder="Buying, selling, or renting"
+              placeholder="What can we help you with?"
               className={styles.input}
               disabled={isSubmitting}
               aria-invalid={Boolean(fieldErrors.subject)}
@@ -232,7 +232,7 @@ export default function AgentInquiryForm({
             maxLength={1000}
             value={form.message}
             onChange={handleChange("message")}
-            placeholder="Write your message"
+            placeholder="Tell us what you're looking for or what you'd like to sell..."
             className={styles.textarea}
             disabled={isSubmitting}
             aria-invalid={Boolean(fieldErrors.message)}

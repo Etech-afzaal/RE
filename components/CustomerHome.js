@@ -698,7 +698,7 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
             </div>
             <div className={styles.sellActions}>
               <Link href="/agent/signup" className={styles.btnPrimary}>
-                Become an Agent
+                Become an agent
               </Link>
               <Link href="/agent/login" className={styles.btnGhost}>
                 Agent login
@@ -928,7 +928,7 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
               <h4>Explore</h4>
               <a href="#agents">Find agents</a>
               <a href="#why-us">Why us</a>
-              <Link href="/privacy-policy">Privacy Policy</Link>
+              <Link href="/privacy-policy">Privacy policy</Link>
             </div>
             <div className={styles.footerCol}>
               <h4>Accounts</h4>

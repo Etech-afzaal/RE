@@ -750,7 +750,7 @@ export default function HomeListings({ properties = [], children }) {
         <PropertySection
           id="sale"
           title="For Sale"
-          kicker="Homes for sale"
+          kicker="Houses for sale"
           properties={saleProperties}
           currentPage={pages.sale}
           pageSize={pageSize}
@@ -760,7 +760,7 @@ export default function HomeListings({ properties = [], children }) {
         <PropertySection
           id="rent"
           title="For Rent"
-          kicker="Homes for rent"
+          kicker="Houses for rent"
           properties={rentProperties}
           currentPage={pages.rent}
           pageSize={pageSize}

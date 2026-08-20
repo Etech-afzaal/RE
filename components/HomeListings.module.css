@@ -358,8 +358,8 @@
 /* Supplementary unit label — never compete with primary price */
 .footerValueConversion {
   font-size: 0.68em;
-  font-weight: 400;
-  color: #9ca3af;
+  font-weight: 600;
+  color: #111827;
   letter-spacing: 0;
 }
 
