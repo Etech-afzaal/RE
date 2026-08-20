@@ -1427,7 +1427,7 @@ export default function CreatePropertyPage() {
 
         {step === 5 ? (
           <>
-            <p className={ui.muted}>
+            <p className={ui.muted} style={{ marginBottom: "15px" }}>
               Save as draft to continue later, or submit for admin approval.
               Drafts never appear on your public website. Submitting needs a
               title, property type, city, address, size, price, and at least

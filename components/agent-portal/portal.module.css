@@ -430,13 +430,6 @@ button.stepPillActive:hover {
   font-weight: 800;
 }
 
-.field {
-  display: grid;
-  grid-template-rows: auto auto minmax(1.15rem, auto);
-  gap: 0.3rem;
-  margin-bottom: 0.75rem;
-  align-content: start;
-}
 
 /* ---------- Property marketing sections ---------- */
 /* Separates each marketing section into a clean, clearly defined card */
@@ -453,8 +446,9 @@ button.stepPillActive:hover {
 .label {
   display: block;
   min-height: 1.1rem;
-  color: var(--muted);
-  font-size: 0.78rem;
+  margin-bottom: 5px;
+  color: #333;
+  font-size: 0.82rem;
   font-weight: 700;
   line-height: 1.1rem;
 }
