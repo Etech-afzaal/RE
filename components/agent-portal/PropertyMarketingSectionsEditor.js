@@ -163,7 +163,7 @@ export default function PropertyMarketingSectionsEditor({ form, setForm }) {
   return (
     <div>
       {/* Property Highlights */}
-      <div className={ui.field}>
+      <div className={ui.marketingSection}>
         <span className={ui.label}>
           Property Highlights{" "}
           <span className={ui.muted}>
@@ -228,7 +228,7 @@ export default function PropertyMarketingSectionsEditor({ form, setForm }) {
       </div>
 
       {/* Why This Home */}
-      <div className={ui.field}>
+      <div className={ui.marketingSection}>
         <span className={ui.label}>
           Why This Home?{" "}
           <span className={ui.muted}>
@@ -264,7 +264,7 @@ export default function PropertyMarketingSectionsEditor({ form, setForm }) {
       </div>
 
       {/* Location Advantages */}
-      <div className={ui.field}>
+      <div className={ui.marketingSection}>
         <span className={ui.label}>
           Location Advantages{" "}
           <span className={ui.muted}>
@@ -319,7 +319,7 @@ export default function PropertyMarketingSectionsEditor({ form, setForm }) {
       </div>
 
       {/* Investment Insights */}
-      <div className={ui.field}>
+      <div className={ui.marketingSection}>
         <span className={ui.label}>
           Investment Insight{" "}
           <span className={ui.muted}>

@@ -438,6 +438,18 @@ button.stepPillActive:hover {
   align-content: start;
 }
 
+/* ---------- Property marketing sections ---------- */
+/* Separates each marketing section into a clean, clearly defined card */
+.marketingSection {
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(26, 26, 26, 0.12);
+  border-radius: 14px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+
 .label {
   display: block;
   min-height: 1.1rem;
