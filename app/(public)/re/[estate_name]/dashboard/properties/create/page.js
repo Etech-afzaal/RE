@@ -46,6 +46,7 @@ import {
 } from "@/lib/propertyTaxonomy";
 import ui from "@/components/agent-portal/portal.module.css";
 import PropertyMarketingSectionsEditor from "@/components/agent-portal/PropertyMarketingSectionsEditor";
+import { persistDraftFiles, loadDraftFiles, clearDraftFiles } from "@/lib/propertyDraftFiles";
 
 const DRAFT_STORAGE_KEY = "dhalahore_agent_property_draft";
 
@@ -151,10 +152,14 @@ export default function CreatePropertyPage() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [busyAction, setBusyAction] = useState(null); // null | "draft" | "submit"
   const [submitSuccessOpen, setSubmitSuccessOpen] = useState(false);
+  // Popup shown when submit-for-approval fails (exact server message).
+  const [submitErrorOpen, setSubmitErrorOpen] = useState(false);
+  const [submitErrorMessage, setSubmitErrorMessage] = useState("");
   // Reuse after first create so retries do not orphan duplicate drafts.
   const [createdPropertyId, setCreatedPropertyId] = useState(null);
   const imagesUploadedRef = useRef(false);
   const videosUploadedRef = useRef(false);
+  const restoredFilesRef = useRef(false);
   // Each entry: { file, url, category, isFeatured }. Position in the array is
   // the display order sent to the API as imageOrder. Capped at MAX_PROPERTY_IMAGES.
   const [images, setImages] = useState([]);
@@ -196,6 +201,32 @@ export default function CreatePropertyPage() {
     // change would break previews that are still on screen.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Restore uploaded files from IndexedDB once (only when a text draft exists,
+  // so stale uploads do not leak into a fresh session).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (readDraft()) {
+        const restored = await loadDraftFiles();
+        if (cancelled) return;
+        if (restored.images.length) setImages(restored.images);
+        if (restored.videos.length) setVideos(restored.videos);
+      } else {
+        await clearDraftFiles().catch(() => {});
+      }
+      restoredFilesRef.current = true;
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Persist uploaded files so they survive a page refresh (frontend only).
+  useEffect(() => {
+    if (!restoredFilesRef.current) return;
+    persistDraftFiles({ images, videos });
+  }, [images, videos]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -835,21 +866,23 @@ export default function CreatePropertyPage() {
         });
         const submitData = await submitRes.json().catch(() => ({}));
         if (!submitRes.ok) {
-          setError(
+          setError("");
+          setErrorDetails([]);
+          setSubmitErrorMessage(
             submitData.error ||
               "Unable to submit property. Please try again.",
           );
-          setErrorDetails(
-            Array.isArray(submitData.errors) ? submitData.errors : [],
-          );
+          setSubmitErrorOpen(true);
           return;
         }
         clearDraft();
+        clearDraftFiles();
         setSubmitSuccessOpen(true);
         return;
       }
 
       clearDraft();
+      clearDraftFiles();
       router.push(`${base}/properties`);
     } catch (err) {
       setError(
@@ -861,6 +894,11 @@ export default function CreatePropertyPage() {
     } finally {
       setBusyAction(null);
     }
+  }
+
+  function handleSubmitErrorClose() {
+    setSubmitErrorOpen(false);
+    setSubmitErrorMessage("");
   }
 
   function handleSubmitSuccessContinue() {
@@ -1509,6 +1547,37 @@ export default function CreatePropertyPage() {
           </div>
         ) : null}
       </div>
+
+      {submitErrorOpen ? (
+        <div className={ui.dialogBackdrop} role="presentation">
+          <div
+            className={`${ui.dialog} ${ui.dialogSuccess}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="submit-error-title"
+            aria-describedby="submit-error-description"
+          >
+            <div className={ui.dialogSuccessIcon} aria-hidden="true">
+              !
+            </div>
+            <h2 id="submit-error-title" className={ui.dialogTitle}>
+              Unable to Submit Property
+            </h2>
+            <p id="submit-error-description" className={ui.dialogText}>
+              {submitErrorMessage}
+            </p>
+            <div className={ui.dialogActions}>
+              <button
+                type="button"
+                className={ui.btnPrimary}
+                onClick={handleSubmitErrorClose}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {submitSuccessOpen ? (
         <div className={ui.dialogBackdrop} role="presentation">
