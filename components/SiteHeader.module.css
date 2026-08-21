@@ -127,6 +127,12 @@
   color: var(--gold-deep);
 }
 
+.navDropdownLinkActive {
+  background: var(--gold-tint);
+  color: var(--gold-deep);
+  font-weight: 700;
+}
+
 .navLink {
   position: relative;
   color: #1a1a1a;
@@ -379,6 +385,11 @@
   .mobileSubLink:hover,
   .mobileSubLink:active {
     color: var(--gold-deep);
+  }
+
+  .mobileSubLinkActive {
+    color: var(--gold-deep);
+    font-weight: 700;
   }
 
   .headerMenuOpen .logoGroup {

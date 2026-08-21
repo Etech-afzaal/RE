@@ -5,6 +5,10 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { PUBLIC_SITE_LOGO_DIMENSIONS } from "@/components/publicSiteLogo";
+import {
+  normalizePropertySubtype,
+  normalizePropertyType,
+} from "@/lib/propertyTaxonomy";
 import styles from "./SiteHeader.module.css";
 
 const DEFAULT_NAV_LINKS = [
@@ -96,6 +100,10 @@ export default function SiteHeader({
   const [menuEntered, setMenuEntered] = useState(false);
   const [menuMounted, setMenuMounted] = useState(false);
   const [activeHref, setActiveHref] = useState(homeHref);
+  // Subtype filter active state (e.g. "Apartments" under "For Sale") — purely
+  // visual; the existing scroll-based section highlight stays unchanged.
+  const [activeSubtype, setActiveSubtype] = useState(null);
+  const [activeType, setActiveType] = useState(null);
   const [openMobileGroup, setOpenMobileGroup] = useState(null);
   // Desktop category menus: only one open at a time; independent of filter/URL.
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -128,6 +136,18 @@ export default function SiteHeader({
     }, 420);
     return () => window.clearTimeout(closeTimerRef.current);
   }, [menuOpen]);
+
+  // Sync the subtype highlight from the URL on first load and back/forward.
+  useEffect(() => {
+    const syncSubtype = () => {
+      const params = new URLSearchParams(window.location.search);
+      setActiveType(normalizePropertyType(params.get("type")));
+      setActiveSubtype(normalizePropertySubtype(params.get("subtype")));
+    };
+    syncSubtype();
+    window.addEventListener("popstate", syncSubtype);
+    return () => window.removeEventListener("popstate", syncSubtype);
+  }, []);
 
   useEffect(() => {
     const syncActive = () => {
@@ -212,6 +232,8 @@ export default function SiteHeader({
     // Client-side filter only — avoid router.replace so App Router loading.js /
     // NavigationLoader are not triggered on every subtype change.
     window.history.replaceState(window.history.state, "", next);
+    setActiveType(normalizePropertyType(type || null));
+    setActiveSubtype(normalizePropertySubtype(subtype || null));
     window.dispatchEvent(
       new CustomEvent("dhalahorePropertiesTypeFilter", {
         detail: {
@@ -227,6 +249,8 @@ export default function SiteHeader({
     lockedHrefRef.current = null;
     window.clearTimeout(lockTimerRef.current);
     setMenuOpen(false);
+    setActiveSubtype(null);
+    setActiveType(null);
     window.dispatchEvent(new Event("dhalahorePropertiesResetFilters"));
 
     // Agent public site: go to /re/{handle} (no #hero) so the search bar stays in view.
@@ -262,6 +286,8 @@ export default function SiteHeader({
     lockedHrefRef.current = null;
     window.clearTimeout(lockTimerRef.current);
     setMenuOpen(false);
+    setActiveSubtype(null);
+    setActiveType(null);
     window.dispatchEvent(new Event("dhalahorePropertiesResetFilters"));
 
     if (homeHref.startsWith("/re/")) {
@@ -377,9 +403,10 @@ export default function SiteHeader({
         <div className={styles.navDropdown} role="menu">
           <Link
             href={link.href}
-            className={styles.navDropdownLink}
+            className={`${styles.navDropdownLink} ${activeType === link.type && !activeSubtype ? styles.navDropdownLinkActive : ""}`.trim()}
             role="menuitem"
             tabIndex={dropdownOpen ? 0 : -1}
+            aria-current={activeType === link.type && !activeSubtype ? "true" : undefined}
             onClick={(event) =>
               handleSectionClick(event, link.href, {
                 type: link.type,
@@ -391,13 +418,15 @@ export default function SiteHeader({
           </Link>
           {link.children.map((child) => {
             const childHash = `#${sectionIdFromType(link.type)}`;
+            const childActive = activeType === link.type && activeSubtype === child.subtype;
             return (
               <Link
                 key={`${link.label}-${child.label}`}
                 href={childHash}
-                className={styles.navDropdownLink}
+                className={`${styles.navDropdownLink} ${childActive ? styles.navDropdownLinkActive : ""}`.trim()}
                 role="menuitem"
                 tabIndex={dropdownOpen ? 0 : -1}
+                aria-current={childActive ? "true" : undefined}
                 onClick={(event) =>
                   handleSectionClick(event, childHash, {
                     type: link.type,
@@ -471,8 +500,9 @@ export default function SiteHeader({
           <div className={styles.mobileSubmenu}>
             <Link
               href={link.href}
-              className={styles.mobileSubLink}
+              className={`${styles.mobileSubLink} ${activeType === link.type && !activeSubtype ? styles.mobileSubLinkActive : ""}`.trim()}
               tabIndex={menuEntered ? 0 : -1}
+              aria-current={activeType === link.type && !activeSubtype ? "true" : undefined}
               onClick={(event) =>
                 handleSectionClick(event, link.href, {
                   type: link.type,
@@ -484,12 +514,14 @@ export default function SiteHeader({
             </Link>
             {link.children.map((child) => {
               const childHash = `#${sectionIdFromType(link.type)}`;
+              const childActive = activeType === link.type && activeSubtype === child.subtype;
               return (
                 <Link
                   key={`${link.label}-${child.label}`}
                   href={childHash}
-                  className={styles.mobileSubLink}
+                  className={`${styles.mobileSubLink} ${childActive ? styles.mobileSubLinkActive : ""}`.trim()}
                   tabIndex={menuEntered ? 0 : -1}
+                  aria-current={childActive ? "true" : undefined}
                   onClick={(event) =>
                     handleSectionClick(event, childHash, {
                       type: link.type,
