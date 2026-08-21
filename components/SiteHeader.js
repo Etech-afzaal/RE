@@ -375,6 +375,20 @@ export default function SiteHeader({
           {link.label}
         </Link>
         <div className={styles.navDropdown} role="menu">
+          <Link
+            href={link.href}
+            className={styles.navDropdownLink}
+            role="menuitem"
+            tabIndex={dropdownOpen ? 0 : -1}
+            onClick={(event) =>
+              handleSectionClick(event, link.href, {
+                type: link.type,
+                subtype: null,
+              })
+            }
+          >
+            All {link.label.replace(/^For\s+/i, "")}
+          </Link>
           {link.children.map((child) => {
             const childHash = `#${sectionIdFromType(link.type)}`;
             return (
@@ -460,7 +474,10 @@ export default function SiteHeader({
               className={styles.mobileSubLink}
               tabIndex={menuEntered ? 0 : -1}
               onClick={(event) =>
-                handleSectionClick(event, link.href, { clear: true })
+                handleSectionClick(event, link.href, {
+                  type: link.type,
+                  subtype: null,
+                })
               }
             >
               All {link.label.replace(/^For\s+/i, "")}
