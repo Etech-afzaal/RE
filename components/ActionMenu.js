@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { Eye, MoreHorizontal, SquarePen, Trash2 } from "lucide-react";
 import styles from "./ActionMenu.module.css";
 
@@ -19,10 +18,11 @@ export default function ActionMenu({
   ariaLabel = "Property actions",
 }) {
   const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState(null);
+  const [opensUpward, setOpensUpward] = useState(false);
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
   const menuId = useId();
+  const viewportGap = 8;
 
   const items = [
     onView && { label: "View", icon: Eye, onSelect: onView },
@@ -31,10 +31,40 @@ export default function ActionMenu({
     onDelete && { label: "Delete", icon: Trash2, onSelect: onDelete, destructive: true, disabled: deleteDisabled },
   ].filter(Boolean);
 
+  function getMenuBoundaryRect() {
+    const trigger = triggerRef.current;
+    if (!trigger) return null;
+
+    // Property pages render actions in a table wrapped by the scrollable list
+    // container; the legacy dashboard uses a list. Resolve either at runtime so
+    // this shared component remains bounded to its own rows on every dashboard.
+    const table = trigger.closest("table");
+    if (table?.parentElement) return table.parentElement.getBoundingClientRect();
+    return trigger.closest("ul")?.getBoundingClientRect() || null;
+  }
+
   function updatePosition() {
     const rect = triggerRef.current?.getBoundingClientRect();
     if (!rect) return;
-    setPosition({ top: rect.bottom + 8, right: Math.max(8, window.innerWidth - rect.right) });
+
+    const menuRect = menuRef.current?.getBoundingClientRect();
+    const menuHeight = menuRect?.height || 0;
+    const boundary = getMenuBoundaryRect();
+    const boundaryTop = boundary?.top ?? 0;
+    // Use the list's real bottom rather than the visible viewport bottom.
+    // The menu is anchored to its row, so a menu farther down the page can be
+    // reached by normal scrolling; only the final rows need to flip upward.
+    const boundaryBottom = boundary?.bottom ?? window.innerHeight - viewportGap;
+    const spaceBelow = boundaryBottom - rect.bottom - viewportGap;
+    const spaceAbove = rect.top - boundaryTop - viewportGap;
+
+    // Never let a partial upward menu cross the list's top edge into the page
+    // header. If neither side fits, keep it below its own trigger instead.
+    setOpensUpward(
+      menuHeight > 0 &&
+        spaceBelow < menuHeight &&
+        spaceAbove >= menuHeight,
+    );
   }
 
   function closeMenu({ restoreFocus = false } = {}) {
@@ -46,6 +76,7 @@ export default function ActionMenu({
     if (!open) return undefined;
 
     updatePosition();
+    const frame = window.requestAnimationFrame(updatePosition);
     const closeOnOutsideClick = (event) => {
       if (!menuRef.current?.contains(event.target) && !triggerRef.current?.contains(event.target)) {
         closeMenu();
@@ -61,12 +92,18 @@ export default function ActionMenu({
     window.addEventListener("resize", refreshPosition);
     window.addEventListener("scroll", refreshPosition, true);
     return () => {
+      window.cancelAnimationFrame(frame);
       document.removeEventListener("mousedown", closeOnOutsideClick);
       document.removeEventListener("keydown", closeOnEscape);
       window.removeEventListener("resize", refreshPosition);
       window.removeEventListener("scroll", refreshPosition, true);
     };
   }, [open]);
+
+  function openMenu() {
+    setOpensUpward(false);
+    setOpen(true);
+  }
 
   function selectAction(action) {
     closeMenu();
@@ -76,7 +113,7 @@ export default function ActionMenu({
   function handleTriggerKeyDown(event) {
     if (["ArrowDown", "ArrowUp"].includes(event.key)) {
       event.preventDefault();
-      setOpen(true);
+      openMenu();
       requestAnimationFrame(() => {
         const buttons = menuRef.current?.querySelectorAll("button");
         buttons?.[event.key === "ArrowUp" ? buttons.length - 1 : 0]?.focus();
@@ -103,42 +140,41 @@ export default function ActionMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => {
+          if (open) closeMenu();
+          else openMenu();
+        }}
         onKeyDown={handleTriggerKeyDown}
       >
         <MoreHorizontal size={20} aria-hidden="true" />
       </button>
-      {open && position && typeof document !== "undefined"
-        ? createPortal(
-            <div
-              ref={menuRef}
-              id={menuId}
-              className={styles.menu}
-              role="menu"
-              aria-label={ariaLabel}
-              style={position}
-              onKeyDown={handleMenuKeyDown}
-            >
-              {items.map((action) => {
-                const Icon = action.icon;
-                return (
-                  <button
-                    key={action.label}
-                    type="button"
-                    role="menuitem"
-                    className={`${styles.item} ${action.destructive ? styles.danger : ""}`}
-                    disabled={action.disabled}
-                    onClick={() => selectAction(action)}
-                  >
-                    {Icon ? <Icon size={18} aria-hidden="true" /> : null}
-                    <span>{action.label}</span>
-                  </button>
-                );
-              })}
-            </div>,
-            document.body,
-          )
-        : null}
+      {open ? (
+        <div
+          ref={menuRef}
+          id={menuId}
+          className={`${styles.menu} ${opensUpward ? styles.menuUpward : ""}`}
+          role="menu"
+          aria-label={ariaLabel}
+          onKeyDown={handleMenuKeyDown}
+        >
+          {items.map((action) => {
+            const Icon = action.icon;
+            return (
+              <button
+                key={action.label}
+                type="button"
+                role="menuitem"
+                className={`${styles.item} ${action.destructive ? styles.danger : ""}`}
+                disabled={action.disabled}
+                onClick={() => selectAction(action)}
+              >
+                {Icon ? <Icon size={18} aria-hidden="true" /> : null}
+                <span>{action.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
 }
