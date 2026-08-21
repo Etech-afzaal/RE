@@ -47,6 +47,25 @@ import {
 import ui from "@/components/agent-portal/portal.module.css";
 import PropertyMarketingSectionsEditor from "@/components/agent-portal/PropertyMarketingSectionsEditor";
 
+const DRAFT_STORAGE_KEY = "dhalahore_agent_property_draft";
+
+function readDraft() {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(DRAFT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearDraft() {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+  } catch {}
+}
+
 const STEPS = [
   "Basic Information",
   "Location",
@@ -126,7 +145,7 @@ export default function CreatePropertyPage() {
   const username = decodeURIComponent(params.estate_name || "");
   const base = `/re/${encodeURIComponent(username)}/dashboard`;
 
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(() => readDraft()?.step ?? 0);
   const [error, setError] = useState("");
   const [errorDetails, setErrorDetails] = useState([]);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -146,7 +165,7 @@ export default function CreatePropertyPage() {
   const [watermarkText, setWatermarkText] = useState("");
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState(() => readDraft()?.form || {
     title: "",
     propertyType: "sale",
     propertySubtype: "",
@@ -198,6 +217,18 @@ export default function CreatePropertyPage() {
       cancelled = true;
     };
   }, [status, router, session?.user]);
+
+  // Persist field values across page refreshes (text fields only; file
+  // uploads cannot be serialized and are intentionally not restored).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.sessionStorage.setItem(
+        DRAFT_STORAGE_KEY,
+        JSON.stringify({ step, form }),
+      );
+    } catch {}
+  }, [step, form]);
 
   if (status === "loading" || status === "unauthenticated") {
     return (
@@ -813,10 +844,12 @@ export default function CreatePropertyPage() {
           );
           return;
         }
+        clearDraft();
         setSubmitSuccessOpen(true);
         return;
       }
 
+      clearDraft();
       router.push(`${base}/properties`);
     } catch (err) {
       setError(
