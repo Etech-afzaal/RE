@@ -139,6 +139,26 @@ function buildDescription({ description, bedrooms, bathrooms, parking }) {
   return parts.filter(Boolean).join("\n\n") || null;
 }
 
+function apiErrorMessage(response, data, fallback) {
+  const message =
+    typeof data?.error === "string" && data.error.trim()
+      ? data.error.trim()
+      : "";
+  const details = Array.isArray(data?.errors)
+    ? data.errors.filter((item) => typeof item === "string" && item.trim())
+    : [];
+
+  if (details.length > 0) {
+    return `${message || fallback} ${details.join(" ")}`.trim();
+  }
+  if (message) return message;
+  if (response.status === 401) return "Your session has expired. Please sign in and try again.";
+  if (response.status === 403) return "You do not have permission to submit this property.";
+  if (response.status === 404) return "The property could not be found. Please refresh and try again.";
+  if (response.status >= 500) return "The server could not process this request. Please try again shortly.";
+  return fallback;
+}
+
 export default function CreatePropertyPage() {
   const params = useParams();
   const router = useRouter();
@@ -722,6 +742,13 @@ export default function CreatePropertyPage() {
     setStep(targetStep);
   }
 
+  function showSubmitError(message) {
+    setError("");
+    setErrorDetails([]);
+    setSubmitErrorMessage(message);
+    setSubmitErrorOpen(true);
+  }
+
   async function save({ submit = false } = {}) {
     clearStepFeedback();
     const title = buildTitle(form.title, form.propertyType);
@@ -729,6 +756,7 @@ export default function CreatePropertyPage() {
       setFieldErrors({ title: "Title is required" });
       setError("Title is required");
       setStep(PROPERTY_WIZARD_STEPS.BASIC);
+      if (submit) showSubmitError("Title is required");
       return;
     }
 
@@ -738,18 +766,21 @@ export default function CreatePropertyPage() {
         setFieldErrors(formCheck.fieldErrors);
         setError(formCheck.error);
         setStep(propertyFieldToWizardStep(formCheck.field));
+        showSubmitError(formCheck.error);
         return;
       }
 
       const imageCheck = validateMediaStep(PROPERTY_WIZARD_STEPS.IMAGES);
       if (!imageCheck.ok) {
         applyStepValidationFailure(imageCheck, PROPERTY_WIZARD_STEPS.IMAGES);
+        showSubmitError(imageCheck.error);
         return;
       }
 
       const videoCheck = validateMediaStep(PROPERTY_WIZARD_STEPS.VIDEO);
       if (!videoCheck.ok) {
         applyStepValidationFailure(videoCheck, PROPERTY_WIZARD_STEPS.VIDEO);
+        showSubmitError(videoCheck.error);
         return;
       }
     }
@@ -784,7 +815,9 @@ export default function CreatePropertyPage() {
         });
         const createData = await createRes.json().catch(() => ({}));
         if (!createRes.ok) {
-          throw new Error(createData.error || "Could not create property.");
+          throw new Error(
+            apiErrorMessage(createRes, createData, "Could not create property."),
+          );
         }
         propertyId = createData.propertyId;
         setCreatedPropertyId(propertyId);
@@ -815,7 +848,9 @@ export default function CreatePropertyPage() {
         });
         const updateData = await updateRes.json().catch(() => ({}));
         if (!updateRes.ok) {
-          throw new Error(updateData.error || "Could not update property.");
+          throw new Error(
+            apiErrorMessage(updateRes, updateData, "Could not update property."),
+          );
         }
       }
 
@@ -834,7 +869,13 @@ export default function CreatePropertyPage() {
         });
         const imageData = await imageRes.json().catch(() => ({}));
         if (!imageRes.ok) {
-          throw new Error(imageData.error || "Could not upload property images.");
+          throw new Error(
+            apiErrorMessage(
+              imageRes,
+              imageData,
+              "Could not upload property images.",
+            ),
+          );
         }
         imagesUploadedRef.current = true;
       }
@@ -853,7 +894,13 @@ export default function CreatePropertyPage() {
         });
         const videoData = await videoRes.json().catch(() => ({}));
         if (!videoRes.ok) {
-          throw new Error(videoData.error || "Could not upload property videos.");
+          throw new Error(
+            apiErrorMessage(
+              videoRes,
+              videoData,
+              "Could not upload property videos.",
+            ),
+          );
         }
         videosUploadedRef.current = true;
       }
@@ -866,13 +913,13 @@ export default function CreatePropertyPage() {
         });
         const submitData = await submitRes.json().catch(() => ({}));
         if (!submitRes.ok) {
-          setError("");
-          setErrorDetails([]);
-          setSubmitErrorMessage(
-            submitData.error ||
+          showSubmitError(
+            apiErrorMessage(
+              submitRes,
+              submitData,
               "Unable to submit property. Please try again.",
+            ),
           );
-          setSubmitErrorOpen(true);
           return;
         }
         clearDraft();
@@ -885,12 +932,13 @@ export default function CreatePropertyPage() {
       clearDraftFiles();
       router.push(`${base}/properties`);
     } catch (err) {
-      setError(
+      const message =
         err?.message ||
-          (submit
-            ? "Unable to submit property. Please try again."
-            : "Something went wrong."),
-      );
+        (submit
+          ? "Unable to submit property. Check your connection and try again."
+          : "Something went wrong.");
+      if (submit) showSubmitError(message);
+      else setError(message);
     } finally {
       setBusyAction(null);
     }
