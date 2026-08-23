@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CircleCheck, Send, Star, StarOff } from "lucide-react";
+import { CircleCheck, Send, Star, StarOff, Undo2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
@@ -88,6 +88,7 @@ export default function AgentPropertiesPage() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
   const [propertyToDelete, setPropertyToDelete] = useState(null);
+  const [propertyToCancelApproval, setPropertyToCancelApproval] = useState(null);
   const [error, setError] = useState("");
   const [errorDetails, setErrorDetails] = useState([]);
   const [success, setSuccess] = useState("");
@@ -204,6 +205,36 @@ export default function AgentPropertiesPage() {
       await load();
     } catch {
       setError("Could not submit this property for approval.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function cancelApprovalRequest() {
+    if (!propertyToCancelApproval) return;
+
+    const property = propertyToCancelApproval;
+    setBusyId(property.id);
+    setError("");
+    setErrorDetails([]);
+    setSuccess("");
+    try {
+      const res = await fetch(
+        `/api/properties/${property.id}/cancel-approval`,
+        { method: "POST" },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(
+          data.error || "Could not cancel this approval request.",
+        );
+        return;
+      }
+      setPropertyToCancelApproval(null);
+      setSuccess("Approval request cancelled. Property returned to draft.");
+      await load();
+    } catch {
+      setError("Could not cancel this approval request.");
     } finally {
       setBusyId(null);
     }
@@ -460,6 +491,19 @@ export default function AgentPropertiesPage() {
                             ...(property.status === "draft" || isRejected
                               ? [{ label: isRejected ? "Resubmit" : "Submit For Approval", icon: Send, onSelect: () => submitForApproval(property), disabled: busyId === property.id }]
                               : []),
+                            ...(isPending
+                              ? [{
+                                  label: "Cancel Approval Request",
+                                  icon: Undo2,
+                                  onSelect: () => {
+                                    setError("");
+                                    setErrorDetails([]);
+                                    setSuccess("");
+                                    setPropertyToCancelApproval(property);
+                                  },
+                                  disabled: busyId === property.id,
+                                }]
+                              : []),
                             ...(property.status === "approved" && !featured
                               ? [{ label: "Add to Featured", icon: Star, onSelect: () => addToFeatured(property), disabled: busyId === property.id }]
                               : []),
@@ -520,6 +564,46 @@ export default function AgentPropertiesPage() {
                 onClick={deleteProperty}
               >
                 {busyId === propertyToDelete.id ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {propertyToCancelApproval ? (
+        <div className={ui.dialogBackdrop} role="presentation">
+          <div
+            className={ui.dialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cancel-approval-title"
+            aria-describedby="cancel-approval-description"
+          >
+            <h2 id="cancel-approval-title" className={ui.dialogTitle}>
+              Cancel approval request?
+            </h2>
+            <p id="cancel-approval-description" className={ui.dialogText}>
+              This property will return to Draft and can be edited and submitted
+              again.
+            </p>
+            <div className={ui.dialogActions}>
+              <button
+                type="button"
+                className={ui.btnGhost}
+                disabled={busyId === propertyToCancelApproval.id}
+                onClick={() => setPropertyToCancelApproval(null)}
+              >
+                Keep Request
+              </button>
+              <button
+                type="button"
+                className={ui.btnPrimary}
+                disabled={busyId === propertyToCancelApproval.id}
+                onClick={cancelApprovalRequest}
+              >
+                {busyId === propertyToCancelApproval.id
+                  ? "Cancelling…"
+                  : "Cancel Approval Request"}
               </button>
             </div>
           </div>
