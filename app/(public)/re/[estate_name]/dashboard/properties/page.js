@@ -15,6 +15,7 @@ import { formatPropertyLocation } from "@/lib/propertyLocation";
 import { formatPropertyPrice } from "@/lib/formatPrice";
 import { getPropertyUrl } from "@/lib/propertySlug";
 import ui from "@/components/agent-portal/portal.module.css";
+import styles from "./page.module.css";
 
 const TABS = [
   { id: "all", label: "All" },
@@ -310,7 +311,12 @@ export default function AgentPropertiesPage() {
         ))}
       </div>
 
-      <div className={ui.panel} ref={propertiesSectionRef}>
+      <div
+        className={`${ui.panel} ${
+          !loading && properties.length > 0 ? styles.listingPanel : ""
+        }`}
+        ref={propertiesSectionRef}
+      >
         {error ? (
           <div className={ui.error}>
             <p className={ui.noticeTitle}>{error}</p>
@@ -341,7 +347,7 @@ export default function AgentPropertiesPage() {
               {" · "}
               Featured: {featuredCount} / {featuredLimit}
             </p>
-            <div className={ui.tableWrap}>
+            <div className={`${ui.tableWrap} ${styles.tableArea}`}>
               <table className={ui.table}>
               <thead>
                 <tr>
@@ -472,11 +478,13 @@ export default function AgentPropertiesPage() {
               </tbody>
               </table>
             </div>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={changePage}
-            />
+            <div className={styles.paginationSlot}>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={changePage}
+              />
+            </div>
           </>
         )}
       </div>

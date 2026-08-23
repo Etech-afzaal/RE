@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import GalleryCarousel from "./GalleryCarousel";
 import HeroGallery from "./HeroGallery";
-import ExpandableText from "./ExpandableText";
+import PropertySummaryCard from "./PropertySummaryCard";
 import PropertyVideoGallery from "@/components/PropertyVideoGallery";
 import {
   getAgentByUsername,
@@ -40,19 +40,6 @@ const formatSize = (value, unit) => {
     if (match.toLowerCase() === "sqft") return "Sqft";
     return match.charAt(0).toUpperCase() + match.slice(1).toLowerCase();
   });
-};
-
-const formatDate = (date) => {
-  if (!date) return null;
-  try {
-    return new Date(date).toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  } catch {
-    return null;
-  }
 };
 
 function titleCaseWords(value) {
@@ -417,27 +404,6 @@ function HighlightIcon({ name }) {
   );
 }
 
-function LocationPinIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-      className={styles.locationPin}
-    >
-      <path
-        d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-      <circle cx="12" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.8" />
-    </svg>
-  );
-}
-
 function CompanyLogo({ src, companyName, className }) {
   if (src) {
     return (
@@ -513,7 +479,6 @@ export default async function PropertyDetailPage({ params }) {
 
   const companyName = companyNameFromAgent(agent);
   const sizeLabel = formatSize(property.size_value, property.size_unit);
-  const listedDate = formatDate(property.created_at);
   const locationInfo = resolveLocationInfo(property);
   const attrs = parsePropertyAttributes(property);
   const propertyTypeLabel = inferPropertyTypeLabel(property);
@@ -557,18 +522,6 @@ export default async function PropertyDetailPage({ params }) {
   );
   const agentProfileHref = `/re/${encodeURIComponent(agentHandle)}`;
 
-  /** Compact glance chips inside the summary card. */
-  const summaryChips = [
-    sizeLabel,
-    attrs.beds != null
-      ? `${attrs.beds} ${attrs.beds === 1 ? "Bedroom" : "Bedrooms"}`
-      : null,
-    attrs.baths != null
-      ? `${attrs.baths} ${attrs.baths === 1 ? "Bathroom" : "Bathrooms"}`
-      : null,
-    propertyTypeLabel,
-  ].filter(Boolean);
-
   // Agent-edited marketing sections take priority. Fields that were never set
   // (existing properties) fall back to the existing generated content; a saved
   // empty array intentionally hides the section.
@@ -587,42 +540,6 @@ export default async function PropertyDetailPage({ params }) {
         sizeLabel,
         propertyTypeLabel,
       });
-
-  const detailRows = [
-    { label: "Property Type", value: propertyTypeLabel },
-    { label: "Listing Type", value: statusLabel },
-    sizeLabel ? { label: "Size", value: sizeLabel } : null,
-    locationInfo.area ? { label: "Area", value: locationInfo.area } : null,
-    locationInfo.phase ? { label: "Phase", value: locationInfo.phase } : null,
-    locationInfo.city ? { label: "City", value: locationInfo.city } : null,
-    locationInfo.address
-      ? { label: "Address", value: locationInfo.address }
-      : null,
-    attrs.beds != null
-      ? {
-          label: "Bedrooms",
-          value: String(attrs.beds),
-        }
-      : null,
-    attrs.baths != null
-      ? {
-          label: "Bathrooms",
-          value: String(attrs.baths),
-        }
-      : null,
-    attrs.parking != null
-      ? {
-          label: "Parking",
-          value: String(attrs.parking),
-        }
-      : null,
-    attrs.furnished ? { label: "Furnishing", value: attrs.furnished } : null,
-    attrs.facing ? { label: "Facing", value: attrs.facing } : null,
-    attrs.floor ? { label: "Floor", value: attrs.floor } : null,
-    attrs.yearBuilt ? { label: "Year Built", value: attrs.yearBuilt } : null,
-    listedDate ? { label: "Listed Date", value: listedDate } : null,
-    { label: "Reference ID", value: `#${property.id}` },
-  ].filter(Boolean);
 
   const amenities = buildAmenities(attrs, property);
   const savedWhyData = savedMarketingSection(property.why_this_home);
@@ -687,44 +604,35 @@ export default async function PropertyDetailPage({ params }) {
           </div>
         </header>
 
-        {/* 2. Hero property media */}
+        {/* 2. Hero property media — unchanged */}
         <HeroGallery images={heroImages} title={property.title} />
 
         {/* 3–4. Property summary + sticky agent contact */}
         <section className={styles.overview}>
           <div className={styles.overviewMain}>
-            {/* 1. Property summary */}
-            <article className={styles.summaryCard}>
-              <div className={styles.summaryTop}>
-                <p className={styles.statusLabel}>{statusLabel}</p>
-                {listedDate ? (
-                  <p className={styles.listedOn}>Listed : {listedDate}</p>
-                ) : null}
-              </div>
-              <h1 className={styles.title}>{property.title}</h1>
-              {locationInfo.full ? (
-                <p className={styles.locationLine}>
-                  <LocationPinIcon />
-                  <span>{locationInfo.full}</span>
-                </p>
-              ) : null}
-              <p className={styles.price}>
-                {formatPrice(property.price, property.price_currency)}
-              </p>
-
-              {summaryChips.length > 0 ? (
-                <>
-                  <hr className={styles.summaryDivider} />
-                  <ul className={styles.summaryChips} aria-label="Key details">
-                    {summaryChips.map((chip) => (
-                      <li key={chip} className={styles.summaryChip}>
-                        {chip}
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              ) : null}
-            </article>
+            {/* 1. Premium summary card (below hero; replaces old info/story/facts) */}
+            <PropertySummaryCard
+              className={styles.summaryCard}
+              title={property.title}
+              imageUrl={heroImage?.image_url || null}
+              imageAlt={property.title}
+              address={locationInfo.address}
+              phase={locationInfo.phase}
+              area={locationInfo.area}
+              city={locationInfo.city}
+              priceLabel={formatPrice(
+                property.price,
+                property.price_currency,
+              )}
+              description={attrs.overview}
+              propertyType={propertyTypeLabel}
+              status={statusLabel}
+              sizeLabel={sizeLabel}
+              bedrooms={attrs.beds}
+              bathrooms={attrs.baths}
+              parking={attrs.parking}
+              referenceId={`#${property.id}`}
+            />
 
             {/* 2. Property highlights */}
             {highlights.length > 0 ? (
@@ -754,55 +662,7 @@ export default async function PropertyDetailPage({ params }) {
               </section>
             ) : null}
 
-            {/* 3. About this property */}
-            {attrs.overview ? (
-              <section
-                className={styles.contentCard}
-                aria-labelledby="about-heading"
-              >
-                <p className={styles.sectionKicker}>Story</p>
-                <h2 id="about-heading" className={styles.sectionTitle}>
-                  About This Property
-                </h2>
-                <ExpandableText text={attrs.overview} />
-              </section>
-            ) : null}
-
-            {/* 4. Property details */}
-            {detailRows.length > 0 ? (
-              <section
-                className={`${styles.contentCard} ${styles.detailsCard}`}
-                aria-labelledby="details-heading"
-              >
-                <p className={styles.sectionKicker}>Facts</p>
-                <h2 id="details-heading" className={styles.sectionTitle}>
-                  Property Details
-                </h2>
-                <div className={styles.detailsLayout}>
-                  <dl className={styles.detailsList}>
-                    {detailRows.map((row) => (
-                      <div key={row.label} className={styles.detailsRow}>
-                        <dt>{row.label}</dt>
-                        <dd>{row.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                  {heroImage ? (
-                    <div className={styles.detailsImage} aria-hidden="true">
-                      <Image
-                        src={heroImage.image_url}
-                        alt=""
-                        fill
-                        sizes="(max-width: 768px) 0px, 22vw"
-                        className={styles.detailsImageAsset}
-                      />
-                    </div>
-                  ) : null}
-                </div>
-              </section>
-            ) : null}
-
-            {/* 5. Why this home */}
+            {/* 3. Why this home */}
             {lifestylePoints.length > 0 ? (
               <section
                 className={styles.contentCard}
@@ -825,7 +685,7 @@ export default async function PropertyDetailPage({ params }) {
               </section>
             ) : null}
 
-            {/* 6. Amenities */}
+            {/* 4. Amenities */}
             {amenities.length > 0 ? (
               <section
                 className={styles.contentCard}
@@ -848,7 +708,7 @@ export default async function PropertyDetailPage({ params }) {
               </section>
             ) : null}
 
-            {/* 7. Location advantage */}
+            {/* 5. Location advantage */}
             {locationInfo.full && locationAdvantageItems.length > 0 ? (
               <section
                 className={styles.contentCard}
@@ -874,7 +734,7 @@ export default async function PropertyDetailPage({ params }) {
               </section>
             ) : null}
 
-            {/* 8. Investment insight */}
+            {/* 6. Investment insight */}
             {showInvestment ? (
               <section
                 className={`${styles.contentCard} ${styles.insightCard}`}

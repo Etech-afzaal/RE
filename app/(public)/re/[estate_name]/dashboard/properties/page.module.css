@@ -1,0 +1,46 @@
+/*
+ * Keep the properties listing panel at a stable height across pagination
+ * pages (1–10 rows). Derived from existing portal table metrics:
+ *   count line ≈ 2.25rem
+ *   thead (0.9rem×2 padding + label) ≈ 2.7rem
+ *   row (52px thumb + 0.9rem×2 padding) ≈ 5.05rem × 10 page size
+ *   pagination (1.25rem margin + 2.35rem buttons + bottom gap) ≈ 4.6rem
+ */
+
+.listingPanel {
+  --listing-count-h: 2.25rem;
+  --listing-thead-h: 2.7rem;
+  --listing-row-h: 5.05rem;
+  --listing-page-size: 10;
+  --listing-pagination-h: 4.6rem;
+
+  display: flex;
+  flex-direction: column;
+  min-height: calc(
+    var(--listing-count-h) +
+      var(--listing-thead-h) +
+      (var(--listing-row-h) * var(--listing-page-size)) +
+      var(--listing-pagination-h)
+  );
+}
+
+.tableArea {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.paginationSlot {
+  margin-top: auto;
+  padding-bottom: 1.1rem;
+}
+
+/* Mobile uses stacked cards — keep natural height to avoid large blank gaps */
+@media (max-width: 768px) {
+  .listingPanel {
+    min-height: 0;
+  }
+
+  .paginationSlot {
+    margin-top: 0;
+  }
+}
