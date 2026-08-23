@@ -1423,3 +1423,98 @@ button.stepPillActive:hover {
   border-radius: 12px;
   background: #fff;
 }
+
+/* Property highlight icon selector — matches .select dimensions */
+.iconSelectWrap {
+  position: relative;
+  width: 100%;
+}
+
+.iconSelectTrigger {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  height: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0 0.85rem;
+  border: 1px solid rgba(26, 26, 26, 0.12);
+  border-radius: 12px;
+  background: #faf9f6;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  line-height: 1.25;
+  cursor: pointer;
+  text-align: left;
+}
+
+.iconSelectTrigger:focus,
+.iconSelectTrigger:focus-visible {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(242, 187, 70, 0.16);
+}
+
+.iconSelectGlyph {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold-deep);
+}
+
+.iconSelectLabel {
+  flex: 1;
+  min-width: 0;
+}
+
+.iconSelectChevron {
+  flex-shrink: 0;
+  color: #6b7280;
+}
+
+.iconSelectMenu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  border: 1px solid rgba(26, 26, 26, 0.12);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: var(--shadow-md);
+}
+
+.iconSelectOption {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  line-height: 1.25;
+  cursor: pointer;
+  text-align: left;
+}
+
+.iconSelectOption:hover,
+.iconSelectOption:focus-visible {
+  background: var(--gold-tint);
+  outline: none;
+}
+
+.iconSelectOptionActive {
+  background: var(--gold-tint);
+  font-weight: 600;
+}

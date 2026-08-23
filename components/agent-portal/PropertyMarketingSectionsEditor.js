@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { MARKETING_LIMITS } from "@/lib/propertyMarketingSections";
 import ui from "./portal.module.css";
 
@@ -41,6 +42,183 @@ const INVESTMENT_SUGGESTIONS = [
   "Suitable for rental income",
 ];
 const HIGHLIGHT_ICONS = ["home", "pin", "family", "space", "sun", "car"];
+
+/** Same SVG mapping as the public property detail HighlightIcon. */
+function HighlightIcon({ name, size = 22 }) {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    "aria-hidden": "true",
+  };
+
+  if (name === "sun") {
+    return (
+      <svg {...common}>
+        <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
+        <path
+          d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.1 5.1l1.6 1.6M17.3 17.3l1.6 1.6M18.9 5.1l-1.6 1.6M6.7 17.3l-1.6 1.6"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+  if (name === "car") {
+    return (
+      <svg {...common}>
+        <path
+          d="M4 15.5h16l-1.2-4.2a2 2 0 0 0-1.9-1.4H7.1a2 2 0 0 0-1.9 1.4L4 15.5z"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M6.5 15.5v2M17.5 15.5v2M7.5 10l1-3h7l1 3"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+  if (name === "pin") {
+    return (
+      <svg {...common}>
+        <path
+          d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11z"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        />
+        <circle cx="12" cy="10" r="2.4" stroke="currentColor" strokeWidth="1.8" />
+      </svg>
+    );
+  }
+  if (name === "family") {
+    return (
+      <svg {...common}>
+        <circle cx="9" cy="8" r="2.4" stroke="currentColor" strokeWidth="1.8" />
+        <circle cx="16" cy="9" r="2" stroke="currentColor" strokeWidth="1.8" />
+        <path
+          d="M4.5 18.5c.6-3 2.5-4.5 4.5-4.5s3.9 1.5 4.5 4.5M13.5 18.5c.3-1.8 1.3-2.8 2.5-2.8 1.4 0 2.4 1.2 2.7 2.8"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+  if (name === "space") {
+    return (
+      <svg {...common}>
+        <path
+          d="M4 9.5 12 4l8 5.5V20H4V9.5z"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        />
+        <path d="M10 20v-6h4v6" stroke="currentColor" strokeWidth="1.8" />
+      </svg>
+    );
+  }
+  return (
+    <svg {...common}>
+      <path
+        d="M4 10.5 12 4l8 6.5V20H4v-9.5z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path d="M9.5 20v-5.5h5V20" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+function HighlightIconSelect({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const selected = value || "home";
+
+  useEffect(() => {
+    if (!open) return undefined;
+    function handlePointerDown(event) {
+      if (!wrapRef.current?.contains(event.target)) {
+        setOpen(false);
+      }
+    }
+    function handleKeyDown(event) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div className={ui.iconSelectWrap} ref={wrapRef}>
+      <button
+        type="button"
+        className={ui.iconSelectTrigger}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        <span className={ui.iconSelectGlyph} aria-hidden="true">
+          <HighlightIcon name={selected} size={18} />
+        </span>
+        <span className={ui.iconSelectLabel}>{selected}</span>
+        <svg
+          className={ui.iconSelectChevron}
+          width="12"
+          height="8"
+          viewBox="0 0 12 8"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M1 1.5l5 5 5-5"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+      {open ? (
+        <ul className={ui.iconSelectMenu} role="listbox" aria-label="Highlight icon">
+          {HIGHLIGHT_ICONS.map((icon) => (
+            <li key={icon} role="presentation">
+              <button
+                type="button"
+                role="option"
+                aria-selected={selected === icon}
+                className={`${ui.iconSelectOption} ${
+                  selected === icon ? ui.iconSelectOptionActive : ""
+                }`.trim()}
+                onClick={() => {
+                  onChange(icon);
+                  setOpen(false);
+                }}
+              >
+                <span className={ui.iconSelectGlyph} aria-hidden="true">
+                  <HighlightIcon name={icon} size={18} />
+                </span>
+                <span>{icon}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
 
 function useHelpers(form, setForm) {
   const arr = (key) => form[key] || [];
@@ -193,17 +371,10 @@ export default function PropertyMarketingSectionsEditor({ form, setForm }) {
               </label>
               <label className={ui.field}>
                 <span className={ui.imageCardLabel}>Icon</span>
-                <select
-                  className={ui.select}
+                <HighlightIconSelect
                   value={item.icon || "home"}
-                  onChange={(e) => h.highlights.set(i, { icon: e.target.value })}
-                >
-                  {HIGHLIGHT_ICONS.map((icon) => (
-                    <option key={icon} value={icon}>
-                      {icon}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(icon) => h.highlights.set(i, { icon })}
+                />
               </label>
             </div>
             <label className={ui.field}>

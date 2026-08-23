@@ -83,8 +83,6 @@ export async function POST(req) {
     );
   }
 
-  console.log("Contact request received");
-
   const validated = validateContactInput(body);
   if (!validated.ok) {
     return NextResponse.json(
@@ -137,9 +135,7 @@ export async function POST(req) {
       `;
 
       try {
-        console.log("Attempting to send email to agent...", agent.email);
         await sendMail(agent.email, `New inquiry for ${agent.full_name}`, html);
-        console.log("Email sent successfully to agent.");
       } catch (err) {
         await query("DELETE FROM customer_inquiries WHERE id = ?", [
           inquiryId,
@@ -178,13 +174,11 @@ export async function POST(req) {
     });
 
     try {
-      console.log("Attempting to send email to admin...", adminEmail);
       await sendMail(
         adminEmail,
         `New Contact Form Submission - ${subject}`,
         html,
       );
-      console.log("Email sent successfully to admin.");
     } catch (err) {
       await query("DELETE FROM customer_inquiries WHERE id = ?", [
         inquiryId,
