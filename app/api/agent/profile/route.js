@@ -20,7 +20,8 @@ export async function GET() {
 
   const agentId = agentIdFrom(session);
   const rows = await query(
-    `SELECT id, estate_name, username, full_name, email, phone,
+    `SELECT id, estate_name, username, full_name, email, phone, secondary_phone,
+            whatsapp_number,
             profile_image, company_logo, description, areas_served, status
      FROM users WHERE id = ? AND user_type = 'agent' LIMIT 1`,
     [agentId],
@@ -42,16 +43,20 @@ export async function PATCH(req) {
     return NextResponse.json({ error: validated.error }, { status: 400 });
   }
 
-  const { full_name, phone, description, areas_served } = validated.data;
+  const { full_name, phone, secondary_phone, whatsapp_number, description, areas_served } =
+    validated.data;
 
   // Email stays identity-bound; do not allow arbitrary email changes here.
   await query(
     `UPDATE users
-     SET full_name = ?, phone = ?, description = ?, areas_served = ?
+     SET full_name = ?, phone = ?, secondary_phone = ?, whatsapp_number = ?,
+         description = ?, areas_served = ?
      WHERE id = ?`,
     [
       full_name,
       phone || null,
+      secondary_phone || null,
+      whatsapp_number || null,
       description || null,
       areas_served || null,
       agentId,

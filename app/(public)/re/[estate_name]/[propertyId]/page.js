@@ -13,10 +13,14 @@ import { agentPublicUsername } from "@/lib/propertySlug";
 import AgentAvatar from "@/components/AgentAvatar";
 import AgentInquiryForm from "@/components/AgentInquiryForm";
 import AgentWhatsAppFab from "@/components/AgentWhatsAppFab";
+import AgentPhoneReveal from "./AgentPhoneReveal";
+import BackToTop from "./BackToTop";
 import { PUBLIC_SITE_LOGO_DIMENSIONS } from "@/components/publicSiteLogo";
+import { agentPhoneEntries } from "@/lib/agentContact";
 import {
-  buildWhatsAppUrl,
+  buildAgentWhatsAppUrl,
   propertyWhatsAppMessage,
+  resolveAgentWhatsAppNumber,
 } from "@/lib/whatsapp";
 import {
   formatPropertyLocation,
@@ -511,10 +515,12 @@ export default async function PropertyDetailPage({ params }) {
     return [];
   })();
 
+  const phoneEntries = agentPhoneEntries(agent);
   const telHref = agent.phone
     ? `tel:${String(agent.phone).replace(/\s/g, "")}`
     : null;
-  const waHref = buildWhatsAppUrl(agent.phone);
+  const waHref = buildAgentWhatsAppUrl(agent);
+  const waFabPhone = resolveAgentWhatsAppNumber(agent);
   const waFabMessage = propertyWhatsAppMessage(
     agent.full_name,
     property.title,
@@ -808,6 +814,14 @@ export default async function PropertyDetailPage({ params }) {
               </div>
             </div>
 
+            <div className={styles.agentDetails}>
+              <AgentPhoneReveal phoneEntries={phoneEntries} />
+              <a href={`mailto:${agent.email}`} className={styles.agentDetail}>
+                <span>Email</span>
+                <strong>{agent.email}</strong>
+              </a>
+            </div>
+
             <div className={styles.agentActions}>
               {telHref ? (
                 <a href={telHref} className={styles.agentPrimary}>
@@ -824,19 +838,6 @@ export default async function PropertyDetailPage({ params }) {
                   WhatsApp
                 </a>
               ) : null}
-            </div>
-
-            <div className={styles.agentDetails}>
-              {agent.phone ? (
-                <a href={telHref} className={styles.agentDetail}>
-                  <span>Phone</span>
-                  <strong>{agent.phone}</strong>
-                </a>
-              ) : null}
-              <a href={`mailto:${agent.email}`} className={styles.agentDetail}>
-                <span>Email</span>
-                <strong>{agent.email}</strong>
-              </a>
             </div>
 
             <div id="inquiry">
@@ -975,8 +976,10 @@ export default async function PropertyDetailPage({ params }) {
 
       {/* Desktop FAB — hidden on mobile where sticky contact bar replaces it */}
       <div className={styles.fabDesktopOnly}>
-        <AgentWhatsAppFab phone={agent.phone} message={waFabMessage} />
+        <AgentWhatsAppFab phone={waFabPhone} message={waFabMessage} />
       </div>
+
+      <BackToTop />
 
       {/* Mobile sticky contact CTA — Call + WhatsApp always reachable */}
       {telHref || waHref ? (

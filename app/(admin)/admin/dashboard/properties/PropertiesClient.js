@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Archive, CircleCheck } from "lucide-react";
 import ActionMenu from "@/components/ActionMenu";
-import ImagePreviewModal from "@/components/ImagePreviewModal";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Pagination from "@/components/Pagination";
 import { getPropertyUrl } from "@/lib/propertySlug";
@@ -54,6 +53,24 @@ function isLiveProperty(status) {
   return normalizePropertyStatus(status) === "approved";
 }
 
+function isPendingApproval(status) {
+  return normalizePropertyStatus(status) === "pending_approval";
+}
+
+function getListingHref(property) {
+  if (isLiveProperty(property.status)) {
+    return getPropertyUrl(property);
+  }
+  if (isPendingApproval(property.status)) {
+    return `/admin/dashboard/approvals/${property.id}`;
+  }
+  return null;
+}
+
+function listingLinkOpensNewTab(property) {
+  return isLiveProperty(property.status);
+}
+
 function parseStatusFilter(value) {
   if (value === "active") return "approved";
   return STATUS_FILTER_OPTIONS.includes(value) ? value : "all";
@@ -75,8 +92,6 @@ export default function AdminPropertiesPage() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState("");
-  const [previewImages, setPreviewImages] = useState([]);
-  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     setAgentFilter(agentFromQuery);
@@ -247,7 +262,7 @@ export default function AdminPropertiesPage() {
       ) : filtered.length === 0 ? (
         <div className={styles.emptyState}>No properties match your filters.</div>
       ) : (
-        <>
+        <div className={styles.listingPanel}>
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
@@ -261,32 +276,63 @@ export default function AdminPropertiesPage() {
                 </tr>
               </thead>
               <tbody>
-                {pageItems.map((property) => (
+                {pageItems.map((property) => {
+                  const listingHref = getListingHref(property);
+                  const listingExternal = listingLinkOpensNewTab(property);
+                  const listingLabel = isPendingApproval(property.status)
+                    ? `Review ${property.title}`
+                    : `View ${property.title}`;
+
+                  return (
                   <tr key={property.id}>
                     <td data-label="Property">
                       <div className={styles.propCell}>
                         {property.image_url ? (
-                          <button
-                            type="button"
-                            className={styles.thumbButton}
-                            aria-label={`Preview image for ${property.title}`}
-                            onClick={() => {
-                              setPreviewImages([
-                                {
-                                  image_url: property.image_url,
-                                  category: null,
-                                },
-                              ]);
-                              setPreviewOpen(true);
-                            }}
-                          >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                          listingHref ? (
+                            <a
+                              href={listingHref}
+                              className={styles.thumbButton}
+                              aria-label={listingLabel}
+                              {...(listingExternal
+                                ? {
+                                    target: "_blank",
+                                    rel: "noopener noreferrer",
+                                  }
+                                : {})}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={property.image_url}
+                                alt=""
+                                className={styles.thumb}
+                              />
+                            </a>
+                          ) : (
+                            /* eslint-disable-next-line @next/next/no-img-element */
                             <img
                               src={property.image_url}
                               alt=""
                               className={styles.thumb}
                             />
-                          </button>
+                          )
+                        ) : listingHref ? (
+                          <a
+                            href={listingHref}
+                            className={styles.thumbButton}
+                            aria-label={listingLabel}
+                            {...(listingExternal
+                              ? {
+                                  target: "_blank",
+                                  rel: "noopener noreferrer",
+                                }
+                              : {})}
+                          >
+                            <div
+                              className={`${styles.thumb} ${styles.thumbPlaceholder}`}
+                            >
+                              N/A
+                            </div>
+                          </a>
                         ) : (
                           <div
                             className={`${styles.thumb} ${styles.thumbPlaceholder}`}
@@ -295,14 +341,22 @@ export default function AdminPropertiesPage() {
                           </div>
                         )}
                         <div>
-                          <a
-                            href={getPropertyUrl(property)}
-                            className={styles.titleLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {property.title}
-                          </a>
+                          {listingHref ? (
+                            <a
+                              href={listingHref}
+                              className={styles.titleLink}
+                              {...(listingExternal
+                                ? {
+                                    target: "_blank",
+                                    rel: "noopener noreferrer",
+                                  }
+                                : {})}
+                            >
+                              {property.title}
+                            </a>
+                          ) : (
+                            <p className={styles.listPrimary}>{property.title}</p>
+                          )}
                           <p className={styles.listSecondary}>
                             {property.location || "—"}
                             {property.size_value
@@ -348,14 +402,19 @@ export default function AdminPropertiesPage() {
                       <ActionMenu
                         ariaLabel={`Actions for ${property.title}`}
                         onView={
-                          isLiveProperty(property.status)
-                            ? () =>
-                                window.open(
-                                  getPropertyUrl(property),
-                                  "_blank",
-                                  "noopener,noreferrer",
-                                )
-                              : undefined
+                          listingHref
+                            ? () => {
+                                if (listingExternal) {
+                                  window.open(
+                                    listingHref,
+                                    "_blank",
+                                    "noopener,noreferrer",
+                                  );
+                                  return;
+                                }
+                                router.push(listingHref);
+                              }
+                            : undefined
                         }
                         additionalActions={
                           property.status === "pending_approval"
@@ -369,7 +428,8 @@ export default function AdminPropertiesPage() {
                       />
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -379,15 +439,8 @@ export default function AdminPropertiesPage() {
             totalPages={totalPages}
             onPageChange={setCurrentPage}
           />
-        </>
+        </div>
       )}
-
-      <ImagePreviewModal
-        images={previewImages}
-        currentIndex={0}
-        isOpen={previewOpen}
-        onClose={() => setPreviewOpen(false)}
-      />
     </div>
   );
 }

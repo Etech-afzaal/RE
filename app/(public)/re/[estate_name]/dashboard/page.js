@@ -7,7 +7,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import ActionMenu from "@/components/ActionMenu";
-import ImagePreviewModal from "@/components/ImagePreviewModal";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { formatPropertyPrice } from "@/lib/formatPrice";
 import { getPropertyUrl } from "@/lib/propertySlug";
@@ -65,8 +64,6 @@ export default function AgentAdminDashboardPage() {
   const [properties, setProperties] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [previewImages, setPreviewImages] = useState([]);
-  const [previewOpen, setPreviewOpen] = useState(false);
 
   const firstName = useMemo(() => {
     const name = session?.user?.name || "Agent";
@@ -173,24 +170,28 @@ export default function AgentAdminDashboardPage() {
                     property.images?.[0]?.image_url ||
                     null;
                   const addedOn = formatAddedDate(property.created_at);
+                  const editHref = `${base}/properties/${property.id}/edit`;
+                  const isApproved = property.status === "approved";
                   return (
                     <tr key={property.id}>
                       <td>
                         <div className={ui.propCell}>
                           {image ? (
-                            <button
-                              type="button"
-                              className={ui.thumbButton}
-                              aria-label={`Preview image for ${property.title}`}
-                              onClick={() => {
-                                const gallery =
-                                  property.images?.length > 0
-                                    ? property.images
-                                    : [{ image_url: image, category: null }];
-                                setPreviewImages(gallery);
-                                setPreviewOpen(true);
-                              }}
-                            >
+                            isApproved ? (
+                              <Link
+                                href={editHref}
+                                className={ui.thumbButton}
+                                aria-label={`Edit ${property.title}`}
+                              >
+                                <Image
+                                  src={image}
+                                  alt=""
+                                  width={52}
+                                  height={52}
+                                  className={ui.thumb}
+                                />
+                              </Link>
+                            ) : (
                               <Image
                                 src={image}
                                 alt=""
@@ -198,12 +199,29 @@ export default function AgentAdminDashboardPage() {
                                 height={52}
                                 className={ui.thumb}
                               />
-                            </button>
+                            )
+                          ) : isApproved ? (
+                            <Link
+                              href={editHref}
+                              className={ui.thumbButton}
+                              aria-label={`Edit ${property.title}`}
+                            >
+                              <div className={ui.thumbFallback}>P</div>
+                            </Link>
                           ) : (
                             <div className={ui.thumbFallback}>P</div>
                           )}
                           <div>
-                            <p className={ui.propTitle}>{property.title}</p>
+                            {isApproved ? (
+                              <Link
+                                href={editHref}
+                                className={`${ui.propTitle} ${ui.propTitleLink}`}
+                              >
+                                {property.title}
+                              </Link>
+                            ) : (
+                              <p className={ui.propTitle}>{property.title}</p>
+                            )}
                             {addedOn ? (
                               <p className={ui.propMeta}>Added at {addedOn}</p>
                             ) : null}
@@ -247,13 +265,6 @@ export default function AgentAdminDashboardPage() {
           </div>
         )}
       </div>
-
-      <ImagePreviewModal
-        images={previewImages}
-        currentIndex={0}
-        isOpen={previewOpen}
-        onClose={() => setPreviewOpen(false)}
-      />
     </AgentPortalShell>
   );
 }

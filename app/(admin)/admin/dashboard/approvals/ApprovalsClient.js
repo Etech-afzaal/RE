@@ -4,11 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CircleCheck, CircleX, Eye } from "lucide-react";
 import ActionMenu from "@/components/ActionMenu";
-import ImagePreviewModal from "@/components/ImagePreviewModal";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import RejectPropertyDialog from "@/components/admin/RejectPropertyDialog";
 import { formatPropertyPrice } from "@/lib/formatPrice";
-import { getPropertyUrl } from "@/lib/propertySlug";
 import styles from "@/components/admin/adminUi.module.css";
 
 const ITEMS_PER_PAGE = 8;
@@ -35,8 +33,6 @@ export default function ApprovalsClient() {
   const [rejecting, setRejecting] = useState(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [previewImages, setPreviewImages] = useState([]);
-  const [previewOpen, setPreviewOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -128,7 +124,7 @@ export default function ApprovalsClient() {
           Nothing to review. Submitted listings will appear here.
         </div>
       ) : (
-        <>
+        <div className={styles.listingPanel}>
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
@@ -142,24 +138,18 @@ export default function ApprovalsClient() {
                 </tr>
               </thead>
               <tbody>
-                {pageItems.map((property) => (
+                {pageItems.map((property) => {
+                  const reviewHref = `/admin/dashboard/approvals/${property.id}`;
+
+                  return (
                   <tr key={property.id}>
                     <td data-label="Property">
                       <div className={styles.propCell}>
                         {property.image_url ? (
-                          <button
-                            type="button"
+                          <a
+                            href={reviewHref}
                             className={styles.thumbButton}
-                            aria-label={`Preview image for ${property.title}`}
-                            onClick={() => {
-                              setPreviewImages([
-                                {
-                                  image_url: property.image_url,
-                                  category: null,
-                                },
-                              ]);
-                              setPreviewOpen(true);
-                            }}
+                            aria-label={`Review ${property.title}`}
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
@@ -167,21 +157,22 @@ export default function ApprovalsClient() {
                               alt=""
                               className={styles.thumb}
                             />
-                          </button>
+                          </a>
                         ) : (
-                          <div
-                            className={`${styles.thumb} ${styles.thumbPlaceholder}`}
+                          <a
+                            href={reviewHref}
+                            className={styles.thumbButton}
+                            aria-label={`Review ${property.title}`}
                           >
-                            N/A
-                          </div>
+                            <div
+                              className={`${styles.thumb} ${styles.thumbPlaceholder}`}
+                            >
+                              N/A
+                            </div>
+                          </a>
                         )}
                         <div>
-                          <a
-                            href={getPropertyUrl(property)}
-                            className={styles.titleLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
+                          <a href={reviewHref} className={styles.titleLink}>
                             {property.title}
                           </a>
                           <p className={styles.listSecondary}>
@@ -234,7 +225,8 @@ export default function ApprovalsClient() {
                       />
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -277,7 +269,7 @@ export default function ApprovalsClient() {
               </button>
             </div>
           )}
-        </>
+        </div>
       )}
 
       {rejecting ? (
@@ -288,13 +280,6 @@ export default function ApprovalsClient() {
           onConfirm={(reason) => review(rejecting, "rejected", reason)}
         />
       ) : null}
-
-      <ImagePreviewModal
-        images={previewImages}
-        currentIndex={0}
-        isOpen={previewOpen}
-        onClose={() => setPreviewOpen(false)}
-      />
     </div>
   );
 }

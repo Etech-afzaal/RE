@@ -123,10 +123,9 @@ function LocationIcon() {
 }
 
 const SORT_OPTIONS = [
-  { value: "default", label: "Price" },
+  { value: "newest", label: "Newest first" },
   { value: "price-asc", label: "Price: Low to High" },
   { value: "price-desc", label: "Price: High to Low" },
-  { value: "newest", label: "Newest first" },
 ];
 
 function getCategory(property) {
@@ -489,7 +488,7 @@ export default function HomeListings({ properties = [], children }) {
   const pageSize = isMobile ? MOBILE_PAGE_SIZE : DESKTOP_PAGE_SIZE;
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("all");
-  const [sort, setSort] = useState("default");
+  const [sort, setSort] = useState("newest");
   const [pages, setPages] = useState({ sale: 1, rent: 1, plot: 1 });
   // Local filter state — updated via history.replaceState + custom events so
   // subtype changes do not trigger App Router navigations / loading UI.
@@ -566,7 +565,7 @@ export default function HomeListings({ properties = [], children }) {
     const resetFilters = () => {
       setQuery("");
       setLocation("all");
-      setSort("default");
+      setSort("newest");
       setPages({ sale: 1, rent: 1, plot: 1 });
       clearTypeFilters();
     };

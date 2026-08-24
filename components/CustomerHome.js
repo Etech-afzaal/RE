@@ -172,7 +172,7 @@ function AgentCard({ agent }) {
     "Lahore";
 
   return (
-    <article className={styles.agentCard}>
+    <Link href={href} className={styles.agentCard}>
       <div className={styles.agentContent}>
         <div className={styles.agentBody}>
           <p className={styles.agentAgency}>{formatAgency(agent)}</p>
@@ -207,10 +207,8 @@ function AgentCard({ agent }) {
           )}
         </div>
       </div>
-      <Link href={href} className={styles.viewProfile}>
-        View Listing
-      </Link>
-    </article>
+      <span className={styles.viewProfile}>View Listing</span>
+    </Link>
   );
 }
 

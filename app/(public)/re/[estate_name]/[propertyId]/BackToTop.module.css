@@ -1,0 +1,43 @@
+.lift {
+  position: fixed;
+  right: max(24px, env(safe-area-inset-right, 0px));
+  bottom: max(24px, env(safe-area-inset-bottom, 0px));
+  z-index: 9998;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: var(--shadow-gold);
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.lift:hover {
+  background: var(--gold-soft);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(242, 187, 70, 0.38);
+}
+
+.lift:focus-visible {
+  outline: 3px solid var(--gold-deep);
+  outline-offset: 3px;
+}
+
+@media (max-width: 768px) {
+  .lift {
+    /* Clear the sticky Call / WhatsApp bar */
+    bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+    right: max(16px, env(safe-area-inset-right, 0px));
+    width: 48px;
+    height: 48px;
+  }
+}

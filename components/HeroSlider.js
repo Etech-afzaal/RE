@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./HeroSlider.module.css";
@@ -40,6 +40,7 @@ export default function HeroSlider({ slides = [] }) {
       : FALLBACK_SLIDES;
 
   const [active, setActive] = useState(0);
+  const thumbsRef = useRef(null);
   const current = items[active] || items[0];
 
   const goTo = useCallback((index) => {
@@ -60,6 +61,21 @@ export default function HeroSlider({ slides = [] }) {
       setActive((prev) => (prev + 1) % items.length);
     }, INTERVAL_MS);
     return () => clearInterval(id);
+  }, [active, items.length]);
+
+  useEffect(() => {
+    const rail = thumbsRef.current;
+    if (!rail || items.length <= 1) return;
+    const thumb = rail.querySelector(`[data-thumb="${active}"]`);
+    if (!(thumb instanceof HTMLElement)) return;
+
+    // Scroll only the thumbnail rail — never the page.
+    const target =
+      thumb.offsetLeft - (rail.clientWidth - thumb.offsetWidth) / 2;
+    rail.scrollTo({
+      left: Math.max(0, target),
+      behavior: "smooth",
+    });
   }, [active, items.length]);
 
   if (!current) return null;
@@ -176,6 +192,42 @@ export default function HeroSlider({ slides = [] }) {
           </div>
         ) : null}
       </div>
+
+      {items.length > 1 ? (
+        <div
+          className={styles.thumbs}
+          ref={thumbsRef}
+          role="tablist"
+          aria-label="Hero thumbnails"
+        >
+          {items.map((slide, index) => {
+            const thumbLabel =
+              slide.image_category || slide.title || `Slide ${index + 1}`;
+            return (
+              <button
+                key={slide.id}
+                type="button"
+                data-thumb={index}
+                role="tab"
+                aria-selected={index === active}
+                aria-label={`Show slide ${index + 1}: ${thumbLabel}`}
+                className={`${styles.thumb} ${
+                  index === active ? styles.thumbActive : ""
+                }`}
+                onClick={() => goTo(index)}
+              >
+                <Image
+                  src={slide.image_url}
+                  alt=""
+                  fill
+                  sizes="100px"
+                  className={styles.thumbImage}
+                />
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
     </section>
   );
 }

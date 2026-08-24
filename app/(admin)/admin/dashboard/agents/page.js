@@ -222,7 +222,7 @@ export default function AdminAgentsPage() {
       ) : filtered.length === 0 ? (
         <div className={styles.emptyState}>No agents match your filters.</div>
       ) : (
-        <>
+        <div className={styles.listingPanel}>
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
@@ -295,7 +295,7 @@ export default function AdminAgentsPage() {
             totalPages={totalPages}
             onPageChange={setCurrentPage}
           />
-        </>
+        </div>
       )}
 
       {blocking ? (

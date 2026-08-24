@@ -32,7 +32,9 @@
     "migrate:property-is-featured": "node scripts/migrate-property-is-featured.js",
     "migrate:image-hero-display": "node scripts/migrate-property-image-hero-display.js",
     "migrate:drop-image-title": "node scripts/migrate-drop-property-image-title.js",
-    "migrate:marketing-sections": "node scripts/migrate-property-marketing-sections.js"
+    "migrate:marketing-sections": "node scripts/migrate-property-marketing-sections.js",
+    "migrate:agent-whatsapp-number": "node scripts/migrate-agent-whatsapp-number.js",
+    "migrate:agent-secondary-phone": "node scripts/migrate-agent-secondary-phone.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

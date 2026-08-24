@@ -210,6 +210,8 @@
   border-radius: 10px;
   line-height: 0;
   flex-shrink: 0;
+  text-decoration: none;
+  color: inherit;
 }
 
 .thumbButton:hover .thumb,
@@ -235,6 +237,16 @@
   font-weight: 700;
   font-size: 0.92rem;
   color: var(--ink);
+}
+
+.propTitleLink {
+  display: inline-block;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.propTitleLink:hover {
+  color: var(--gold-deep);
 }
 
 .propMeta {

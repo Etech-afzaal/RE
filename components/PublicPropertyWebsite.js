@@ -10,7 +10,8 @@ import TrustStats from "@/components/TrustStats";
 import LocationCarousel from "@/components/LocationCarousel";
 import AgentInquiryForm from "@/components/AgentInquiryForm";
 import AgentWhatsAppFab from "@/components/AgentWhatsAppFab";
-import { agentWebsiteWhatsAppMessage } from "@/lib/whatsapp";
+import { agentPhoneEntries } from "@/lib/agentContact";
+import { agentWebsiteWhatsAppMessage, resolveAgentWhatsAppNumber } from "@/lib/whatsapp";
 import styles from "@/app/page.module.css";
 
 const AGENT_PUBLIC_NAV = [
@@ -68,6 +69,7 @@ export default function PublicPropertyWebsite({
     heroSlides.find((slide) => slide.image_url)?.image_url ||
     null;
 
+  const phoneEntries = agent ? agentPhoneEntries(agent) : [];
   const contactPhone = agent
     ? agent.phone || null
     : "+92 300 123 4567";
@@ -195,7 +197,17 @@ export default function PublicPropertyWebsite({
                       </span>
                       <div>
                         <p className={styles.contactDetailLabel}>Phone</p>
-                        {contactPhone && contactTelHref ? (
+                        {phoneEntries.length > 0 ? (
+                          phoneEntries.map((entry) => (
+                            <a
+                              key={entry.number}
+                              href={entry.href}
+                              className={styles.contactDetailLink}
+                            >
+                              {entry.number}
+                            </a>
+                          ))
+                        ) : contactPhone && contactTelHref ? (
                           <a
                             href={contactTelHref}
                             className={styles.contactDetailLink}
@@ -319,9 +331,15 @@ export default function PublicPropertyWebsite({
 
             <div className={styles.footerCol}>
               <h4>Contact</h4>
-              {contactPhone && contactTelHref ? (
-                <a href={contactTelHref}>{contactPhone}</a>
-              ) : null}
+              {phoneEntries.length > 0
+                ? phoneEntries.map((entry) => (
+                    <a key={entry.number} href={entry.href}>
+                      {entry.number}
+                    </a>
+                  ))
+                : contactPhone && contactTelHref ? (
+                    <a href={contactTelHref}>{contactPhone}</a>
+                  ) : null}
               <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
               <span>{contactOffice}</span>
             </div>
@@ -333,9 +351,9 @@ export default function PublicPropertyWebsite({
         </footer>
       </main>
 
-      {agent?.phone ? (
+      {resolveAgentWhatsAppNumber(agent) ? (
         <AgentWhatsAppFab
-          phone={agent.phone}
+          phone={resolveAgentWhatsAppNumber(agent)}
           message={agentWebsiteWhatsAppMessage(agent.full_name)}
         />
       ) : null}

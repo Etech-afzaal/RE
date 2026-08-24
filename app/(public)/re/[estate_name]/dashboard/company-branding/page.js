@@ -222,7 +222,7 @@ export default function CompanyBrandingPage() {
             className={ui.input}
             value={form.company_name}
             onChange={(e) => setForm({ ...form, company_name: e.target.value })}
-            placeholder="Johar Living Properties"
+            placeholder="Dhalahore Properties"
           />
         </label>
         <label className={ui.field}>
@@ -231,6 +231,7 @@ export default function CompanyBrandingPage() {
             className={ui.textarea}
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
+            placeholder="Describe your agency, services, and market expertise"
           />
         </label>
         <label className={ui.field}>
@@ -241,6 +242,7 @@ export default function CompanyBrandingPage() {
             onChange={(e) =>
               setForm({ ...form, office_address: e.target.value })
             }
+            placeholder="Office number, street, area, city"
           />
         </label>
         <label className={ui.field}>
@@ -249,6 +251,7 @@ export default function CompanyBrandingPage() {
             className={ui.input}
             value={form.areas_served}
             onChange={(e) => setForm({ ...form, areas_served: e.target.value })}
+            placeholder="DHA Lahore, Johar Town, Gulberg"
           />
         </label>
         <label className={ui.field}>

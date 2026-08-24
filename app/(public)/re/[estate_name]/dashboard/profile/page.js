@@ -24,6 +24,8 @@ export default function AgentProfilePage() {
     full_name: "",
     email: "",
     phone: "",
+    secondary_phone: "",
+    whatsapp_number: "",
     description: "",
     areas_served: "",
     profile_image: null,
@@ -52,6 +54,8 @@ export default function AgentProfilePage() {
           full_name: data.agent.full_name || "",
           email: data.agent.email || "",
           phone: data.agent.phone || "",
+          secondary_phone: data.agent.secondary_phone || "",
+          whatsapp_number: data.agent.whatsapp_number || "",
           description: data.agent.description || "",
           areas_served: data.agent.areas_served || "",
           profile_image: data.agent.profile_image || null,
@@ -216,12 +220,18 @@ export default function AgentProfilePage() {
             className={ui.input}
             value={form.full_name}
             onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+            placeholder="Your full name"
             required
           />
         </label>
         <label className={ui.field}>
           <span className={ui.label}>Email</span>
-          <input className={ui.input} value={form.email} disabled />
+          <input
+            className={ui.input}
+            value={form.email}
+            placeholder="you@example.com"
+            disabled
+          />
         </label>
         <label className={ui.field}>
           <span className={ui.label}>Phone</span>
@@ -229,6 +239,29 @@ export default function AgentProfilePage() {
             className={ui.input}
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            placeholder="+92 300 1234567"
+          />
+        </label>
+        <label className={ui.field}>
+          <span className={ui.label}>Second Number</span>
+          <input
+            className={ui.input}
+            value={form.secondary_phone}
+            onChange={(e) =>
+              setForm({ ...form, secondary_phone: e.target.value })
+            }
+            placeholder="+92 301 2345678"
+          />
+        </label>
+        <label className={ui.field}>
+          <span className={ui.label}>WhatsApp Number</span>
+          <input
+            className={ui.input}
+            value={form.whatsapp_number}
+            onChange={(e) =>
+              setForm({ ...form, whatsapp_number: e.target.value })
+            }
+            placeholder="+92 300 1234567"
           />
         </label>
         <label className={ui.field}>
@@ -237,6 +270,7 @@ export default function AgentProfilePage() {
             className={ui.textarea}
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
+            placeholder="Brief introduction about your experience and specialization"
           />
         </label>
         <label className={ui.field}>

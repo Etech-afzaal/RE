@@ -758,6 +758,28 @@
   overflow: auto;
 }
 
+/* Stable listing height for admin paged tables (8 rows per page). */
+.listingPanel {
+  --admin-listing-page-size: 8;
+  --admin-listing-head-height: 2.55rem;
+  --admin-listing-row-height: 4.875rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.listingPanel .tableWrap {
+  flex: 1 0 auto;
+  min-height: calc(
+    var(--admin-listing-head-height) +
+      (var(--admin-listing-row-height) * var(--admin-listing-page-size))
+  );
+}
+
+.listingPanel > nav,
+.listingPanel > .pagination {
+  flex-shrink: 0;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -1122,6 +1144,8 @@
   cursor: pointer;
   border-radius: 10px;
   line-height: 0;
+  text-decoration: none;
+  color: inherit;
 }
 
 .thumbButton:hover .thumb,
@@ -1262,6 +1286,10 @@
   }
 
   /* Stack tables into cards on phones — desktop table unchanged */
+  .listingPanel .tableWrap {
+    min-height: 0;
+  }
+
   .tableWrap {
     overflow: visible;
     background: transparent;

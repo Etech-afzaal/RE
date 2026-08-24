@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 import AgentAvatar from "@/components/AgentAvatar";
 import { agentPublicUsername } from "@/lib/propertySlug";
+import { agentPhoneEntries, agentHasPhone } from "@/lib/agentContact";
+import { buildAgentWhatsAppUrl } from "@/lib/whatsapp";
 import styles from "./AgentBrandProfile.module.css";
 
 function titleCaseWords(value) {
@@ -120,9 +122,9 @@ export default function AgentBrandProfile({ agent, stats = null }) {
   const companyName = companyNameFromAgent(agent);
   const designation = agentDesignation(agent);
   const areas = parseAreas(agent.areas_served);
-  const phoneHref = agent.phone
-    ? `tel:${String(agent.phone).replace(/\s/g, "")}`
-    : null;
+  const phoneEntries = agentPhoneEntries(agent);
+  const whatsappNumber = String(agent.whatsapp_number || "").trim();
+  const whatsappHref = buildAgentWhatsAppUrl(agent);
 
   const brandStats = [
     {
@@ -215,16 +217,41 @@ export default function AgentBrandProfile({ agent, stats = null }) {
               </div>
             ) : null}
 
-            {(agent.phone || agent.email) && (
+            {(agentHasPhone(agent) || whatsappNumber || agent.email) && (
               <div className={styles.block}>
                 <p className={styles.blockLabel}>Contact Information</p>
                 <div className={styles.contactGrid}>
-                  {agent.phone ? (
+                  {phoneEntries.length > 0 ? (
                     <div className={styles.contactItem}>
                       <span className={styles.contactLabel}>Phone</span>
-                      <a href={phoneHref} className={styles.contactValue}>
-                        {agent.phone}
-                      </a>
+                      {phoneEntries.map((entry) => (
+                        <a
+                          key={entry.number}
+                          href={entry.href}
+                          className={styles.contactValue}
+                        >
+                          {entry.number}
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
+                  {whatsappNumber ? (
+                    <div className={styles.contactItem}>
+                      <span className={styles.contactLabel}>WhatsApp</span>
+                      {whatsappHref ? (
+                        <a
+                          href={whatsappHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.contactValue}
+                        >
+                          {whatsappNumber}
+                        </a>
+                      ) : (
+                        <span className={styles.contactValue}>
+                          {whatsappNumber}
+                        </span>
+                      )}
                     </div>
                   ) : null}
                   {agent.email ? (
