@@ -1,4 +1,7 @@
-.root { position: relative; display: inline-flex; }
+.root {
+  position: relative;
+  display: inline-flex;
+}
 
 .trigger {
   display: inline-grid;
@@ -13,8 +16,17 @@
   transition: background var(--transition-base, 160ms ease), color var(--transition-base, 160ms ease), border-color var(--transition-base, 160ms ease);
 }
 
-.trigger:hover, .trigger[aria-expanded="true"] { background: var(--brass-tint, var(--gold-tint, #fff6d8)); border-color: var(--line-soft, #eadfbe); }
-.trigger:focus-visible, .item:focus-visible { outline: 3px solid rgba(242, 187, 70, 0.38); outline-offset: 2px; }
+.trigger:hover,
+.trigger[aria-expanded="true"] {
+  background: var(--brass-tint, var(--gold-tint, #fff6d8));
+  border-color: var(--line-soft, #eadfbe);
+}
+
+.trigger:focus-visible,
+.item:focus-visible {
+  outline: 3px solid rgba(242, 187, 70, 0.38);
+  outline-offset: 2px;
+}
 
 .menu {
   position: absolute;
@@ -23,7 +35,7 @@
   /* Keep scrolling row menus underneath the sticky dashboard header. */
   z-index: 10;
   display: grid;
-  min-width: 10.5rem;
+  min-width: 15.5rem;
   padding: 0.35rem;
   border: 1px solid var(--line-soft, #e8dfcd);
   border-radius: 14px;
@@ -63,9 +75,32 @@
   height: 1.25rem;
 }
 
-.item:hover:not(:disabled) { background: var(--brass-tint, var(--gold-tint, #fff6d8)); }
-.item:disabled { cursor: not-allowed; opacity: 0.55; }
-.danger:hover:not(:disabled) { color: var(--danger, #dc2626); background: var(--danger-tint, #fff1f2); }
-.danger:hover:not(:disabled) svg { color: var(--danger, #dc2626); }
+.item:hover:not(:disabled) {
+  background: var(--brass-tint, var(--gold-tint, #fff6d8));
+}
 
-@keyframes menuIn { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.item:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.danger:hover:not(:disabled) {
+  color: var(--danger, #dc2626);
+  background: var(--danger-tint, #fff1f2);
+}
+
+.danger:hover:not(:disabled) svg {
+  color: var(--danger, #dc2626);
+}
+
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
