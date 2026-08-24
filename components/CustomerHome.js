@@ -481,7 +481,7 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
                 setNoMatchArea(null);
                 setLocationFilterActive(false);
               }}
-              placeholder="Search by name, agency, or expertise"
+              placeholder="Search by area, name, agency, or expertise"
               aria-label="Search agents"
             />
           </div>
@@ -698,10 +698,10 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
             </div>
             <div className={styles.sellActions}>
               <Link href="/agent/signup" className={styles.btnPrimary}>
-                Become an agent
+                Become an Agent
               </Link>
               <Link href="/agent/login" className={styles.btnGhost}>
-                Agent login
+                Agent Login
               </Link>
             </div>
           </section>
@@ -720,7 +720,7 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
                       onClick={toggleExpandAllFaqs}
                       aria-expanded={allFaqsExpanded}
                     >
-                      {allFaqsExpanded ? "Collapse all" : "Expand all"}
+                      {allFaqsExpanded ? "Collapse All" : "Expand All"}
                     </button>
                   </div>
                   <div className={styles.faqList}>
@@ -926,14 +926,14 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
             </div>
             <div className={styles.footerCol}>
               <h4>Explore</h4>
-              <a href="#agents">Find agents</a>
+              <a href="#agents">Find Agents</a>
               <a href="#why-us">Why us</a>
-              <Link href="/privacy-policy">Privacy policy</Link>
+              <Link href="/privacy-policy">Privacy Policy</Link>
             </div>
             <div className={styles.footerCol}>
               <h4>Accounts</h4>
-              <Link href="/agent/login">Agent login</Link>
-              <Link href="/agent/signup">Become an agent</Link>
+              <Link href="/agent/login">Agent Login</Link>
+              <Link href="/agent/signup">Become an Agent</Link>
             </div>
             <div className={styles.footerCol}>
               <h4>Contact</h4>

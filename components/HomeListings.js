@@ -426,7 +426,7 @@ function PropertySection({
           <h2 className={styles.title}>{title}</h2>
         </div>
         <p className={styles.count}>
-          {properties.length} {properties.length === 1 ? "home" : "homes"}
+          {properties.length} {properties.length === 1 ? "home" : "houses"}
         </p>
       </div>
 

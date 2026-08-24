@@ -134,7 +134,7 @@ export default function AgentAdminDashboardPage() {
         <div className={ui.panelHeader}>
           <h2 className={ui.panelTitle}>Recent Properties</h2>
           <Link href={`${base}/properties`} className={ui.btnGhost}>
-            View all
+            View All
           </Link>
         </div>
         {loading ? (

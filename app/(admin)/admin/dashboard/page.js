@@ -433,7 +433,7 @@ export default function AdminOverviewPage() {
             href="/admin/dashboard/approvals"
             className={styles.attentionHeaderLink}
           >
-            View all
+            View All
           </Link>
         </div>
         {attentionItems.length === 0 ? (
@@ -561,7 +561,7 @@ export default function AdminOverviewPage() {
         <div className={styles.panelHeader}>
           <h2 className={styles.panelTitle}>Recent Activities</h2>
           <Link href="/admin/dashboard/logs" className={styles.panelLink}>
-            View all
+            View All
           </Link>
         </div>
         {activityRows.length === 0 ? (

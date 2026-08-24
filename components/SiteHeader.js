@@ -78,8 +78,8 @@ function sectionIdFromType(type) {
 
 export default function SiteHeader({
   navLinks = DEFAULT_NAV_LINKS,
-  ctaLabel = "Become an agent",
-  ctaHref = "/agent/login",
+  ctaLabel = "Become an Agent",
+  ctaHref = "/agent/signup",
   logoSrc = "/logo.svg",
   logoAlt = "Dhalahore Properties",
   logoScrollTarget,

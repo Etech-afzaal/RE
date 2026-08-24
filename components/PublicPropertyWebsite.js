@@ -82,7 +82,7 @@ export default function PublicPropertyWebsite({
     <div className={styles.wrapper}>
       <SiteHeader
         navLinks={AGENT_PUBLIC_NAV}
-        ctaLabel="Sell your property"
+        ctaLabel="Sell Your Property"
         ctaHref="#contact"
         logoSrc={agent?.company_logo || "/logo.svg"}
         logoAlt={
@@ -118,7 +118,7 @@ export default function PublicPropertyWebsite({
                   className={styles.textLink}
                   data-view-all-homes
                 >
-                  View all homes
+                  View All Homes
                 </a>
               </div>
 
@@ -307,14 +307,14 @@ export default function PublicPropertyWebsite({
               <Link href="#sale">For Sale</Link>
               <Link href="#rent">For Rent</Link>
               <Link href="#plots">Plots</Link>
-              <Link href="#why-us">How it works</Link>
+              <Link href="#why-us">How It Works</Link>
             </div>
 
             <div className={styles.footerCol}>
               <h4>Agents</h4>
               <Link href="/agent/signup">Sign up</Link>
               <Link href="/agent/login">Login</Link>
-              <Link href="/agent/properties/new">Add property</Link>
+              <Link href="/agent/properties/new">Add Property</Link>
             </div>
 
             <div className={styles.footerCol}>
