@@ -736,11 +736,11 @@ export default function EditPropertyPage() {
             ) : null}
             {isRejected ? (
               <div className={ui.noticeRejected}>
-                <p className={ui.noticeTitle}>
-                  Your property was rejected. Please review the reason and update
-                  it.
+                <p className={ui.noticeTitle}>Property Rejected</p>
+                <p className={ui.noticeFeedbackLabel}>Admin Feedback:</p>
+                <p className={ui.noticeFeedbackBody}>
+                  {rejection?.reason || "No reason was recorded."}
                 </p>
-                {rejection?.reason || "No reason was recorded."}
               </div>
             ) : null}
             <p className={ui.muted}>

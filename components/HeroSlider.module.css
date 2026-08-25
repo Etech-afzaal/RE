@@ -51,13 +51,13 @@
 
 .thumbActive {
   opacity: 1;
-  border-color: #f2bb46;
+  border-color: var(--gold, #f2bb46);
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(242, 187, 70, 0.35);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--gold, #f2bb46) 35%, transparent);
 }
 
 .thumb:focus-visible {
-  outline: 3px solid #f2bb46;
+  outline: 3px solid var(--gold, #f2bb46);
   outline-offset: 2px;
 }
 
@@ -179,8 +179,8 @@
   gap: 0.55rem;
   padding: 0.85rem 1.45rem;
   border-radius: 10px;
-  background: #f2bb46;
-  color: #1a1a1a;
+  background: var(--cta-bg, #f2bb46);
+  color: var(--cta-fg, #1a1a1a);
   font-weight: 700;
   font-size: 0.98rem;
   text-decoration: none;
@@ -188,11 +188,13 @@
   transition:
     background 0.2s ease,
     transform 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.2s ease,
+    color 0.2s ease;
 }
 
 .cta:hover {
-  background: #f5c85c;
+  background: var(--cta-hover-bg, #f5c85c);
+  color: var(--cta-hover-fg, #1a1a1a);
   transform: translateY(-2px);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
 }
@@ -296,14 +298,14 @@
 
 .navigationButton:hover {
   transform: translateY(-50%) scale(1.06);
-  background: rgba(242, 187, 70, 0.92);
-  border-color: #f2bb46;
+  background: color-mix(in srgb, var(--gold, #f2bb46) 92%, transparent);
+  border-color: var(--gold, #f2bb46);
   color: #1a1a1a;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
 }
 
 .navigationButton:focus-visible {
-  outline: 3px solid #f2bb46;
+  outline: 3px solid var(--gold, #f2bb46);
   outline-offset: 3px;
 }
 
@@ -326,9 +328,9 @@
 }
 
 .dotActive {
-  background: #f2bb46;
-  border-color: #f2bb46;
-  box-shadow: 0 0 0 3px rgba(242, 187, 70, 0.28);
+  background: var(--gold, #f2bb46);
+  border-color: var(--gold, #f2bb46);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold, #f2bb46) 28%, transparent);
 }
 
 @media (max-width: 1024px) {

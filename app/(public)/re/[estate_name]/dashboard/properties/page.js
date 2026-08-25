@@ -397,6 +397,7 @@ export default function AgentPropertiesPage() {
                   const isRejected = property.status === "rejected";
                   const featured = isFeaturedProperty(property);
                   const isApproved = property.status === "approved";
+                  const linksToEdit = isApproved || isRejected;
                   const note = statusNote(property.status);
                   const addedOn = formatAddedDate(property.created_at);
                   return (
@@ -404,7 +405,7 @@ export default function AgentPropertiesPage() {
                       <td data-label="Property">
                         <div className={ui.propCell}>
                           {image ? (
-                            isApproved ? (
+                            linksToEdit ? (
                               <Link
                                 href={editHref}
                                 className={ui.thumbButton}
@@ -427,7 +428,7 @@ export default function AgentPropertiesPage() {
                                 className={ui.thumb}
                               />
                             )
-                          ) : isApproved ? (
+                          ) : linksToEdit ? (
                             <Link
                               href={editHref}
                               className={ui.thumbButton}
@@ -439,7 +440,7 @@ export default function AgentPropertiesPage() {
                             <div className={ui.thumbFallback}>P</div>
                           )}
                           <div>
-                            {isApproved ? (
+                            {linksToEdit ? (
                               <Link
                                 href={editHref}
                                 className={`${ui.propTitle} ${ui.propTitleLink}`}

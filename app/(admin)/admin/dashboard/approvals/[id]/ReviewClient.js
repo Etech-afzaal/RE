@@ -138,6 +138,7 @@ export default function ReviewClient({ propertyId }) {
   }
 
   const isPending = property.status === "pending_approval";
+  const isRejected = property.status === "rejected";
   const publicUrl = getPropertyUrl(property);
   const safeImagePage = Math.min(imagePage, imageTotalPages);
   const imageStart =
@@ -279,23 +280,27 @@ export default function ReviewClient({ propertyId }) {
                     Reject Property
                   </button>
                 </div>
+              ) : isRejected ? (
+                <div className={styles.reviewRejected}>
+                  <span
+                    className={`${styles.badge} ${styles.badgeDanger}`}
+                  >
+                    Rejected
+                  </span>
+                  <InfoRow label="Rejection reason">
+                    {property.rejected_reason || "No reason was recorded."}
+                  </InfoRow>
+                  <InfoRow label="Rejected">
+                    {formatDateTime(property.rejected_at)}
+                    {property.rejected_by ? ` · ${property.rejected_by}` : ""}
+                  </InfoRow>
+                </div>
               ) : (
                 <p className={styles.empty}>
                   This listing is not awaiting review.
                 </p>
               )}
 
-              {property.rejected_reason ? (
-                <>
-                  <InfoRow label="Rejection reason">
-                    {property.rejected_reason}
-                  </InfoRow>
-                  <InfoRow label="Rejected">
-                    {formatDateTime(property.rejected_at)}
-                    {property.rejected_by ? ` · ${property.rejected_by}` : ""}
-                  </InfoRow>
-                </>
-              ) : null}
               {property.approved_at ? (
                 <InfoRow label="Approved">
                   {formatDateTime(property.approved_at)}

@@ -65,7 +65,7 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(135deg, rgba(242, 187, 70, 0.18), transparent 55%),
+    linear-gradient(135deg, color-mix(in srgb, var(--gold) 18%, transparent), transparent 55%),
     #e8e4dc;
 }
 
@@ -150,6 +150,20 @@
   padding: 0.15rem 0.1rem 0.35rem;
   scroll-snap-type: x proximity;
   scrollbar-width: thin;
+  scrollbar-color: var(--gold, #c8a45d) transparent;
+}
+
+.thumbs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.thumbs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.thumbs::-webkit-scrollbar-thumb {
+  background: var(--gold, #c8a45d);
+  border-radius: 999px;
 }
 
 .thumb {

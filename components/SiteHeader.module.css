@@ -11,7 +11,7 @@
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(26, 26, 26, 0.06);
-  box-shadow: 0 1px 0 rgba(242, 187, 70, 0.18);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--gold) 18%, transparent);
 }
 
 .inner {
@@ -166,7 +166,11 @@
 }
 
 .navLinkActive {
-  color: var(--gold-deep);
+  color: var(--nav-link-active-color, var(--gold-deep));
+}
+
+.navLinkActive::after {
+  width: var(--nav-link-active-underline, 0);
 }
 
 .actions {
@@ -183,21 +187,22 @@
   gap: 0.4rem;
   padding: 0.6rem 1.1rem;
   border-radius: 12px;
-  background: var(--gold);
-  color: #1a1a1a;
+  background: var(--cta-bg, var(--gold));
+  color: var(--cta-fg, #1a1a1a);
   font-weight: 700;
   font-size: 0.9rem;
   text-decoration: none;
   white-space: nowrap;
-  box-shadow: var(--shadow-gold);
+  box-shadow: var(--cta-shadow, var(--shadow-gold));
   transition: background 0.2s ease, transform 0.4s ease-out, box-shadow 0.2s ease,
-    opacity 0.4s ease-out;
+    opacity 0.4s ease-out, color 0.2s ease;
 }
 
 .agentButton:hover {
-  background: var(--gold-soft);
+  background: var(--cta-hover-bg, var(--gold-soft));
+  color: var(--cta-hover-fg, #1a1a1a);
   transform: translateY(-1px);
-  box-shadow: 0 12px 30px rgba(242, 187, 70, 0.35);
+  box-shadow: var(--cta-shadow, 0 12px 30px color-mix(in srgb, var(--gold) 35%, transparent));
 }
 
 .hamburger {
@@ -217,7 +222,7 @@
 
 .hamburger:hover {
   background: var(--gold-tint);
-  border-color: rgba(242, 187, 70, 0.45);
+  border-color: color-mix(in srgb, var(--gold) 45%, transparent);
 }
 
 .mobileOverlay {
@@ -408,18 +413,19 @@
     margin-top: 0.75rem;
     padding: 0.85rem 1rem;
     border-radius: 12px;
-    background: var(--gold);
-    color: #1a1a1a;
+    background: var(--cta-bg, var(--gold));
+    color: var(--cta-fg, #1a1a1a);
     font-size: 0.92rem;
     font-weight: 700;
     text-decoration: none;
-    box-shadow: var(--shadow-gold);
+    box-shadow: var(--cta-shadow, var(--shadow-gold));
     opacity: 0;
     transform: translateY(12px);
     transition:
       opacity 350ms ease-out,
       transform 350ms ease-out,
-      background 0.2s ease;
+      background 0.2s ease,
+      color 0.2s ease;
     transition-delay: 0ms;
   }
 
@@ -430,7 +436,8 @@
   }
 
   .mobileCta:hover {
-    background: var(--gold-soft);
+    background: var(--cta-hover-bg, var(--gold-soft));
+    color: var(--cta-hover-fg, #1a1a1a);
   }
 }
 

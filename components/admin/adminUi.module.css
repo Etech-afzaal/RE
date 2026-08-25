@@ -1058,23 +1058,52 @@
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   align-items: start;
-  gap: 1.15rem;
+  gap: 1.25rem;
 }
 
-/* Right-side review info cards — breathing room only; left gallery unchanged */
+/* Left column: stacked review cards with consistent separation */
+.reviewGrid > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+/* Review page cards — internal breathing room (left + right) */
+.reviewGrid .panelHeader {
+  align-items: flex-start;
+  gap: 0.85rem 1rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.reviewGrid .panelTitle {
+  line-height: 1.35;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.reviewGrid .panelBody {
+  padding: 1.5rem;
+}
+
+.reviewGrid .panelBody > .empty {
+  padding: 0.25rem 0;
+}
+
+/* Right-side review info cards — keep structure; align with left spacing */
 .reviewSidebar {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
   min-width: 0;
 }
 
 .reviewSidebar .panelHeader {
-  padding: 1.25rem 1.4rem;
+  padding: 1.25rem 1.5rem;
 }
 
 .reviewSidebar .panelBody {
-  padding: 1.35rem 1.4rem;
+  padding: 1.35rem 1.5rem;
 }
 
 .reviewSidebar .panelBody > .empty {
@@ -1084,7 +1113,7 @@
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 0.7rem;
+  gap: 0.85rem;
 }
 
 .galleryMeta {
@@ -1093,7 +1122,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 0.5rem 1rem;
-  margin-bottom: 0.85rem;
+  margin-bottom: 1rem;
 }
 
 .galleryCount {
@@ -1232,6 +1261,17 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
+}
+
+.reviewRejected {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.reviewRejected .badge {
+  align-self: flex-start;
+  margin-bottom: 0.35rem;
 }
 
 .noticeDanger {

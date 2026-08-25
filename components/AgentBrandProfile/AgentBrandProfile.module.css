@@ -46,7 +46,7 @@
   border-radius: 14px;
   border: 1px solid rgba(26, 26, 26, 0.08);
   background:
-    linear-gradient(145deg, var(--gold-tint, rgba(242, 187, 70, 0.18)), #fff),
+    linear-gradient(145deg, var(--gold-tint, color-mix(in srgb, var(--gold) 18%, transparent)), #fff),
     #faf9f6;
   color: var(--gold-deep, #9a6b12);
   font-family: var(--font-display, inherit);
@@ -116,7 +116,7 @@
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  background: var(--gold-tint, rgba(242, 187, 70, 0.18));
+  background: var(--gold-tint, color-mix(in srgb, var(--gold) 18%, transparent));
   color: var(--gold-deep, #9a6b12);
   font-family: var(--font-display, inherit);
   font-size: 1.5rem;
@@ -153,8 +153,8 @@
   gap: 0.35rem;
   padding: 0.22rem 0.55rem 0.22rem 0.28rem;
   border-radius: 999px;
-  background: var(--gold-tint, rgba(242, 187, 70, 0.18));
-  border: 1px solid rgba(242, 187, 70, 0.35);
+  background: var(--verified-bg, var(--gold-tint, color-mix(in srgb, var(--gold) 18%, transparent)));
+  border: 1px solid var(--verified-border, color-mix(in srgb, var(--gold, #f2bb46) 35%, transparent));
   color: #1a1a1a;
   white-space: nowrap;
 }
@@ -177,7 +177,7 @@
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: var(--gold-deep, #9a6b12);
+  color: var(--verified-fg, var(--gold-deep, #9a6b12));
 }
 
 .agentRole {
@@ -264,6 +264,16 @@
   text-transform: uppercase;
 }
 
+.blockLabel::after {
+  content: "";
+  display: block;
+  width: 2.25rem;
+  height: 2px;
+  margin-top: 0.4rem;
+  background: var(--gold, #f2bb46);
+  border-radius: 999px;
+}
+
 .aboutText {
   margin: 0;
   color: #4f4f4f;
@@ -286,9 +296,9 @@
   align-items: center;
   padding: 0.4rem 0.75rem;
   border-radius: 999px;
-  border: 1px solid rgba(26, 26, 26, 0.1);
-  background: #faf9f6;
-  color: #1a1a1a;
+  border: 1px solid rgba(26, 26, 26, 0.12);
+  background: #ffffff;
+  color: #111111;
   font-size: 0.84rem;
   font-weight: 600;
   text-decoration: none;
@@ -300,9 +310,17 @@
 }
 
 .areaChip:hover {
-  background: var(--gold-tint, rgba(242, 187, 70, 0.18));
-  border-color: rgba(242, 187, 70, 0.55);
-  color: var(--gold-deep, #9a6b12);
+  background: var(--gold-tint, color-mix(in srgb, var(--gold) 18%, transparent));
+  border-color: color-mix(in srgb, var(--gold, #f2bb46) 55%, transparent);
+  color: #111111;
+}
+
+.areaChip:active,
+.areaChip:focus-visible {
+  background: var(--gold, #f2bb46);
+  border-color: var(--gold, #f2bb46);
+  color: #111111;
+  outline: none;
 }
 
 .contactGrid {

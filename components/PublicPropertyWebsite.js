@@ -13,6 +13,7 @@ import AgentWhatsAppFab from "@/components/AgentWhatsAppFab";
 import { agentPhoneEntries } from "@/lib/agentContact";
 import { agentWebsiteWhatsAppMessage, resolveAgentWhatsAppNumber } from "@/lib/whatsapp";
 import styles from "@/app/page.module.css";
+import "@/app/agent-public-theme.css";
 
 const AGENT_PUBLIC_NAV = [
   { label: "Home", href: "/" },
@@ -51,9 +52,8 @@ const AGENT_PUBLIC_NAV = [
 ];
 
 /**
- * Shared public property website UI (homepage design).
- * Used by `/` (marketplace) and `/re/[agent_username]` (per-agent site).
- * Visual design must stay identical — only data/props differ.
+ * Agent public property website UI (`/re/[agent_username]`).
+ * Visual theme is isolated via `.agent-public-theme` (see agent-public-theme.css).
  */
 export default function PublicPropertyWebsite({
   properties = [],
@@ -81,7 +81,7 @@ export default function PublicPropertyWebsite({
     agent?.office_address || "12 Garden Town, Lahore";
 
   return (
-    <div className={styles.wrapper}>
+    <div className={`agent-public-theme ${styles.wrapper}`}>
       <SiteHeader
         navLinks={AGENT_PUBLIC_NAV}
         ctaLabel="Sell Your Property"

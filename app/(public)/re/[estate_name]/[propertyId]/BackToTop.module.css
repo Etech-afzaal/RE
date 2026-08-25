@@ -11,24 +11,26 @@
   padding: 0;
   border: none;
   border-radius: 999px;
-  background: var(--gold);
-  color: var(--ink);
+  background: var(--cta-bg, var(--gold));
+  color: var(--cta-fg, var(--ink));
   cursor: pointer;
-  box-shadow: var(--shadow-gold);
+  box-shadow: var(--cta-shadow, var(--shadow-gold));
   transition:
     background 0.2s ease,
     transform 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.2s ease,
+    color 0.2s ease;
 }
 
 .lift:hover {
-  background: var(--gold-soft);
+  background: var(--cta-hover-bg, var(--gold-soft));
+  color: var(--cta-hover-fg, var(--ink));
   transform: translateY(-2px);
-  box-shadow: 0 14px 32px rgba(242, 187, 70, 0.38);
+  box-shadow: var(--cta-shadow, 0 14px 32px color-mix(in srgb, var(--gold) 38%, transparent));
 }
 
 .lift:focus-visible {
-  outline: 3px solid var(--gold-deep);
+  outline: 3px solid var(--gold);
   outline-offset: 3px;
 }
 

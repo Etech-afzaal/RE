@@ -82,9 +82,9 @@
 }
 
 .playlistBtnActive {
-  background: rgba(242, 187, 70, 0.14);
+  background: color-mix(in srgb, var(--gold, #f2bb46) 14%, transparent);
   border-color: var(--gold, #f2bb46);
-  box-shadow: 0 0 0 1px rgba(242, 187, 70, 0.25);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold, #f2bb46) 25%, transparent);
 }
 
 .thumbWrap {
@@ -214,7 +214,7 @@
 }
 
 .playlistBtnActive .playlistIndex {
-  color: rgba(242, 187, 70, 0.85);
+  color: color-mix(in srgb, var(--gold, #f2bb46) 85%, transparent);
 }
 
 /* ---------- Player ---------- */

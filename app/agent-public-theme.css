@@ -1,0 +1,60 @@
+/**
+ * Isolated theme for Agent Public Website + Agent Property Detail only.
+ * Applied via `.agent-public-theme` on those page roots — does NOT change :root.
+ */
+
+.agent-public-theme {
+  /* Surfaces */
+  --paper: #fafaf8;
+  --surface: #ffffff;
+  --surface-sunken: #fafaf8;
+  --surface-secondary: #fafaf8;
+
+  /* Ink */
+  --ink: #111111;
+  --ink-soft: #666666;
+  --muted: #999999;
+
+  /* Remap legacy gold/brass tokens → champagne gold consultant palette */
+  --gold: #c8a45d;
+  --gold-soft: #d4b574;
+  --gold-deep: #111111;
+  --gold-tint: #f5efe3;
+  --brass: #c8a45d;
+  --brass-deep: #8a6a2f;
+  --brass-light: #d4b574;
+  --brass-tint: #f5efe3;
+  --shadow-gold: 0 10px 28px rgba(200, 164, 93, 0.28);
+
+  /* Named agent tokens */
+  --agent-black: #111111;
+  --agent-white: #ffffff;
+  --agent-bg: #fafaf8;
+  --agent-accent: #c8a45d;
+  --agent-accent-secondary: #8a6a2f;
+
+  /* Primary CTAs: black fill; champagne gold on hover */
+  --cta-bg: #111111;
+  --cta-fg: #ffffff;
+  --cta-hover-bg: #c8a45d;
+  --cta-hover-fg: #111111;
+  --cta-shadow: 0 10px 28px rgba(17, 17, 17, 0.22);
+
+  /* Verified agent badge */
+  --verified-bg: #f5efe3;
+  --verified-fg: #8a6a2f;
+  --verified-border: #c8a45d;
+
+  /* WhatsApp CTAs (light WhatsApp green — not champagne) */
+  --wa-bg: #ecfdf3;
+  --wa-border: #86efac;
+  --wa-fg: #166534;
+  --wa-hover-bg: #dcfce7;
+
+  /* Navbar active (main links) — scoped to agent public via CSS vars */
+  --nav-link-active-color: #c8a45d;
+  --nav-link-active-underline: 100%;
+
+  color: var(--ink);
+  background-color: var(--paper);
+}

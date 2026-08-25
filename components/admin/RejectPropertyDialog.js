@@ -58,7 +58,7 @@ export default function RejectPropertyDialog({
         </p>
 
         <div className={styles.field}>
-          <label htmlFor="reject-reason">Reason</label>
+          <label htmlFor="reject-reason">Reason for rejection</label>
           <textarea
             id="reject-reason"
             ref={textareaRef}
@@ -87,7 +87,7 @@ export default function RejectPropertyDialog({
           <button
             type="button"
             className={`${styles.btn} ${styles.btnDanger}`}
-            disabled={busy}
+            disabled={busy || !reason.trim()}
             onClick={confirm}
           >
             {busy ? "Rejecting…" : "Reject"}

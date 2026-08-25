@@ -97,7 +97,7 @@
 .textarea:focus {
   outline: none;
   border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(242, 187, 70, 0.16);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 16%, transparent);
 }
 
 .textarea {
@@ -128,16 +128,17 @@
   padding: 0.9rem 1.4rem;
   border: 0;
   border-radius: 12px;
-  background: var(--gold);
-  color: #1a1a1a;
+  background: var(--cta-bg, var(--gold));
+  color: var(--cta-fg, #1a1a1a);
   font-weight: 700;
   font-family: var(--font-body);
   cursor: pointer;
-  box-shadow: var(--shadow-gold);
+  box-shadow: var(--cta-shadow, var(--shadow-gold));
   transition:
     background 0.2s ease,
     transform 0.2s ease,
-    opacity 0.2s ease;
+    opacity 0.2s ease,
+    color 0.2s ease;
 }
 
 .panelProperty .submit {
@@ -173,7 +174,8 @@
 }
 
 .submit:hover:not(:disabled) {
-  background: var(--gold-soft);
+  background: var(--cta-hover-bg, var(--gold-soft));
+  color: var(--cta-hover-fg, #1a1a1a);
   transform: translateY(-1px);
 }
 

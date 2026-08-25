@@ -218,6 +218,15 @@ export default function SiteHeader({
 
   const isActiveLink = (href) => href === activeHref;
 
+  const isAgentPublicSite = homeHref.startsWith("/re/");
+
+  /** Main nav active: scroll/hash section OR listing type filter (agent public only). */
+  const isNavLinkActive = (link) => {
+    if (isActiveLink(link.href)) return true;
+    if (isAgentPublicSite && link.type && activeType === link.type) return true;
+    return false;
+  };
+
   const isHomeLink = (href) => href === homeHref || href === "/";
 
   const applyListingFilter = ({ type, subtype, hash }) => {
@@ -350,7 +359,7 @@ export default function SiteHeader({
   const homeLinkHref = homeHref;
 
   const renderDesktopLink = (link) => {
-    const active = isActiveLink(link.href);
+    const active = isNavLinkActive(link);
     const isHash = link.href.startsWith("#");
     const hasChildren = Array.isArray(link.children) && link.children.length > 0;
 
@@ -444,7 +453,7 @@ export default function SiteHeader({
   };
 
   const renderMobileLink = (link, index) => {
-    const active = isActiveLink(link.href);
+    const active = isNavLinkActive(link);
     const isHash = link.href.startsWith("#");
     const hasChildren = Array.isArray(link.children) && link.children.length > 0;
     const groupOpen = openMobileGroup === link.label;

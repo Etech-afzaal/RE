@@ -21,11 +21,11 @@
   padding: 0.9rem;
   margin: 0;
   background: #fff;
-  border: 1px solid rgba(242, 187, 70, 0.28);
+  border: 1px solid color-mix(in srgb, var(--gold) 28%, transparent);
   border-radius: 18px;
   box-shadow:
     0 18px 40px rgba(16, 24, 40, 0.08),
-    0 0 0 4px rgba(242, 187, 70, 0.06);
+    0 0 0 4px color-mix(in srgb, var(--gold) 6%, transparent);
   position: relative;
   z-index: 3;
 }
@@ -40,15 +40,15 @@
   max-height: 50px;
   border: 1px solid transparent;
   border-radius: 12px;
-  background: #faf8f3;
+  background: var(--surface-sunken, #faf8f3);
   color: #9a8b6a;
   box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .searchField:focus-within {
-  border-color: rgba(242, 187, 70, 0.55);
-  box-shadow: 0 0 0 3px rgba(242, 187, 70, 0.22);
+  border-color: color-mix(in srgb, var(--gold) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 22%, transparent);
 }
 
 .searchField input {
@@ -101,7 +101,7 @@
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background-color: #faf8f3;
+  background-color: var(--surface-sunken, #faf8f3);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%236b7280' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 1.1rem center;
@@ -117,8 +117,8 @@
 .selectField select:focus,
 .selectField select:focus-visible {
   outline: none;
-  border-color: rgba(242, 187, 70, 0.55);
-  box-shadow: 0 0 0 3px rgba(242, 187, 70, 0.22);
+  border-color: color-mix(in srgb, var(--gold) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 22%, transparent);
   font-size: 0.92rem;
   line-height: 1.25;
 }
@@ -128,17 +128,18 @@
   padding: 0 1.5rem;
   border: none;
   border-radius: 12px;
-  background: var(--gold);
-  color: #1a1a1a;
+  background: var(--cta-bg, var(--gold));
+  color: var(--cta-fg, #1a1a1a);
   font-weight: 700;
   font-size: 0.95rem;
   cursor: pointer;
-  box-shadow: var(--shadow-gold);
-  transition: background 0.2s ease, transform 0.2s ease;
+  box-shadow: var(--cta-shadow, var(--shadow-gold));
+  transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
 }
 
 .searchBtn:hover {
-  background: var(--gold-soft);
+  background: var(--cta-hover-bg, var(--gold-soft));
+  color: var(--cta-hover-fg, #1a1a1a);
   transform: translateY(-1px);
 }
 
@@ -202,13 +203,14 @@
 }
 
 .pageButton:hover {
-  border-color: rgba(242, 187, 70, 0.55);
-  background: rgba(255, 244, 214, 0.7);
+  border-color: color-mix(in srgb, var(--gold) 55%, transparent);
+  background: var(--gold-tint);
 }
 
 .pageButtonActive {
   border-color: var(--gold);
-  background: var(--gold-soft);
+  background: var(--gold);
+  color: #111111;
 }
 
 .card {
@@ -226,7 +228,7 @@
 
 .card:hover {
   transform: translateY(-4px);
-  border-color: rgba(242, 187, 70, 0.35);
+  border-color: color-mix(in srgb, var(--gold) 35%, transparent);
   box-shadow: 0 18px 40px rgba(26, 26, 26, 0.1);
 }
 
@@ -249,7 +251,7 @@
 .fallback {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #f3eee3, #fff8e8);
+  background: linear-gradient(135deg, #f3eee3, var(--gold-tint));
 }
 
 .body {
@@ -331,7 +333,7 @@
   gap: 1rem;
   margin-top: auto;
   padding-top: 0.95rem;
-  border-top: 1px solid rgba(242, 187, 70, 0.18);
+  border-top: 1px solid color-mix(in srgb, var(--gold) 18%, transparent);
 }
 
 .footerItem {
@@ -367,7 +369,7 @@
   padding: 2.5rem 1.5rem;
   text-align: center;
   border-radius: 18px;
-  border: 1px dashed rgba(242, 187, 70, 0.45);
+  border: 1px dashed color-mix(in srgb, var(--gold) 45%, transparent);
   color: #737373;
   background: #fff;
 }

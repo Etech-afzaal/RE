@@ -3,8 +3,12 @@
   min-height: 100vh;
   color: var(--ink);
   background:
-    radial-gradient(ellipse 80% 45% at 50% -8%, rgba(242, 187, 70, 0.14), transparent 55%),
-    linear-gradient(180deg, #ffffff 0%, #faf9f6 30%, #f7f4ec 100%);
+    radial-gradient(
+      ellipse 80% 45% at 50% -8%,
+      color-mix(in srgb, var(--gold) 14%, transparent),
+      transparent 55%
+    ),
+    linear-gradient(180deg, #ffffff 0%, var(--paper, #faf9f6) 30%, var(--surface-sunken, #f7f4ec) 100%);
 }
 
 .container {
@@ -53,7 +57,7 @@
   padding: 0.5rem 0 1rem;
   /* Match agent public site hero top spacing (HeroSlider wrap margin-top) */
   margin-bottom: 1.5rem;
-  border-bottom: 1px solid rgba(242, 187, 70, 0.22);
+  border-bottom: 1px solid color-mix(in srgb, var(--gold) 22%, transparent);
 }
 
 .brandLink {
@@ -103,17 +107,18 @@
   justify-content: center;
   padding: 0.72rem 1.25rem;
   border-radius: 12px;
-  background: var(--gold);
-  color: var(--ink);
+  background: var(--cta-bg, var(--gold));
+  color: var(--cta-fg, var(--ink));
   font-weight: 700;
   text-decoration: none;
   font-size: 0.92rem;
-  box-shadow: var(--shadow-gold);
-  transition: background 0.2s ease, transform 0.2s ease;
+  box-shadow: var(--cta-shadow, var(--shadow-gold));
+  transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
 }
 
 .contactButton:hover {
-  background: var(--gold-soft);
+  background: var(--cta-hover-bg, var(--gold-soft));
+  color: var(--cta-hover-fg, var(--ink));
   transform: translateY(-1px);
 }
 
@@ -148,9 +153,9 @@
 }
 
 .insightCard {
-  border-color: rgba(242, 187, 70, 0.28);
+  border-color: color-mix(in srgb, var(--gold) 28%, transparent);
   background:
-    linear-gradient(160deg, rgba(242, 187, 70, 0.08), transparent 55%),
+    linear-gradient(160deg, color-mix(in srgb, var(--gold) 8%, transparent), transparent 55%),
     #fff;
 }
 
@@ -183,7 +188,7 @@
   border-radius: 12px;
   background: #fff;
   color: var(--gold-deep);
-  border: 1px solid rgba(242, 187, 70, 0.35);
+  border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent);
 }
 
 .highlightTitle {
@@ -234,7 +239,7 @@
   color: var(--gold-deep);
   font-size: 0.75rem;
   font-weight: 800;
-  border: 1px solid rgba(242, 187, 70, 0.4);
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
 }
 
 /* ---------- Amenities pills ---------- */
@@ -253,15 +258,15 @@
   gap: 0.4rem;
   padding: 0.5rem 0.85rem;
   border-radius: 999px;
-  background: var(--surface-sunken);
-  border: 1px solid rgba(26, 26, 26, 0.06);
+  background: #ffffff;
+  border: 1px solid rgba(26, 26, 26, 0.12);
   font-size: 0.88rem;
   font-weight: 700;
-  color: var(--ink);
+  color: #111111;
 }
 
 .amenityCheck {
-  color: var(--gold-deep);
+  color: var(--gold);
   font-size: 0.78rem;
 }
 
@@ -407,7 +412,16 @@
   gap: 0.35rem;
   font-size: 0.78rem;
   font-weight: 700;
-  color: var(--ink-soft);
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  background: var(--verified-bg, var(--gold-tint));
+  border: 1px solid var(--verified-border, color-mix(in srgb, var(--gold) 35%, transparent));
+  color: var(--verified-fg, var(--ink-soft));
+}
+
+.verifiedBadge svg {
+  color: var(--gold);
+  flex-shrink: 0;
 }
 
 .agentDetails {
@@ -463,7 +477,7 @@
 
 .agentDetailRevealPending:hover {
   background: var(--gold-tint);
-  box-shadow: inset 0 0 0 1px rgba(242, 187, 70, 0.22);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold) 22%, transparent);
 }
 
 .phoneRevealTrigger {
@@ -564,17 +578,19 @@
   font-weight: 700;
   font-size: 0.92rem;
   text-decoration: none;
-  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .agentPrimary {
-  background: var(--gold);
-  color: var(--ink);
-  box-shadow: var(--shadow-gold);
+  background: var(--cta-bg, var(--gold));
+  color: var(--cta-fg, var(--ink));
+  box-shadow: var(--cta-shadow, var(--shadow-gold));
 }
 
 .agentPrimary:hover {
-  background: var(--gold-soft);
+  background: var(--cta-hover-bg, var(--gold-soft));
+  color: var(--cta-hover-fg, var(--ink));
   transform: translateY(-1px);
 }
 
@@ -774,15 +790,17 @@
   justify-content: center;
   padding: 0.7rem 1.2rem;
   border-radius: 12px;
-  background: var(--gold);
-  color: var(--ink);
+  background: var(--cta-bg, var(--gold));
+  color: var(--cta-fg, var(--ink));
   font-weight: 700;
   text-decoration: none;
-  box-shadow: var(--shadow-gold);
+  box-shadow: var(--cta-shadow, var(--shadow-gold));
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .videoCta:hover {
-  background: var(--gold-soft);
+  background: var(--cta-hover-bg, var(--gold-soft));
+  color: var(--cta-hover-fg, var(--ink));
 }
 
 .nearbyLabel {
@@ -838,18 +856,19 @@
   justify-content: center;
   padding: 0.7rem 1.15rem;
   border-radius: 12px;
-  border: 1px solid var(--gold);
-  background: var(--gold);
-  color: #1a1a1a;
+  border: 1px solid var(--cta-bg, var(--gold));
+  background: var(--cta-bg, var(--gold));
+  color: var(--cta-fg, #1a1a1a);
   font-weight: 700;
   text-decoration: none;
   font-size: 0.92rem;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
 
 .brandProfileBtn:hover {
-  border-color: var(--gold-soft);
-  background: var(--gold-soft);
+  border-color: var(--cta-hover-bg, var(--gold-soft));
+  background: var(--cta-hover-bg, var(--gold-soft));
+  color: var(--cta-hover-fg, #1a1a1a);
 }
 
 /* ---------- Trust ---------- */
@@ -892,7 +911,7 @@
   color: var(--gold-deep);
   font-weight: 800;
   font-size: 0.85rem;
-  border: 1px solid rgba(242, 187, 70, 0.45);
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
 }
 
 .assuranceCard strong {
@@ -912,9 +931,9 @@
   padding: 1.75rem 1.85rem;
   border-radius: 22px;
   background:
-    linear-gradient(135deg, rgba(242, 187, 70, 0.16), rgba(255, 255, 255, 0.9)),
+    linear-gradient(135deg, color-mix(in srgb, var(--gold) 16%, transparent), rgba(255, 255, 255, 0.9)),
     #fff;
-  border: 1px solid rgba(242, 187, 70, 0.35);
+  border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent);
   box-shadow: var(--shadow-md);
 }
 
@@ -1214,9 +1233,9 @@
   }
 
   .mobileCallBtn {
-    background: var(--gold);
-    color: var(--ink);
-    box-shadow: var(--shadow-gold);
+    background: var(--cta-bg, var(--gold));
+    color: var(--cta-fg, var(--ink));
+    box-shadow: var(--cta-shadow, var(--shadow-gold));
   }
 
   .mobileWaBtn {

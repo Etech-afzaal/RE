@@ -33,6 +33,7 @@ import {
   propertySubtypeLabel,
 } from "@/lib/propertyTaxonomy";
 import styles from "./page.module.css";
+import "@/app/agent-public-theme.css";
 
 const formatPrice = (price, currency) =>
   formatPropertyPrice(price, currency, { fallback: "Price on request" });
@@ -587,7 +588,7 @@ export default async function PropertyDetailPage({ params }) {
   }));
 
   return (
-    <div className={styles.page}>
+    <div className={`agent-public-theme ${styles.page}`}>
       <div className={styles.container}>
         {/* 1. Agent brand header */}
         <header className={styles.header}>
@@ -798,7 +799,7 @@ export default async function PropertyDetailPage({ params }) {
                     >
                       <path
                         d="M12 2l2.4 2.1 3.1-.4 1 3 2.9 1.2-.7 3.1L23 13.5l-2.3 2.2.4 3.1-3 .9-1.4 2.9-3.1-.8-2.6 1.9-2.6-1.9-3.1.8-1.4-2.9-3-.9.4-3.1L1 13.5l2.3-2.5-.7-3.1L5.5 6.7l1-3 3.1.4L12 2z"
-                        fill="#f2bb46"
+                        fill="currentColor"
                       />
                       <path
                         d="M8.5 12.5l2.4 2.4 4.6-5"

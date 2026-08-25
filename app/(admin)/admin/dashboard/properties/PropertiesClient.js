@@ -57,11 +57,15 @@ function isPendingApproval(status) {
   return normalizePropertyStatus(status) === "pending_approval";
 }
 
+function isRejected(status) {
+  return normalizePropertyStatus(status) === "rejected";
+}
+
 function getListingHref(property) {
   if (isLiveProperty(property.status)) {
     return getPropertyUrl(property);
   }
-  if (isPendingApproval(property.status)) {
+  if (isPendingApproval(property.status) || isRejected(property.status)) {
     return `/admin/dashboard/approvals/${property.id}`;
   }
   return null;
@@ -279,7 +283,10 @@ export default function AdminPropertiesPage() {
                 {pageItems.map((property) => {
                   const listingHref = getListingHref(property);
                   const listingExternal = listingLinkOpensNewTab(property);
-                  const listingLabel = isPendingApproval(property.status)
+                  const goesToReview =
+                    isPendingApproval(property.status) ||
+                    isRejected(property.status);
+                  const listingLabel = goesToReview
                     ? `Review ${property.title}`
                     : `View ${property.title}`;
 
@@ -418,8 +425,28 @@ export default function AdminPropertiesPage() {
                         }
                         additionalActions={
                           property.status === "pending_approval"
-                            ? [{ label: "Review submission", icon: CircleCheck, onSelect: () => router.push(`/admin/dashboard/approvals/${property.id}`) }]
-                            : [
+                            ? [
+                                {
+                                  label: "Review submission",
+                                  icon: CircleCheck,
+                                  onSelect: () =>
+                                    router.push(
+                                      `/admin/dashboard/approvals/${property.id}`,
+                                    ),
+                                },
+                              ]
+                            : isRejected(property.status)
+                              ? [
+                                  {
+                                    label: "View review",
+                                    icon: CircleCheck,
+                                    onSelect: () =>
+                                      router.push(
+                                        `/admin/dashboard/approvals/${property.id}`,
+                                      ),
+                                  },
+                                ]
+                              : [
                                 ...(property.status !== "draft"
                                   ? [{ label: "Unpublish", icon: Archive, destructive: true, disabled: busyId === property.id, onSelect: () => updateStatus(property, "draft") }]
                                   : [{ label: "Publish", icon: CircleCheck, disabled: busyId === property.id, onSelect: () => updateStatus(property, "active") }]),

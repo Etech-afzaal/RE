@@ -1,9 +1,9 @@
 .wrapper {
   min-height: 100vh;
-  color: #1a1a1a;
+  color: var(--ink, #1a1a1a);
   background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(242, 187, 70, 0.14), transparent 55%),
-    linear-gradient(180deg, #ffffff 0%, #faf9f6 28%, #f7f4ec 100%);
+    radial-gradient(ellipse 80% 50% at 50% -10%, color-mix(in srgb, var(--gold) 14%, transparent), transparent 55%),
+    linear-gradient(180deg, #ffffff 0%, var(--paper, #faf9f6) 28%, var(--surface-sunken, #f7f4ec) 100%);
   display: flex;
   flex-direction: column;
 }
@@ -82,7 +82,7 @@
   overscroll-behavior-x: contain;
   padding: 0.15rem 0.1rem 0.85rem;
   scrollbar-width: thin;
-  scrollbar-color: rgba(242, 187, 70, 0.7) transparent;
+  scrollbar-color: color-mix(in srgb, var(--gold) 70%, transparent) transparent;
 }
 
 .locationGrid::-webkit-scrollbar {
@@ -90,7 +90,7 @@
 }
 
 .locationGrid::-webkit-scrollbar-thumb {
-  background: rgba(242, 187, 70, 0.7);
+  background: color-mix(in srgb, var(--gold) 70%, transparent);
   border-radius: 999px;
 }
 
@@ -166,7 +166,7 @@
   margin-bottom: 0.55rem;
   padding: 0.28rem 0.6rem;
   border-radius: 999px;
-  background: rgba(242, 187, 70, 0.92);
+  background: color-mix(in srgb, var(--gold) 92%, transparent);
   color: #1a1a1a;
   font-size: 0.68rem;
   font-weight: 700;
@@ -245,7 +245,7 @@
 }
 
 .step:hover {
-  border-color: rgba(242, 187, 70, 0.4);
+  border-color: color-mix(in srgb, var(--gold) 40%, transparent);
   transform: translateY(-2px);
 }
 
@@ -257,7 +257,7 @@
   height: 2.2rem;
   border-radius: 999px;
   background: var(--gold-tint);
-  border: 1px solid rgba(242, 187, 70, 0.4);
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
   font-family: var(--font-mono);
   font-size: 0.78rem;
   font-weight: 700;
@@ -292,7 +292,7 @@
   isolation: isolate;
   color: #fff;
   margin-bottom: 5.5rem;
-  border: 1px solid rgba(242, 187, 70, 0.35);
+  border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent);
   box-shadow: 0 18px 40px rgba(26, 26, 26, 0.12);
   background: linear-gradient(135deg, #2a2418 0%, #1a1a1a 100%);
   min-height: 220px;
@@ -313,7 +313,7 @@
       105deg,
       rgba(18, 16, 12, 0.88) 0%,
       rgba(18, 16, 12, 0.62) 48%,
-      rgba(242, 187, 70, 0.28) 100%
+      color-mix(in srgb, var(--gold) 28%, transparent) 100%
     );
 }
 
@@ -368,16 +368,17 @@
   justify-content: center;
   padding: 0.9rem 1.4rem;
   border-radius: 12px;
-  background: var(--gold);
-  color: #1a1a1a;
+  background: var(--cta-bg, var(--gold));
+  color: var(--cta-fg, #1a1a1a);
   font-weight: 700;
   text-decoration: none;
-  box-shadow: var(--shadow-gold);
-  transition: background 0.2s ease, transform 0.2s ease;
+  box-shadow: var(--cta-shadow, var(--shadow-gold));
+  transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
 }
 
 .btnPrimary:hover {
-  background: var(--gold-soft);
+  background: var(--cta-hover-bg, var(--gold-soft));
+  color: var(--cta-hover-fg, #1a1a1a);
   transform: translateY(-1px);
 }
 
@@ -397,7 +398,7 @@
 
 .btnGhost:hover {
   border-color: var(--gold);
-  background: rgba(242, 187, 70, 0.18);
+  background: color-mix(in srgb, var(--gold) 18%, transparent);
 }
 
 /* Footer */
@@ -569,7 +570,7 @@
   border-radius: 28px;
   box-shadow: 0 24px 60px rgba(26, 26, 26, 0.08);
   padding: 2.25rem 2rem;
-  border: 1px solid rgba(242, 187, 70, 0.15);
+  border: 1px solid color-mix(in srgb, var(--gold) 15%, transparent);
   overflow: hidden;
 }
 
@@ -578,7 +579,7 @@
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(circle at 95% 10%, rgba(242, 187, 70, 0.025), transparent 18%),
+    radial-gradient(circle at 95% 10%, color-mix(in srgb, var(--gold) 2.5%, transparent), transparent 18%),
     linear-gradient(90deg, transparent 49%, rgba(26, 26, 26, 0.03) 49%, rgba(26, 26, 26, 0.03) 51%, transparent 51%),
     linear-gradient(180deg, transparent 48%, rgba(26, 26, 26, 0.025) 48%, rgba(26, 26, 26, 0.025) 52%, transparent 52%);
   opacity: 0.03;
@@ -732,7 +733,7 @@
 .contactTextarea:focus {
   outline: none;
   border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(242, 187, 70, 0.16);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 16%, transparent);
 }
 
 .contactTextarea {
