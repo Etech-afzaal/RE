@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { flushSync } from "react-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { getPropertyUrl } from "@/lib/propertySlug";
@@ -15,6 +14,13 @@ import {
 } from "@/lib/propertyTaxonomy";
 import { useIsMobile } from "@/lib/useIsMobile";
 import { sanitizeSearchInput } from "@/lib/validators/common";
+import {
+  AGENT_PUBLIC_LISTING_GROUPS,
+  listingMainSectionId,
+  listingSubsectionId,
+  listingSubsectionCountLabel,
+  listingSubsectionTitle,
+} from "@/lib/agentPublicListingSections";
 import styles from "./HomeListings.module.css";
 
 const DESKTOP_PAGE_SIZE = 3;
@@ -387,10 +393,140 @@ function PropertyCard({ property }) {
   );
 }
 
+const SWIPE_THRESHOLD_PX = 48;
+const WHEEL_DELTA_MIN = 36;
+const PAGINATION_SWIPE_COOLDOWN_MS = 450;
+
+/** Horizontal swipe / trackpad scroll → prev/next page (not page scroll). */
+function useListingPaginationSwipe({
+  totalPages,
+  currentPage,
+  onPageChange,
+}) {
+  const areaRef = useRef(null);
+  const touchStartX = useRef(null);
+  const touchStartY = useRef(null);
+  const pointerStartX = useRef(null);
+  const pointerStartY = useRef(null);
+  const cooldownRef = useRef(false);
+
+  const goNext = useCallback(() => {
+    if (currentPage < totalPages) onPageChange(currentPage + 1);
+  }, [currentPage, totalPages, onPageChange]);
+
+  const goPrev = useCallback(() => {
+    if (currentPage > 1) onPageChange(currentPage - 1);
+  }, [currentPage, onPageChange]);
+
+  const runOnce = useCallback((action) => {
+    if (totalPages <= 1 || cooldownRef.current) return;
+    cooldownRef.current = true;
+    action();
+    window.setTimeout(() => {
+      cooldownRef.current = false;
+    }, PAGINATION_SWIPE_COOLDOWN_MS);
+  }, [totalPages]);
+
+  useEffect(() => {
+    const el = areaRef.current;
+    if (!el || totalPages <= 1) return;
+
+    const onWheel = (event) => {
+      const absX = Math.abs(event.deltaX);
+      const absY = Math.abs(event.deltaY);
+      if (absX < WHEEL_DELTA_MIN || absX <= absY * 1.15) return;
+
+      event.preventDefault();
+      if (event.deltaX > 0) {
+        runOnce(goNext);
+      } else {
+        runOnce(goPrev);
+      }
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [totalPages, goNext, goPrev, runOnce]);
+
+  const onTouchStart = (event) => {
+    if (totalPages <= 1) return;
+    touchStartX.current = event.touches[0]?.clientX ?? null;
+    touchStartY.current = event.touches[0]?.clientY ?? null;
+  };
+
+  const onTouchEnd = (event) => {
+    if (
+      totalPages <= 1 ||
+      touchStartX.current == null ||
+      touchStartY.current == null
+    ) {
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+
+    const deltaX = touch.clientX - touchStartX.current;
+    const deltaY = touch.clientY - touchStartY.current;
+    touchStartX.current = null;
+    touchStartY.current = null;
+
+    if (
+      Math.abs(deltaX) < SWIPE_THRESHOLD_PX ||
+      Math.abs(deltaX) <= Math.abs(deltaY)
+    ) {
+      return;
+    }
+
+    if (deltaX < 0) {
+      runOnce(goNext);
+    } else {
+      runOnce(goPrev);
+    }
+  };
+
+  const onPointerDown = (event) => {
+    if (totalPages <= 1 || event.button !== 0) return;
+    pointerStartX.current = event.clientX;
+    pointerStartY.current = event.clientY;
+  };
+
+  const onPointerUp = (event) => {
+    if (
+      totalPages <= 1 ||
+      pointerStartX.current == null ||
+      pointerStartY.current == null
+    ) {
+      return;
+    }
+
+    const deltaX = event.clientX - pointerStartX.current;
+    const deltaY = event.clientY - pointerStartY.current;
+    pointerStartX.current = null;
+    pointerStartY.current = null;
+
+    if (
+      Math.abs(deltaX) < SWIPE_THRESHOLD_PX ||
+      Math.abs(deltaX) <= Math.abs(deltaY)
+    ) {
+      return;
+    }
+
+    if (deltaX < 0) {
+      runOnce(goNext);
+    } else {
+      runOnce(goPrev);
+    }
+  };
+
+  return { areaRef, onTouchStart, onTouchEnd, onPointerDown, onPointerUp };
+}
+
 function PropertySection({
   id,
   title,
   kicker,
+  subtype,
   properties,
   currentPage,
   onPageChange,
@@ -417,6 +553,13 @@ function PropertySection({
     return Array.from({ length: end - start + 1 }, (_, index) => start + index);
   };
 
+  const { areaRef, onTouchStart, onTouchEnd, onPointerDown, onPointerUp } =
+    useListingPaginationSwipe({
+      totalPages,
+      currentPage: safePage,
+      onPageChange,
+    });
+
   return (
     <section id={id} className={styles.section}>
       <div className={styles.sectionHeader}>
@@ -425,7 +568,8 @@ function PropertySection({
           <h2 className={styles.title}>{title}</h2>
         </div>
         <p className={styles.count}>
-          {properties.length} {properties.length === 1 ? "home" : "houses"}
+          {properties.length}{" "}
+          {listingSubsectionCountLabel(subtype, properties.length)}
         </p>
       </div>
 
@@ -435,10 +579,19 @@ function PropertySection({
         </div>
       ) : (
         <>
-          <div className={styles.grid}>
-            {pageItems.map((property) => (
-              <PropertyCard key={property.id} property={property} />
-            ))}
+          <div
+            ref={areaRef}
+            className={styles.gridSwipe}
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
+            onPointerDown={onPointerDown}
+            onPointerUp={onPointerUp}
+          >
+            <div className={styles.grid}>
+              {pageItems.map((property) => (
+                <PropertyCard key={property.id} property={property} />
+              ))}
+            </div>
           </div>
 
           {totalPages > 1 ? (
@@ -489,41 +642,13 @@ export default function HomeListings({ properties = [], children }) {
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("all");
   const [sort, setSort] = useState("newest");
-  const [pages, setPages] = useState({ sale: 1, rent: 1, plot: 1 });
-  // Local filter state — updated via history.replaceState + custom events so
-  // subtype changes do not trigger App Router navigations / loading UI.
-  const [activeType, setActiveType] = useState(null);
-  const [activeSubtype, setActiveSubtype] = useState(null);
+  const [pages, setPages] = useState({});
+  const pageKey = (type, subtype) => listingSubsectionId(type, subtype);
 
   // Reset to page 1 when mobile/desktop page size changes so slices stay valid
   useEffect(() => {
-    setPages({ sale: 1, rent: 1, plot: 1 });
+    setPages({});
   }, [pageSize]);
-
-  useEffect(() => {
-    const readFiltersFromUrl = () => {
-      const params = new URLSearchParams(window.location.search);
-      setActiveType(normalizePropertyType(params.get("type")));
-      setActiveSubtype(normalizePropertySubtype(params.get("subtype")));
-    };
-
-    readFiltersFromUrl();
-
-    const onTypeFilter = (event) => {
-      // Commit filter DOM before SiteHeader scrollIntoView in the same click.
-      flushSync(() => {
-        setActiveType(normalizePropertyType(event.detail?.type));
-        setActiveSubtype(normalizePropertySubtype(event.detail?.subtype));
-      });
-    };
-
-    window.addEventListener("dhalahorePropertiesTypeFilter", onTypeFilter);
-    window.addEventListener("popstate", readFiltersFromUrl);
-    return () => {
-      window.removeEventListener("dhalahorePropertiesTypeFilter", onTypeFilter);
-      window.removeEventListener("popstate", readFiltersFromUrl);
-    };
-  }, []);
 
   const locations = useMemo(() => {
     const set = new Set();
@@ -545,29 +670,17 @@ export default function HomeListings({ properties = [], children }) {
 
   useEffect(() => {
     const scrollToSale = () => {
-      const section = document.getElementById("sale");
+      const section = document.getElementById("for-sale");
       if (section) {
         section.scrollIntoView({ behavior: "smooth", block: "start" });
       }
-    };
-
-    const clearTypeFilters = () => {
-      const params = new URLSearchParams(window.location.search);
-      params.delete("type");
-      params.delete("subtype");
-      const qs = params.toString();
-      const next = `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash || ""}`;
-      window.history.replaceState(window.history.state, "", next);
-      setActiveType(null);
-      setActiveSubtype(null);
     };
 
     const resetFilters = () => {
       setQuery("");
       setLocation("all");
       setSort("newest");
-      setPages({ sale: 1, rent: 1, plot: 1 });
-      clearTypeFilters();
+      setPages({});
     };
 
     const handleDocumentClick = (event) => {
@@ -581,7 +694,7 @@ export default function HomeListings({ properties = [], children }) {
         return;
       }
 
-      const card = target.closest("a[data-location][href='#sale']");
+      const card = target.closest("a[data-location][href='#for-sale']");
       if (!card) return;
 
       event.preventDefault();
@@ -590,7 +703,7 @@ export default function HomeListings({ properties = [], children }) {
 
       setQuery("");
       setLocation(selectedLocation);
-      setPages({ sale: 1, rent: 1, plot: 1 });
+      setPages({});
       scrollToSale();
     };
 
@@ -608,8 +721,8 @@ export default function HomeListings({ properties = [], children }) {
   }, []);
 
   useEffect(() => {
-    setPages({ sale: 1, rent: 1, plot: 1 });
-  }, [query, location, sort, activeType, activeSubtype]);
+    setPages({});
+  }, [query, location, sort]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -628,16 +741,7 @@ export default function HomeListings({ properties = [], children }) {
       const haystack =
         `${p.title} ${displayLocation} ${p.city || ""} ${p.area || ""} ${p.phase || ""} ${p.agent_name || ""}`.toLowerCase();
       const matchesQuery = !q || haystack.includes(q);
-      const category = getCategory(p);
-      const subtype = getSubtype(p);
-      const matchesType = !activeType || category === activeType;
-      const matchesSubtype = !activeSubtype || subtype === activeSubtype;
-      return (
-        matchesLocation &&
-        matchesQuery &&
-        matchesType &&
-        matchesSubtype
-      );
+      return matchesLocation && matchesQuery;
     });
 
     const priceOf = (p) =>
@@ -668,22 +772,24 @@ export default function HomeListings({ properties = [], children }) {
     }
 
     return base;
-  }, [properties, query, location, sort, activeType, activeSubtype]);
+  }, [properties, query, location, sort]);
 
-  const saleProperties = useMemo(
-    () => filtered.filter((property) => getCategory(property) === "sale"),
-    [filtered],
-  );
-
-  const rentProperties = useMemo(
-    () => filtered.filter((property) => getCategory(property) === "rent"),
-    [filtered],
-  );
-
-  const plotProperties = useMemo(
-    () => filtered.filter((property) => getCategory(property) === "plot"),
-    [filtered],
-  );
+  const groupedSections = useMemo(() => {
+    return AGENT_PUBLIC_LISTING_GROUPS.map((group) => ({
+      ...group,
+      mainId: listingMainSectionId(group.type),
+      subsections: group.subtypes.map((subtype) => ({
+        subtype,
+        id: listingSubsectionId(group.type, subtype),
+        title: listingSubsectionTitle(subtype),
+        properties: filtered.filter(
+          (property) =>
+            getCategory(property) === group.type &&
+            getSubtype(property) === subtype,
+        ),
+      })),
+    }));
+  }, [filtered]);
 
   return (
     <>
@@ -746,35 +852,32 @@ export default function HomeListings({ properties = [], children }) {
       {children}
 
       <div className={styles.listingsWrap}>
-        <PropertySection
-          id="sale"
-          title="For Sale"
-          kicker="Houses for sale"
-          properties={saleProperties}
-          currentPage={pages.sale}
-          pageSize={pageSize}
-          onPageChange={(page) => setPages((prev) => ({ ...prev, sale: page }))}
-        />
-
-        <PropertySection
-          id="rent"
-          title="For Rent"
-          kicker="Houses for rent"
-          properties={rentProperties}
-          currentPage={pages.rent}
-          pageSize={pageSize}
-          onPageChange={(page) => setPages((prev) => ({ ...prev, rent: page }))}
-        />
-
-        <PropertySection
-          id="plots"
-          title="Plots"
-          kicker="Land listings"
-          properties={plotProperties}
-          currentPage={pages.plot}
-          pageSize={pageSize}
-          onPageChange={(page) => setPages((prev) => ({ ...prev, plot: page }))}
-        />
+        {groupedSections.map((group) => (
+          <div
+            key={group.type}
+            id={group.mainId}
+            className={styles.listingGroup}
+          >
+            {group.subsections.map((section) => {
+              const key = pageKey(group.type, section.subtype);
+              return (
+                <PropertySection
+                  key={section.id}
+                  id={section.id}
+                  title={section.title}
+                  kicker={group.title}
+                  subtype={section.subtype}
+                  properties={section.properties}
+                  currentPage={pages[key] || 1}
+                  pageSize={pageSize}
+                  onPageChange={(page) =>
+                    setPages((prev) => ({ ...prev, [key]: page }))
+                  }
+                />
+              );
+            })}
+          </div>
+        ))}
       </div>
     </>
   );

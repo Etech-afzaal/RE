@@ -13,6 +13,10 @@
   margin: 0 auto;
 }
 
+.listingGroup {
+  scroll-margin-top: 110px;
+}
+
 .searchBar {
   display: grid;
   grid-template-columns: 1fr minmax(150px, 200px) minmax(160px, 200px) auto;
@@ -179,6 +183,10 @@
   display: grid;
   gap: 1.4rem;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.gridSwipe {
+  touch-action: pan-y;
 }
 
 .pagination {

@@ -205,7 +205,7 @@ export default function AgentBrandProfile({ agent, stats = null }) {
                   {areas.map((area) => (
                     <li key={area}>
                       <a
-                        href="#sale"
+                        href="#for-sale"
                         data-location={area}
                         className={styles.areaChip}
                       >

@@ -9,6 +9,10 @@ import {
   normalizePropertySubtype,
   normalizePropertyType,
 } from "@/lib/propertyTaxonomy";
+import {
+  listingMainSectionId,
+  listingScrollTargetId,
+} from "@/lib/agentPublicListingSections";
 import styles from "./SiteHeader.module.css";
 
 const DEFAULT_NAV_LINKS = [
@@ -87,6 +91,7 @@ export default function SiteHeader({
   const router = useRouter();
   const pathname = usePathname();
   const homeHref = useMemo(() => getAgentHomeHref(pathname), [pathname]);
+  const isAgentPublicSite = homeHref.startsWith("/re/");
   const resolvedNavLinks = useMemo(
     () =>
       navLinks.map((link) =>
@@ -137,8 +142,10 @@ export default function SiteHeader({
     return () => window.clearTimeout(closeTimerRef.current);
   }, [menuOpen]);
 
-  // Sync the subtype highlight from the URL on first load and back/forward.
+  // Sync subtype highlight from URL (customer site filter nav only).
   useEffect(() => {
+    if (homeHref.startsWith("/re/")) return;
+
     const syncSubtype = () => {
       const params = new URLSearchParams(window.location.search);
       setActiveType(normalizePropertyType(params.get("type")));
@@ -147,9 +154,11 @@ export default function SiteHeader({
     syncSubtype();
     window.addEventListener("popstate", syncSubtype);
     return () => window.removeEventListener("popstate", syncSubtype);
-  }, []);
+  }, [homeHref]);
 
   useEffect(() => {
+    if (isAgentPublicSite) return;
+
     const syncActive = () => {
       const sections = getNavSections(resolvedNavLinks);
       if (sections.length === 0) {
@@ -214,13 +223,141 @@ export default function SiteHeader({
       window.clearTimeout(lockTimerRef.current);
       retryIds.forEach((id) => window.clearTimeout(id));
     };
-  }, [resolvedNavLinks, homeHref]);
+  }, [resolvedNavLinks, homeHref, isAgentPublicSite]);
+
+  // Agent public: scroll-spy for listing main + subtype sections (no URL filters).
+  useEffect(() => {
+    if (!isAgentPublicSite) return;
+
+    const buildListingTargets = () => {
+      const targets = [];
+
+      for (const link of resolvedNavLinks) {
+        if (!link.type) continue;
+
+        const mainId = listingMainSectionId(link.type);
+        const mainEl = document.getElementById(mainId);
+        if (mainEl) {
+          targets.push({
+            href: link.href,
+            type: link.type,
+            subtype: null,
+            element: mainEl,
+          });
+        }
+
+        if (!Array.isArray(link.children)) continue;
+        for (const child of link.children) {
+          const subId = listingScrollTargetId(link.type, child.subtype);
+          const subEl = document.getElementById(subId);
+          if (subEl) {
+            targets.push({
+              href: link.href,
+              type: link.type,
+              subtype: child.subtype,
+              element: subEl,
+            });
+          }
+        }
+      }
+
+      return targets.sort(
+        (a, b) => a.element.offsetTop - b.element.offsetTop,
+      );
+    };
+
+    const syncListingActive = () => {
+      const listingTargets = buildListingTargets();
+      const otherSections = getNavSections(
+        resolvedNavLinks.filter((link) => !link.type),
+      );
+      const probe = getProbeY();
+      const lockedHref = lockedHrefRef.current;
+
+      if (lockedHref) {
+        const lockedListing = listingTargets.find((t) => t.href === lockedHref);
+        const lockedOther = otherSections.find((s) => s.href === lockedHref);
+        const lockedEl = lockedListing?.element || lockedOther?.element;
+        const reached =
+          lockedEl && lockedEl.getBoundingClientRect().top <= probe + 2;
+        if (!reached) {
+          setActiveHref(lockedHref);
+          return;
+        }
+        lockedHrefRef.current = null;
+        window.clearTimeout(lockTimerRef.current);
+      }
+
+      let matchedListing = null;
+      for (const target of listingTargets) {
+        if (target.element.getBoundingClientRect().top <= probe + 2) {
+          matchedListing = target;
+        }
+      }
+
+      if (matchedListing) {
+        setActiveHref(matchedListing.href);
+        setActiveType(matchedListing.type);
+        setActiveSubtype(matchedListing.subtype);
+        return;
+      }
+
+      if (otherSections.length === 0) {
+        setActiveHref(homeHref);
+        setActiveType(null);
+        setActiveSubtype(null);
+        return;
+      }
+
+      const firstTop = otherSections[0].element.getBoundingClientRect().top;
+      if (firstTop > probe) {
+        setActiveHref(homeHref);
+        setActiveType(null);
+        setActiveSubtype(null);
+        return;
+      }
+
+      let nextHref = otherSections[0].href;
+      for (const section of otherSections) {
+        if (section.element.getBoundingClientRect().top <= probe) {
+          nextHref = section.href;
+        }
+      }
+
+      setActiveHref(nextHref);
+      setActiveType(null);
+      setActiveSubtype(null);
+    };
+
+    let ticking = false;
+    const onScrollOrResize = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        syncListingActive();
+        ticking = false;
+      });
+    };
+
+    syncListingActive();
+    window.addEventListener("scroll", onScrollOrResize, { passive: true });
+    window.addEventListener("resize", onScrollOrResize);
+
+    const retryIds = [100, 400, 1000].map((ms) =>
+      window.setTimeout(syncListingActive, ms),
+    );
+
+    return () => {
+      window.removeEventListener("scroll", onScrollOrResize);
+      window.removeEventListener("resize", onScrollOrResize);
+      window.clearTimeout(lockTimerRef.current);
+      retryIds.forEach((id) => window.clearTimeout(id));
+    };
+  }, [resolvedNavLinks, homeHref, isAgentPublicSite]);
 
   const isActiveLink = (href) => href === activeHref;
 
-  const isAgentPublicSite = homeHref.startsWith("/re/");
-
-  /** Main nav active: scroll/hash section OR listing type filter (agent public only). */
+  /** Main nav active: scroll section or listing area (agent public). */
   const isNavLinkActive = (link) => {
     if (isActiveLink(link.href)) return true;
     if (isAgentPublicSite && link.type && activeType === link.type) return true;
@@ -319,13 +456,33 @@ export default function SiteHeader({
 
   const handleSectionClick = (event, href, filter = null) => {
     event.preventDefault();
-    // Clicks close any open category dropdown; filter/scroll must not reopen it.
     setActiveDropdown(null);
     setHoverArmed(false);
     if (typeof document !== "undefined" && document.activeElement?.blur) {
       document.activeElement.blur();
     }
-    const element = document.getElementById(href.slice(1));
+
+    let scrollTargetId = href.slice(1);
+    let nextType = null;
+    let nextSubtype = null;
+
+    if (isAgentPublicSite && filter?.type) {
+      nextType = filter.type;
+      nextSubtype = filter.subtype || null;
+      scrollTargetId = listingScrollTargetId(nextType, nextSubtype);
+    } else if (isAgentPublicSite) {
+      nextType = normalizePropertyType(
+        href === "#for-sale"
+          ? "sale"
+          : href === "#for-rent"
+            ? "rent"
+            : href === "#plots"
+              ? "plot"
+              : null,
+      );
+    }
+
+    const element = document.getElementById(scrollTargetId);
     lockedHrefRef.current = href;
     setActiveHref(href);
     setMenuOpen(false);
@@ -333,6 +490,14 @@ export default function SiteHeader({
     lockTimerRef.current = window.setTimeout(() => {
       lockedHrefRef.current = null;
     }, 1200);
+
+    if (isAgentPublicSite) {
+      if (nextType) setActiveType(nextType);
+      else setActiveType(null);
+      setActiveSubtype(nextSubtype);
+      element?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
 
     if (filter?.clear) {
       applyListingFilter({ type: null, subtype: null, hash: href });
@@ -404,7 +569,10 @@ export default function SiteHeader({
           href={link.href}
           className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`.trim()}
           onClick={(event) =>
-            handleSectionClick(event, link.href, { clear: true })
+            handleSectionClick(event, link.href, {
+              clear: true,
+              type: link.type,
+            })
           }
         >
           {link.label}
@@ -426,8 +594,11 @@ export default function SiteHeader({
             All {link.label.replace(/^For\s+/i, "")}
           </Link>
           {link.children.map((child) => {
-            const childHash = `#${sectionIdFromType(link.type)}`;
-            const childActive = activeType === link.type && activeSubtype === child.subtype;
+            const childHash = isAgentPublicSite
+              ? `#${listingScrollTargetId(link.type, child.subtype)}`
+              : `#${sectionIdFromType(link.type)}`;
+            const childActive =
+              activeType === link.type && activeSubtype === child.subtype;
             return (
               <Link
                 key={`${link.label}-${child.label}`}
@@ -522,8 +693,11 @@ export default function SiteHeader({
               All {link.label.replace(/^For\s+/i, "")}
             </Link>
             {link.children.map((child) => {
-              const childHash = `#${sectionIdFromType(link.type)}`;
-              const childActive = activeType === link.type && activeSubtype === child.subtype;
+              const childHash = isAgentPublicSite
+                ? `#${listingScrollTargetId(link.type, child.subtype)}`
+                : `#${sectionIdFromType(link.type)}`;
+              const childActive =
+                activeType === link.type && activeSubtype === child.subtype;
               return (
                 <Link
                   key={`${link.label}-${child.label}`}

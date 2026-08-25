@@ -13,7 +13,7 @@ const FALLBACK_SLIDES = [
     description:
       "It's important to note that real estate laws and regulations vary by jurisdiction.",
     image_url: "/hero/1.jpg",
-    href: "#sale",
+    href: "#for-sale",
   },
   {
     id: "fallback-2",
@@ -21,7 +21,7 @@ const FALLBACK_SLIDES = [
     description:
       "It's important to note that real estate laws and regulations vary by jurisdiction.",
     image_url: "/hero/2.jpg",
-    href: "#sale",
+    href: "#for-sale",
   },
   {
     id: "fallback-3",
@@ -29,7 +29,7 @@ const FALLBACK_SLIDES = [
     description:
       "It's important to note that real estate laws and regulations vary by jurisdiction.",
     image_url: "/hero/3.jpg",
-    href: "#sale",
+    href: "#for-sale",
   },
 ];
 
@@ -112,7 +112,7 @@ export default function HeroSlider({ slides = [] }) {
           ) : null}
 
           <div className={styles.actions}>
-            <Link href={current.href || "#sale"} className={styles.cta}>
+            <Link href={current.href || "#for-sale"} className={styles.cta}>
               <svg
                 className={styles.ctaIcon}
                 width="18"

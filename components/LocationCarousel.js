@@ -88,7 +88,7 @@ export default function LocationCarousel({ locations = [] }) {
         {locations.map((loc) => (
           <a
             key={loc.name}
-            href="#sale"
+            href="#for-sale"
             className={styles.locationCard}
             data-location={loc.name}
             role="listitem"

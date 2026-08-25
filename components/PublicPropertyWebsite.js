@@ -19,7 +19,7 @@ const AGENT_PUBLIC_NAV = [
   { label: "Home", href: "/" },
   {
     label: "For Sale",
-    href: "#sale",
+    href: "#for-sale",
     type: "sale",
     children: [
       { label: "Houses", subtype: "house" },
@@ -30,7 +30,7 @@ const AGENT_PUBLIC_NAV = [
   },
   {
     label: "For Rent",
-    href: "#rent",
+    href: "#for-rent",
     type: "rent",
     children: [
       { label: "Houses", subtype: "house" },
@@ -116,7 +116,7 @@ export default function PublicPropertyWebsite({
                   <h2 className={styles.sectionTitle}>Browse by location</h2>
                 </div>
                 <a
-                  href="#sale"
+                  href="#for-sale"
                   className={styles.textLink}
                   data-view-all-homes
                 >
@@ -316,7 +316,7 @@ export default function PublicPropertyWebsite({
 
             <div className={styles.footerCol}>
               <h4>Properties</h4>
-              <Link href="#sale">For Sale</Link>
+              <Link href="#for-sale">For Sale</Link>
               <Link href="#rent">For Rent</Link>
               <Link href="#plots">Plots</Link>
               <Link href="#why-us">How It Works</Link>
