@@ -225,37 +225,51 @@ export default function SiteHeader({
     };
   }, [resolvedNavLinks, homeHref, isAgentPublicSite]);
 
-  // Agent public: scroll-spy for listing main + subtype sections (no URL filters).
+  // Agent public: scroll-spy for listing + page sections (e.g. Search Areas).
   useEffect(() => {
     if (!isAgentPublicSite) return;
 
-    const buildListingTargets = () => {
+    const buildAllScrollTargets = () => {
       const targets = [];
 
       for (const link of resolvedNavLinks) {
-        if (!link.type) continue;
-
-        const mainId = listingMainSectionId(link.type);
-        const mainEl = document.getElementById(mainId);
-        if (mainEl) {
-          targets.push({
-            href: link.href,
-            type: link.type,
-            subtype: null,
-            element: mainEl,
-          });
-        }
-
-        if (!Array.isArray(link.children)) continue;
-        for (const child of link.children) {
-          const subId = listingScrollTargetId(link.type, child.subtype);
-          const subEl = document.getElementById(subId);
-          if (subEl) {
+        if (link.type) {
+          const mainId = listingMainSectionId(link.type);
+          const mainEl = document.getElementById(mainId);
+          if (mainEl) {
             targets.push({
               href: link.href,
               type: link.type,
-              subtype: child.subtype,
-              element: subEl,
+              subtype: null,
+              element: mainEl,
+            });
+          }
+
+          if (Array.isArray(link.children)) {
+            for (const child of link.children) {
+              const subId = listingScrollTargetId(link.type, child.subtype);
+              const subEl = document.getElementById(subId);
+              if (subEl) {
+                targets.push({
+                  href: link.href,
+                  type: link.type,
+                  subtype: child.subtype,
+                  element: subEl,
+                });
+              }
+            }
+          }
+          continue;
+        }
+
+        if (link.href.startsWith("#")) {
+          const el = document.getElementById(link.href.slice(1));
+          if (el) {
+            targets.push({
+              href: link.href,
+              type: null,
+              subtype: null,
+              element: el,
             });
           }
         }
@@ -267,64 +281,46 @@ export default function SiteHeader({
     };
 
     const syncListingActive = () => {
-      const listingTargets = buildListingTargets();
-      const otherSections = getNavSections(
-        resolvedNavLinks.filter((link) => !link.type),
-      );
+      const allTargets = buildAllScrollTargets();
       const probe = getProbeY();
       const lockedHref = lockedHrefRef.current;
 
       if (lockedHref) {
-        const lockedListing = listingTargets.find((t) => t.href === lockedHref);
-        const lockedOther = otherSections.find((s) => s.href === lockedHref);
-        const lockedEl = lockedListing?.element || lockedOther?.element;
+        const lockedEl = document.getElementById(lockedHref.slice(1));
         const reached =
           lockedEl && lockedEl.getBoundingClientRect().top <= probe + 2;
         if (!reached) {
           setActiveHref(lockedHref);
+          const lockedLink = resolvedNavLinks.find(
+            (link) => link.href === lockedHref,
+          );
+          if (lockedLink?.type) {
+            setActiveType(lockedLink.type);
+          } else {
+            setActiveType(null);
+            setActiveSubtype(null);
+          }
           return;
         }
         lockedHrefRef.current = null;
         window.clearTimeout(lockTimerRef.current);
       }
 
-      let matchedListing = null;
-      for (const target of listingTargets) {
+      let matched = null;
+      for (const target of allTargets) {
         if (target.element.getBoundingClientRect().top <= probe + 2) {
-          matchedListing = target;
+          matched = target;
         }
       }
 
-      if (matchedListing) {
-        setActiveHref(matchedListing.href);
-        setActiveType(matchedListing.type);
-        setActiveSubtype(matchedListing.subtype);
+      if (matched) {
+        setActiveHref(matched.href);
+        setActiveType(matched.type);
+        setActiveSubtype(matched.subtype);
         return;
       }
 
-      if (otherSections.length === 0) {
-        setActiveHref(homeHref);
-        setActiveType(null);
-        setActiveSubtype(null);
-        return;
-      }
-
-      const firstTop = otherSections[0].element.getBoundingClientRect().top;
-      if (firstTop > probe) {
-        setActiveHref(homeHref);
-        setActiveType(null);
-        setActiveSubtype(null);
-        return;
-      }
-
-      let nextHref = otherSections[0].href;
-      for (const section of otherSections) {
-        if (section.element.getBoundingClientRect().top <= probe) {
-          nextHref = section.href;
-        }
-      }
-
-      setActiveHref(nextHref);
+      setActiveHref(homeHref);
       setActiveType(null);
       setActiveSubtype(null);
     };
@@ -492,9 +488,13 @@ export default function SiteHeader({
     }, 1200);
 
     if (isAgentPublicSite) {
-      if (nextType) setActiveType(nextType);
-      else setActiveType(null);
-      setActiveSubtype(nextSubtype);
+      if (nextType) {
+        setActiveType(nextType);
+        setActiveSubtype(nextSubtype);
+      } else {
+        setActiveType(null);
+        setActiveSubtype(null);
+      }
       element?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
