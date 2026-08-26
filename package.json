@@ -34,7 +34,8 @@
     "migrate:drop-image-title": "node scripts/migrate-drop-property-image-title.js",
     "migrate:marketing-sections": "node scripts/migrate-property-marketing-sections.js",
     "migrate:agent-whatsapp-number": "node scripts/migrate-agent-whatsapp-number.js",
-    "migrate:agent-secondary-phone": "node scripts/migrate-agent-secondary-phone.js"
+    "migrate:agent-secondary-phone": "node scripts/migrate-agent-secondary-phone.js",
+    "migrate:website-listing-preferences": "node scripts/migrate-website-listing-preferences.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

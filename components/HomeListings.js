@@ -15,12 +15,12 @@ import {
 import { useIsMobile } from "@/lib/useIsMobile";
 import { sanitizeSearchInput } from "@/lib/validators/common";
 import {
-  AGENT_PUBLIC_LISTING_GROUPS,
   listingMainSectionId,
   listingSubsectionId,
   listingSubsectionCountLabel,
   listingSubsectionTitle,
 } from "@/lib/agentPublicListingSections";
+import { filterListingGroupsByPreferences } from "@/lib/websiteListingPreferences";
 import styles from "./HomeListings.module.css";
 
 const DESKTOP_PAGE_SIZE = 3;
@@ -636,7 +636,11 @@ function PropertySection({
   );
 }
 
-export default function HomeListings({ properties = [], children }) {
+export default function HomeListings({
+  properties = [],
+  children,
+  listingPreferences = null,
+}) {
   const isMobile = useIsMobile(768);
   const pageSize = isMobile ? MOBILE_PAGE_SIZE : DESKTOP_PAGE_SIZE;
   const [query, setQuery] = useState("");
@@ -775,7 +779,8 @@ export default function HomeListings({ properties = [], children }) {
   }, [properties, query, location, sort]);
 
   const groupedSections = useMemo(() => {
-    return AGENT_PUBLIC_LISTING_GROUPS.map((group) => ({
+    const groups = filterListingGroupsByPreferences(listingPreferences);
+    return groups.map((group) => ({
       ...group,
       mainId: listingMainSectionId(group.type),
       subsections: group.subtypes.map((subtype) => ({
@@ -789,7 +794,7 @@ export default function HomeListings({ properties = [], children }) {
         ),
       })),
     }));
-  }, [filtered]);
+  }, [filtered, listingPreferences]);
 
   return (
     <>
@@ -852,32 +857,36 @@ export default function HomeListings({ properties = [], children }) {
       {children}
 
       <div className={styles.listingsWrap}>
-        {groupedSections.map((group) => (
-          <div
-            key={group.type}
-            id={group.mainId}
-            className={styles.listingGroup}
-          >
-            {group.subsections.map((section) => {
-              const key = pageKey(group.type, section.subtype);
-              return (
-                <PropertySection
-                  key={section.id}
-                  id={section.id}
-                  title={section.title}
-                  kicker={group.title}
-                  subtype={section.subtype}
-                  properties={section.properties}
-                  currentPage={pages[key] || 1}
-                  pageSize={pageSize}
-                  onPageChange={(page) =>
-                    setPages((prev) => ({ ...prev, [key]: page }))
-                  }
-                />
-              );
-            })}
-          </div>
-        ))}
+        {groupedSections.length === 0 ? (
+          <div className={styles.empty}>No listings available.</div>
+        ) : (
+          groupedSections.map((group) => (
+            <div
+              key={group.type}
+              id={group.mainId}
+              className={styles.listingGroup}
+            >
+              {group.subsections.map((section) => {
+                const key = pageKey(group.type, section.subtype);
+                return (
+                  <PropertySection
+                    key={section.id}
+                    id={section.id}
+                    title={section.title}
+                    kicker={group.title}
+                    subtype={section.subtype}
+                    properties={section.properties}
+                    currentPage={pages[key] || 1}
+                    pageSize={pageSize}
+                    onPageChange={(page) =>
+                      setPages((prev) => ({ ...prev, [key]: page }))
+                    }
+                  />
+                );
+              })}
+            </div>
+          ))
+        )}
       </div>
     </>
   );

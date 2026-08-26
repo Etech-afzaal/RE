@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS users (
   areas_served VARCHAR(500) NULL,
   office_address VARCHAR(500) NULL,                -- Company branding
   social_links VARCHAR(1000) NULL,                 -- Company branding (URLs)
+  website_listing_preferences JSON NULL,           -- Agent public website category visibility
   password_hash VARCHAR(255) NOT NULL,
   user_type ENUM('superadmin','agent') NOT NULL DEFAULT 'agent',
   must_reset_password BOOLEAN DEFAULT TRUE,

@@ -12,6 +12,11 @@ import AgentInquiryForm from "@/components/AgentInquiryForm";
 import AgentWhatsAppFab from "@/components/AgentWhatsAppFab";
 import { agentPhoneEntries } from "@/lib/agentContact";
 import { agentWebsiteWhatsAppMessage, resolveAgentWhatsAppNumber } from "@/lib/whatsapp";
+import {
+  filterNavLinksByPreferences,
+  isCategoryEnabled,
+  normalizeWebsiteListingPreferences,
+} from "@/lib/websiteListingPreferences";
 import styles from "@/app/page.module.css";
 import "@/app/agent-public-theme.css";
 
@@ -63,6 +68,14 @@ export default function PublicPropertyWebsite({
   agent = null,
   agentStats = null,
 }) {
+  const listingPreferences = normalizeWebsiteListingPreferences(
+    agent?.website_listing_preferences,
+  );
+  const navLinks = filterNavLinksByPreferences(
+    AGENT_PUBLIC_NAV,
+    listingPreferences,
+  );
+
   const trustBackground =
     properties.find((property) => property.featuredImage?.image_url)
       ?.featuredImage?.image_url ||
@@ -83,7 +96,7 @@ export default function PublicPropertyWebsite({
   return (
     <div className={`agent-public-theme ${styles.wrapper}`}>
       <SiteHeader
-        navLinks={AGENT_PUBLIC_NAV}
+        navLinks={navLinks}
         ctaLabel="Sell Your Property"
         ctaHref="#contact"
         logoSrc={agent?.company_logo || "/logo.svg"}
@@ -93,7 +106,10 @@ export default function PublicPropertyWebsite({
             : "Dhalahore Properties"
         }
       />
-      <HomeListings properties={properties}>
+      <HomeListings
+        properties={properties}
+        listingPreferences={listingPreferences}
+      >
         <HeroSlider slides={heroSlides} />
         <div className={styles.container}>
           {agent ? (
@@ -316,9 +332,15 @@ export default function PublicPropertyWebsite({
 
             <div className={styles.footerCol}>
               <h4>Properties</h4>
-              <Link href="#for-sale">For Sale</Link>
-              <Link href="#rent">For Rent</Link>
-              <Link href="#plots">Plots</Link>
+              {isCategoryEnabled(listingPreferences, "sale") ? (
+                <Link href="#for-sale">For Sale</Link>
+              ) : null}
+              {isCategoryEnabled(listingPreferences, "rent") ? (
+                <Link href="#for-rent">For Rent</Link>
+              ) : null}
+              {isCategoryEnabled(listingPreferences, "plot") ? (
+                <Link href="#plots">Plots</Link>
+              ) : null}
               <Link href="#why-us">How It Works</Link>
             </div>
 

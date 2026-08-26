@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
@@ -8,6 +8,10 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import PasswordInput from "@/components/PasswordInput";
 import ui from "@/components/agent-portal/portal.module.css";
 import { validateNewPassword } from "@/lib/validators/userValidator";
+import {
+  defaultWebsiteListingPreferences,
+  WEBSITE_LISTING_PREF_OPTIONS,
+} from "@/lib/websiteListingPreferences";
 
 export default function AgentSettingsPage() {
   const params = useParams();
@@ -21,11 +25,43 @@ export default function AgentSettingsPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const [prefs, setPrefs] = useState(defaultWebsiteListingPreferences);
+  const [prefsLoading, setPrefsLoading] = useState(true);
+  const [prefsSaving, setPrefsSaving] = useState(false);
+  const [prefsError, setPrefsError] = useState("");
+  const [prefsSuccess, setPrefsSuccess] = useState("");
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.replace("/agent/login");
     }
   }, [status, router]);
+
+  const loadPreferences = useCallback(async () => {
+    setPrefsLoading(true);
+    setPrefsError("");
+    try {
+      const res = await fetch("/api/agent/website-listing-preferences");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setPrefsError(data.error || "Could not load listing preferences.");
+        setPrefs(defaultWebsiteListingPreferences());
+        return;
+      }
+      setPrefs(data.preferences || defaultWebsiteListingPreferences());
+    } catch {
+      setPrefsError("Network error. Please try again.");
+      setPrefs(defaultWebsiteListingPreferences());
+    } finally {
+      setPrefsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      loadPreferences();
+    }
+  }, [status, loadPreferences]);
 
   if (status === "loading" || status === "unauthenticated") {
     return (
@@ -80,6 +116,56 @@ export default function AgentSettingsPage() {
     }
   }
 
+  function toggleCategory(type, enabled) {
+    setPrefs((prev) => ({
+      ...prev,
+      [type]: {
+        ...prev[type],
+        enabled,
+      },
+    }));
+    setPrefsSuccess("");
+  }
+
+  function toggleSubtype(type, subtype, enabled) {
+    setPrefs((prev) => ({
+      ...prev,
+      [type]: {
+        ...prev[type],
+        types: {
+          ...prev[type].types,
+          [subtype]: enabled,
+        },
+      },
+    }));
+    setPrefsSuccess("");
+  }
+
+  async function saveListingPreferences(e) {
+    e.preventDefault();
+    setPrefsError("");
+    setPrefsSuccess("");
+    setPrefsSaving(true);
+    try {
+      const res = await fetch("/api/agent/website-listing-preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preferences: prefs }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setPrefsError(data.error || "Could not save preferences.");
+        return;
+      }
+      if (data.preferences) setPrefs(data.preferences);
+      setPrefsSuccess("Website listing preferences saved.");
+    } catch {
+      setPrefsError("Network error. Please try again.");
+    } finally {
+      setPrefsSaving(false);
+    }
+  }
+
   return (
     <AgentPortalShell
       username={username}
@@ -87,48 +173,122 @@ export default function AgentSettingsPage() {
       title="Settings"
       subtitle="Account security and preferences"
     >
-      <form className={ui.formCard} onSubmit={changePassword}>
-        <h2 className={ui.panelTitle} style={{ marginBottom: "1rem" }}>
-          Change password
-        </h2>
-        {error ? <p className={ui.error}>{error}</p> : null}
-        {success ? <p className={ui.success}>{success}</p> : null}
-        <label className={ui.field}>
-          <span className={ui.label}>Current password</span>
-          <PasswordInput
-            className={ui.input}
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            autoComplete="current-password"
-            required
-          />
-        </label>
-        <label className={ui.field}>
-          <span className={ui.label}>New password</span>
-          <PasswordInput
-            className={ui.input}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="new-password"
-            required
-          />
-        </label>
-        <label className={ui.field}>
-          <span className={ui.label}>Confirm password</span>
-          <PasswordInput
-            className={ui.input}
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            autoComplete="new-password"
-            required
-          />
-        </label>
-        <div className={ui.formActions}>
-          <button type="submit" className={ui.btnPrimary} disabled={saving}>
-            {saving ? "Updating…" : "Update Password"}
-          </button>
-        </div>
-      </form>
+      <div className={ui.settingsStack}>
+        <form className={ui.formCard} onSubmit={changePassword}>
+          <h2 className={ui.panelTitle} style={{ marginBottom: "1rem" }}>
+            Change password
+          </h2>
+          {error ? <p className={ui.error}>{error}</p> : null}
+          {success ? <p className={ui.success}>{success}</p> : null}
+          <label className={ui.field}>
+            <span className={ui.label}>Current password</span>
+            <PasswordInput
+              className={ui.input}
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+            />
+          </label>
+          <label className={ui.field}>
+            <span className={ui.label}>New password</span>
+            <PasswordInput
+              className={ui.input}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              required
+            />
+          </label>
+          <label className={ui.field}>
+            <span className={ui.label}>Confirm password</span>
+            <PasswordInput
+              className={ui.input}
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              autoComplete="new-password"
+              required
+            />
+          </label>
+          <div className={ui.formActions}>
+            <button type="submit" className={ui.btnPrimary} disabled={saving}>
+              {saving ? "Updating…" : "Update Password"}
+            </button>
+          </div>
+        </form>
+
+        <form className={ui.formCard} onSubmit={saveListingPreferences}>
+          <h2 className={ui.panelTitle} style={{ marginBottom: "0.35rem" }}>
+            Website Listing Preferences
+          </h2>
+          <p className={ui.settingsLead}>
+            Choose what appears on your public website
+          </p>
+          {prefsError ? <p className={ui.error}>{prefsError}</p> : null}
+          {prefsSuccess ? <p className={ui.success}>{prefsSuccess}</p> : null}
+
+          {prefsLoading ? (
+            <p className={ui.settingsMuted}>Loading preferences…</p>
+          ) : (
+            <div className={ui.prefGroups}>
+              {WEBSITE_LISTING_PREF_OPTIONS.map((group) => {
+                const category = prefs[group.type];
+                const parentEnabled = Boolean(category?.enabled);
+                return (
+                  <div key={group.type} className={ui.prefGroup}>
+                    <label className={ui.prefParent}>
+                      <input
+                        type="checkbox"
+                        checked={parentEnabled}
+                        onChange={(e) =>
+                          toggleCategory(group.type, e.target.checked)
+                        }
+                      />
+                      <span>{group.label}</span>
+                    </label>
+                    <div className={ui.prefChildren}>
+                      {group.subtypes.map((child) => (
+                        <label
+                          key={child.subtype}
+                          className={`${ui.prefChild}${
+                            parentEnabled ? "" : ` ${ui.prefChildDisabled}`
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={Boolean(
+                              category?.types?.[child.subtype],
+                            )}
+                            disabled={!parentEnabled}
+                            onChange={(e) =>
+                              toggleSubtype(
+                                group.type,
+                                child.subtype,
+                                e.target.checked,
+                              )
+                            }
+                          />
+                          <span>{child.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className={ui.formActions}>
+            <button
+              type="submit"
+              className={ui.btnPrimary}
+              disabled={prefsSaving || prefsLoading}
+            >
+              {prefsSaving ? "Saving…" : "Save Preferences"}
+            </button>
+          </div>
+        </form>
+      </div>
     </AgentPortalShell>
   );
 }

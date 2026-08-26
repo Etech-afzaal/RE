@@ -467,13 +467,6 @@ export default function AgentPropertiesPage() {
                           {statusLabel(property.status)}
                         </span>
                         {note ? <p className={ui.statusNote}>{note}</p> : null}
-                        {isRejected ? (
-                          <p className={`${ui.statusNote} ${ui.statusNoteRejected}`}>
-                            <span className={ui.reasonLabel}>Reason: </span>
-                            {property.rejected_reason ||
-                              "No reason was recorded."}
-                          </p>
-                        ) : null}
                       </td>
                       <td data-label="Price">
                         {formatPrice(property.price, property.price_currency)}
