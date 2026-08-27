@@ -1,0 +1,28 @@
+.dialogTitle {
+  margin: 0 0 1rem;
+}
+
+.dialogForm {
+  margin-top: 0.25rem;
+}
+
+.imageSection {
+  margin-bottom: 0.35rem;
+}
+
+.imageHint {
+  margin: 0.4rem 0 0.75rem;
+}
+
+.field {
+  display: block;
+  margin-top: 0.85rem;
+}
+
+.field:first-of-type {
+  margin-top: 0.5rem;
+}
+
+.dialogError {
+  margin-bottom: 0.75rem;
+}

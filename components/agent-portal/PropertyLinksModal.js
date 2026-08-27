@@ -1,0 +1,150 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { BarChart3, Copy, Link2 } from "lucide-react";
+import ui from "@/components/agent-portal/portal.module.css";
+import styles from "./PropertyLinksModal.module.css";
+
+function fullUrl(path) {
+  if (typeof window === "undefined") return path;
+  return `${window.location.origin}${path}`;
+}
+
+export default function PropertyLinksModal({
+  property,
+  username,
+  onClose,
+}) {
+  const base = `/re/${encodeURIComponent(username)}/dashboard`;
+  const [links, setLinks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [copiedCode, setCopiedCode] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await fetch(
+          `/api/properties/${property.id}/marketing-links`,
+        );
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.error || "Could not load property links.");
+        }
+        if (active) {
+          setLinks(Array.isArray(data.links) ? data.links : []);
+        }
+      } catch (err) {
+        if (active) {
+          setError(err.message || "Could not load property links.");
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [property.id]);
+
+  async function copyLink(link) {
+    const url = fullUrl(link.url);
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedCode(link.unique_code);
+      setTimeout(() => setCopiedCode(null), 2000);
+    } catch {
+      setError("Could not copy link. Please copy manually.");
+    }
+  }
+
+  return (
+    <div className={ui.dialogBackdrop} role="presentation" onClick={onClose}>
+      <div
+        className={`${ui.dialog} ${styles.dialogWide}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="property-links-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id="property-links-title" className={ui.dialogTitle}>
+          Property Links
+        </h2>
+        <p className={ui.dialogText}>
+          Marketing links for &ldquo;{property.title}&rdquo;. Each subagent gets
+          a unique tracking link.
+        </p>
+
+        {error ? <p className={ui.error}>{error}</p> : null}
+
+        {loading ? (
+          <p className={ui.empty}>Loading links…</p>
+        ) : links.length === 0 ? (
+          <div className={styles.emptyState}>
+            <Link2 size={20} aria-hidden="true" />
+            <p>No subagents yet. Create subagents to generate marketing links.</p>
+            <Link href={`${base}/subagents`} className={ui.btnPrimary}>
+              Manage Subagents
+            </Link>
+          </div>
+        ) : (
+          <ul className={styles.linkList}>
+            {links.map((link) => (
+              <li key={link.id} className={styles.linkRow}>
+                <div className={styles.linkPerson}>
+                  {link.subagent.image ? (
+                    <Image
+                      src={link.subagent.image}
+                      alt=""
+                      width={44}
+                      height={44}
+                      className={styles.linkAvatar}
+                    />
+                  ) : (
+                    <div className={styles.linkAvatarFallback}>
+                      {link.subagent.name?.charAt(0) || "S"}
+                    </div>
+                  )}
+                  <div>
+                    <p className={styles.linkName}>{link.subagent.name}</p>
+                    <p className={styles.linkCode}>ref={link.unique_code}</p>
+                  </div>
+                </div>
+                <p className={styles.linkUrl}>{fullUrl(link.url)}</p>
+                <div className={styles.linkActions}>
+                  <button
+                    type="button"
+                    className={ui.btnGhost}
+                    onClick={() => copyLink(link)}
+                  >
+                    <Copy size={16} aria-hidden="true" />
+                    {copiedCode === link.unique_code ? "Copied" : "Copy"}
+                  </button>
+                  <Link
+                    href={`${base}/properties/${property.id}/links/${link.id}/insights`}
+                    className={ui.btnPrimary}
+                    onClick={onClose}
+                  >
+                    <BarChart3 size={16} aria-hidden="true" />
+                    Insights
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className={ui.dialogActions}>
+          <button type="button" className={ui.btnGhost} onClick={onClose}>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

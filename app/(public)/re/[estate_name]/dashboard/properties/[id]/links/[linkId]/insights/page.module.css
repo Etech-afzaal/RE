@@ -1,0 +1,67 @@
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.avatar {
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatarFallback {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #e5e5e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: #555;
+}
+
+.name {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.meta {
+  margin: 4px 0 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.archived {
+  margin: 6px 0 0;
+  color: #a66;
+  font-size: 0.85rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.statCard {
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 16px;
+  background: #fafafa;
+}
+
+.statLabel {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.statValue {
+  margin: 8px 0 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+}

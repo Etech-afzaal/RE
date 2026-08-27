@@ -68,6 +68,23 @@ function navItems(base) {
       ),
     },
     {
+      href: `${base}/subagents`,
+      label: "Subagents",
+      icon: (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <circle cx="17" cy="9" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <path
+            d="M4 19.5c1.5-2.8 3.5-4 5-4s3.5 1.2 5 4M14 19.5c.4-1.5 1.2-2.5 2.5-2.5 1.6 0 2.7 1.2 3 2.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+        </svg>
+      ),
+    },
+    {
       href: `${base}/profile`,
       label: "My Profile",
       icon: (

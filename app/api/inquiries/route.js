@@ -23,6 +23,7 @@ export async function POST(req) {
       subject: body?.subject,
       message: body?.message,
       page_url: body?.page_url,
+      marketing_ref: body?.marketing_ref,
     });
 
     if (!result.ok) {

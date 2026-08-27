@@ -22,6 +22,7 @@ export default function AgentInquiryForm({
   variant = "website",
   heading = null,
   kicker = "Send a message",
+  marketingRef = null,
 }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -111,6 +112,8 @@ export default function AgentInquiryForm({
 
     if (propertyId != null) payload.property_id = Number(propertyId);
     else if (agentId != null) payload.agent_id = Number(agentId);
+
+    if (marketingRef) payload.marketing_ref = marketingRef;
 
     try {
       const response = await fetch("/api/inquiries", {

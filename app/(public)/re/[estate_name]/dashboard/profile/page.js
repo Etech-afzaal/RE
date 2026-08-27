@@ -11,6 +11,7 @@ import { validateAgentProfileInput } from "@/lib/validators/userValidator";
 import {
   IMAGE_KINDS,
   imageProcessErrorMessage,
+  profileImageSizeErrorMessage,
   validateImageUploadFile,
 } from "@/lib/imageUpload";
 import { compressImageForUpload } from "@/lib/clientImageCompress";
@@ -36,6 +37,7 @@ export default function AgentProfilePage() {
   const [confirmRemoveImage, setConfirmRemoveImage] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [imageError, setImageError] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [successPopup, setSuccessPopup] = useState("");
@@ -110,6 +112,9 @@ export default function AgentProfilePage() {
       const imageData = await imageRes.json().catch(() => ({}));
       if (!imageRes.ok) {
         setSaving(false);
+        setImageError(
+          imageData.error || profileImageSizeErrorMessage(),
+        );
         setError(imageData.error || "Profile saved, but the image could not be uploaded.");
         return;
       }
@@ -122,19 +127,31 @@ export default function AgentProfilePage() {
 
   async function selectImage(file) {
     if (!file) return;
+    setImageError("");
     setError("");
 
     const validated = validateImageUploadFile(file, IMAGE_KINDS.PROFILE);
     if (!validated.ok) {
-      setError(validated.error);
+      setImageError(validated.error);
       return;
     }
 
     try {
       const compressed = await compressImageForUpload(file);
+      const afterCompress = validateImageUploadFile(compressed, IMAGE_KINDS.PROFILE);
+      if (!afterCompress.ok) {
+        setImageError(afterCompress.error);
+        return;
+      }
       setSelectedImage(compressed);
-    } catch {
-      setError(imageProcessErrorMessage());
+      setImageError("");
+    } catch (err) {
+      const message = String(err?.message || "").trim();
+      setImageError(
+        message && message !== "Error"
+          ? message
+          : imageProcessErrorMessage(),
+      );
     }
   }
 
@@ -155,7 +172,14 @@ export default function AgentProfilePage() {
     setSuccess("Profile picture removed successfully.");
   }
 
-  const showRemoveImage = Boolean(form.profile_image) && !selectedImage;
+  function clearPendingProfileImage() {
+    setSelectedImage(null);
+    setImageError("");
+    setError("");
+    setSuccess("");
+  }
+
+  const showRemoveImage = Boolean(selectedImage || form.profile_image);
 
   return (
     <AgentPortalShell
@@ -193,6 +217,10 @@ export default function AgentProfilePage() {
                 aria-label="Remove profile picture"
                 disabled={saving || removingImage}
                 onClick={() => {
+                  if (selectedImage) {
+                    clearPendingProfileImage();
+                    return;
+                  }
                   setError("");
                   setSuccess("");
                   setConfirmRemoveImage(true);
@@ -203,16 +231,25 @@ export default function AgentProfilePage() {
             ) : null}
           </div>
           <label className={ui.btnGhost} style={{ cursor: "pointer" }}>
-            {selectedImage ? "Picture selected" : "Upload picture"}
+            {selectedImage || form.profile_image
+              ? "Replace picture"
+              : "Upload picture"}
             <input
               type="file"
               accept="image/*"
               hidden
               disabled={saving || removingImage}
-              onChange={(e) => selectImage(e.target.files?.[0])}
+              onChange={(e) => {
+                selectImage(e.target.files?.[0]);
+                e.target.value = "";
+              }}
             />
           </label>
         </div>
+        <p className={ui.propMeta}>JPG, PNG or WEBP. Maximum size 2 MB.</p>
+        {imageError ? (
+          <p className={ui.fieldError} role="alert">{imageError}</p>
+        ) : null}
 
         <label className={ui.field}>
           <span className={ui.label}>Name</span>

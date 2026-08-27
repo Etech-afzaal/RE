@@ -13,15 +13,20 @@ import { agentPublicUsername } from "@/lib/propertySlug";
 import AgentAvatar from "@/components/AgentAvatar";
 import AgentInquiryForm from "@/components/AgentInquiryForm";
 import AgentWhatsAppFab from "@/components/AgentWhatsAppFab";
-import AgentPhoneReveal from "./AgentPhoneReveal";
+import TrackedAgentWhatsAppFab from "@/components/TrackedAgentWhatsAppFab";
+import TrackedTelLink from "@/components/TrackedTelLink";
+import TrackedWhatsAppLink from "@/components/TrackedWhatsAppLink";
+import PropertyReferralTracker from "@/components/PropertyReferralTracker";
+import TrackedAgentPhoneReveal from "./TrackedAgentPhoneReveal";
 import BackToTop from "./BackToTop";
 import { PUBLIC_SITE_LOGO_DIMENSIONS } from "@/components/publicSiteLogo";
-import { agentPhoneEntries } from "@/lib/agentContact";
+import { agentPhoneEntries, subagentContactFromMarketingLink, subagentPhoneEntries } from "@/lib/agentContact";
 import {
   buildAgentWhatsAppUrl,
   propertyWhatsAppMessage,
   resolveAgentWhatsAppNumber,
 } from "@/lib/whatsapp";
+import { resolvePropertyMarketingRef } from "@/lib/marketingLinks";
 import {
   formatPropertyLocation,
   resolveLocationInfo,
@@ -471,7 +476,7 @@ function savedMarketingSection(value) {
   return { present: false, value: [] };
 }
 
-export default async function PropertyDetailPage({ params }) {
+export default async function PropertyDetailPage({ params, searchParams }) {
   const agent = await getAgentByUsername(params.estate_name);
   if (!agent) return notFound();
 
@@ -481,6 +486,15 @@ export default async function PropertyDetailPage({ params }) {
     params.propertyId,
   );
   if (!property) return notFound();
+
+  const refCode = searchParams?.ref
+    ? String(searchParams.ref).trim()
+    : null;
+  const marketingLink = refCode
+    ? await resolvePropertyMarketingRef(property.id, refCode)
+    : null;
+  const isReferral = Boolean(marketingLink);
+  const marketingRef = isReferral ? marketingLink.unique_code : null;
 
   const companyName = companyNameFromAgent(agent);
   const sizeLabel = formatSize(property.size_value, property.size_unit);
@@ -516,14 +530,37 @@ export default async function PropertyDetailPage({ params }) {
     return [];
   })();
 
-  const phoneEntries = agentPhoneEntries(agent);
-  const telHref = agent.phone
-    ? `tel:${String(agent.phone).replace(/\s/g, "")}`
+  const subagentContact = isReferral
+    ? subagentContactFromMarketingLink(marketingLink)
     : null;
-  const waHref = buildAgentWhatsAppUrl(agent);
-  const waFabPhone = resolveAgentWhatsAppNumber(agent);
+
+  const phoneEntries = isReferral
+    ? subagentPhoneEntries(subagentContact)
+    : agentPhoneEntries(agent);
+  const contactName = isReferral
+    ? subagentContact.name
+    : agent.full_name;
+  const contactImage = isReferral
+    ? subagentContact.image
+    : agent.profile_image;
+  const contactEmail = isReferral
+    ? subagentContact.email
+    : agent.email;
+  const telHref = isReferral
+    ? subagentContact.phone
+      ? `tel:${String(subagentContact.phone).replace(/\s/g, "")}`
+      : null
+    : agent.phone
+      ? `tel:${String(agent.phone).replace(/\s/g, "")}`
+      : null;
+  const waHref = isReferral
+    ? buildAgentWhatsAppUrl(subagentContact)
+    : buildAgentWhatsAppUrl(agent);
+  const waFabPhone = isReferral
+    ? resolveAgentWhatsAppNumber(subagentContact)
+    : resolveAgentWhatsAppNumber(agent);
   const waFabMessage = propertyWhatsAppMessage(
-    agent.full_name,
+    isReferral ? subagentContact.name : agent.full_name,
     property.title,
     formatPropertyLocation(property),
   );
@@ -589,6 +626,12 @@ export default async function PropertyDetailPage({ params }) {
 
   return (
     <div className={`agent-public-theme ${styles.page}`}>
+      {marketingRef ? (
+        <PropertyReferralTracker
+          refCode={marketingRef}
+          propertyId={property.id}
+        />
+      ) : null}
       <div className={styles.container}>
         {/* 1. Agent brand header */}
         <header className={styles.header}>
@@ -781,14 +824,14 @@ export default async function PropertyDetailPage({ params }) {
               <p className={styles.agentKicker}>Listed by</p>
               <div className={styles.agentTop}>
                 <AgentAvatar
-                  src={agent.profile_image}
-                  alt={agent.full_name || "Agent"}
+                  src={contactImage}
+                  alt={contactName || "Agent"}
                   width={48}
                   height={48}
                   className={styles.agentAvatarImg}
                 />
                 <div>
-                  <h2 className={styles.agentName}>{agent.full_name}</h2>
+                  <h2 className={styles.agentName}>{contactName}</h2>
                   <span className={styles.verifiedBadge}>
                     <svg
                       width="13"
@@ -816,28 +859,56 @@ export default async function PropertyDetailPage({ params }) {
             </div>
 
             <div className={styles.agentDetails}>
-              <AgentPhoneReveal phoneEntries={phoneEntries} />
-              <a href={`mailto:${agent.email}`} className={styles.agentDetail}>
+              <TrackedAgentPhoneReveal
+                phoneEntries={phoneEntries}
+                marketingRef={marketingRef}
+                propertyId={property.id}
+              />
+              <a href={`mailto:${contactEmail}`} className={styles.agentDetail}>
                 <span>Email</span>
-                <strong>{agent.email}</strong>
+                <strong>{contactEmail}</strong>
               </a>
             </div>
 
             <div className={styles.agentActions}>
               {telHref ? (
-                <a href={telHref} className={styles.agentPrimary}>
-                  Call Agent
-                </a>
+                marketingRef ? (
+                  <TrackedTelLink
+                    href={telHref}
+                    className={styles.agentPrimary}
+                    marketingRef={marketingRef}
+                    propertyId={property.id}
+                  >
+                    Call Agent
+                  </TrackedTelLink>
+                ) : (
+                  <a href={telHref} className={styles.agentPrimary}>
+                    Call Agent
+                  </a>
+                )
               ) : null}
               {waHref ? (
-                <a
-                  href={waHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.agentWhatsApp}
-                >
-                  WhatsApp
-                </a>
+                marketingRef ? (
+                  <TrackedWhatsAppLink
+                    href={waHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.agentWhatsApp}
+                    marketingRef={marketingRef}
+                    propertyId={property.id}
+                  >
+                    WhatsApp
+                  </TrackedWhatsAppLink>
+                ) : (
+                  <a
+                    href={waHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.agentWhatsApp}
+                  >
+                    WhatsApp
+                  </a>
+                )
               ) : null}
             </div>
 
@@ -847,6 +918,7 @@ export default async function PropertyDetailPage({ params }) {
                 variant="property"
                 kicker="Send Inquiry"
                 heading={null}
+                marketingRef={marketingRef}
               />
             </div>
 
@@ -977,7 +1049,16 @@ export default async function PropertyDetailPage({ params }) {
 
       {/* Desktop FAB — hidden on mobile where sticky contact bar replaces it */}
       <div className={styles.fabDesktopOnly}>
-        <AgentWhatsAppFab phone={waFabPhone} message={waFabMessage} />
+        {marketingRef ? (
+          <TrackedAgentWhatsAppFab
+            phone={waFabPhone}
+            message={waFabMessage}
+            marketingRef={marketingRef}
+            propertyId={property.id}
+          />
+        ) : (
+          <AgentWhatsAppFab phone={waFabPhone} message={waFabMessage} />
+        )}
       </div>
 
       <BackToTop />
@@ -986,19 +1067,43 @@ export default async function PropertyDetailPage({ params }) {
       {telHref || waHref ? (
         <nav className={styles.mobileContactBar} aria-label="Contact agent">
           {telHref ? (
-            <a href={telHref} className={styles.mobileCallBtn}>
-              Call Agent
-            </a>
+            marketingRef ? (
+              <TrackedTelLink
+                href={telHref}
+                className={styles.mobileCallBtn}
+                marketingRef={marketingRef}
+                propertyId={property.id}
+              >
+                Call Agent
+              </TrackedTelLink>
+            ) : (
+              <a href={telHref} className={styles.mobileCallBtn}>
+                Call Agent
+              </a>
+            )
           ) : null}
           {waHref ? (
-            <a
-              href={waHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.mobileWaBtn}
-            >
-              WhatsApp
-            </a>
+            marketingRef ? (
+              <TrackedWhatsAppLink
+                href={waHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.mobileWaBtn}
+                marketingRef={marketingRef}
+                propertyId={property.id}
+              >
+                WhatsApp
+              </TrackedWhatsAppLink>
+            ) : (
+              <a
+                href={waHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.mobileWaBtn}
+              >
+                WhatsApp
+              </a>
+            )
           ) : null}
         </nav>
       ) : null}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CircleCheck, Send, Star, StarOff, Undo2 } from "lucide-react";
+import { CircleCheck, Link2, Send, Star, StarOff, Undo2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
@@ -14,6 +14,7 @@ import { formatPropertyLocation } from "@/lib/propertyLocation";
 import { formatPropertyPrice } from "@/lib/formatPrice";
 import { getPropertyUrl } from "@/lib/propertySlug";
 import ui from "@/components/agent-portal/portal.module.css";
+import PropertyLinksModal from "@/components/agent-portal/PropertyLinksModal";
 import styles from "./page.module.css";
 
 const TABS = [
@@ -88,6 +89,7 @@ export default function AgentPropertiesPage() {
   const [busyId, setBusyId] = useState(null);
   const [propertyToDelete, setPropertyToDelete] = useState(null);
   const [propertyToCancelApproval, setPropertyToCancelApproval] = useState(null);
+  const [propertyForLinks, setPropertyForLinks] = useState(null);
   const [error, setError] = useState("");
   const [errorDetails, setErrorDetails] = useState([]);
   const [success, setSuccess] = useState("");
@@ -524,6 +526,19 @@ export default function AgentPropertiesPage() {
                             ...(property.status === "approved" || property.status === "hidden"
                               ? [{ label: "Mark as sold", icon: CircleCheck,  onSelect: () => markAsSold(property), disabled: busyId === property.id }]
                               : []),
+                            ...(isApproved
+                              ? [{
+                                  label: "Property Links",
+                                  icon: Link2,
+                                  onSelect: () => {
+                                    setError("");
+                                    setErrorDetails([]);
+                                    setSuccess("");
+                                    setPropertyForLinks(property);
+                                  },
+                                  disabled: busyId === property.id,
+                                }]
+                              : []),
                           ]}
                         />
                       </td>
@@ -619,6 +634,14 @@ export default function AgentPropertiesPage() {
             </div>
           </div>
         </div>
+      ) : null}
+
+      {propertyForLinks ? (
+        <PropertyLinksModal
+          property={propertyForLinks}
+          username={username}
+          onClose={() => setPropertyForLinks(null)}
+        />
       ) : null}
     </AgentPortalShell>
   );

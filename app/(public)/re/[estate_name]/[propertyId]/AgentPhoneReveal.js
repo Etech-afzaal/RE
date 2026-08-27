@@ -3,10 +3,23 @@
 import { useState } from "react";
 import styles from "./page.module.css";
 
-export default function AgentPhoneReveal({ phoneEntries = [] }) {
+export default function AgentPhoneReveal({
+  phoneEntries = [],
+  onReveal,
+  onPhoneClick,
+}) {
   const [revealed, setRevealed] = useState(false);
 
   if (phoneEntries.length === 0) return null;
+
+  function handleReveal() {
+    setRevealed(true);
+    onReveal?.();
+  }
+
+  function handlePhoneClick() {
+    onPhoneClick?.();
+  }
 
   return (
     <div
@@ -19,7 +32,7 @@ export default function AgentPhoneReveal({ phoneEntries = [] }) {
         <button
           type="button"
           className={styles.phoneRevealTrigger}
-          onClick={() => setRevealed(true)}
+          onClick={handleReveal}
           aria-label="Click to show phone number"
         >
           <span className={styles.phoneRevealTriggerIcon} aria-hidden="true">
@@ -43,6 +56,7 @@ export default function AgentPhoneReveal({ phoneEntries = [] }) {
               href={entry.href}
               className={styles.phoneRevealLink}
               style={{ animationDelay: `${index * 0.05}s` }}
+              onClick={handlePhoneClick}
             >
               <strong>{entry.number}</strong>
             </a>
