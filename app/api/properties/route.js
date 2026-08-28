@@ -24,6 +24,7 @@ export async function GET(req) {
   const agentId = Number(session.user.agent_id || session.user.id);
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
+  const featured = searchParams.get("featured") === "1";
   const search = sanitizeSearchInput(searchParams.get("search")).value;
   const page = searchParams.get("page");
   const includeStats = searchParams.get("stats") === "1";
@@ -32,6 +33,7 @@ export async function GET(req) {
     page,
     pageSize: 10,
     status,
+    featured,
     search,
   });
   if (includeStats) {

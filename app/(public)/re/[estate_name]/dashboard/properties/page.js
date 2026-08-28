@@ -25,6 +25,7 @@ import styles from "./page.module.css";
 
 const TABS = [
   { id: "all", label: "All" },
+  { id: "featured", label: "Featured" },
   { id: "draft", label: "Draft" },
   { id: "pending_approval", label: "Pending Approval" },
   { id: "approved", label: "Approved" },
@@ -54,11 +55,15 @@ export default function AgentPropertiesPage() {
   const propertiesSectionRef = useRef(null);
   const shouldScrollRef = useRef(false);
 
-  const load = useCallback(async (page = currentPage, selectedTab = tab) => {
+  const load = useCallback(async (page = 1, selectedTab = "all") => {
     setLoading(true);
     setLoadError("");
     const params = new URLSearchParams({ page: String(page) });
-    if (selectedTab !== "all") params.set("status", selectedTab);
+    if (selectedTab === "featured") {
+      params.set("featured", "1");
+    } else if (selectedTab !== "all") {
+      params.set("status", selectedTab);
+    }
     try {
       const res = await fetch(`/api/properties?${params}`);
       const data = await res.json().catch(() => ({}));
@@ -77,7 +82,7 @@ export default function AgentPropertiesPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, tab]);
+  }, []);
 
   const actions = useAgentPropertyActions({
     onReload: (page) => load(page ?? currentPage, tab),
@@ -115,7 +120,7 @@ export default function AgentPropertiesPage() {
   function changePage(page) {
     if (page < 1 || page > totalPages || page === currentPage) return;
     shouldScrollRef.current = true;
-    load(page);
+    load(page, tab);
   }
 
   function changeTab(nextTab) {
