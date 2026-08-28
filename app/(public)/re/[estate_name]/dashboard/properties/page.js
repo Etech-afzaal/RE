@@ -1,22 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { CircleCheck, Eye, Link2, Send, SquarePen, Star, StarOff, Undo2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
-import ActionMenu from "@/components/ActionMenu";
+import AgentPropertyActionModals from "@/components/agent-portal/AgentPropertyActionModals";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Pagination from "@/components/Pagination";
+import PropertyListingActions from "@/components/agent-portal/PropertyListingActions";
+import { useAgentPropertyActions } from "@/components/agent-portal/useAgentPropertyActions";
 import { formatPropertyLocation } from "@/lib/propertyLocation";
 import { formatPropertyPrice } from "@/lib/formatPrice";
-import { getPropertyUrl } from "@/lib/propertySlug";
+import {
+  formatAddedDate,
+  isFeaturedProperty,
+  statusClass,
+  statusLabel,
+  statusNote,
+} from "@/lib/agentPropertyListingHelpers";
 import ui from "@/components/agent-portal/portal.module.css";
-import PropertyLinksModal from "@/components/agent-portal/PropertyLinksModal";
-import PropertyQuickAction from "@/components/agent-portal/PropertyQuickAction";
-import quickActionStyles from "@/components/agent-portal/PropertyQuickActions.module.css";
 import styles from "./page.module.css";
 
 const TABS = [
@@ -30,48 +34,6 @@ const TABS = [
 
 function formatPrice(value, currency) {
   return formatPropertyPrice(value, currency, { fallback: "—" });
-}
-
-/** Date-only label from properties.created_at, e.g. "30 Jul 2026". */
-function formatAddedDate(value) {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-function statusClass(status) {
-  if (status === "approved") return ui.badgeApproved;
-  if (status === "pending_approval") return ui.badgePending;
-  if (status === "draft") return ui.badgeDraft;
-  if (status === "rejected") return ui.badgeRejected;
-  if (status === "sold") return ui.badgeSold;
-  return ui.badgeDraft;
-}
-
-function statusLabel(status) {
-  return String(status || "draft").replace(/_/g, " ");
-}
-
-/** Short line under the status badge so agents know what happens next. */
-function statusNote(status) {
-  if (status === "approved") return "Listed publicly";
-  if (status === "pending_approval") return "Waiting for admin review";
-  if (status === "draft") return "Not visible to the public";
-  if (status === "hidden") return "Hidden from your public website";
-  return null;
-}
-
-function isFeaturedProperty(property) {
-  return (
-    property?.is_featured === true ||
-    property?.is_featured === 1 ||
-    property?.is_featured === "1"
-  );
 }
 
 export default function AgentPropertiesPage() {
@@ -88,19 +50,13 @@ export default function AgentPropertiesPage() {
   const [featuredCount, setFeaturedCount] = useState(0);
   const [featuredLimit, setFeaturedLimit] = useState(10);
   const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState(null);
-  const [propertyToDelete, setPropertyToDelete] = useState(null);
-  const [propertyToCancelApproval, setPropertyToCancelApproval] = useState(null);
-  const [propertyForLinks, setPropertyForLinks] = useState(null);
-  const [error, setError] = useState("");
-  const [errorDetails, setErrorDetails] = useState([]);
-  const [success, setSuccess] = useState("");
+  const [loadError, setLoadError] = useState("");
   const propertiesSectionRef = useRef(null);
   const shouldScrollRef = useRef(false);
 
-  async function load(page = currentPage, selectedTab = tab) {
+  const load = useCallback(async (page = currentPage, selectedTab = tab) => {
     setLoading(true);
-    setError("");
+    setLoadError("");
     const params = new URLSearchParams({ page: String(page) });
     if (selectedTab !== "all") params.set("status", selectedTab);
     try {
@@ -117,11 +73,17 @@ export default function AgentPropertiesPage() {
       setFeaturedCount(Number(data.featuredCount) || 0);
       setFeaturedLimit(Number(data.featuredLimit) || 10);
     } catch (err) {
-      setError(err.message || "Could not load properties.");
+      setLoadError(err.message || "Could not load properties.");
     } finally {
       setLoading(false);
     }
-  }
+  }, [currentPage, tab]);
+
+  const actions = useAgentPropertyActions({
+    onReload: (page) => load(page ?? currentPage, tab),
+    getReloadPage: () =>
+      properties.length === 1 && currentPage > 1 ? currentPage - 1 : currentPage,
+  });
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -138,7 +100,7 @@ export default function AgentPropertiesPage() {
       : "all";
     setTab(initialTab);
     load(1, initialTab);
-  }, [status, router]);
+  }, [status, router, load]);
 
   useEffect(() => {
     if (!loading && shouldScrollRef.current) {
@@ -160,162 +122,6 @@ export default function AgentPropertiesPage() {
     setTab(nextTab);
     setCurrentPage(1);
     load(1, nextTab);
-  }
-
-  async function markAsSold(property) {
-    setBusyId(property.id);
-    setError("");
-    setErrorDetails([]);
-    setSuccess("");
-    try {
-      const res = await fetch(`/api/properties/${property.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "sold" }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error || "Could not mark this property as sold.");
-        return;
-      }
-      setSuccess("Property marked as sold.");
-      await load();
-    } catch {
-      setError("Could not mark this property as sold.");
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  async function submitForApproval(property) {
-    setBusyId(property.id);
-    setError("");
-    setErrorDetails([]);
-    setSuccess("");
-    try {
-      const res = await fetch(`/api/properties/${property.id}/submit`, {
-        method: "POST",
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error || "Could not submit this property for approval.");
-        setErrorDetails(Array.isArray(data.errors) ? data.errors : []);
-        return;
-      }
-      setSuccess("Property submitted for approval.");
-      await load();
-    } catch {
-      setError("Could not submit this property for approval.");
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  async function cancelApprovalRequest() {
-    if (!propertyToCancelApproval) return;
-
-    const property = propertyToCancelApproval;
-    setBusyId(property.id);
-    setError("");
-    setErrorDetails([]);
-    setSuccess("");
-    try {
-      const res = await fetch(
-        `/api/properties/${property.id}/cancel-approval`,
-        { method: "POST" },
-      );
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(
-          data.error || "Could not cancel this approval request.",
-        );
-        return;
-      }
-      setPropertyToCancelApproval(null);
-      setSuccess("Approval request cancelled. Property returned to draft.");
-      await load();
-    } catch {
-      setError("Could not cancel this approval request.");
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  async function addToFeatured(property) {
-    setBusyId(property.id);
-    setError("");
-    setErrorDetails([]);
-    setSuccess("");
-    try {
-      const res = await fetch(`/api/properties/${property.id}/featured`, {
-        method: "POST",
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error || "Could not add this property to featured.");
-        return;
-      }
-      setSuccess(
-        data.already_featured
-          ? "Property is already featured."
-          : "Property added to featured.",
-      );
-      await load();
-    } catch {
-      setError("Could not add this property to featured.");
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  async function removeFromFeatured(property) {
-    setBusyId(property.id);
-    setError("");
-    setErrorDetails([]);
-    setSuccess("");
-    try {
-      const res = await fetch(`/api/properties/${property.id}/featured`, {
-        method: "DELETE",
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error || "Could not remove this property from featured.");
-        return;
-      }
-      setSuccess("Property removed from featured.");
-      await load();
-    } catch {
-      setError("Could not remove this property from featured.");
-    } finally {
-      setBusyId(null);
-    }
-  }
-
-  async function deleteProperty() {
-    if (!propertyToDelete) return;
-
-    const id = propertyToDelete.id;
-    setBusyId(id);
-    setError("");
-    try {
-      const res = await fetch(`/api/properties/${id}`, { method: "DELETE" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(data.error || "Could not delete this property.");
-      }
-
-      const pageAfterDelete =
-        properties.length === 1 && currentPage > 1
-          ? currentPage - 1
-          : currentPage;
-      setPropertyToDelete(null);
-      setSuccess("Property deleted successfully.");
-      await load(pageAfterDelete);
-    } catch (err) {
-      setError(err.message || "Could not delete this property.");
-    } finally {
-      setBusyId(null);
-    }
   }
 
   return (
@@ -349,19 +155,24 @@ export default function AgentPropertiesPage() {
         }`}
         ref={propertiesSectionRef}
       >
-        {error ? (
+        {loadError ? (
           <div className={ui.error}>
-            <p className={ui.noticeTitle}>{error}</p>
-            {errorDetails.length > 0 ? (
+            <p className={ui.noticeTitle}>{loadError}</p>
+          </div>
+        ) : null}
+        {actions.error ? (
+          <div className={ui.error}>
+            <p className={ui.noticeTitle}>{actions.error}</p>
+            {actions.errorDetails.length > 0 ? (
               <ul className={ui.errorList}>
-                {errorDetails.map((detail) => (
+                {actions.errorDetails.map((detail) => (
                   <li key={detail}>{detail}</li>
                 ))}
               </ul>
             ) : null}
           </div>
         ) : null}
-        {success ? <p className={ui.success}>{success}</p> : null}
+        {actions.success ? <p className={ui.success}>{actions.success}</p> : null}
         {loading ? (
           <LoadingSpinner
             fullPage={false}
@@ -397,84 +208,12 @@ export default function AgentPropertiesPage() {
                     property.images?.[0]?.image_url ||
                     null;
                   const editHref = `${base}/properties/${property.id}/edit`;
-                  const isPending = property.status === "pending_approval";
+                  const isApproved = property.status === "approved";
                   const isRejected = property.status === "rejected";
                   const featured = isFeaturedProperty(property);
-                  const isApproved = property.status === "approved";
                   const linksToEdit = isApproved || isRejected;
                   const note = statusNote(property.status);
                   const addedOn = formatAddedDate(property.created_at);
-                  const isBusy = busyId === property.id;
-                  const openPropertyLinks = () => {
-                    setError("");
-                    setErrorDetails([]);
-                    setSuccess("");
-                    setPropertyForLinks(property);
-                  };
-                  const goToEdit = () => router.push(editHref);
-                  const showQuickEdit =
-                    isApproved || isRejected || property.status === "draft" || property.status === "sold" || property.status === "hidden";
-                  const showQuickLinks = isApproved;
-                  const showQuickResubmit = isRejected;
-                  const showQuickPendingView = isPending;
-                  const menuOnEdit = showQuickEdit ? undefined : () => router.push(editHref);
-                  const menuOnView =
-                    property.status === "approved"
-                      ? () =>
-                          window.open(
-                            getPropertyUrl(property, username),
-                            "_blank",
-                            "noopener,noreferrer",
-                          )
-                      : showQuickPendingView
-                        ? undefined
-                        : isPending
-                          ? goToEdit
-                          : undefined;
-                  const menuAdditionalActions = [
-                    ...(property.status === "draft" || isRejected
-                      ? showQuickResubmit
-                        ? []
-                        : [{
-                            label: isRejected ? "Resubmit" : "Submit For Approval",
-                            icon: Send,
-                            onSelect: () => submitForApproval(property),
-                            disabled: isBusy,
-                          }]
-                      : []),
-                    ...(isPending
-                      ? [{
-                          label: "Cancel Approval Request",
-                          icon: Undo2,
-                          onSelect: () => {
-                            setError("");
-                            setErrorDetails([]);
-                            setSuccess("");
-                            setPropertyToCancelApproval(property);
-                          },
-                          disabled: isBusy,
-                        }]
-                      : []),
-                    ...(property.status === "approved" && !featured
-                      ? [{ label: "Add to Featured", icon: Star, onSelect: () => addToFeatured(property), disabled: isBusy }]
-                      : []),
-                    ...(property.status === "approved" && featured
-                      ? [{ label: "Remove from Featured", icon: StarOff, onSelect: () => removeFromFeatured(property), disabled: isBusy }]
-                      : []),
-                    ...(property.status === "approved" || property.status === "hidden"
-                      ? [{ label: "Mark as sold", icon: CircleCheck, onSelect: () => markAsSold(property), disabled: isBusy }]
-                      : []),
-                    ...(showQuickLinks
-                      ? []
-                      : isApproved
-                        ? [{
-                            label: "Property Links",
-                            icon: Link2,
-                            onSelect: openPropertyLinks,
-                            disabled: isBusy,
-                          }]
-                        : []),
-                  ];
                   return (
                     <tr key={property.id}>
                       <td data-label="Property">
@@ -547,58 +286,19 @@ export default function AgentPropertiesPage() {
                         {formatPrice(property.price, property.price_currency)}
                       </td>
                       <td data-label="Actions">
-                        <div className={quickActionStyles.actionGroup}>
-                          {showQuickEdit ? (
-                            <PropertyQuickAction
-                              icon={SquarePen}
-                              tooltip="Edit Property"
-                              onClick={goToEdit}
-                              disabled={isBusy}
-                            />
-                          ) : null}
-                          {showQuickLinks ? (
-                            <PropertyQuickAction
-                              icon={Link2}
-                              tooltip="Property Links"
-                              onClick={openPropertyLinks}
-                              disabled={isBusy}
-                            />
-                          ) : null}
-                          {showQuickResubmit ? (
-                            <PropertyQuickAction
-                              icon={Send}
-                              tooltip="Resubmit Property"
-                              onClick={() => submitForApproval(property)}
-                              disabled={isBusy}
-                            />
-                          ) : null}
-                          {showQuickPendingView ? (
-                            <PropertyQuickAction
-                              icon={Eye}
-                              tooltip="View Property"
-                              onClick={goToEdit}
-                              disabled={isBusy}
-                            />
-                          ) : null}
-                          <ActionMenu
-                            ariaLabel={`More actions for ${property.title}`}
-                            triggerTooltip="More Actions"
-                            onView={menuOnView}
-                            onEdit={menuOnEdit}
-                            onDelete={
-                              isPending
-                                ? undefined
-                                : () => {
-                                    setError("");
-                                    setErrorDetails([]);
-                                    setSuccess("");
-                                    setPropertyToDelete(property);
-                                  }
-                            }
-                            deleteDisabled={isBusy}
-                            additionalActions={menuAdditionalActions}
-                          />
-                        </div>
+                        <PropertyListingActions
+                          property={property}
+                          username={username}
+                          base={base}
+                          busyId={actions.busyId}
+                          onMarkSold={actions.markAsSold}
+                          onSubmitForApproval={actions.submitForApproval}
+                          onAddFeatured={actions.addToFeatured}
+                          onRemoveFeatured={actions.removeFromFeatured}
+                          onOpenLinks={actions.openLinks}
+                          onOpenDelete={actions.openDelete}
+                          onOpenCancelApproval={actions.openCancelApproval}
+                        />
                       </td>
                     </tr>
                   );
@@ -616,91 +316,18 @@ export default function AgentPropertiesPage() {
           </>
         )}
       </div>
-      {propertyToDelete ? (
-        <div className={ui.dialogBackdrop} role="presentation">
-          <div
-            className={ui.dialog}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-property-title"
-            aria-describedby="delete-property-description"
-          >
-            <h2 id="delete-property-title" className={ui.dialogTitle}>
-              Delete Property?
-            </h2>
-            <p id="delete-property-description" className={ui.dialogText}>
-              This action cannot be undone. This will permanently delete
-              &ldquo;{propertyToDelete.title}&rdquo; and all associated data.
-            </p>
-            <div className={ui.dialogActions}>
-              <button
-                type="button"
-                className={ui.btnGhost}
-                disabled={busyId === propertyToDelete.id}
-                onClick={() => setPropertyToDelete(null)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={ui.btnDanger}
-                disabled={busyId === propertyToDelete.id}
-                onClick={deleteProperty}
-              >
-                {busyId === propertyToDelete.id ? "Deleting…" : "Delete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {propertyToCancelApproval ? (
-        <div className={ui.dialogBackdrop} role="presentation">
-          <div
-            className={ui.dialog}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="cancel-approval-title"
-            aria-describedby="cancel-approval-description"
-          >
-            <h2 id="cancel-approval-title" className={ui.dialogTitle}>
-              Cancel approval request?
-            </h2>
-            <p id="cancel-approval-description" className={ui.dialogText}>
-              This property will return to Draft and can be edited and submitted
-              again.
-            </p>
-            <div className={ui.dialogActions}>
-              <button
-                type="button"
-                className={ui.btnGhost}
-                disabled={busyId === propertyToCancelApproval.id}
-                onClick={() => setPropertyToCancelApproval(null)}
-              >
-                Keep Request
-              </button>
-              <button
-                type="button"
-                className={ui.btnPrimary}
-                disabled={busyId === propertyToCancelApproval.id}
-                onClick={cancelApprovalRequest}
-              >
-                {busyId === propertyToCancelApproval.id
-                  ? "Cancelling…"
-                  : "Cancel Approval Request"}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {propertyForLinks ? (
-        <PropertyLinksModal
-          property={propertyForLinks}
-          username={username}
-          onClose={() => setPropertyForLinks(null)}
-        />
-      ) : null}
+      <AgentPropertyActionModals
+        username={username}
+        propertyToDelete={actions.propertyToDelete}
+        propertyToCancelApproval={actions.propertyToCancelApproval}
+        propertyForLinks={actions.propertyForLinks}
+        busyId={actions.busyId}
+        onCloseDelete={() => actions.setPropertyToDelete(null)}
+        onConfirmDelete={actions.deleteProperty}
+        onCloseCancelApproval={() => actions.setPropertyToCancelApproval(null)}
+        onConfirmCancelApproval={actions.cancelApprovalRequest}
+        onCloseLinks={() => actions.setPropertyForLinks(null)}
+      />
     </AgentPortalShell>
   );
 }

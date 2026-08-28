@@ -1,15 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
-import ActionMenu from "@/components/ActionMenu";
+import AgentPropertyActionModals from "@/components/agent-portal/AgentPropertyActionModals";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import PropertyListingActions from "@/components/agent-portal/PropertyListingActions";
+import { useAgentPropertyActions } from "@/components/agent-portal/useAgentPropertyActions";
+import { formatPropertyLocation } from "@/lib/propertyLocation";
 import { formatPropertyPrice } from "@/lib/formatPrice";
-import { getPropertyUrl } from "@/lib/propertySlug";
+import {
+  formatAddedDate,
+  isFeaturedProperty,
+  statusClass,
+  statusLabel,
+  statusNote,
+} from "@/lib/agentPropertyListingHelpers";
 import ui from "@/components/agent-portal/portal.module.css";
 
 /** `id` matches the stats payload key; `status` filters the properties list. */
@@ -31,31 +40,6 @@ function formatPrice(value, currency) {
   return formatPropertyPrice(value, currency, { fallback: "—" });
 }
 
-/** Date-only label from properties.created_at, e.g. "30 Jul 2026". */
-function formatAddedDate(value) {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-function statusClass(status) {
-  if (status === "approved") return ui.badgeApproved;
-  if (status === "pending_approval") return ui.badgePending;
-  if (status === "draft") return ui.badgeDraft;
-  if (status === "rejected") return ui.badgeRejected;
-  if (status === "sold") return ui.badgeSold;
-  return ui.badgeDraft;
-}
-
-function statusLabel(status) {
-  return String(status || "draft").replace(/_/g, " ");
-}
-
 export default function AgentAdminDashboardPage() {
   const params = useParams();
   const router = useRouter();
@@ -64,6 +48,17 @@ export default function AgentAdminDashboardPage() {
   const [properties, setProperties] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const loadDashboard = useCallback(async () => {
+    setLoading(true);
+    const res = await fetch("/api/properties?stats=1");
+    const data = await res.json().catch(() => ({}));
+    setProperties(Array.isArray(data.properties) ? data.properties : []);
+    setStats(data.stats || null);
+    setLoading(false);
+  }, []);
+
+  const actions = useAgentPropertyActions({ onReload: loadDashboard });
 
   const firstName = useMemo(() => {
     const name = session?.user?.name || "Agent";
@@ -79,19 +74,14 @@ export default function AgentAdminDashboardPage() {
 
     let cancelled = false;
     (async () => {
-      setLoading(true);
-      const res = await fetch("/api/properties?stats=1");
-      const data = await res.json().catch(() => ({}));
+      await loadDashboard();
       if (cancelled) return;
-      setProperties(Array.isArray(data.properties) ? data.properties : []);
-      setStats(data.stats || null);
-      setLoading(false);
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [status, router]);
+  }, [status, router, loadDashboard]);
 
   const recent = properties.slice(0, 8);
   const base = `/re/${encodeURIComponent(username)}/dashboard`;
@@ -134,6 +124,23 @@ export default function AgentAdminDashboardPage() {
             View All
           </Link>
         </div>
+        {actions.error ? (
+          <div className={ui.error} style={{ margin: "1rem 1.1rem 0" }}>
+            <p className={ui.noticeTitle}>{actions.error}</p>
+            {actions.errorDetails.length > 0 ? (
+              <ul className={ui.errorList}>
+                {actions.errorDetails.map((detail) => (
+                  <li key={detail}>{detail}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
+        {actions.success ? (
+          <p className={ui.success} style={{ margin: "1rem 1.1rem 0" }}>
+            {actions.success}
+          </p>
+        ) : null}
         {loading ? (
           <LoadingSpinner
             fullPage={false}
@@ -172,12 +179,16 @@ export default function AgentAdminDashboardPage() {
                   const addedOn = formatAddedDate(property.created_at);
                   const editHref = `${base}/properties/${property.id}/edit`;
                   const isApproved = property.status === "approved";
+                  const isRejected = property.status === "rejected";
+                  const featured = isFeaturedProperty(property);
+                  const linksToEdit = isApproved || isRejected;
+                  const note = statusNote(property.status);
                   return (
                     <tr key={property.id}>
-                      <td>
+                      <td data-label="Property">
                         <div className={ui.propCell}>
                           {image ? (
-                            isApproved ? (
+                            linksToEdit ? (
                               <Link
                                 href={editHref}
                                 className={ui.thumbButton}
@@ -200,7 +211,7 @@ export default function AgentAdminDashboardPage() {
                                 className={ui.thumb}
                               />
                             )
-                          ) : isApproved ? (
+                          ) : linksToEdit ? (
                             <Link
                               href={editHref}
                               className={ui.thumbButton}
@@ -212,7 +223,7 @@ export default function AgentAdminDashboardPage() {
                             <div className={ui.thumbFallback}>P</div>
                           )}
                           <div>
-                            {isApproved ? (
+                            {linksToEdit ? (
                               <Link
                                 href={editHref}
                                 className={`${ui.propTitle} ${ui.propTitleLink}`}
@@ -223,38 +234,41 @@ export default function AgentAdminDashboardPage() {
                               <p className={ui.propTitle}>{property.title}</p>
                             )}
                             {addedOn ? (
-                              <p className={ui.propMeta}>Added at {addedOn}</p>
+                              <p className={ui.propMeta}>Added: {addedOn}</p>
+                            ) : null}
+                            {featured && isApproved ? (
+                              <p className={ui.propMeta}>Featured</p>
                             ) : null}
                           </div>
                         </div>
                       </td>
-                      <td>{property.location || "—"}</td>
-                      <td>
+                      <td data-label="Location">
+                        {formatPropertyLocation(property) || "—"}
+                      </td>
+                      <td data-label="Status">
                         <span
                           className={`${ui.badge} ${statusClass(property.status)}`}
                         >
                           {statusLabel(property.status)}
                         </span>
+                        {note ? <p className={ui.statusNote}>{note}</p> : null}
                       </td>
-                      <td>{formatPrice(property.price, property.price_currency)}</td>
+                      <td data-label="Price">
+                        {formatPrice(property.price, property.price_currency)}
+                      </td>
                       <td data-label="Actions">
-                        <ActionMenu
-                          ariaLabel={`Actions for ${property.title}`}
-                          onView={
-                            property.status === "approved"
-                              ? () =>
-                                  window.open(
-                                    getPropertyUrl(property, username),
-                                    "_blank",
-                                    "noopener,noreferrer",
-                                  )
-                              : () => router.push(`${base}/properties/${property.id}/edit`)
-                          }
-                          onEdit={
-                            property.status === "pending_approval"
-                              ? undefined
-                              : () => router.push(`${base}/properties/${property.id}/edit`)
-                          }
+                        <PropertyListingActions
+                          property={property}
+                          username={username}
+                          base={base}
+                          busyId={actions.busyId}
+                          onMarkSold={actions.markAsSold}
+                          onSubmitForApproval={actions.submitForApproval}
+                          onAddFeatured={actions.addToFeatured}
+                          onRemoveFeatured={actions.removeFromFeatured}
+                          onOpenLinks={actions.openLinks}
+                          onOpenDelete={actions.openDelete}
+                          onOpenCancelApproval={actions.openCancelApproval}
                         />
                       </td>
                     </tr>
@@ -265,6 +279,19 @@ export default function AgentAdminDashboardPage() {
           </div>
         )}
       </div>
+
+      <AgentPropertyActionModals
+        username={username}
+        propertyToDelete={actions.propertyToDelete}
+        propertyToCancelApproval={actions.propertyToCancelApproval}
+        propertyForLinks={actions.propertyForLinks}
+        busyId={actions.busyId}
+        onCloseDelete={() => actions.setPropertyToDelete(null)}
+        onConfirmDelete={actions.deleteProperty}
+        onCloseCancelApproval={() => actions.setPropertyToCancelApproval(null)}
+        onConfirmCancelApproval={actions.cancelApprovalRequest}
+        onCloseLinks={() => actions.setPropertyForLinks(null)}
+      />
     </AgentPortalShell>
   );
 }
