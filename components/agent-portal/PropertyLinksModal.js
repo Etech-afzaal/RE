@@ -81,6 +81,7 @@ export default function PropertyLinksModal({
           tracking.
         </p>
 
+        <div className={styles.linkContent}>
         {error ? <p className={ui.error}>{error}</p> : null}
 
         {loading ? (
@@ -148,6 +149,7 @@ export default function PropertyLinksModal({
             ))}
           </ul>
         )}
+        </div>
 
         <div className={ui.dialogActions}>
           <button type="button" className={ui.btnGhost} onClick={onClose}>

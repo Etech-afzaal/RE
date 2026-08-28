@@ -1,6 +1,16 @@
 .dialogWide {
   width: min(100%, 760px);
   max-width: 760px;
+  max-height: min(600px, calc(100dvh - 2rem));
+  display: flex;
+  flex-direction: column;
+}
+
+.linkContent {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
 }
 
 .linkList {
