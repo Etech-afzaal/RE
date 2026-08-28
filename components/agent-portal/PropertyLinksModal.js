@@ -126,24 +126,29 @@ export default function PropertyLinksModal({
                     </p>
                   </div>
                 </div>
-                <p className={styles.linkUrl}>{fullUrl(link.url)}</p>
-                <div className={styles.linkActions}>
+                <Link
+                  href={`${base}/properties/${property.id}/links/${link.id}/insights`}
+                  className={`${ui.btnPrimary} ${styles.insightsButton}`}
+                  onClick={onClose}
+                >
+                  <BarChart3 size={16} aria-hidden="true" />
+                  Insights
+                </Link>
+                <div className={styles.linkUrlRow}>
+                  <p className={styles.linkUrl}>{fullUrl(link.url)}</p>
                   <button
                     type="button"
-                    className={ui.btnGhost}
+                    className={`${ui.btnGhost} ${styles.copyLinkButton}`}
                     onClick={() => copyLink(link)}
+                    aria-label={
+                      copiedCode === link.unique_code ? "Link copied" : "Copy link"
+                    }
+                    title={
+                      copiedCode === link.unique_code ? "Link copied" : "Copy link"
+                    }
                   >
                     <Copy size={16} aria-hidden="true" />
-                    {copiedCode === link.unique_code ? "Copied" : "Copy"}
                   </button>
-                  <Link
-                    href={`${base}/properties/${property.id}/links/${link.id}/insights`}
-                    className={ui.btnPrimary}
-                    onClick={onClose}
-                  >
-                    <BarChart3 size={16} aria-hidden="true" />
-                    Insights
-                  </Link>
                 </div>
               </li>
             ))}

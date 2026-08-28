@@ -23,6 +23,7 @@
 }
 
 .linkRow {
+  position: relative;
   border: 1px solid var(--portal-border, #e8e8e8);
   border-radius: 12px;
   padding: 14px;
@@ -34,6 +35,16 @@
   align-items: center;
   gap: 12px;
   margin-bottom: 10px;
+  padding-right: 104px;
+}
+
+.insightsButton {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  gap: 0.3rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.78rem;
 }
 
 .linkAvatar {
@@ -84,24 +95,22 @@
   color: #666;
 }
 
-.linkUrl {
+.linkUrlRow {
   margin: 0 0 12px;
+}
+
+.linkUrl {
+  display: inline;
   font-size: 0.9rem;
   color: #333;
   word-break: break-all;
 }
 
-.linkActions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.linkActions button,
-.linkActions a {
+.copyLinkButton {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  margin-left: 8px;
+  padding: 0.45rem;
+  vertical-align: middle;
 }
 
 .emptyState {
