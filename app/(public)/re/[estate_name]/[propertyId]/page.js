@@ -26,7 +26,8 @@ import {
   propertyWhatsAppMessage,
   resolveAgentWhatsAppNumber,
 } from "@/lib/whatsapp";
-import { resolvePropertyMarketingRef } from "@/lib/marketingLinks";
+import { resolvePropertyMarketingRef, ensureAgentMarketingLink } from "@/lib/marketingLinks";
+import { PROPERTY_PUBLIC_STATUS } from "@/lib/status";
 import {
   formatPropertyLocation,
   resolveLocationInfo,
@@ -495,6 +496,16 @@ export default async function PropertyDetailPage({ params, searchParams }) {
     : null;
   const isReferral = Boolean(marketingLink);
   const marketingRef = isReferral ? marketingLink.unique_code : null;
+  const isPublicListing = property.status === PROPERTY_PUBLIC_STATUS;
+  let trackingRef = null;
+  if (isPublicListing) {
+    if (isReferral) {
+      trackingRef = marketingLink.unique_code;
+    } else {
+      const agentLink = await ensureAgentMarketingLink(agent.id, property.id);
+      trackingRef = agentLink.unique_code;
+    }
+  }
 
   const companyName = companyNameFromAgent(agent);
   const sizeLabel = formatSize(property.size_value, property.size_unit);
@@ -626,9 +637,9 @@ export default async function PropertyDetailPage({ params, searchParams }) {
 
   return (
     <div className={`agent-public-theme ${styles.page}`}>
-      {marketingRef ? (
+      {trackingRef ? (
         <PropertyReferralTracker
-          refCode={marketingRef}
+          refCode={trackingRef}
           propertyId={property.id}
         />
       ) : null}
@@ -861,7 +872,7 @@ export default async function PropertyDetailPage({ params, searchParams }) {
             <div className={styles.agentDetails}>
               <TrackedAgentPhoneReveal
                 phoneEntries={phoneEntries}
-                marketingRef={marketingRef}
+                marketingRef={trackingRef}
                 propertyId={property.id}
               />
               <a href={`mailto:${contactEmail}`} className={styles.agentDetail}>
@@ -872,43 +883,26 @@ export default async function PropertyDetailPage({ params, searchParams }) {
 
             <div className={styles.agentActions}>
               {telHref ? (
-                marketingRef ? (
-                  <TrackedTelLink
-                    href={telHref}
-                    className={styles.agentPrimary}
-                    marketingRef={marketingRef}
-                    propertyId={property.id}
-                  >
-                    Call Agent
-                  </TrackedTelLink>
-                ) : (
-                  <a href={telHref} className={styles.agentPrimary}>
-                    Call Agent
-                  </a>
-                )
+                <TrackedTelLink
+                  href={telHref}
+                  className={styles.agentPrimary}
+                  marketingRef={trackingRef}
+                  propertyId={property.id}
+                >
+                  Call Agent
+                </TrackedTelLink>
               ) : null}
               {waHref ? (
-                marketingRef ? (
-                  <TrackedWhatsAppLink
-                    href={waHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.agentWhatsApp}
-                    marketingRef={marketingRef}
-                    propertyId={property.id}
-                  >
-                    WhatsApp
-                  </TrackedWhatsAppLink>
-                ) : (
-                  <a
-                    href={waHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.agentWhatsApp}
-                  >
-                    WhatsApp
-                  </a>
-                )
+                <TrackedWhatsAppLink
+                  href={waHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.agentWhatsApp}
+                  marketingRef={trackingRef}
+                  propertyId={property.id}
+                >
+                  WhatsApp
+                </TrackedWhatsAppLink>
               ) : null}
             </div>
 
@@ -919,6 +913,7 @@ export default async function PropertyDetailPage({ params, searchParams }) {
                 kicker="Send Inquiry"
                 heading={null}
                 marketingRef={marketingRef}
+                insightRef={trackingRef}
               />
             </div>
 
@@ -1049,11 +1044,11 @@ export default async function PropertyDetailPage({ params, searchParams }) {
 
       {/* Desktop FAB — hidden on mobile where sticky contact bar replaces it */}
       <div className={styles.fabDesktopOnly}>
-        {marketingRef ? (
+        {trackingRef ? (
           <TrackedAgentWhatsAppFab
             phone={waFabPhone}
             message={waFabMessage}
-            marketingRef={marketingRef}
+            marketingRef={trackingRef}
             propertyId={property.id}
           />
         ) : (
@@ -1067,43 +1062,26 @@ export default async function PropertyDetailPage({ params, searchParams }) {
       {telHref || waHref ? (
         <nav className={styles.mobileContactBar} aria-label="Contact agent">
           {telHref ? (
-            marketingRef ? (
-              <TrackedTelLink
-                href={telHref}
-                className={styles.mobileCallBtn}
-                marketingRef={marketingRef}
-                propertyId={property.id}
-              >
-                Call Agent
-              </TrackedTelLink>
-            ) : (
-              <a href={telHref} className={styles.mobileCallBtn}>
-                Call Agent
-              </a>
-            )
+            <TrackedTelLink
+              href={telHref}
+              className={styles.mobileCallBtn}
+              marketingRef={trackingRef}
+              propertyId={property.id}
+            >
+              Call Agent
+            </TrackedTelLink>
           ) : null}
           {waHref ? (
-            marketingRef ? (
-              <TrackedWhatsAppLink
-                href={waHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.mobileWaBtn}
-                marketingRef={marketingRef}
-                propertyId={property.id}
-              >
-                WhatsApp
-              </TrackedWhatsAppLink>
-            ) : (
-              <a
-                href={waHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.mobileWaBtn}
-              >
-                WhatsApp
-              </a>
-            )
+            <TrackedWhatsAppLink
+              href={waHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.mobileWaBtn}
+              marketingRef={trackingRef}
+              propertyId={property.id}
+            >
+              WhatsApp
+            </TrackedWhatsAppLink>
           ) : null}
         </nav>
       ) : null}

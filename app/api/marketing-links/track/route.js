@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getMarketingLinkByCode } from "@/lib/marketingLinks";
+import { getMarketingLinkByCode, isAgentOwnMarketingLink } from "@/lib/marketingLinks";
 import { recordLinkInsight } from "@/lib/marketingInsights";
 import { PROPERTY_PUBLIC_STATUS } from "@/lib/status";
 
@@ -39,7 +39,7 @@ export async function POST(req) {
     return NextResponse.json({ error: "Property not available." }, { status: 404 });
   }
 
-  if (!link.subagent_is_active) {
+  if (!isAgentOwnMarketingLink(link) && !link.subagent_is_active) {
     return NextResponse.json({ error: "Referral link inactive." }, { status: 404 });
   }
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAgent } from "@/lib/adminAuth";
-import { getMarketingLinkForAgent } from "@/lib/marketingLinks";
+import { getMarketingLinkForAgent, isAgentOwnMarketingLink } from "@/lib/marketingLinks";
 import { getLinkInsightCounts } from "@/lib/marketingInsights";
 
 function agentIdFromSession(session) {
@@ -31,6 +31,7 @@ export async function GET(_req, { params }) {
       unique_code: link.unique_code,
       property_id: link.property_id,
       property_title: link.property_title,
+      is_agent_own: isAgentOwnMarketingLink(link),
       subagent: {
         id: link.subagent_id,
         name: link.subagent_name,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CircleCheck, Link2, Send, Star, StarOff, Undo2 } from "lucide-react";
+import { CircleCheck, Eye, Link2, Send, SquarePen, Star, StarOff, Undo2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
@@ -15,6 +15,8 @@ import { formatPropertyPrice } from "@/lib/formatPrice";
 import { getPropertyUrl } from "@/lib/propertySlug";
 import ui from "@/components/agent-portal/portal.module.css";
 import PropertyLinksModal from "@/components/agent-portal/PropertyLinksModal";
+import PropertyQuickAction from "@/components/agent-portal/PropertyQuickAction";
+import quickActionStyles from "@/components/agent-portal/PropertyQuickActions.module.css";
 import styles from "./page.module.css";
 
 const TABS = [
@@ -402,6 +404,77 @@ export default function AgentPropertiesPage() {
                   const linksToEdit = isApproved || isRejected;
                   const note = statusNote(property.status);
                   const addedOn = formatAddedDate(property.created_at);
+                  const isBusy = busyId === property.id;
+                  const openPropertyLinks = () => {
+                    setError("");
+                    setErrorDetails([]);
+                    setSuccess("");
+                    setPropertyForLinks(property);
+                  };
+                  const goToEdit = () => router.push(editHref);
+                  const showQuickEdit =
+                    isApproved || isRejected || property.status === "draft" || property.status === "sold" || property.status === "hidden";
+                  const showQuickLinks = isApproved;
+                  const showQuickResubmit = isRejected;
+                  const showQuickPendingView = isPending;
+                  const menuOnEdit = showQuickEdit ? undefined : () => router.push(editHref);
+                  const menuOnView =
+                    property.status === "approved"
+                      ? () =>
+                          window.open(
+                            getPropertyUrl(property, username),
+                            "_blank",
+                            "noopener,noreferrer",
+                          )
+                      : showQuickPendingView
+                        ? undefined
+                        : isPending
+                          ? goToEdit
+                          : undefined;
+                  const menuAdditionalActions = [
+                    ...(property.status === "draft" || isRejected
+                      ? showQuickResubmit
+                        ? []
+                        : [{
+                            label: isRejected ? "Resubmit" : "Submit For Approval",
+                            icon: Send,
+                            onSelect: () => submitForApproval(property),
+                            disabled: isBusy,
+                          }]
+                      : []),
+                    ...(isPending
+                      ? [{
+                          label: "Cancel Approval Request",
+                          icon: Undo2,
+                          onSelect: () => {
+                            setError("");
+                            setErrorDetails([]);
+                            setSuccess("");
+                            setPropertyToCancelApproval(property);
+                          },
+                          disabled: isBusy,
+                        }]
+                      : []),
+                    ...(property.status === "approved" && !featured
+                      ? [{ label: "Add to Featured", icon: Star, onSelect: () => addToFeatured(property), disabled: isBusy }]
+                      : []),
+                    ...(property.status === "approved" && featured
+                      ? [{ label: "Remove from Featured", icon: StarOff, onSelect: () => removeFromFeatured(property), disabled: isBusy }]
+                      : []),
+                    ...(property.status === "approved" || property.status === "hidden"
+                      ? [{ label: "Mark as sold", icon: CircleCheck, onSelect: () => markAsSold(property), disabled: isBusy }]
+                      : []),
+                    ...(showQuickLinks
+                      ? []
+                      : isApproved
+                        ? [{
+                            label: "Property Links",
+                            icon: Link2,
+                            onSelect: openPropertyLinks,
+                            disabled: isBusy,
+                          }]
+                        : []),
+                  ];
                   return (
                     <tr key={property.id}>
                       <td data-label="Property">
@@ -474,73 +547,58 @@ export default function AgentPropertiesPage() {
                         {formatPrice(property.price, property.price_currency)}
                       </td>
                       <td data-label="Actions">
-                        <ActionMenu
-                          ariaLabel={`Actions for ${property.title}`}
-                          onView={
-                            property.status === "approved"
-                              ? () =>
-                                  window.open(
-                                    getPropertyUrl(property, username),
-                                    "_blank",
-                                    "noopener,noreferrer",
-                                  )
-                              : isPending
-                              ? () => router.push(editHref)
-                              : undefined
-                          }
-                          onEdit={isPending ? undefined : () => router.push(editHref)}
-                          onDelete={
-                            isPending
-                              ? undefined
-                              : () => {
-                                  setError("");
-                                  setErrorDetails([]);
-                                  setSuccess("");
-                                  setPropertyToDelete(property);
-                                }
-                          }
-                          deleteDisabled={busyId === property.id}
-                          additionalActions={[
-                            ...(property.status === "draft" || isRejected
-                              ? [{ label: isRejected ? "Resubmit" : "Submit For Approval", icon: Send, onSelect: () => submitForApproval(property), disabled: busyId === property.id }]
-                              : []),
-                            ...(isPending
-                              ? [{
-                                  label: "Cancel Approval Request",
-                                  icon: Undo2,
-                                  onSelect: () => {
+                        <div className={quickActionStyles.actionGroup}>
+                          {showQuickEdit ? (
+                            <PropertyQuickAction
+                              icon={SquarePen}
+                              tooltip="Edit Property"
+                              onClick={goToEdit}
+                              disabled={isBusy}
+                            />
+                          ) : null}
+                          {showQuickLinks ? (
+                            <PropertyQuickAction
+                              icon={Link2}
+                              tooltip="Property Links"
+                              onClick={openPropertyLinks}
+                              disabled={isBusy}
+                            />
+                          ) : null}
+                          {showQuickResubmit ? (
+                            <PropertyQuickAction
+                              icon={Send}
+                              tooltip="Resubmit Property"
+                              onClick={() => submitForApproval(property)}
+                              disabled={isBusy}
+                            />
+                          ) : null}
+                          {showQuickPendingView ? (
+                            <PropertyQuickAction
+                              icon={Eye}
+                              tooltip="View Property"
+                              onClick={goToEdit}
+                              disabled={isBusy}
+                            />
+                          ) : null}
+                          <ActionMenu
+                            ariaLabel={`More actions for ${property.title}`}
+                            triggerTooltip="More Actions"
+                            onView={menuOnView}
+                            onEdit={menuOnEdit}
+                            onDelete={
+                              isPending
+                                ? undefined
+                                : () => {
                                     setError("");
                                     setErrorDetails([]);
                                     setSuccess("");
-                                    setPropertyToCancelApproval(property);
-                                  },
-                                  disabled: busyId === property.id,
-                                }]
-                              : []),
-                            ...(property.status === "approved" && !featured
-                              ? [{ label: "Add to Featured", icon: Star, onSelect: () => addToFeatured(property), disabled: busyId === property.id }]
-                              : []),
-                            ...(property.status === "approved" && featured
-                              ? [{ label: "Remove from Featured", icon: StarOff, onSelect: () => removeFromFeatured(property), disabled: busyId === property.id }]
-                              : []),
-                            ...(property.status === "approved" || property.status === "hidden"
-                              ? [{ label: "Mark as sold", icon: CircleCheck,  onSelect: () => markAsSold(property), disabled: busyId === property.id }]
-                              : []),
-                            ...(isApproved
-                              ? [{
-                                  label: "Property Links",
-                                  icon: Link2,
-                                  onSelect: () => {
-                                    setError("");
-                                    setErrorDetails([]);
-                                    setSuccess("");
-                                    setPropertyForLinks(property);
-                                  },
-                                  disabled: busyId === property.id,
-                                }]
-                              : []),
-                          ]}
-                        />
+                                    setPropertyToDelete(property);
+                                  }
+                            }
+                            deleteDisabled={isBusy}
+                            additionalActions={menuAdditionalActions}
+                          />
+                        </div>
                       </td>
                     </tr>
                   );

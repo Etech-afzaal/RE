@@ -1,0 +1,13 @@
+.actionGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-wrap: nowrap;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .actionGroup {
+    gap: 0.1rem;
+  }
+}

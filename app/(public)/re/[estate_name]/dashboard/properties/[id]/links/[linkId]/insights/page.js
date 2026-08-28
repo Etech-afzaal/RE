@@ -69,7 +69,8 @@ export default function PropertyLinkInsightsPage() {
       ) : error ? (
         <p className={ui.error}>{error}</p>
       ) : link ? (
-        <div className={ui.panel}>
+        <div className={`${ui.panel} ${styles.panel}`}>
+          <div className={styles.panelBody}>
           <div className={styles.header}>
             {link.subagent?.image ? (
               <Image
@@ -87,9 +88,14 @@ export default function PropertyLinkInsightsPage() {
             <div>
               <h2 className={styles.name}>{link.subagent?.name}</h2>
               <p className={styles.meta}>
-                Marketing link: <strong>{link.unique_code}</strong>
+                {link.is_agent_own
+                  ? "Insights from your public listing"
+                  : "Marketing link:"}{" "}
+                {!link.is_agent_own ? (
+                  <strong>{link.unique_code}</strong>
+                ) : null}
               </p>
-              {!link.subagent?.is_active ? (
+              {!link.is_agent_own && !link.subagent?.is_active ? (
                 <p className={styles.archived}>Subagent archived</p>
               ) : null}
             </div>
@@ -116,7 +122,7 @@ export default function PropertyLinkInsightsPage() {
             </div>
           </div>
 
-          <div className={ui.dialogActions} style={{ marginTop: 24 }}>
+          <div className={`${ui.dialogActions} ${styles.actions}`}>
             <Link
               href={`${base}/properties`}
               className={ui.btnGhost}
@@ -129,6 +135,7 @@ export default function PropertyLinkInsightsPage() {
             >
               Manage Subagents
             </Link>
+          </div>
           </div>
         </div>
       ) : null}

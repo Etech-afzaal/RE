@@ -18,27 +18,35 @@ export async function GET(_req, { params }) {
     return NextResponse.json({ error: "Invalid property." }, { status: 400 });
   }
 
-  const propertyRows = await query(
-    "SELECT id, agent_id FROM properties WHERE id = ? AND agent_id = ? LIMIT 1",
-    [propertyId, agentId],
-  );
+  try {
+    const propertyRows = await query(
+      "SELECT id, agent_id FROM properties WHERE id = ? AND agent_id = ? LIMIT 1",
+      [propertyId, agentId],
+    );
 
-  if (!propertyRows[0]) {
-    return NextResponse.json({ error: "Property not found." }, { status: 404 });
+    if (!propertyRows[0]) {
+      return NextResponse.json({ error: "Property not found." }, { status: 404 });
+    }
+
+    const agentRows = await query(
+      "SELECT username, estate_name FROM users WHERE id = ? AND user_type = 'agent' LIMIT 1",
+      [agentId],
+    );
+    const agentUsername =
+      agentRows[0]?.username || agentRows[0]?.estate_name || "";
+
+    const links = await listMarketingLinksForProperty(
+      agentId,
+      propertyId,
+      agentUsername,
+    );
+
+    return NextResponse.json({ links });
+  } catch (err) {
+    console.error("Failed to load property marketing links:", err);
+    return NextResponse.json(
+      { error: "Could not load property links." },
+      { status: 500 },
+    );
   }
-
-  const agentRows = await query(
-    "SELECT username, estate_name FROM users WHERE id = ? AND user_type = 'agent' LIMIT 1",
-    [agentId],
-  );
-  const agentUsername =
-    agentRows[0]?.username || agentRows[0]?.estate_name || "";
-
-  const links = await listMarketingLinksForProperty(
-    agentId,
-    propertyId,
-    agentUsername,
-  );
-
-  return NextResponse.json({ links });
 }

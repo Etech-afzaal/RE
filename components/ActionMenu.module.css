@@ -4,6 +4,7 @@
 }
 
 .trigger {
+  position: relative;
   display: inline-grid;
   width: 2.35rem;
   height: 2.35rem;
@@ -26,6 +27,40 @@
 .item:focus-visible {
   outline: 3px solid rgba(242, 187, 70, 0.38);
   outline-offset: 2px;
+}
+
+.trigger[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  z-index: 20;
+  padding: 0.35rem 0.55rem;
+  border-radius: 8px;
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-50%) translateY(4px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.trigger[data-tooltip]:hover::after,
+.trigger[data-tooltip]:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+@media (max-width: 768px) {
+  .trigger[data-tooltip]::after {
+    display: none;
+  }
 }
 
 .menu {

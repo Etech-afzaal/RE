@@ -16,6 +16,7 @@ export default function ActionMenu({
   deleteDisabled = false,
   additionalActions = [],
   ariaLabel = "Property actions",
+  triggerTooltip = null,
 }) {
   const [open, setOpen] = useState(false);
   const [opensUpward, setOpensUpward] = useState(false);
@@ -136,10 +137,11 @@ export default function ActionMenu({
         ref={triggerRef}
         type="button"
         className={styles.trigger}
-        aria-label={ariaLabel}
+        aria-label={triggerTooltip || ariaLabel}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
+        data-tooltip={triggerTooltip || undefined}
         onClick={() => {
           if (open) closeMenu();
           else openMenu();

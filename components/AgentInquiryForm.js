@@ -23,6 +23,7 @@ export default function AgentInquiryForm({
   heading = null,
   kicker = "Send a message",
   marketingRef = null,
+  insightRef = null,
 }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -114,6 +115,7 @@ export default function AgentInquiryForm({
     else if (agentId != null) payload.agent_id = Number(agentId);
 
     if (marketingRef) payload.marketing_ref = marketingRef;
+    if (insightRef) payload.insight_ref = insightRef;
 
     try {
       const response = await fetch("/api/inquiries", {

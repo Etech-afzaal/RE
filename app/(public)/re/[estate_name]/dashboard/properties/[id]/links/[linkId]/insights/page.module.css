@@ -1,8 +1,18 @@
+.panel {
+  max-width: 760px;
+}
+
+.panelBody {
+  padding: 1.35rem 1.4rem 1.5rem;
+}
+
 .header {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--line-soft, #e8e8e8);
 }
 
 .avatar {
@@ -43,13 +53,15 @@
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0.15rem 0;
 }
 
 .statCard {
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--line-soft, #e8e8e8);
   border-radius: 12px;
-  padding: 16px;
+  padding: 1rem 1.1rem;
   background: #fafafa;
 }
 
@@ -60,8 +72,27 @@
 }
 
 .statValue {
-  margin: 8px 0 0;
+  margin: 0.5rem 0 0;
   font-size: 1.75rem;
   font-weight: 700;
   line-height: 1;
+}
+
+.actions {
+  margin-top: 1.5rem;
+  padding-top: 0.25rem;
+}
+
+@media (max-width: 640px) {
+  .panelBody {
+    padding: 1.1rem 1rem 1.25rem;
+  }
+
+  .statsGrid {
+    gap: 0.65rem;
+  }
+
+  .statCard {
+    padding: 0.85rem 0.9rem;
+  }
 }

@@ -76,26 +76,27 @@ export default function PropertyLinksModal({
           Property Links
         </h2>
         <p className={ui.dialogText}>
-          Marketing links for &ldquo;{property.title}&rdquo;. Each subagent gets
-          a unique tracking link.
+          Marketing links for &ldquo;{property.title}&rdquo;. Your own site link
+          tracks visitors from your public listing; subagent links add referral
+          tracking.
         </p>
 
         {error ? <p className={ui.error}>{error}</p> : null}
 
         {loading ? (
           <p className={ui.empty}>Loading links…</p>
-        ) : links.length === 0 ? (
+        ) : error ? null : links.length === 0 ? (
           <div className={styles.emptyState}>
             <Link2 size={20} aria-hidden="true" />
-            <p>No subagents yet. Create subagents to generate marketing links.</p>
-            <Link href={`${base}/subagents`} className={ui.btnPrimary}>
-              Manage Subagents
-            </Link>
+            <p>Could not load links for this property.</p>
           </div>
         ) : (
           <ul className={styles.linkList}>
             {links.map((link) => (
-              <li key={link.id} className={styles.linkRow}>
+              <li
+                key={link.id}
+                className={`${styles.linkRow} ${link.is_agent_own ? styles.linkRowOwn : ""}`}
+              >
                 <div className={styles.linkPerson}>
                   {link.subagent.image ? (
                     <Image
@@ -107,12 +108,21 @@ export default function PropertyLinksModal({
                     />
                   ) : (
                     <div className={styles.linkAvatarFallback}>
-                      {link.subagent.name?.charAt(0) || "S"}
+                      {link.subagent.name?.charAt(0) || "Y"}
                     </div>
                   )}
                   <div>
-                    <p className={styles.linkName}>{link.subagent.name}</p>
-                    <p className={styles.linkCode}>ref={link.unique_code}</p>
+                    <p className={styles.linkName}>
+                      {link.subagent.name}
+                      {link.is_agent_own ? (
+                        <span className={styles.ownBadge}>Your site</span>
+                      ) : null}
+                    </p>
+                    <p className={styles.linkCode}>
+                      {link.is_agent_own
+                        ? "Direct listing on your website"
+                        : `ref=${link.unique_code}`}
+                    </p>
                   </div>
                 </div>
                 <p className={styles.linkUrl}>{fullUrl(link.url)}</p>

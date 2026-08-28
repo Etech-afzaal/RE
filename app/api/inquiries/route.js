@@ -24,6 +24,7 @@ export async function POST(req) {
       message: body?.message,
       page_url: body?.page_url,
       marketing_ref: body?.marketing_ref,
+      insight_ref: body?.insight_ref,
     });
 
     if (!result.ok) {
