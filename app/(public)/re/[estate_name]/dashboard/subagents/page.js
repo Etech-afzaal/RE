@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import AgentAvatar from "@/components/AgentAvatar";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import Pagination from "@/components/Pagination";
 import ui from "@/components/agent-portal/portal.module.css";
 import styles from "./page.module.css";
 import {
@@ -34,6 +35,8 @@ const EMPTY_FORM = {
   image: null,
 };
 
+const PAGE_SIZE = 10;
+
 export default function AgentSubagentsPage() {
   const params = useParams();
   const router = useRouter();
@@ -42,6 +45,9 @@ export default function AgentSubagentsPage() {
   const base = `/re/${encodeURIComponent(username)}/dashboard`;
 
   const [subagents, setSubagents] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalSubagents, setTotalSubagents] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -54,22 +60,37 @@ export default function AgentSubagentsPage() {
   const [imageError, setImageError] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const listSectionRef = useRef(null);
+  const shouldScrollRef = useRef(false);
 
-  async function loadSubagents() {
+  const loadSubagents = useCallback(async (page = 1) => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/agent/subagents");
+      const res = await fetch(`/api/agent/subagents?page=${page}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(data.error || "Could not load subagents.");
       }
       setSubagents(Array.isArray(data.subagents) ? data.subagents : []);
+      setCurrentPage(data.currentPage || 1);
+      setTotalSubagents(Number(data.totalSubagents) || 0);
+      setTotalPages(Number(data.totalPages) || 1);
     } catch (err) {
       setError(err.message || "Could not load subagents.");
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  function getReloadPage() {
+    return subagents.length === 1 && currentPage > 1 ? currentPage - 1 : currentPage;
+  }
+
+  function changePage(page) {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+    shouldScrollRef.current = true;
+    loadSubagents(page);
   }
 
   useEffect(() => {
@@ -77,8 +98,18 @@ export default function AgentSubagentsPage() {
       router.replace("/agent/login");
       return;
     }
-    if (status === "authenticated") loadSubagents();
-  }, [status, router]);
+    if (status === "authenticated") loadSubagents(1);
+  }, [status, router, loadSubagents]);
+
+  useEffect(() => {
+    if (!loading && shouldScrollRef.current) {
+      shouldScrollRef.current = false;
+      listSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [loading, subagents]);
 
   useEffect(() => {
     if (!successPopup) return undefined;
@@ -255,7 +286,7 @@ export default function AgentSubagentsPage() {
       setEditingId(null);
       setForm(EMPTY_FORM);
       setSelectedImage(null);
-      await loadSubagents();
+      await loadSubagents(editingId ? currentPage : 1);
     } catch (err) {
       setError(err.message || "Could not save subagent.");
     } finally {
@@ -277,7 +308,7 @@ export default function AgentSubagentsPage() {
       }
       setDeleteTarget(null);
       setSuccess("Subagent removed.");
-      await loadSubagents();
+      await loadSubagents(getReloadPage());
     } catch (err) {
       setError(err.message || "Could not delete subagent.");
     } finally {
@@ -305,19 +336,30 @@ export default function AgentSubagentsPage() {
       {error ? <p className={ui.error}>{error}</p> : null}
       {success ? <p className={ui.success}>{success}</p> : null}
 
-      <div className={ui.panel}>
+      <div
+        className={`${ui.panel} ${
+          !loading && subagents.length > 0 ? styles.listingPanel : ""
+        }`}
+        ref={listSectionRef}
+      >
         {loading ? (
           <LoadingSpinner
             fullPage={false}
             label="Loading"
             hint="Fetching subagents…"
           />
-        ) : subagents.filter((s) => s.is_active).length === 0 ? (
+        ) : totalSubagents === 0 ? (
           <p className={ui.empty}>
             No subagents yet. Add marketing representatives.
           </p>
         ) : (
-          <div className={ui.tableWrap}>
+          <>
+            <p className={ui.paginationCount}>
+              Showing {(currentPage - 1) * PAGE_SIZE + 1}&ndash;
+              {Math.min(currentPage * PAGE_SIZE, totalSubagents)} of{" "}
+              {totalSubagents} subagents
+            </p>
+            <div className={`${ui.tableWrap} ${styles.tableArea}`}>
             <table className={ui.table}>
               <thead>
                 <tr>
@@ -328,9 +370,7 @@ export default function AgentSubagentsPage() {
                 </tr>
               </thead>
               <tbody>
-                {subagents
-                  .filter((s) => s.is_active)
-                  .map((subagent) => (
+                {subagents.map((subagent) => (
                     <tr key={subagent.id}>
                       <td data-label="Representative">
                         <div className={ui.propCell}>
@@ -374,14 +414,23 @@ export default function AgentSubagentsPage() {
                   ))}
               </tbody>
             </table>
-          </div>
+            </div>
+            <div className={styles.paginationSlot}>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={changePage}
+                ariaLabel="Subagents pagination"
+              />
+            </div>
+          </>
         )}
       </div>
 
       {showForm ? (
         <div className={ui.dialogBackdrop} role="presentation">
           <div
-            className={ui.dialog}
+            className={`${ui.dialog} ${styles.formDialog}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="subagent-form-title"
@@ -396,50 +445,54 @@ export default function AgentSubagentsPage() {
               {error ? (
                 <p className={`${ui.error} ${styles.dialogError}`}>{error}</p>
               ) : null}
-              <div className={`${ui.brandAssetRow} ${styles.imageSection}`}>
-                <div
-                  className={`${ui.brandAssetPreview} ${ui.brandAssetPreviewRound}`}
-                >
-                  <AgentAvatar
-                    src={imagePreview || form.image}
-                    alt=""
-                    width={72}
-                    height={72}
-                    style={{ borderRadius: "50%", objectFit: "cover" }}
-                  />
-                  {hasFormImage ? (
-                    <button
-                      type="button"
-                      className={ui.brandAssetRemove}
-                      aria-label="Remove picture"
-                      disabled={saving}
-                      onClick={clearPendingImage}
+              <div className={styles.formLayout}>
+                <div className={styles.formAside}>
+                  <div className={`${ui.brandAssetRow} ${styles.imageSection}`}>
+                    <div
+                      className={`${ui.brandAssetPreview} ${ui.brandAssetPreviewRound}`}
                     >
-                      ×
-                    </button>
+                      <AgentAvatar
+                        src={imagePreview || form.image}
+                        alt=""
+                        width={72}
+                        height={72}
+                        style={{ borderRadius: "50%", objectFit: "cover" }}
+                      />
+                      {hasFormImage ? (
+                        <button
+                          type="button"
+                          className={ui.brandAssetRemove}
+                          aria-label="Remove picture"
+                          disabled={saving}
+                          onClick={clearPendingImage}
+                        >
+                          ×
+                        </button>
+                      ) : null}
+                    </div>
+                    <label className={ui.btnGhost} style={{ cursor: "pointer" }}>
+                      Upload image
+                      <input
+                        type="file"
+                        accept="image/*"
+                        hidden
+                        disabled={saving}
+                        onChange={(e) => {
+                          selectImage(e.target.files?.[0]);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <p className={`${ui.propMeta} ${styles.imageHint}`}>
+                    JPG, PNG or WEBP. Maximum size 2 MB.
+                  </p>
+                  {imageError ? (
+                    <p className={ui.fieldError} role="alert">{imageError}</p>
                   ) : null}
                 </div>
-                <label className={ui.btnGhost} style={{ cursor: "pointer" }}>
-                  Upload image
-                  <input
-                    type="file"
-                    accept="image/*"
-                    hidden
-                    disabled={saving}
-                    onChange={(e) => {
-                      selectImage(e.target.files?.[0]);
-                      e.target.value = "";
-                    }}
-                  />
-                </label>
-              </div>
-              <p className={`${ui.propMeta} ${styles.imageHint}`}>
-                JPG, PNG or WEBP. Maximum size 2 MB.
-              </p>
-              {imageError ? (
-                <p className={ui.fieldError} role="alert">{imageError}</p>
-              ) : null}
 
+                <div className={styles.formFields}>
               <label className={`${ui.field} ${styles.field}`}>
                 <span className={ui.label}>Name</span>
                 <input
@@ -453,6 +506,23 @@ export default function AgentSubagentsPage() {
                   }
                   placeholder="Full name"
                   maxLength={30}
+                  required
+                />
+              </label>
+              <label className={`${ui.field} ${styles.field}`}>
+                <span className={ui.label}>Email</span>
+                <input
+                  type="email"
+                  className={ui.input}
+                  value={form.email}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      email: normalizeSubagentEmailInput(e.target.value),
+                    })
+                  }
+                  placeholder="you@example.com"
+                  maxLength={50}
                   required
                 />
               </label>
@@ -505,24 +575,7 @@ export default function AgentSubagentsPage() {
                   maxLength={16}
                 />
               </label>
-              <label className={`${ui.field} ${styles.field}`}>
-                <span className={ui.label}>Email</span>
-                <input
-                  type="email"
-                  className={ui.input}
-                  value={form.email}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      email: normalizeSubagentEmailInput(e.target.value),
-                    })
-                  }
-                  placeholder="you@example.com"
-                  maxLength={50}
-                  required
-                />
-              </label>
-              <label className={`${ui.field} ${styles.field}`}>
+              <label className={`${ui.field} ${styles.field} ${styles.fieldFull}`}>
                 <span className={ui.label}>Description / Bio</span>
                 <textarea
                   className={ui.textarea}
@@ -537,11 +590,13 @@ export default function AgentSubagentsPage() {
                   }
                   placeholder="Optional short bio"
                   maxLength={500}
-                  rows={4}
+                  rows={2}
                 />
               </label>
+                </div>
+              </div>
 
-              <div className={ui.dialogActions}>
+              <div className={`${ui.dialogActions} ${styles.dialogActions}`}>
                 <button
                   type="button"
                   className={ui.btnGhost}

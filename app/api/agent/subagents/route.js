@@ -1,23 +1,26 @@
 import { NextResponse } from "next/server";
 import { requireAgent } from "@/lib/adminAuth";
-import { createSubagent, listSubagentsForAgent } from "@/lib/subagents";
+import { createSubagent, getSubagentsPageByAgent } from "@/lib/subagents";
 import { validateSubagentInput } from "@/lib/validators/subagentValidator";
 
 function agentIdFromSession(session) {
   return Number(session.user.agent_id || session.user.id);
 }
 
-export async function GET() {
+export async function GET(req) {
   const { session, error } = await requireAgent();
   if (error) return error;
 
   const agentId = agentIdFromSession(session);
-  const subagents = await listSubagentsForAgent(agentId, { includeInactive: true });
+  const { searchParams } = new URL(req.url);
+  const page = searchParams.get("page");
 
-  return NextResponse.json({
-    subagents,
-    count: subagents.filter((s) => s.is_active).length,
+  const payload = await getSubagentsPageByAgent(agentId, {
+    page,
+    pageSize: 10,
   });
+
+  return NextResponse.json(payload);
 }
 
 export async function POST(req) {
