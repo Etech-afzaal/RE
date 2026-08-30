@@ -181,13 +181,30 @@
 }
 
 .statIcon {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  width: 1.35rem;
-  height: 1.35rem;
-  margin-top: 0.05rem;
+  width: 20px;
+  height: 20px;
+  margin-top: 0.02rem;
   color: var(--gold-deep);
+}
+
+.statIcon svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.statIconLarge {
+  width: 22px;
+  height: 22px;
+}
+
+.statIconLarge svg {
+  width: 22px;
+  height: 22px;
 }
 
 .statCopy {

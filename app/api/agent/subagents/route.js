@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAgent } from "@/lib/adminAuth";
-import {
-  createSubagent,
-  listSubagentsForAgent,
-  MAX_SUBAGENTS_PER_AGENT,
-} from "@/lib/subagents";
+import { createSubagent, listSubagentsForAgent } from "@/lib/subagents";
 import { validateSubagentInput } from "@/lib/validators/subagentValidator";
 
 function agentIdFromSession(session) {
@@ -20,7 +16,6 @@ export async function GET() {
 
   return NextResponse.json({
     subagents,
-    max: MAX_SUBAGENTS_PER_AGENT,
     count: subagents.filter((s) => s.is_active).length,
   });
 }

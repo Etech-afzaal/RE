@@ -66,7 +66,7 @@ export default function PropertyLinksModal({
   return (
     <div className={ui.dialogBackdrop} role="presentation" onClick={onClose}>
       <div
-        className={`${ui.dialog} ${styles.dialogWide}`}
+        className={`${ui.dialog} ${ui.dialogWide}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="property-links-title"
@@ -136,19 +136,26 @@ export default function PropertyLinksModal({
                 </Link>
                 <div className={styles.linkUrlRow}>
                   <p className={styles.linkUrl}>{fullUrl(link.url)}</p>
-                  <button
-                    type="button"
-                    className={`${ui.btnGhost} ${styles.copyLinkButton}`}
-                    onClick={() => copyLink(link)}
-                    aria-label={
-                      copiedCode === link.unique_code ? "Link copied" : "Copy link"
-                    }
-                    title={
-                      copiedCode === link.unique_code ? "Link copied" : "Copy link"
-                    }
-                  >
-                    <Copy size={16} aria-hidden="true" />
-                  </button>
+                  <div className={styles.copyLinkWrap}>
+                    <button
+                      type="button"
+                      className={`${ui.btnGhost} ${styles.copyLinkButton}`}
+                      onClick={() => copyLink(link)}
+                      aria-label={
+                        copiedCode === link.unique_code ? "Link copied" : "Copy link"
+                      }
+                      title={
+                        copiedCode === link.unique_code ? "Link copied" : "Copy link"
+                      }
+                    >
+                      <Copy size={16} aria-hidden="true" />
+                    </button>
+                    {copiedCode === link.unique_code ? (
+                      <span className={styles.copiedLabel} role="status" aria-live="polite">
+                        Copied
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
               </li>
             ))}

@@ -42,11 +42,10 @@ export default function AgentSubagentsPage() {
   const base = `/re/${encodeURIComponent(username)}/dashboard`;
 
   const [subagents, setSubagents] = useState([]);
-  const [maxSubagents, setMaxSubagents] = useState(5);
-  const [activeCount, setActiveCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [successPopup, setSuccessPopup] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -66,8 +65,6 @@ export default function AgentSubagentsPage() {
         throw new Error(data.error || "Could not load subagents.");
       }
       setSubagents(Array.isArray(data.subagents) ? data.subagents : []);
-      setMaxSubagents(Number(data.max) || 5);
-      setActiveCount(Number(data.count) || 0);
     } catch (err) {
       setError(err.message || "Could not load subagents.");
     } finally {
@@ -82,6 +79,12 @@ export default function AgentSubagentsPage() {
     }
     if (status === "authenticated") loadSubagents();
   }, [status, router]);
+
+  useEffect(() => {
+    if (!successPopup) return undefined;
+    const timer = window.setTimeout(() => setSuccessPopup(""), 2000);
+    return () => window.clearTimeout(timer);
+  }, [successPopup]);
 
   useEffect(() => {
     if (!selectedImage) {
@@ -101,6 +104,7 @@ export default function AgentSubagentsPage() {
     setShowForm(true);
     setError("");
     setSuccess("");
+    setSuccessPopup("");
   }
 
   function openEdit(subagent) {
@@ -119,6 +123,7 @@ export default function AgentSubagentsPage() {
     setShowForm(true);
     setError("");
     setSuccess("");
+    setSuccessPopup("");
   }
 
   async function selectImage(file) {
@@ -166,6 +171,7 @@ export default function AgentSubagentsPage() {
     setError("");
     setImageError("");
     setSuccess("");
+    setSuccessPopup("");
 
     const validated = validateSubagentInput(form);
     if (!validated.ok) {
@@ -207,7 +213,7 @@ export default function AgentSubagentsPage() {
           }
         }
 
-        setSuccess("Subagent updated.");
+        setSuccessPopup("Subagent updated");
       } else {
         const res = await fetch("/api/agent/subagents", {
           method: "POST",
@@ -279,8 +285,6 @@ export default function AgentSubagentsPage() {
     }
   }
 
-  const atLimit = activeCount >= maxSubagents;
-
   return (
     <AgentPortalShell
       username={username}
@@ -291,16 +295,13 @@ export default function AgentSubagentsPage() {
         <button
           type="button"
           className={ui.btnPrimary}
-          disabled={atLimit || loading}
+          disabled={loading}
           onClick={openCreate}
         >
           Add Subagent
         </button>
       }
     >
-      {atLimit ? (
-        <p className={ui.noticeTitle}>Maximum 5 subagents allowed.</p>
-      ) : null}
       {error ? <p className={ui.error}>{error}</p> : null}
       {success ? <p className={ui.success}>{success}</p> : null}
 
@@ -313,7 +314,7 @@ export default function AgentSubagentsPage() {
           />
         ) : subagents.filter((s) => s.is_active).length === 0 ? (
           <p className={ui.empty}>
-            No subagents yet. Add up to {maxSubagents} marketing representatives.
+            No subagents yet. Add marketing representatives.
           </p>
         ) : (
           <div className={ui.tableWrap}>
@@ -352,7 +353,7 @@ export default function AgentSubagentsPage() {
                       <td data-label="Email">{subagent.email}</td>
                       <td data-label="Phone">{subagent.phone}</td>
                       <td data-label="Actions">
-                        <div className={ui.dialogActions} style={{ justifyContent: "flex-start" }}>
+                        <div className={styles.rowActions}>
                           <button
                             type="button"
                             className={ui.btnGhost}
@@ -419,7 +420,7 @@ export default function AgentSubagentsPage() {
                   ) : null}
                 </div>
                 <label className={ui.btnGhost} style={{ cursor: "pointer" }}>
-                  {hasFormImage ? "Replace picture" : "Upload picture"}
+                  Upload image
                   <input
                     type="file"
                     accept="image/*"
@@ -561,6 +562,24 @@ export default function AgentSubagentsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      ) : null}
+
+      {successPopup ? (
+        <div className={ui.dialogBackdrop} role="presentation">
+          <div
+            className={`${ui.dialog} ${ui.dialogSuccess}`}
+            role="status"
+            aria-live="polite"
+            aria-labelledby="subagent-success-title"
+          >
+            <div className={ui.dialogSuccessIcon} aria-hidden="true">
+              ✓
+            </div>
+            <h2 id="subagent-success-title" className={ui.dialogTitle}>
+              {successPopup}
+            </h2>
           </div>
         </div>
       ) : null}

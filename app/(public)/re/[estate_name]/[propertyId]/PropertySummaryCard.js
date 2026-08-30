@@ -115,12 +115,18 @@ function BedIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
-        d="M4 12V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4M4 12v4h16v-4M4 12h16"
+        d="M3 18V9.5A2.5 2.5 0 0 1 5.5 7H10a3 3 0 0 1 6 0h2.5A2.5 2.5 0 0 1 21 9.5V18"
         stroke="currentColor"
         strokeWidth="1.7"
+        strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <path d="M8 10v2M16 10v2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path
+        d="M3 14h18M3 18h18"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -129,12 +135,23 @@ function BathIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
-        d="M5 14h14v3a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3zM5 14V11a2 2 0 0 1 2-2h1M19 14V11a2 2 0 0 0-2-2h-1"
+        d="M4 12h16v2.5A3.5 3.5 0 0 1 16.5 18h-9A3.5 3.5 0 0 1 4 14.5V12z"
         stroke="currentColor"
         strokeWidth="1.7"
         strokeLinejoin="round"
       />
-      <path d="M8 6v2M12 4v4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path
+        d="M6 12V6.5A2.5 2.5 0 0 1 8.5 4H10"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+      <path
+        d="M7 18v2M17 18v2"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -143,14 +160,26 @@ function CarIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
-        d="M5 17h14l-1.2-4.5a2 2 0 0 0-1.9-1.5H8.1a2 2 0 0 0-1.9 1.5L5 17z"
+        d="M5 15.5h14"
         stroke="currentColor"
         strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+      <path
+        d="M6.5 15.5V12.8l1.7-4.5a2 2 0 0 1 1.9-1.3h4.8a2 2 0 0 1 1.9 1.3l1.7 4.5v2.7"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx="8" cy="17" r="1.5" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="16" cy="17" r="1.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M3 17h18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path
+        d="M9.2 11h5.6"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+      <circle cx="8" cy="15.5" r="1.65" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="16" cy="15.5" r="1.65" stroke="currentColor" strokeWidth="1.5" />
     </svg>
   );
 }
@@ -202,7 +231,12 @@ export default function PropertySummaryCard({
       ? { label: "Bathrooms", value: String(bathrooms), Icon: BathIcon }
       : null,
     parkingLabel
-      ? { label: "Parking", value: parkingLabel, Icon: CarIcon }
+      ? {
+          label: "Parking",
+          value: parkingLabel,
+          Icon: CarIcon,
+          iconClass: styles.statIconLarge,
+        }
       : null,
     referenceId
       ? { label: "Reference ID", value: referenceId, Icon: IdIcon }
@@ -287,7 +321,10 @@ export default function PropertySummaryCard({
                 key={item.label}
                 className={`${styles.statItem} ${index > 0 ? styles.statItemDivider : ""}`.trim()}
               >
-                <span className={styles.statIcon} aria-hidden="true">
+                <span
+                  className={`${styles.statIcon} ${item.iconClass || ""}`.trim()}
+                  aria-hidden="true"
+                >
                   <item.Icon />
                 </span>
                 <div className={styles.statCopy}>

@@ -1,11 +1,3 @@
-.dialogWide {
-  width: min(100%, 760px);
-  max-width: 760px;
-  max-height: min(600px, calc(100dvh - 2rem));
-  display: flex;
-  flex-direction: column;
-}
-
 .linkContent {
   min-height: 0;
   overflow-y: auto;
@@ -106,11 +98,37 @@
   word-break: break-all;
 }
 
+.copyLinkWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
 .copyLinkButton {
   display: inline-flex;
-  margin-left: 8px;
   padding: 0.45rem;
-  vertical-align: middle;
+}
+
+.copiedLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1a5f3c;
+  white-space: nowrap;
+  animation: copiedFadeIn 160ms ease;
+}
+
+@keyframes copiedFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .emptyState {

@@ -231,9 +231,7 @@ export default function AgentProfilePage() {
             ) : null}
           </div>
           <label className={ui.btnGhost} style={{ cursor: "pointer" }}>
-            {selectedImage || form.profile_image
-              ? "Replace picture"
-              : "Upload picture"}
+            Upload image
             <input
               type="file"
               accept="image/*"

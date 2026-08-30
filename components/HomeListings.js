@@ -567,10 +567,45 @@ function PropertySection({
           <p className={styles.kicker}>{kicker}</p>
           <h2 className={styles.title}>{title}</h2>
         </div>
-        <p className={styles.count}>
-          {properties.length}{" "}
-          {listingSubsectionCountLabel(subtype, properties.length)}
-        </p>
+        <div className={styles.sectionHeaderMeta}>
+          {properties.length > 0 && totalPages > 1 ? (
+            <nav
+              className={styles.paginationCompact}
+              aria-label={`${title} pagination`}
+            >
+              <button
+                type="button"
+                className={styles.pageButton}
+                onClick={() => onPageChange(safePage - 1)}
+                disabled={safePage <= 1}
+                aria-label="Previous page"
+              >
+                &lt;
+              </button>
+              <button
+                type="button"
+                className={`${styles.pageButton} ${styles.pageButtonActive}`}
+                aria-current="page"
+                tabIndex={-1}
+              >
+                {safePage}
+              </button>
+              <button
+                type="button"
+                className={styles.pageButton}
+                onClick={() => onPageChange(safePage + 1)}
+                disabled={safePage >= totalPages}
+                aria-label="Next page"
+              >
+                &gt;
+              </button>
+            </nav>
+          ) : null}
+          <p className={styles.count}>
+            {properties.length}{" "}
+            {listingSubsectionCountLabel(subtype, properties.length)}
+          </p>
+        </div>
       </div>
 
       {properties.length === 0 ? (

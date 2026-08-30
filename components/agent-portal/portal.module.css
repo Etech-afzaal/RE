@@ -938,6 +938,14 @@ button.stepPillActive:hover {
   box-shadow: 0 22px 56px rgba(26, 26, 26, 0.2);
 }
 
+.dialogWide {
+  width: min(100%, 760px);
+  max-width: 760px;
+  max-height: min(600px, calc(100dvh - 2rem));
+  display: flex;
+  flex-direction: column;
+}
+
 .dialogTitle {
   margin: 0 0 0.55rem;
   color: var(--ink);

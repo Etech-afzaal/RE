@@ -994,12 +994,16 @@ export default async function PropertyDetailPage({ params, searchParams }) {
                       locationInfo.city || "Lahore"
                     }.`}
               </p>
-              <p className={styles.brandManaged}>
-                Managed by <strong>{agent.full_name}</strong>
-              </p>
-              <Link href={`${agentProfileHref}#agent`} className={styles.brandProfileBtn}>
-                View Agent Profile
-              </Link>
+              {!isReferral ? (
+                <>
+                  <p className={styles.brandManaged}>
+                    Managed by <strong>{agent.full_name}</strong>
+                  </p>
+                  <Link href={`${agentProfileHref}#agent`} className={styles.brandProfileBtn}>
+                    View Agent Profile
+                  </Link>
+                </>
+              ) : null}
             </div>
           </div>
         </section>
