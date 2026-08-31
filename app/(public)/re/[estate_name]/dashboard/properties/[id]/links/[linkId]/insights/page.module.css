@@ -44,6 +44,24 @@
   font-size: 0.9rem;
 }
 
+.metaLink {
+  margin: 0.2rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.metaLink a {
+  color: #111827;
+  font-weight: 600;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.metaLink a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .archived {
   margin: 6px 0 0;
   color: #a66;

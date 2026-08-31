@@ -10,6 +10,12 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import ui from "@/components/agent-portal/portal.module.css";
 import styles from "./page.module.css";
 
+function fullUrl(path) {
+  if (!path) return "";
+  if (typeof window === "undefined") return path;
+  return `${window.location.origin}${path}`;
+}
+
 export default function PropertyLinkInsightsPage() {
   const params = useParams();
   const router = useRouter();
@@ -52,12 +58,13 @@ export default function PropertyLinkInsightsPage() {
 
   const link = data?.link;
   const insights = data?.insights;
+  const marketingUrl = link?.url ? fullUrl(link.url) : "";
 
   return (
     <AgentPortalShell
       username={username}
       agentName={session?.user?.name}
-      title="Link Insights"
+      title="Insights"
       subtitle={link?.property_title || "Marketing link performance"}
     >
       {loading ? (
@@ -88,13 +95,19 @@ export default function PropertyLinkInsightsPage() {
             <div>
               <h2 className={styles.name}>{link.subagent?.name}</h2>
               <p className={styles.meta}>
-                {link.is_agent_own
-                  ? "Insights from your public listing"
-                  : "Marketing link:"}{" "}
-                {!link.is_agent_own ? (
-                  <strong>{link.unique_code}</strong>
-                ) : null}
+                {link.is_agent_own ? "Public listing:" : "Marketing link:"}
               </p>
+              {marketingUrl ? (
+                <p className={styles.metaLink}>
+                  <a
+                    href={marketingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {marketingUrl}
+                  </a>
+                </p>
+              ) : null}
               {!link.is_agent_own && !link.subagent?.is_active ? (
                 <p className={styles.archived}>Subagent archived</p>
               ) : null}

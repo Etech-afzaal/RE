@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAgent } from "@/lib/adminAuth";
 import { getMarketingLinkForAgent, isAgentOwnMarketingLink } from "@/lib/marketingLinks";
+import { getPropertyUrl } from "@/lib/propertySlug";
 import { getLinkInsightCounts } from "@/lib/marketingInsights";
 
 function agentIdFromSession(session) {
@@ -24,6 +25,14 @@ export async function GET(_req, { params }) {
   }
 
   const counts = await getLinkInsightCounts(linkId);
+  const username = link.agent_username || link.agent_estate_name || "";
+  const propertyPath = getPropertyUrl(
+    { id: link.property_id, title: link.property_title, username },
+    username,
+  );
+  const url = isAgentOwnMarketingLink(link)
+    ? propertyPath
+    : `${propertyPath}?ref=${link.unique_code}`;
 
   return NextResponse.json({
     link: {
@@ -31,6 +40,7 @@ export async function GET(_req, { params }) {
       unique_code: link.unique_code,
       property_id: link.property_id,
       property_title: link.property_title,
+      url,
       is_agent_own: isAgentOwnMarketingLink(link),
       subagent: {
         id: link.subagent_id,
