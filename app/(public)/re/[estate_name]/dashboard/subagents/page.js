@@ -374,14 +374,27 @@ export default function AgentSubagentsPage() {
                     <tr key={subagent.id}>
                       <td data-label="Representative">
                         <div className={ui.propCell}>
-                          <AgentAvatar
-                            src={subagent.image}
-                            alt=""
-                            width={40}
-                            height={40}
-                          />
+                          <button
+                            type="button"
+                            className={styles.representativeTrigger}
+                            onClick={() => openEdit(subagent)}
+                            aria-label={`Edit ${subagent.name}`}
+                          >
+                            <AgentAvatar
+                              src={subagent.image}
+                              alt=""
+                              width={40}
+                              height={40}
+                            />
+                          </button>
                           <div>
-                            <p className={ui.propTitle}>{subagent.name}</p>
+                            <button
+                              type="button"
+                              className={`${ui.propTitle} ${styles.representativeTrigger}`}
+                              onClick={() => openEdit(subagent)}
+                            >
+                              {subagent.name}
+                            </button>
                             {subagent.description ? (
                               <p className={ui.propMeta}>
                                 {subagent.description.slice(0, 60)}

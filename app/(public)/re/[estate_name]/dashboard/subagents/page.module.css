@@ -98,6 +98,17 @@
   gap: 0.65rem;
 }
 
+.representativeTrigger {
+  display: block;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
 @media (min-width: 520px) {
   .formFields {
     grid-template-columns: repeat(2, minmax(0, 1fr));
