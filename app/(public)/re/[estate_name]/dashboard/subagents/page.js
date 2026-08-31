@@ -540,7 +540,7 @@ export default function AgentSubagentsPage() {
                 />
               </label>
               <label className={`${ui.field} ${styles.field}`}>
-                <span className={ui.label}>Phone</span>
+                  <span className={ui.label}>Primary Phone</span>
                 <input
                   className={ui.input}
                   type="tel"
@@ -557,7 +557,7 @@ export default function AgentSubagentsPage() {
                 />
               </label>
               <label className={`${ui.field} ${styles.field}`}>
-                <span className={ui.label}>Second Number</span>
+                  <span className={ui.label}>Secondary Phone</span>
                 <input
                   className={ui.input}
                   type="tel"

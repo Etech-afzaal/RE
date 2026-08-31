@@ -269,7 +269,7 @@ export default function AgentProfilePage() {
           />
         </label>
         <label className={ui.field}>
-          <span className={ui.label}>Phone</span>
+          <span className={ui.label}>Primary Phone</span>
           <input
             className={ui.input}
             value={form.phone}
@@ -278,7 +278,7 @@ export default function AgentProfilePage() {
           />
         </label>
         <label className={ui.field}>
-          <span className={ui.label}>Second Number</span>
+          <span className={ui.label}>Secondary Phone</span>
           <input
             className={ui.input}
             value={form.secondary_phone}
