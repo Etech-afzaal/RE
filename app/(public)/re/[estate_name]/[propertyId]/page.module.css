@@ -511,7 +511,7 @@
   font: inherit;
   font-size: 0.72rem;
   font-weight: 600;
-  color: #6b7280;
+  color: #111827;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   text-align: center;
@@ -523,8 +523,13 @@
   line-height: 1.35;
 }
 
-.agentDetailRevealPending:hover .phoneRevealTrigger {
-  color: #374151;
+.phoneRevealTrigger .agentContactIcon {
+  color: #111827;
+}
+
+.agentDetailRevealPending:hover .phoneRevealTrigger,
+.agentDetailRevealPending:hover .phoneRevealTrigger .agentContactIcon {
+  color: #111827;
 }
 
 .phoneRevealContent {
