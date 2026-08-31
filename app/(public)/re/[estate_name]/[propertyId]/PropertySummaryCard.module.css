@@ -145,6 +145,14 @@
   word-break: break-word;
 }
 
+.propertyTypeValue {
+  white-space: nowrap;
+}
+
+.compactPropertyTypeValue {
+  font-size: 0.78rem;
+}
+
 .divider {
   margin: 1.15rem 0 0;
   border: none;

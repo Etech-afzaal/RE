@@ -221,6 +221,9 @@ export default function PropertySummaryCard({
   const cleanDescription = stripPropertyMetaFromDescription(description);
   const parkingLabel =
     formatParkingLabel(parking) ?? parseParkingFromDescription(description);
+  const compactPropertyType = ["apartment", "commercial", "residential"].includes(
+    String(propertyType || "").trim().toLowerCase(),
+  );
 
   const stats = [
     sizeLabel ? { label: "Size", value: sizeLabel, Icon: SizeIcon } : null,
@@ -292,7 +295,13 @@ export default function PropertySummaryCard({
                   </span>
                   <div className={styles.topCardCopy}>
                     <span className={styles.topCardLabel}>Property Type</span>
-                    <span className={styles.topCardValue}>{propertyType}</span>
+                    <span
+                      className={`${styles.topCardValue} ${styles.propertyTypeValue} ${
+                        compactPropertyType ? styles.compactPropertyTypeValue : ""
+                      }`.trim()}
+                    >
+                      {propertyType}
+                    </span>
                   </div>
                 </div>
               ) : null}
