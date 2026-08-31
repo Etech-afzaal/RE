@@ -1,6 +1,7 @@
 /* Premium summary below hero: square featured image + property information */
 
 .card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -62,6 +63,35 @@
   color: var(--ink);
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.listedAt {
+  position: absolute;
+  top: 0.7rem;
+  right: 1.35rem;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  text-align: right;
+  white-space: nowrap;
+  z-index: 1;
+}
+
+.listedAtLabel {
+  font-size: inherit;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.listedAtValue {
+  font-size: inherit;
+  font-weight: 600;
+  color: var(--ink-soft);
 }
 
 .locationLine {
@@ -281,6 +311,14 @@
   .title {
     font-size: 1.4rem;
     margin-bottom: 0.4rem;
+  }
+
+  .listedAt {
+    position: static;
+    align-self: flex-end;
+    margin: 0 0 0.55rem;
+    font-size: 0.68rem;
+    white-space: normal;
   }
 
   .locationLine {

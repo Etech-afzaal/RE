@@ -33,6 +33,7 @@ import {
   resolveLocationInfo,
 } from "@/lib/propertyLocation";
 import { formatPropertyPrice } from "@/lib/formatPrice";
+import { formatAddedDate } from "@/lib/agentPropertyListingHelpers";
 import {
   inferPropertyTypeFromText,
   PROPERTY_TYPE_LISTING_LABELS,
@@ -693,6 +694,7 @@ export default async function PropertyDetailPage({ params, searchParams }) {
               bathrooms={attrs.baths}
               parking={attrs.parking}
               referenceId={`#${property.id}`}
+              listedAt={formatAddedDate(property.created_at)}
             />
 
             {/* 2. Property highlights */}
@@ -875,9 +877,14 @@ export default async function PropertyDetailPage({ params, searchParams }) {
                 marketingRef={trackingRef}
                 propertyId={property.id}
               />
-              <a href={`mailto:${contactEmail}`} className={styles.agentDetail}>
-                <span>Email</span>
-                <strong>{contactEmail}</strong>
+              <a
+                href={`mailto:${contactEmail}`}
+                className={`${styles.agentDetail} ${styles.agentDetailEmail}`}
+              >
+                <span className={styles.agentDetailLabel}>Email</span>
+                <span className={styles.agentDetailValue}>
+                  <strong>{contactEmail}</strong>
+                </span>
               </a>
             </div>
 

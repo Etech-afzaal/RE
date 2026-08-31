@@ -215,6 +215,7 @@ export default function PropertySummaryCard({
   bathrooms,
   parking,
   referenceId,
+  listedAt,
   className,
 }) {
   const locationLine = formatSummaryLocation({ address, phase, area, city });
@@ -270,6 +271,13 @@ export default function PropertySummaryCard({
           <h1 id="property-summary-title" className={styles.title}>
             {title}
           </h1>
+
+          {listedAt ? (
+            <p className={styles.listedAt}>
+              <span className={styles.listedAtLabel}>Listed At:</span>
+              <span className={styles.listedAtValue}>{listedAt}</span>
+            </p>
+          ) : null}
 
           {locationLine ? (
             <p className={styles.locationLine}>

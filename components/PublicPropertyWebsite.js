@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { PUBLIC_SITE_LOGO_DIMENSIONS } from "@/components/publicSiteLogo";
@@ -209,15 +210,19 @@ export default function PublicPropertyWebsite({
                       <div>
                         <p className={styles.contactDetailLabel}>Phone</p>
                         {phoneEntries.length > 0 ? (
-                          phoneEntries.map((entry) => (
-                            <a
-                              key={entry.number}
-                              href={entry.href}
-                              className={styles.contactDetailLink}
-                            >
-                              {entry.number}
-                            </a>
-                          ))
+                          <span style={{ whiteSpace: "pre" }}>
+                            {phoneEntries.map((entry, index) => (
+                              <Fragment key={entry.number}>
+                                {index > 0 ? "\t" : null}
+                                <a
+                                  href={entry.href}
+                                  className={styles.contactDetailLink}
+                                >
+                                  {entry.number}
+                                </a>
+                              </Fragment>
+                            ))}
+                          </span>
                         ) : contactPhone && contactTelHref ? (
                           <a
                             href={contactTelHref}

@@ -21,6 +21,7 @@ import {
   listingSubsectionTitle,
 } from "@/lib/agentPublicListingSections";
 import { filterListingGroupsByPreferences } from "@/lib/websiteListingPreferences";
+import { formatAddedDate } from "@/lib/agentPropertyListingHelpers";
 import styles from "./HomeListings.module.css";
 
 const DESKTOP_PAGE_SIZE = 3;
@@ -286,6 +287,7 @@ function PropertyCard({ property }) {
     property.price,
     property.price_currency,
   );
+  const listedAt = formatAddedDate(property.created_at);
 
   return (
     <Link
@@ -307,12 +309,19 @@ function PropertyCard({ property }) {
       </div>
 
       <div className={styles.body}>
-        {location ? (
+        {location || listedAt ? (
           <div className={styles.locationRow}>
-            <span className={styles.location}>
-              <LocationIcon />
-              <span>{location}</span>
-            </span>
+            {location ? (
+              <span className={styles.location}>
+                <LocationIcon />
+                <span>{location}</span>
+              </span>
+            ) : (
+              <span aria-hidden="true" />
+            )}
+            {listedAt ? (
+              <span className={styles.listedAt}>Listed At: {listedAt}</span>
+            ) : null}
           </div>
         ) : null}
 

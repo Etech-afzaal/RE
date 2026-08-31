@@ -23,11 +23,11 @@ export default function AgentPhoneReveal({
 
   return (
     <div
-      className={`${styles.agentDetail} ${
+      className={`${styles.agentDetail} ${styles.agentDetailPhone} ${
         !revealed ? styles.agentDetailRevealPending : ""
       }`}
     >
-      <span>Phone</span>
+      <span className={styles.agentDetailLabel}>Phone</span>
       {!revealed ? (
         <button
           type="button"
@@ -35,7 +35,7 @@ export default function AgentPhoneReveal({
           onClick={handleReveal}
           aria-label="Click to show phone number"
         >
-          <span className={styles.phoneRevealTriggerIcon} aria-hidden="true">
+          <span className={styles.agentContactIcon} aria-hidden="true">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path
                 d="M6.6 3.5h2.2l1.1 2.6-1.6 1.1a11.2 11.2 0 0 0 5.5 5.5l1.1-1.6 2.6 1.1v2.2c0 .8-.7 1.5-1.5 1.5C10.2 16.9 7.1 13.8 5.1 9.9 4.5 8.7 4.1 7.4 4.1 6c0-.8.7-1.5 1.5-1.5Z"
@@ -58,6 +58,17 @@ export default function AgentPhoneReveal({
               style={{ animationDelay: `${index * 0.05}s` }}
               onClick={handlePhoneClick}
             >
+              <span className={styles.agentContactIcon} aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M6.6 3.5h2.2l1.1 2.6-1.6 1.1a11.2 11.2 0 0 0 5.5 5.5l1.1-1.6 2.6 1.1v2.2c0 .8-.7 1.5-1.5 1.5C10.2 16.9 7.1 13.8 5.1 9.9 4.5 8.7 4.1 7.4 4.1 6c0-.8.7-1.5 1.5-1.5Z"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
               <strong>{entry.number}</strong>
             </a>
           ))}

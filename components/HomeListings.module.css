@@ -319,6 +319,16 @@
   color: var(--gold-deep);
 }
 
+.listedAt {
+  flex-shrink: 0;
+  color: var(--muted, #737373);
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: right;
+  white-space: nowrap;
+}
+
 .address {
   margin: 0;
   font-size: 1.05rem;
@@ -518,6 +528,10 @@
   .location svg {
     width: 11px;
     height: 11px;
+  }
+
+  .listedAt {
+    font-size: 0.6rem;
   }
 
   .address {
