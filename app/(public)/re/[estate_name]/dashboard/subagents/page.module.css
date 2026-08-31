@@ -109,6 +109,14 @@
   cursor: pointer;
 }
 
+.representativeName {
+  transition: color 0.15s ease;
+}
+
+.representativeName:hover {
+  color: var(--gold-deep);
+}
+
 @media (min-width: 520px) {
   .formFields {
     grid-template-columns: repeat(2, minmax(0, 1fr));

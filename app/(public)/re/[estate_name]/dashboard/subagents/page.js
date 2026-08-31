@@ -390,7 +390,7 @@ export default function AgentSubagentsPage() {
                           <div>
                             <button
                               type="button"
-                              className={`${ui.propTitle} ${styles.representativeTrigger}`}
+                              className={`${ui.propTitle} ${styles.representativeTrigger} ${styles.representativeName}`}
                               onClick={() => openEdit(subagent)}
                             >
                               {subagent.name}
