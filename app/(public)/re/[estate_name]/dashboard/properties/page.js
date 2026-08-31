@@ -52,10 +52,13 @@ export default function AgentPropertiesPage() {
   const [featuredLimit, setFeaturedLimit] = useState(10);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const propertiesSectionRef = useRef(null);
   const shouldScrollRef = useRef(false);
+  const skipSearchReloadRef = useRef(true);
 
-  const load = useCallback(async (page = 1, selectedTab = "all") => {
+  const load = useCallback(async (page = 1, selectedTab = "all", searchQuery = "") => {
     setLoading(true);
     setLoadError("");
     const params = new URLSearchParams({ page: String(page) });
@@ -63,6 +66,10 @@ export default function AgentPropertiesPage() {
       params.set("featured", "1");
     } else if (selectedTab !== "all") {
       params.set("status", selectedTab);
+    }
+    const trimmedSearch = String(searchQuery || "").trim();
+    if (trimmedSearch) {
+      params.set("search", trimmedSearch);
     }
     try {
       const res = await fetch(`/api/properties?${params}`);
@@ -85,10 +92,27 @@ export default function AgentPropertiesPage() {
   }, []);
 
   const actions = useAgentPropertyActions({
-    onReload: (page) => load(page ?? currentPage, tab),
+    onReload: (page) => load(page ?? currentPage, tab, debouncedSearch),
     getReloadPage: () =>
       properties.length === 1 && currentPage > 1 ? currentPage - 1 : currentPage,
   });
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    if (skipSearchReloadRef.current) {
+      skipSearchReloadRef.current = false;
+      return;
+    }
+    setCurrentPage(1);
+    load(1, tab, debouncedSearch);
+  }, [debouncedSearch, status, tab, load]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -120,13 +144,14 @@ export default function AgentPropertiesPage() {
   function changePage(page) {
     if (page < 1 || page > totalPages || page === currentPage) return;
     shouldScrollRef.current = true;
-    load(page, tab);
+    load(page, tab, debouncedSearch);
   }
 
   function changeTab(nextTab) {
     setTab(nextTab);
     setCurrentPage(1);
-    load(1, nextTab);
+    skipSearchReloadRef.current = true;
+    load(1, nextTab, debouncedSearch);
   }
 
   return (
@@ -141,17 +166,40 @@ export default function AgentPropertiesPage() {
         </Link>
       }
     >
-      <div className={ui.tabs}>
-        {TABS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            className={`${ui.tab} ${tab === item.id ? ui.tabActive : ""}`}
-            onClick={() => changeTab(item.id)}
-          >
-            {item.label}
-          </button>
-        ))}
+      <div className={styles.tabsRow}>
+        <div className={`${ui.tabs} ${styles.tabsRowTabs}`}>
+          {TABS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`${ui.tab} ${tab === item.id ? ui.tabActive : ""}`}
+              onClick={() => changeTab(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <label className={styles.searchWrap}>
+          <span className={styles.searchIcon} aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.8" />
+              <path
+                d="M16 16 20 20"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+          </span>
+          <input
+            type="search"
+            className={styles.searchInput}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search title or location"
+            aria-label="Search properties by title or location"
+          />
+        </label>
       </div>
 
       <div
@@ -185,7 +233,11 @@ export default function AgentPropertiesPage() {
             hint="Fetching properties…"
           />
         ) : properties.length === 0 ? (
-          <p className={ui.empty}>No properties in this tab.</p>
+          <p className={ui.empty}>
+            {debouncedSearch
+              ? "No properties match your search."
+              : "No properties in this tab."}
+          </p>
         ) : (
           <>
             <p className={ui.paginationCount}>
