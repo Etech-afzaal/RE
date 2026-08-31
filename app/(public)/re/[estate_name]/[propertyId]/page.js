@@ -654,7 +654,7 @@ export default async function PropertyDetailPage({ params, searchParams }) {
             <span className={styles.brandText}>
               <span className={styles.brandName}>{companyName}</span>
               <span className={styles.brandSub}>
-                Listed by {agent.full_name}
+                Listed by {contactName}
               </span>
             </span>
           </Link>
