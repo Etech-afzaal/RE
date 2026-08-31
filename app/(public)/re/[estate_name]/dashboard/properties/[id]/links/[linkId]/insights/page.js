@@ -10,12 +10,6 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import ui from "@/components/agent-portal/portal.module.css";
 import styles from "./page.module.css";
 
-function fullUrl(path) {
-  if (!path) return "";
-  if (typeof window === "undefined") return path;
-  return `${window.location.origin}${path}`;
-}
-
 export default function PropertyLinkInsightsPage() {
   const params = useParams();
   const router = useRouter();
@@ -58,7 +52,7 @@ export default function PropertyLinkInsightsPage() {
 
   const link = data?.link;
   const insights = data?.insights;
-  const marketingUrl = link?.url ? fullUrl(link.url) : "";
+  const marketingUrl = link?.url || "";
 
   return (
     <AgentPortalShell

@@ -8,6 +8,12 @@ function agentIdFromSession(session) {
   return Number(session.user.agent_id || session.user.id);
 }
 
+function absoluteSiteUrl(path) {
+  const base = String(process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
+  if (!base || !path) return path || "";
+  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 export async function GET(_req, { params }) {
   const { session, error } = await requireAgent();
   if (error) return error;
@@ -33,6 +39,7 @@ export async function GET(_req, { params }) {
   const url = isAgentOwnMarketingLink(link)
     ? propertyPath
     : `${propertyPath}?ref=${link.unique_code}`;
+  const marketingUrl = absoluteSiteUrl(url);
 
   return NextResponse.json({
     link: {
@@ -40,7 +47,7 @@ export async function GET(_req, { params }) {
       unique_code: link.unique_code,
       property_id: link.property_id,
       property_title: link.property_title,
-      url,
+      url: marketingUrl,
       is_agent_own: isAgentOwnMarketingLink(link),
       subagent: {
         id: link.subagent_id,
