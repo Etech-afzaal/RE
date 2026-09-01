@@ -316,6 +316,27 @@ export default function AgentSubagentsPage() {
     }
   }
 
+  if (status === "loading") {
+    return (
+      <AgentPortalShell
+        username={username}
+        agentName={session?.user?.name || "Agent"}
+        title="Subagents"
+        subtitle="Marketing representatives for tracked property links"
+      >
+        <LoadingSpinner
+          fullPage={false}
+          label="Loading"
+          hint="Checking your account…"
+        />
+      </AgentPortalShell>
+    );
+  }
+
+  const formDialogStyle = {
+    width: "min(100%, clamp(320px, 92vw, 780px))",
+  };
+
   return (
     <AgentPortalShell
       username={username}
@@ -444,6 +465,7 @@ export default function AgentSubagentsPage() {
         <div className={ui.dialogBackdrop} role="presentation">
           <div
             className={`${ui.dialog} ${styles.formDialog}`}
+            style={formDialogStyle}
             role="dialog"
             aria-modal="true"
             aria-labelledby="subagent-form-title"
