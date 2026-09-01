@@ -20,6 +20,7 @@ export default function ActionMenu({
 }) {
   const [open, setOpen] = useState(false);
   const [opensUpward, setOpensUpward] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState("top");
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
   const menuId = useId();
@@ -72,6 +73,44 @@ export default function ActionMenu({
     setOpen(false);
     if (restoreFocus) triggerRef.current?.focus();
   }
+
+  useEffect(() => {
+    if (!triggerTooltip) {
+      setTooltipPosition("top");
+      return undefined;
+    }
+
+    const updateTooltipPosition = () => {
+      const trigger = triggerRef.current;
+      if (!trigger) return;
+
+      const rect = trigger.getBoundingClientRect();
+      const estimatedTooltipWidth = Math.max(92, triggerTooltip.length * 7.6);
+      const overflowRight = rect.right + estimatedTooltipWidth * 0.7 + 10 > window.innerWidth;
+      const overflowLeft = rect.left - estimatedTooltipWidth * 0.7 - 10 < 0;
+
+      if (overflowRight && rect.left - estimatedTooltipWidth * 0.5 - 8 > 0) {
+        setTooltipPosition("left");
+        return;
+      }
+
+      if (overflowLeft && rect.right + estimatedTooltipWidth * 0.75 + 10 <= window.innerWidth) {
+        setTooltipPosition("right");
+        return;
+      }
+
+      setTooltipPosition("top");
+    };
+
+    updateTooltipPosition();
+    window.addEventListener("resize", updateTooltipPosition);
+    window.addEventListener("scroll", updateTooltipPosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updateTooltipPosition);
+      window.removeEventListener("scroll", updateTooltipPosition, true);
+    };
+  }, [triggerTooltip]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -142,6 +181,7 @@ export default function ActionMenu({
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
         data-tooltip={triggerTooltip || undefined}
+        data-tooltip-position={tooltipPosition}
         onClick={() => {
           if (open) closeMenu();
           else openMenu();
