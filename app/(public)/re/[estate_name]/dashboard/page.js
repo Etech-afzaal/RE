@@ -48,6 +48,7 @@ export default function AgentAdminDashboardPage() {
   const [properties, setProperties] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [greetingLabel, setGreetingLabel] = useState("Good Morning");
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -64,6 +65,10 @@ export default function AgentAdminDashboardPage() {
     const name = session?.user?.name || "Agent";
     return String(name).split(" ")[0];
   }, [session]);
+
+  useEffect(() => {
+    setGreetingLabel(greeting());
+  }, []);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -90,7 +95,7 @@ export default function AgentAdminDashboardPage() {
     <AgentPortalShell
       username={username}
       agentName={session?.user?.name}
-      title={`${greeting()}, ${firstName}`}
+      title={`${greetingLabel}, ${firstName}`}
       subtitle="Manage your properties and grow your business"
       action={
         <Link href={`${base}/properties/create`} className={ui.btnPrimary}>
