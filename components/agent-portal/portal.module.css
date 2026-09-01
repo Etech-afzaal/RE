@@ -155,16 +155,20 @@
 }
 
 .tableWrap {
-  overflow-x: auto;
+  /* Match the admin dashboard pattern: listings must adapt to their panel,
+     not create an independently scrollable horizontal region. */
+  overflow: visible;
 }
 
 .table {
+  min-width: 0;
   width: 100%;
   border-collapse: collapse;
 }
 
 .table th,
 .table td {
+  overflow-wrap: anywhere;
   padding: 0.9rem 1.1rem;
   text-align: left;
   border-bottom: 1px solid var(--line-soft);
@@ -188,7 +192,11 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  min-width: 220px;
+  min-width: 0;
+}
+
+.propCell > div {
+  min-width: 0;
 }
 
 .thumb {
@@ -264,6 +272,8 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  white-space: nowrap;
+  overflow-wrap: normal;
 }
 
 .badgeApproved {
