@@ -20,7 +20,9 @@ export default function ActionMenu({
 }) {
   const [open, setOpen] = useState(false);
   const [opensUpward, setOpensUpward] = useState(false);
+  const [tooltipShift, setTooltipShift] = useState(0);
   const triggerRef = useRef(null);
+  const tooltipMeasureRef = useRef(null);
   const menuRef = useRef(null);
   const menuId = useId();
   const viewportGap = 8;
@@ -101,9 +103,39 @@ export default function ActionMenu({
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!triggerTooltip) return undefined;
+
+    window.addEventListener("resize", updateTooltipPosition);
+    return () => window.removeEventListener("resize", updateTooltipPosition);
+  }, [triggerTooltip]);
+
   function openMenu() {
     setOpensUpward(false);
     setOpen(true);
+  }
+
+  function updateTooltipPosition() {
+    const trigger = triggerRef.current;
+    const rect = trigger?.getBoundingClientRect();
+    if (!trigger || !rect) return;
+
+    // Keep the centered tooltip on normal views. At the viewport edge, move it
+    // only by the few pixels needed to keep the label fully visible.
+    const tooltipWidth =
+      tooltipMeasureRef.current?.getBoundingClientRect().width || 100;
+    const viewportPadding = 2;
+    const table = trigger.closest("table");
+    const panelRight =
+      table?.parentElement?.parentElement?.getBoundingClientRect().right;
+    const visibleRight = Math.min(
+      window.innerWidth,
+      panelRight ?? window.innerWidth,
+    );
+    const centeredRight = rect.left + rect.width / 2 + tooltipWidth / 2;
+    setTooltipShift(
+      Math.max(0, centeredRight - (visibleRight - viewportPadding)),
+    );
   }
 
   function selectAction(action) {
@@ -132,7 +164,10 @@ export default function ActionMenu({
   }
 
   return (
-    <div className={styles.root}>
+    <div
+      className={styles.root}
+      style={{ "--tooltip-shift": `${tooltipShift}px` }}
+    >
       <button
         ref={triggerRef}
         type="button"
@@ -142,6 +177,8 @@ export default function ActionMenu({
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
         data-tooltip={triggerTooltip || undefined}
+        onMouseEnter={updateTooltipPosition}
+        onFocus={updateTooltipPosition}
         onClick={() => {
           if (open) closeMenu();
           else openMenu();
@@ -150,6 +187,15 @@ export default function ActionMenu({
       >
         <MoreHorizontal size={20} aria-hidden="true" />
       </button>
+      {triggerTooltip ? (
+        <span
+          ref={tooltipMeasureRef}
+          className={styles.tooltipMeasure}
+          aria-hidden="true"
+        >
+          {triggerTooltip}
+        </span>
+      ) : null}
       {open ? (
         <div
           ref={menuRef}
