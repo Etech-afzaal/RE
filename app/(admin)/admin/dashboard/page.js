@@ -8,19 +8,22 @@ import styles from "@/components/admin/adminUi.module.css";
 
 function formatDate(value) {
   if (!value) return "—";
-  return new Date(value).toLocaleDateString(undefined, {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "UTC",
     day: "numeric",
     month: "short",
     year: "numeric",
-  });
+  }).format(date);
 }
 
-function formatRelativeTime(value) {
+function formatRelativeTime(value, now = Date.now()) {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
 
-  const diffMs = Date.now() - date.getTime();
+  const diffMs = now - date.getTime();
   const diffSec = Math.round(diffMs / 1000);
   if (diffSec < 60) return "Just now";
   const diffMin = Math.round(diffSec / 60);
@@ -285,6 +288,11 @@ export default function AdminOverviewPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -337,7 +345,13 @@ export default function AdminOverviewPage() {
     recentPending,
     blockedAgents,
   });
-  const activityRows = activity.map(normalizeActivity);
+  const activityRows = activity.map((item) => ({
+    ...normalizeActivity(item),
+    timeLabel: formatRelativeTime(
+      normalizeActivity(item).time,
+      mounted ? Date.now() : new Date("2020-01-01T00:00:00Z").getTime(),
+    ),
+  }));
 
   const STAT_CARDS = [
     {
@@ -581,9 +595,7 @@ export default function AdminOverviewPage() {
                 {activityRows.map((row) => (
                   <tr key={row.id}>
                     <td>
-                      <span className={styles.activityTime}>
-                        {formatRelativeTime(row.time)}
-                      </span>
+                      <span className={styles.activityTime}>{row.timeLabel}</span>
                     </td>
                     <td>
                       <span className={styles.listPrimary}>{row.user}</span>
