@@ -10,6 +10,7 @@ import TrustStats from "@/components/TrustStats";
 import LocationCarousel from "@/components/LocationCarousel";
 import AgentInquiryForm from "@/components/AgentInquiryForm";
 import AgentWhatsAppFab from "@/components/AgentWhatsAppFab";
+import BackToTop from "@/app/(public)/re/[estate_name]/[propertyId]/BackToTop";
 import { agentPhoneEntries } from "@/lib/agentContact";
 import { agentWebsiteWhatsAppMessage, resolveAgentWhatsAppNumber } from "@/lib/whatsapp";
 import {
@@ -379,6 +380,7 @@ export default function PublicPropertyWebsite({
           message={agentWebsiteWhatsAppMessage(agent.full_name)}
         />
       ) : null}
+      <BackToTop />
     </div>
   );
 }
