@@ -452,6 +452,42 @@
   font-size: 0.9rem;
 }
 
+.domainFieldRow {
+  display: flex;
+  align-items: stretch;
+  gap: 0.55rem;
+}
+
+.domainInput {
+  min-width: 0;
+  color: var(--ink-soft);
+}
+
+.domainCopyButton {
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 2.75rem;
+  padding: 0;
+  border: 1px solid rgba(242, 187, 70, 0.45);
+  border-radius: 12px;
+  color: var(--gold-deep);
+  background: var(--gold-tint);
+}
+
+.domainCopyButton:hover:not(:disabled) {
+  border-color: var(--gold);
+  background: rgba(242, 187, 70, 0.2);
+}
+
+.copyStatus {
+  display: block;
+  min-height: 1rem;
+  margin-top: -0.75rem;
+  color: var(--success);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
 .prefGroups {
   display: flex;
   flex-direction: column;
