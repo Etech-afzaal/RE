@@ -43,7 +43,7 @@ export default function AgentForgotPasswordPage() {
           </p>
           <p className={styles.loginFooter}>
             New agent?{" "}
-            <Link href="/agent/signup" className={styles.loginLink}>
+            <Link href="/become-an-agent" className={styles.loginLink}>
               Create an account
             </Link>
           </p>

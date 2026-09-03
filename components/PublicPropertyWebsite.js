@@ -347,7 +347,7 @@ export default function PublicPropertyWebsite({
 
             <div className={styles.footerCol}>
               <h4>Agents</h4>
-              <Link href="/agent/signup">Sign up</Link>
+              <Link href="/become-an-agent">Sign up</Link>
               <Link href="/agent/login">Login</Link>
               <Link href="/agent/properties/new">Add Property</Link>
             </div>

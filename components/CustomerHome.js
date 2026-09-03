@@ -610,7 +610,7 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
                 ) : (
                   <>
                     No agents match your filters. Try another area or{" "}
-                    <Link href="/agent/signup">become an agent</Link>.
+                    <Link href="/become-an-agent">become an agent</Link>.
                   </>
                 )}
               </div>
@@ -695,7 +695,7 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
               </p>
             </div>
             <div className={styles.sellActions}>
-              <Link href="/agent/signup" className={styles.btnPrimary}>
+              <Link href="/become-an-agent" className={styles.btnPrimary}>
                 Become an Agent
               </Link>
               <Link href="/agent/login" className={styles.btnGhost}>
@@ -931,7 +931,7 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
             <div className={styles.footerCol}>
               <h4>Accounts</h4>
               <Link href="/agent/login">Agent Login</Link>
-              <Link href="/agent/signup">Become an Agent</Link>
+              <Link href="/become-an-agent">Become an Agent</Link>
             </div>
             <div className={styles.footerCol}>
               <h4>Contact</h4>
