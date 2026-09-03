@@ -86,7 +86,7 @@ export default function AgentMarketingPage() {
         <div className={styles.actionBar}>
           <label className={styles.consentRow}>
             <input type="checkbox" checked={accepted} onChange={(event) => setAccepted(event.target.checked)} />
-            <span>I accept the <Link href="/privacy-policy">Privacy Policy</Link> of this site.</span>
+            <span>I accept the <Link href="/privacy-policy?from=agent-marketing">Privacy Policy</Link> of this site.</span>
           </label>
           <Link href={accepted ? "/agent/signup" : "#"} className={`${styles.signupButton} ${!accepted ? styles.signupButtonDisabled : ""}`} aria-disabled={!accepted} tabIndex={accepted ? 0 : -1} onClick={(event) => { if (!accepted) event.preventDefault(); }}>
             Sign Up Now <ArrowRight size={18} aria-hidden="true" />

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import SiteHeader from "@/components/SiteHeader";
 import styles from "./page.module.css";
 
 export const metadata = {
@@ -8,18 +7,13 @@ export const metadata = {
     "How Dhalahore Properties collects, uses, and protects personal information for buyers, renters, and real estate agents in Lahore.",
 };
 
-const NAV_LINKS = [
-  { label: "Home", href: "/" },
-  { label: "Find agents", href: "/#agents" },
-  { label: "Why us", href: "/#why-us" },
-  { label: "Contact", href: "/#contact" },
-];
+export default function PrivacyPolicyPage({ searchParams }) {
+  const fromAgentMarketing = searchParams?.from === "agent-marketing";
+  const backHref = fromAgentMarketing ? "/become-an-agent" : "/";
+  const backLabel = fromAgentMarketing ? "Back to agent registration" : "Back to home";
 
-export default function PrivacyPolicyPage() {
   return (
     <div className={styles.page}>
-      <SiteHeader navLinks={NAV_LINKS} />
-
       <main className={styles.main}>
         <article className={styles.article}>
           <p className={styles.kicker}>Legal</p>
@@ -207,8 +201,8 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <p className={styles.backRow}>
-            <Link href="/" className={styles.backLink}>
-              Back to home
+            <Link href={backHref} className={styles.backLink}>
+              {backLabel}
             </Link>
           </p>
         </article>
