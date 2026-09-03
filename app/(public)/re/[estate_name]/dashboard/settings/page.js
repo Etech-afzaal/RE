@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { Check, Copy } from "lucide-react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import PasswordInput from "@/components/PasswordInput";
@@ -24,6 +25,8 @@ export default function AgentSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [domainCopied, setDomainCopied] = useState(false);
 
   const [prefs, setPrefs] = useState(defaultWebsiteListingPreferences);
   const [prefsLoading, setPrefsLoading] = useState(true);
@@ -36,6 +39,23 @@ export default function AgentSettingsPage() {
       router.replace("/agent/login");
     }
   }, [status, router]);
+
+  useEffect(() => {
+    setWebsiteUrl(
+      `${window.location.origin}/re/${encodeURIComponent(username)}`,
+    );
+  }, [username]);
+
+  async function copyWebsiteUrl() {
+    if (!websiteUrl) return;
+    try {
+      await navigator.clipboard.writeText(websiteUrl);
+      setDomainCopied(true);
+      window.setTimeout(() => setDomainCopied(false), 1800);
+    } catch {
+      setDomainCopied(false);
+    }
+  }
 
   const loadPreferences = useCallback(async () => {
     setPrefsLoading(true);
@@ -174,6 +194,43 @@ export default function AgentSettingsPage() {
       subtitle="Account security and preferences"
     >
       <div className={ui.settingsStack}>
+        <section className={ui.formCard}>
+          <h2 className={ui.panelTitle} style={{ marginBottom: "0.35rem" }}>
+            Your Website Domain
+          </h2>
+          <p className={ui.settingsLead}>
+            Your public website URL
+          </p>
+          <div className={ui.field}>
+            <label className={ui.label} htmlFor="public-site-url">
+              Public site URL
+            </label>
+            <span className={ui.domainFieldRow}>
+              <input
+                id="public-site-url"
+                type="text"
+                className={`${ui.input} ${ui.domainInput}`}
+                value={websiteUrl}
+                readOnly
+                aria-label="Your public website URL"
+              />
+              <button
+                type="button"
+                className={ui.domainCopyButton}
+                onClick={copyWebsiteUrl}
+                disabled={!websiteUrl}
+                aria-label={domainCopied ? "Website URL copied" : "Copy website URL"}
+                title={domainCopied ? "Copied" : "Copy URL"}
+              >
+                {domainCopied ? <Check size={18} /> : <Copy size={18} />}
+              </button>
+            </span>
+          </div>
+          <span className={ui.copyStatus} role="status" aria-live="polite">
+            {domainCopied ? "Website URL copied" : ""}
+          </span>
+        </section>
+
         <form className={ui.formCard} onSubmit={changePassword}>
           <h2 className={ui.panelTitle} style={{ marginBottom: "1rem" }}>
             Change password
@@ -219,7 +276,7 @@ export default function AgentSettingsPage() {
 
         <form className={ui.formCard} onSubmit={saveListingPreferences}>
           <h2 className={ui.panelTitle} style={{ marginBottom: "0.35rem" }}>
-            Website Listing Preferences
+            Website Menu Preferences
           </h2>
           <p className={ui.settingsLead}>
             Choose what appears on your public website
@@ -284,7 +341,7 @@ export default function AgentSettingsPage() {
               className={ui.btnPrimary}
               disabled={prefsSaving || prefsLoading}
             >
-              {prefsSaving ? "Saving…" : "Save Preferences"}
+              {prefsSaving ? "Saving…" : "Save Menu"}
             </button>
           </div>
         </form>
