@@ -9,6 +9,7 @@ import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import AgentPropertyActionModals from "@/components/agent-portal/AgentPropertyActionModals";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import PropertyListingActions from "@/components/agent-portal/PropertyListingActions";
+import PendingPropertyInfo from "@/components/agent-portal/PendingPropertyInfo";
 import { useAgentPropertyActions } from "@/components/agent-portal/useAgentPropertyActions";
 import { formatPropertyLocation } from "@/lib/propertyLocation";
 import { formatPropertyPrice } from "@/lib/formatPrice";
@@ -251,10 +252,15 @@ export default function AgentAdminDashboardPage() {
                         {formatPropertyLocation(property) || "—"}
                       </td>
                       <td data-label="Status">
-                        <span
-                          className={`${ui.badge} ${statusClass(property.status)}`}
-                        >
-                          {statusLabel(property.status)}
+                        <span className={ui.statusBadgeRow}>
+                          <span
+                            className={`${ui.badge} ${statusClass(property.status)}`}
+                          >
+                            {statusLabel(property.status)}
+                          </span>
+                          {property.status === "pending_approval" ? (
+                            <PendingPropertyInfo propertyTitle={property.title} />
+                          ) : null}
                         </span>
                         {note ? <p className={ui.statusNote}>{note}</p> : null}
                       </td>

@@ -286,6 +286,29 @@
   color: var(--gold-deep);
 }
 
+.statusBadgeRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.pendingInfoButton {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 1.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: var(--gold-deep);
+  background: transparent;
+}
+
+.pendingInfoButton:hover {
+  color: var(--ink);
+  background: transparent;
+  transform: scale(1.08);
+}
+
 .badgeDraft {
   background: rgba(100, 116, 139, 0.12);
   color: #475569;
@@ -996,6 +1019,17 @@ button.stepPillActive:hover {
   margin: 0 0 0.55rem;
   color: var(--ink);
   font-size: 1.2rem;
+}
+
+.pendingDialogIcon {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-bottom: 0.9rem;
+  border-radius: 999px;
+  color: var(--gold-deep);
+  background: var(--gold-tint);
 }
 
 .dialogText {
