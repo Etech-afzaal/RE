@@ -5,9 +5,14 @@ import { Info } from "lucide-react";
 import ui from "@/components/agent-portal/portal.module.css";
 
 export default function PendingPropertyInfo({ propertyTitle }) {
+  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const headingId = useId();
   const descriptionId = useId();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -17,6 +22,8 @@ export default function PendingPropertyInfo({ propertyTitle }) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open]);
+
+  if (!mounted) return null;
 
   return (
     <>
