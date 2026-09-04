@@ -479,7 +479,7 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
                 setNoMatchArea(null);
                 setLocationFilterActive(false);
               }}
-              placeholder="Search by area, name, agency, or expertise"
+              placeholder="Search by area, name, or agency"
               aria-label="Search agents"
             />
           </div>
@@ -576,10 +576,6 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
                   Verified estate agents across Lahore
                 </h2>
               </div>
-              <p className={styles.count}>
-                {filtered.length}{" "}
-                {filtered.length === 1 ? "agent" : "agents"}
-              </p>
             </div>
 
             {filtered.length === 0 ? (
