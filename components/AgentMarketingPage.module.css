@@ -26,6 +26,7 @@
 .block { margin: 0 clamp(1.25rem,7vw,5rem); padding: clamp(2.25rem,6vw,4rem) 0; border-top: 1px solid var(--line); }
 .blockHeading { max-width: 700px; margin-bottom: 1.75rem; }
 .blockHeading h2,.freePanel h2,.closing h2 { margin: 0; font-size: clamp(1.5rem,3vw,2.15rem); font-weight: 800; letter-spacing: -.03em; }
+.blockHeading .benefitsTitle { line-height: 1.4; }
 .benefitGrid { display: grid; grid-template-columns: repeat(6,1fr); gap: .75rem; }
 .benefitItem { grid-column: span 2; min-width: 0; padding: 1.15rem; display: flex; gap: .85rem; border: 1px solid var(--line-soft); border-radius: var(--radius-lg); background: var(--surface-secondary); }
 .benefitItem:nth-child(4) { grid-column: 2 / span 2; }
