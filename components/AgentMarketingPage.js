@@ -45,7 +45,10 @@ export default function AgentMarketingPage() {
           <section className={styles.block} aria-labelledby="benefits-heading">
           <div className={styles.blockHeading}>
             <p className={styles.stepLabel}>Why it matters</p>
-            <h2 id="benefits-heading">Why Your Real Estate Business Needs an Online Presence</h2>
+            <h2 id="benefits-heading" className={styles.benefitsTitle}>
+              Why Your Real Estate Business Needs an{" "}
+              <span className={styles.goldText}>Online Presence</span>
+            </h2>
           </div>
           <div className={styles.benefitGrid}>
             {BENEFITS.map(([Icon, title, copy]) => (
@@ -84,7 +87,9 @@ export default function AgentMarketingPage() {
           </section>
 
           <section className={styles.closing} aria-labelledby="cta-heading">
-            <h2 id="cta-heading">Ready to Get Started?</h2>
+            <h2 id="cta-heading">
+              Join as an <span className={styles.goldText}>Agent</span>
+            </h2>
             <p>Create your professional Dhalahore presence for free.</p>
           </section>
         </div>
