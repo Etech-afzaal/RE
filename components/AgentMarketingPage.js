@@ -35,7 +35,10 @@ export default function AgentMarketingPage() {
         <div className={styles.scrollContent}>
           <header className={styles.intro}>
             <p className={styles.eyebrow}>Become a Dhalahore Agent</p>
-            <h1>Build Your Professional Real Estate Presence — Completely Free</h1>
+            <h1>
+              Build Your Professional Real Estate Presence —{" "}
+              <span className={styles.goldText}>Completely Free</span>
+            </h1>
             <p className={styles.lead}>Dhalahore gives you a professional online presence where you can showcase your business and properties and be discovered by buyers.</p>
           </header>
 
@@ -57,7 +60,10 @@ export default function AgentMarketingPage() {
           <aside className={styles.freePanel}>
           <span className={styles.freeBadge}>100% Free</span>
           <div>
-            <h2>Everything You Need. Completely Free.</h2>
+            <h2>
+              Everything You Need.{" "}
+              <span className={styles.goldText}>Completely Free.</span>
+            </h2>
             <p>Create your professional presence and use the available agent tools without a subscription or payment.</p>
           </div>
           </aside>
