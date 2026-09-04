@@ -1015,6 +1015,10 @@
   .contactGrid {
     grid-template-columns: 1fr;
   }
+
+  .contactFormPanel {
+    order: -1;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1025,6 +1029,14 @@
   .messageField {
     grid-column: auto;
   }
+
+  .contactInput,
+  .contactTextarea,
+  .contactInput::placeholder,
+  .contactTextarea::placeholder {
+    font-size: 1rem;
+  }
+
 }
 
 /* Footer — same language as marketplace footer */
