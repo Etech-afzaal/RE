@@ -4,9 +4,24 @@
 }
 .card { width: min(1080px,100%); min-height: 0; display: grid; grid-template-rows: minmax(0,1fr) auto; overflow: hidden; border: 1px solid var(--line); border-radius: 28px; background: rgba(255,255,255,.96); box-shadow: var(--shadow-xl); }
 .scrollContent { min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
-.intro { padding: clamp(1.75rem,4.5vw,3.25rem) clamp(1.25rem,7vw,5rem) clamp(1.75rem,4vw,2.75rem); text-align: center; background: linear-gradient(145deg,#fff 15%,var(--gold-tint) 100%); }
+.intro { padding: 20px; text-align: center; background: linear-gradient(145deg,#fff 15%,var(--gold-tint) 100%); }
 .eyebrow,.stepLabel { margin: 0 0 .65rem; color: var(--gold-deep); font-size: .72rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
-.intro h1 { max-width: 700px; margin: 0 auto; font-size: clamp(1.55rem,3.1vw,2.4rem); font-weight: 700; line-height: 1.16; letter-spacing: -.025em; }
+.intro h1 { max-width: 700px; margin: 0 auto; font-size: clamp(1.55rem,3.1vw,2.4rem); font-weight: 700; line-height: 1.4; letter-spacing: -.025em; }
+.goldText {
+  padding: 0.04em 0.24em 0.1em;
+  border-radius: 0.16em;
+  color: var(--ink);
+  background: linear-gradient(
+    178deg,
+    var(--gold-soft) 0%,
+    var(--gold) 78%,
+    var(--gold-soft) 100%
+  );
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  box-shadow: 0 0.1em 0 color-mix(in srgb, var(--gold-deep) 28%, transparent);
+  text-shadow: none;
+}
 .lead { max-width: 670px; margin: 1.15rem auto 0; color: var(--ink-soft); font-size: clamp(1rem,2vw,1.1rem); line-height: 1.7; }
 .block { margin: 0 clamp(1.25rem,7vw,5rem); padding: clamp(2.25rem,6vw,4rem) 0; border-top: 1px solid var(--line); }
 .blockHeading { max-width: 700px; margin-bottom: 1.75rem; }
