@@ -2,8 +2,41 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, Building2, Check, Clock3, Contact, GalleryHorizontalEnd, Globe2, House, Images, LayoutDashboard, MessageCircle, Play, ShieldCheck } from "lucide-react";
+import { ArrowRight, BadgeCheck, Building2, Clock3, Contact, GalleryHorizontalEnd, Globe2, House, Images, LayoutDashboard, MessageCircle, Play, ShieldCheck } from "lucide-react";
 import styles from "./AgentMarketingPage.module.css";
+
+function CustomDomainIcon({ size = 24, ...props }) {
+  const renderedSize = Number(size) + 4;
+
+  return (
+    <svg
+      width={renderedSize}
+      height={renderedSize}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <circle cx="9.5" cy="10.5" r="9" />
+      <path d="M.5 10.5h18M9.5 1.5c2.8 2.5 4.2 5.5 4.2 9M9.5 1.5c-2.8 2.5-4.2 5.5-4.2 9M2.8 5c2 1.1 4.2 1.7 6.7 1.7s4.7-.6 6.7-1.7M2.8 16c1.9-1.1 4-1.6 6.3-1.7" />
+      <rect x="9.5" y="11.5" width="14" height="8.5" rx="1.5" fill="var(--surface, #fff)" />
+      <text
+        x="16.5"
+        y="17"
+        fill="currentColor"
+        stroke="none"
+        fontSize="4"
+        fontWeight="800"
+        textAnchor="middle"
+      >
+        WWW
+      </text>
+    </svg>
+  );
+}
 
 const BENEFITS = [
   [Globe2, "Get discovered", "Help potential buyers find you and your listings."],
@@ -23,7 +56,11 @@ const FEATURES = [
   [BadgeCheck, "Company Branding", "Present your agency branding across your public presence."],
   [MessageCircle, "Direct Buyer Contact", "Receive inquiries through the existing contact tools."],
   [LayoutDashboard, "Agent Dashboard", "Manage your profile, branding, and properties in one place."],
-  [Check, "Property Approval Workflow", "Submit properties for approval before publication."],
+  [
+    CustomDomainIcon,
+    "Use Custom Domain",
+    "Connect a domain you already own and use it for your public agent website on our platform.",
+  ],
 ];
 
 export default function AgentMarketingPage() {
