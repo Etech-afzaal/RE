@@ -25,7 +25,7 @@ import { formatAddedDate } from "@/lib/agentPropertyListingHelpers";
 import styles from "./HomeListings.module.css";
 
 const DESKTOP_PAGE_SIZE = 3;
-const MOBILE_PAGE_SIZE = 4;
+const MOBILE_PAGE_SIZE = 1;
 
 const formatPrice = (price, currency) =>
   formatPropertyPrice(price, currency, { fallback: "On request" });
