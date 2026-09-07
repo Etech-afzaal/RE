@@ -148,7 +148,9 @@
 
 @media (max-width: 768px) {
   .panelWebsite .input,
-  .panelWebsite .textarea {
+  .panelWebsite .textarea,
+  .panelProperty .input,
+  .panelProperty .textarea {
     /* Prevent iOS Safari from zooming when a contact field receives focus. */
     font-size: 16px;
   }

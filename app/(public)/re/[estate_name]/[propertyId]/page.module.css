@@ -1101,14 +1101,14 @@
 
   /*
    * Mobile reading order:
-   * Title → Features → Agent contact → remaining property sections
+   * Highlights → Summary → Agent contact → remaining property sections
    */
   .summaryCard {
-    order: 1;
+    order: 2;
   }
 
-  .overviewMain > .contentCard:first-of-type {
-    order: 2;
+  .overviewMain > .highlightsCard {
+    order: 1;
   }
 
   .contentCard {
@@ -1246,6 +1246,12 @@
     box-shadow: 0 -8px 28px rgba(16, 24, 40, 0.1);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+  }
+
+  /* Keep the fixed actions out of the way while editing inquiry fields. */
+  .page:has(input:focus, textarea:focus) .mobileContactBar {
+    visibility: hidden;
+    pointer-events: none;
   }
 
   .mobileCallBtn,
