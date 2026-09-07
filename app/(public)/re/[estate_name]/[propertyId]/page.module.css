@@ -1010,6 +1010,12 @@
 }
 
 /* ---------- Responsive ---------- */
+@media (min-width: 961px) {
+  .overviewMain > .summaryCard {
+    order: -1;
+  }
+}
+
 @media (max-width: 960px) {
   /*
    * Single-column reading order: Title/Price/Facts → Contact → remaining sections.

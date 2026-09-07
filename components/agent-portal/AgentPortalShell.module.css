@@ -1,3 +1,16 @@
+/* Keep editable dashboard fields above iOS Safari's focus-zoom threshold. */
+@media (max-width: 768px) {
+  .topbarAction {
+    margin-left: auto;
+  }
+
+  .shell input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="hidden"]),
+  .shell select,
+  .shell textarea {
+    font-size: 16px;
+  }
+}
+
 .shell {
   display: flex;
   position: fixed;
