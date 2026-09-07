@@ -830,6 +830,26 @@
   background: rgba(242, 187, 70, 0.04);
 }
 
+.agentListingIdentity {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.agentListingAvatar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.agentListingCopy {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .propCell {
   display: flex;
   align-items: center;
@@ -1314,6 +1334,11 @@
 }
 
 @media (max-width: 720px) {
+  .agentListingAvatar {
+    width: 30px;
+    height: 30px;
+  }
+
   .tableWrap.logsScroll {
     min-width: 0;
     max-width: 100%;

@@ -14,6 +14,7 @@ export async function GET() {
       `SELECT
          a.id,
          a.full_name,
+         a.profile_image,
          a.email,
          a.phone,
          a.estate_name,
