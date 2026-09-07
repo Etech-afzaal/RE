@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Ban, Building2, CirclePause, CirclePlay } from "lucide-react";
 import ActionMenu from "@/components/ActionMenu";
+import AgentAvatar from "@/components/AgentAvatar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Pagination from "@/components/Pagination";
 import BlockAgentDialog from "@/components/admin/BlockAgentDialog";
@@ -239,12 +240,23 @@ export default function AdminAgentsPage() {
                 {pageItems.map((agent) => (
                   <tr key={agent.id}>
                     <td data-label="Agent">
+                      <div className={styles.agentListingIdentity}>
+                        <AgentAvatar
+                          src={agent.profile_image}
+                          alt={agent.full_name}
+                          width={36}
+                          height={36}
+                          className={styles.agentListingAvatar}
+                        />
+                        <div className={styles.agentListingCopy}>
                       <p className={styles.listPrimary}>{agent.full_name}</p>
                       <p className={styles.listSecondary}>
                         <a href={`mailto:${agent.email}`} className={styles.mailLink}>
                           {agent.email}
                         </a>
                       </p>
+                        </div>
+                      </div>
                     </td>
                     <td data-label="Estate">
                       <p className={styles.listPrimary}>
