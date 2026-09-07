@@ -168,8 +168,8 @@ export default function AdminLogsPage() {
         </div>
       ) : (
         <>
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
+          <div className={`${styles.tableWrap} ${styles.logsScroll}`}>
+            <table className={styles.logsTable}>
               <thead>
                 <tr>
                   <th>Date</th>
