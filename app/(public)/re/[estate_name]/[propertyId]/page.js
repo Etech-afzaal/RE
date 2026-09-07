@@ -672,35 +672,10 @@ export default async function PropertyDetailPage({ params, searchParams }) {
         {/* 3–4. Property summary + sticky agent contact */}
         <section className={styles.overview}>
           <div className={styles.overviewMain}>
-            {/* 1. Premium summary card (below hero; replaces old info/story/facts) */}
-            <PropertySummaryCard
-              className={styles.summaryCard}
-              title={property.title}
-              imageUrl={heroImage?.image_url || null}
-              imageAlt={property.title}
-              address={locationInfo.address}
-              phase={locationInfo.phase}
-              area={locationInfo.area}
-              city={locationInfo.city}
-              priceLabel={formatPrice(
-                property.price,
-                property.price_currency,
-              )}
-              description={attrs.overview}
-              propertyType={propertyTypeLabel}
-              status={statusLabel}
-              sizeLabel={sizeLabel}
-              bedrooms={attrs.beds}
-              bathrooms={attrs.baths}
-              parking={attrs.parking}
-              referenceId={`#${property.id}`}
-              listedAt={formatAddedDate(property.created_at)}
-            />
-
-            {/* 2. Property highlights */}
+            {/* 1. Property highlights */}
             {highlights.length > 0 ? (
               <section
-                className={styles.contentCard}
+                className={`${styles.contentCard} ${styles.highlightsCard}`}
                 aria-labelledby="highlights-heading"
               >
                 <p className={styles.sectionKicker}>Lifestyle</p>
@@ -724,6 +699,31 @@ export default async function PropertyDetailPage({ params, searchParams }) {
                 </ul>
               </section>
             ) : null}
+
+            {/* 2. Property summary card */}
+            <PropertySummaryCard
+              className={styles.summaryCard}
+              title={property.title}
+              imageUrl={heroImage?.image_url || null}
+              imageAlt={property.title}
+              address={locationInfo.address}
+              phase={locationInfo.phase}
+              area={locationInfo.area}
+              city={locationInfo.city}
+              priceLabel={formatPrice(
+                property.price,
+                property.price_currency,
+              )}
+              description={attrs.overview}
+              propertyType={propertyTypeLabel}
+              status={statusLabel}
+              sizeLabel={sizeLabel}
+              bedrooms={attrs.beds}
+              bathrooms={attrs.baths}
+              parking={attrs.parking}
+              referenceId={`#${property.id}`}
+              listedAt={formatAddedDate(property.created_at)}
+            />
 
             {/* 3. Why this home */}
             {lifestylePoints.length > 0 ? (
