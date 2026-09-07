@@ -1517,6 +1517,10 @@ button.stepPillActive:hover {
 }
 
 @media (max-width: 768px) {
+  .table td[data-label="Property"] > div {
+    margin-top: 0.75rem;
+  }
+
   .row2 {
     grid-template-columns: 1fr;
   }

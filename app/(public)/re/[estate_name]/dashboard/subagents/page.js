@@ -462,7 +462,7 @@ export default function AgentSubagentsPage() {
       </div>
 
       {showForm ? (
-        <div className={ui.dialogBackdrop} role="presentation">
+        <div className={`${ui.dialogBackdrop} ${styles.formBackdrop}`} role="presentation">
           <div
             className={`${ui.dialog} ${styles.formDialog}`}
             style={formDialogStyle}
