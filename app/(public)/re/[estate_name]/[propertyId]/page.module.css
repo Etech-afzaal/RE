@@ -1047,6 +1047,46 @@
   }
 }
 
+@media (min-width: 769px) and (max-width: 960px) {
+  .overview {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .summaryCard,
+  .agentCard,
+  .highlightsCard,
+  .insightCard {
+    grid-column: 1 / -1;
+  }
+
+  .summaryCard,
+  .contentCard,
+  .agentCard {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .agentCard {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-self: stretch;
+    align-content: start;
+    gap: 1rem 1.75rem;
+  }
+
+  .agentCard > * {
+    min-width: 0;
+    grid-column: 1;
+  }
+
+  .agentCard > :global(#inquiry) {
+    grid-column: 2;
+    grid-row: 1 / span 6;
+  }
+}
+
 @media (max-width: 768px) {
   .page {
     --section-gap: 24px;
