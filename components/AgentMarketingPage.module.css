@@ -279,6 +279,9 @@
     align-items: flex-start;
     flex-direction: column;
   }
+  .freePanel h2 {
+    line-height: 1.4;
+  }
   .actionBar {
     gap: 0.65rem;
     padding: 0.7rem 0.85rem;
