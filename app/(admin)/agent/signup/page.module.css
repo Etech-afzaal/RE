@@ -300,6 +300,12 @@
     padding: 1.5rem 1.15rem;
   }
 
+  .signupInput,
+  .signupTextarea {
+    /* Prevent iOS focus zoom and its horizontal scroll indicator. */
+    font-size: 16px;
+  }
+
   .signupBtn {
     width: 100%;
   }
