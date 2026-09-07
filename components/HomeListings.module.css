@@ -147,6 +147,26 @@
   transform: translateY(-1px);
 }
 
+:global(.agent-public-theme) .searchBtn:hover {
+  background: var(--cta-bg);
+  color: var(--cta-fg);
+  transform: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :global(.agent-public-theme) .searchBtn:hover {
+    background: var(--cta-hover-bg);
+    color: var(--cta-hover-fg);
+    transform: translateY(-1px);
+  }
+}
+
+:global(.agent-public-theme) .searchBtn:active {
+  background: var(--cta-hover-bg);
+  color: var(--cta-hover-fg);
+  transition: none;
+}
+
 .sectionHeader {
   display: flex;
   justify-content: space-between;

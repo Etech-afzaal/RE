@@ -147,8 +147,23 @@
 }
 
 @media (max-width: 768px) {
+  .panelWebsite .input,
+  .panelWebsite .textarea {
+    /* Prevent iOS Safari from zooming when a contact field receives focus. */
+    font-size: 16px;
+  }
+
   .panelWebsite .form {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panelWebsite,
+  .panelWebsite .form,
+  .panelWebsite .field,
+  .panelWebsite .input,
+  .panelWebsite .textarea {
+    min-width: 0;
+    max-width: 100%;
   }
 
   .messageField,

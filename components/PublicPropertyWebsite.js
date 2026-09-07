@@ -211,7 +211,7 @@ export default function PublicPropertyWebsite({
                       <div>
                         <p className={styles.contactDetailLabel}>Phone</p>
                         {phoneEntries.length > 0 ? (
-                          <span style={{ whiteSpace: "pre" }}>
+                          <span className={styles.contactPhoneNumbers}>
                             {phoneEntries.map((entry, index) => (
                               <Fragment key={entry.number}>
                                 {index > 0 ? "\t" : null}
@@ -263,7 +263,13 @@ export default function PublicPropertyWebsite({
                       <div>
                         <p className={styles.contactDetailLabel}>Office</p>
                         <p className={styles.contactDetailValue}>
-                          {contactOffice}
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contactOffice)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {contactOffice}
+                          </a>
                         </p>
                       </div>
                     </div>
@@ -363,7 +369,13 @@ export default function PublicPropertyWebsite({
                     <a href={contactTelHref}>{contactPhone}</a>
                   ) : null}
               <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
-              <span>{contactOffice}</span>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contactOffice)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {contactOffice}
+              </a>
             </div>
           </div>
           <div className={styles.footerBottom}>

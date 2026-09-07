@@ -503,6 +503,20 @@
 }
 
 @media (max-width: 768px) {
+  :global(.agent-public-theme) .contactPhoneNumbers {
+    display: flex;
+    flex-direction: column;
+    white-space: normal;
+  }
+
+  :global(.agent-public-theme) .contactGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  :global(.agent-public-theme) .contactFormPanel {
+    min-width: 0;
+  }
+
   .section {
     margin-bottom: 24px;
   }
@@ -661,6 +675,10 @@
   font-size: 0.98rem;
   line-height: 1.6;
   font-weight: 600;
+}
+
+.contactPhoneNumbers {
+  white-space: pre;
 }
 
 .contactDetailLink {
