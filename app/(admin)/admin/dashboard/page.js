@@ -433,7 +433,7 @@ export default function AdminOverviewPage() {
         ))}
       </div>
 
-      <section className={styles.panel}>
+      <section className={`${styles.panel} ${styles.attentionPanel}`}>
         <div className={`${styles.panelHeader} ${styles.attentionHeader}`}>
           <h2 className={`${styles.panelTitle} ${styles.attentionTitle}`}>
             <AlertTriangle
@@ -571,7 +571,7 @@ export default function AdminOverviewPage() {
         </section>
       </div>
 
-      <section className={styles.panel}>
+      <section className={`${styles.panel} ${styles.activitiesPanel}`}>
         <div className={styles.panelHeader}>
           <h2 className={styles.panelTitle}>Recent Activities</h2>
           <Link href="/admin/dashboard/logs" className={styles.panelLink}>

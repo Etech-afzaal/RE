@@ -1309,6 +1309,26 @@
 }
 
 @media (max-width: 720px) {
+  .activitiesPanel .queueTable th:nth-child(2),
+  .activitiesPanel .queueTable td:nth-child(2),
+  .activitiesPanel .queueTable th:nth-child(3),
+  .activitiesPanel .queueTable td:nth-child(3) {
+    min-width: 200px;
+    white-space: nowrap;
+  }
+
+  .activitiesPanel .queueTable th:nth-child(4),
+  .activitiesPanel .queueTable td:nth-child(4) {
+    min-width: 300px;
+    white-space: nowrap;
+  }
+
+  .attentionPanel .queueTable th:nth-child(2),
+  .attentionPanel .queueTable td:nth-child(2) {
+    min-width: 260px;
+    white-space: nowrap;
+  }
+
   .reviewSidebar > .panel:first-child {
     order: 2;
   }
