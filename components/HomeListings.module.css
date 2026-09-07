@@ -455,6 +455,10 @@
     margin-bottom: 24px;
   }
 
+  :global(.agent-public-theme) .section {
+    margin-bottom: 40px;
+  }
+
   .searchBar {
     grid-template-columns: 1fr;
     gap: 0.5rem;
