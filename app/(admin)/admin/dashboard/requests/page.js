@@ -19,7 +19,7 @@ export default function RequestsPage() {
   const [allRequests, setAllRequests] = useState([]);
   const [filteredRequests, setFilteredRequests] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("pending");
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
 
