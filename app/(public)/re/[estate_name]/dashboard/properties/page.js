@@ -172,6 +172,7 @@ export default function AgentPropertiesPage() {
           {TABS.map((item) => (
             <button
               key={item.id}
+              data-status={item.id}
               type="button"
               className={`${ui.tab} ${tab === item.id ? ui.tabActive : ""}`}
               onClick={() => changeTab(item.id)}

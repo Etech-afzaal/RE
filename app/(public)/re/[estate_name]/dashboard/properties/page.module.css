@@ -100,9 +100,22 @@
   }
 
   .searchWrap {
+    order: -1;
+    flex: 0 0 auto;
     width: 100%;
+    min-width: 0;
     max-width: none;
     margin-left: 0;
+  }
+
+  .tabsRowTabs {
+    flex: 0 0 auto;
+  }
+
+  .tabsRowTabs > [data-status="pending_approval"],
+  .tabsRowTabs > [data-status="rejected"],
+  .tabsRowTabs > [data-status="sold"] {
+    order: 1;
   }
 
   .listingPanel {
