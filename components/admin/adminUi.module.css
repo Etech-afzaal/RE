@@ -1393,6 +1393,10 @@
     min-width: 0;
   }
 
+  .table td[data-label="Property"] > div {
+    margin-top: 0.75rem;
+  }
+
   /* Keep primary identity clear of the top-right action control */
   .table td:first-child {
     padding-right: 2.75rem;

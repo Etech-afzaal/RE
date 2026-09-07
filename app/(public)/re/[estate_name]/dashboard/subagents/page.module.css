@@ -2,6 +2,25 @@
   width: min(100%, clamp(320px, 92vw, 780px));
 }
 
+/* Scroll the entire dialog at the viewport, never an inner form panel. */
+.formBackdrop.formBackdrop {
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  display: block;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: 6dvh 1rem;
+}
+
+.formBackdrop .formDialog {
+  margin: 0 auto;
+  padding: 1rem;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
 .listingPanel {
   --listing-count-h: 2.85rem;
   --listing-thead-h: 2.7rem;
@@ -133,5 +152,27 @@
   .dialogActions button {
     flex: 1 1 calc(50% - 0.35rem);
     min-width: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .formBackdrop.formBackdrop {
+    padding: 5dvh 0.75rem;
+  }
+
+  .formDialog .dialogTitle {
+    margin-bottom: 0.65rem;
+  }
+
+  .formLayout {
+    gap: 0.65rem;
+  }
+
+  .formFields {
+    gap: 0.55rem;
+  }
+
+  .dialogActions {
+    margin-top: 0.75rem;
   }
 }

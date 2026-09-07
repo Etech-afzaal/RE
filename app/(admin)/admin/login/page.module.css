@@ -218,6 +218,11 @@
 }
 
 @media (max-width: 600px) {
+  .loginInput {
+    /* Prevent iOS Safari from zooming when a login field receives focus. */
+    font-size: 16px;
+  }
+
   .loginPage {
     padding: 1rem 0.75rem;
   }
