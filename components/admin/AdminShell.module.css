@@ -495,3 +495,40 @@
     display: none;
   }
 }
+
+@media (max-width: 768px) {
+  .topbar.topbarCompact {
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .topbarCompact .topbarLeft {
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .topbarCompact .topbarLeft > div {
+    min-width: 0;
+  }
+
+  .topbarCompact .kicker,
+  .topbarCompact .pageSubtitle {
+    display: none;
+  }
+
+  .topbarCompact .pageTitle {
+    font-size: 1rem;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .topbarCompact .menuBtn {
+    margin-top: 0;
+  }
+}
