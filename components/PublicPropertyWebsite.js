@@ -391,7 +391,7 @@ export default function PublicPropertyWebsite({
           message={agentWebsiteWhatsAppMessage(agent.full_name)}
         />
       ) : null}
-      <BackToTop />
+      <BackToTop revealAtId="for-sale-shops" />
     </div>
   );
 }
