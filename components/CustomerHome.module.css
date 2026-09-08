@@ -1022,6 +1022,10 @@
 }
 
 @media (max-width: 768px) {
+  .contactGrid {
+    row-gap: 3.5rem;
+  }
+
   .contactFields {
     grid-template-columns: 1fr;
   }
