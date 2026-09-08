@@ -33,6 +33,7 @@ export async function GET(req) {
   const payload = await getSubagentsPageByAgent(agentId, {
     page,
     pageSize: 10,
+    search: searchParams.get("search") || "",
   });
 
   return NextResponse.json(payload);

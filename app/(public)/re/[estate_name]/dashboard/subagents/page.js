@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { Search } from "lucide-react";
 import AgentAvatar from "@/components/AgentAvatar";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -45,6 +46,10 @@ export default function AgentSubagentsPage() {
   const base = `/re/${encodeURIComponent(username)}/dashboard`;
 
   const [subagents, setSubagents] = useState([]);
+  const [search, setSearch] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
+  const hasListedSubagentsRef = useRef(false);
+  const requestIdRef = useRef(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalSubagents, setTotalSubagents] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -63,25 +68,30 @@ export default function AgentSubagentsPage() {
   const listSectionRef = useRef(null);
   const shouldScrollRef = useRef(false);
 
-  const loadSubagents = useCallback(async (page = 1) => {
-    setLoading(true);
+  const loadSubagents = useCallback(async (page = 1, background = false) => {
+    const requestId = ++requestIdRef.current;
+    if (!background) setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/agent/subagents?page=${page}`);
+      const res = await fetch(`/api/agent/subagents?page=${page}&search=${encodeURIComponent(search.trim())}`);
       const data = await res.json().catch(() => ({}));
+      if (requestId !== requestIdRef.current) return;
       if (!res.ok) {
         throw new Error(data.error || "Could not load subagents.");
       }
       setSubagents(Array.isArray(data.subagents) ? data.subagents : []);
+      setAppliedSearch(search.trim());
+      if (data.subagents?.length) hasListedSubagentsRef.current = true;
       setCurrentPage(data.currentPage || 1);
       setTotalSubagents(Number(data.totalSubagents) || 0);
       setTotalPages(Number(data.totalPages) || 1);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       setError(err.message || "Could not load subagents.");
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
-  }, []);
+  }, [search]);
 
   function getReloadPage() {
     return subagents.length === 1 && currentPage > 1 ? currentPage - 1 : currentPage;
@@ -98,7 +108,7 @@ export default function AgentSubagentsPage() {
       router.replace("/agent/login");
       return;
     }
-    if (status === "authenticated") loadSubagents(1);
+    if (status === "authenticated") loadSubagents(1, true);
   }, [status, router, loadSubagents]);
 
   useEffect(() => {
@@ -357,12 +367,44 @@ export default function AgentSubagentsPage() {
       {error ? <p className={ui.error}>{error}</p> : null}
       {success ? <p className={ui.success}>{success}</p> : null}
 
+      <div className={`${styles.searchField} ${styles.mobileSearch}`}>
+        <Search className={styles.searchIcon} size={18} aria-hidden="true" />
+        <input
+          type="search"
+          className={`${ui.input} ${styles.searchInput}`}
+          aria-label="Search subagents by name or email"
+          placeholder="Search by name or email"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
+      </div>
+
       <div
         className={`${ui.panel} ${
-          !loading && subagents.length > 0 ? styles.listingPanel : ""
+          !loading && (hasListedSubagentsRef.current || search.trim()) ? styles.listingPanel : ""
         }`}
         ref={listSectionRef}
       >
+        <div className={styles.listToolbar}>
+          {!loading && (totalSubagents > 0 || appliedSearch) ? (
+            <p className={ui.paginationCount}>
+              Showing {totalSubagents > 0 ? (currentPage - 1) * PAGE_SIZE + 1 : 0}&ndash;
+              {Math.min(currentPage * PAGE_SIZE, totalSubagents)} of{" "}
+              {totalSubagents} subagents
+            </p>
+          ) : null}
+          <div className={`${styles.searchField} ${styles.desktopSearch}`}>
+            <Search className={styles.searchIcon} size={18} aria-hidden="true" />
+            <input
+            type="search"
+            className={`${ui.input} ${styles.searchInput}`}
+            aria-label="Search subagents by name or email"
+            placeholder="Search by name or email"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          </div>
+        </div>
         {loading ? (
           <LoadingSpinner
             fullPage={false}
@@ -371,15 +413,10 @@ export default function AgentSubagentsPage() {
           />
         ) : totalSubagents === 0 ? (
           <p className={ui.empty}>
-            No subagents yet. Add marketing representatives.
+            {appliedSearch ? `No results match your search "${appliedSearch}".` : "No subagents yet. Add marketing representatives."}
           </p>
         ) : (
           <>
-            <p className={ui.paginationCount}>
-              Showing {(currentPage - 1) * PAGE_SIZE + 1}&ndash;
-              {Math.min(currentPage * PAGE_SIZE, totalSubagents)} of{" "}
-              {totalSubagents} subagents
-            </p>
             <div className={`${ui.tableWrap} ${styles.tableArea}`}>
             <table className={ui.table}>
               <thead>
