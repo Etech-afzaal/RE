@@ -1,5 +1,7 @@
 "use client";
 
+import ClearableSearchInput from "@/components/ClearableSearchInput";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -193,7 +195,7 @@ export default function AgentPropertiesPage() {
               />
             </svg>
           </span>
-          <input
+          <ClearableSearchInput
             type="search"
             className={styles.searchInput}
             value={search}

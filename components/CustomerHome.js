@@ -1,5 +1,7 @@
 "use client";
 
+import ClearableSearchInput from "@/components/ClearableSearchInput";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -469,7 +471,7 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
                 strokeLinecap="round"
               />
             </svg>
-            <input
+            <ClearableSearchInput
               ref={searchInputRef}
               type="search"
               value={query}

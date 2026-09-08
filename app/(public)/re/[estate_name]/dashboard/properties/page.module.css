@@ -32,6 +32,7 @@
 
 .searchIcon {
   position: absolute;
+  z-index: 1;
   left: 0.85rem;
   top: 50%;
   transform: translateY(-50%);
@@ -100,6 +101,29 @@
 .paginationSlot {
   margin-top: auto;
   padding-bottom: 1.1rem;
+}
+
+@media (min-width: 769px) {
+  .tabsRow .tabsRowTabs {
+    align-items: center;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-bottom: 0;
+  }
+
+  .tabsRowTabs > button,
+  .searchWrap .searchInput {
+    box-sizing: border-box;
+    height: 2.35rem;
+    min-height: 2.35rem;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .tabsRowTabs > button {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
 }
 
 /* Mobile uses stacked cards — keep natural height to avoid large blank gaps */

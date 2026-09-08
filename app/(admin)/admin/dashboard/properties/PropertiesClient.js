@@ -1,5 +1,7 @@
 "use client";
 
+import ClearableSearchInput from "@/components/ClearableSearchInput";
+
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Archive, CircleCheck } from "lucide-react";
@@ -209,7 +211,7 @@ export default function AdminPropertiesPage() {
       <div className={styles.toolbar}>
         <div className={styles.field}>
           <label htmlFor="prop-search">Search</label>
-          <input
+          <ClearableSearchInput
             id="prop-search"
             className={styles.input}
             placeholder="Title, location, agent…"
