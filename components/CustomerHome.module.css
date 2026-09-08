@@ -1272,6 +1272,14 @@
     box-sizing: border-box;
   }
 
+  .searchField input::placeholder {
+    font-size: clamp(0.8rem, 3.5vw, 0.9375rem);
+  }
+
+  .searchField input:placeholder-shown {
+    padding-right: 0 !important;
+  }
+
   .selectField select {
     text-overflow: ellipsis;
     white-space: nowrap;
