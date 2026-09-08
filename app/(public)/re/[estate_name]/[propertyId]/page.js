@@ -828,7 +828,7 @@ export default async function PropertyDetailPage({ params, searchParams }) {
             ) : null}
           </div>
 
-          <aside className={styles.agentCard}>
+          <aside id="agent-contact-card" className={styles.agentCard}>
             <div className={styles.agentBrandBlock}>
               <p className={styles.agentCompanyName}>{companyName}</p>
             </div>
@@ -1067,7 +1067,7 @@ export default async function PropertyDetailPage({ params, searchParams }) {
         )}
       </div>
 
-      <BackToTop />
+      <BackToTop revealAtId="agent-contact-card" revealAtEnd />
 
       {/* Mobile sticky contact CTA — Call + WhatsApp always reachable */}
       {telHref || waHref ? (

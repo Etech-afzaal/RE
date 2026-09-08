@@ -1095,7 +1095,7 @@
 
 @media (max-width: 768px) {
   .page {
-    --section-gap: 24px;
+    --section-gap: 32px;
     padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
   }
 
@@ -1135,7 +1135,7 @@
   }
 
   .overview {
-    gap: 1.15rem;
+    gap: var(--section-gap);
     width: 100%;
     max-width: 100%;
   }

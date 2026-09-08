@@ -5,11 +5,17 @@ import styles from "./BackToTop.module.css";
 
 const END_THRESHOLD_PX = 120;
 
-export default function BackToTop() {
+export default function BackToTop({ revealAtId, revealAtEnd = false }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const updateVisibility = () => {
+      const revealSection = revealAtId && document.getElementById(revealAtId);
+      if (revealSection) {
+        const bounds = revealSection.getBoundingClientRect();
+        setVisible((revealAtEnd ? bounds.bottom : bounds.top) <= window.innerHeight);
+        return;
+      }
       const scrollBottom = window.scrollY + window.innerHeight;
       const pageHeight = document.documentElement.scrollHeight;
       setVisible(scrollBottom >= pageHeight - END_THRESHOLD_PX);
@@ -22,7 +28,7 @@ export default function BackToTop() {
       window.removeEventListener("scroll", updateVisibility);
       window.removeEventListener("resize", updateVisibility);
     };
-  }, []);
+  }, [revealAtId, revealAtEnd]);
 
   if (!visible) return null;
 
