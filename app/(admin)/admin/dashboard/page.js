@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import OverviewTableScroll from "@/components/admin/OverviewTableScroll";
 import styles from "@/components/admin/adminUi.module.css";
 
 function formatDate(value) {
@@ -463,7 +464,7 @@ export default function AdminOverviewPage() {
             </div>
           </div>
         ) : (
-          <div className={styles.tableScroll}>
+          <OverviewTableScroll>
             <table className={styles.queueTable}>
               <thead>
                 <tr>
@@ -503,7 +504,7 @@ export default function AdminOverviewPage() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </OverviewTableScroll>
         )}
       </section>
 
@@ -581,7 +582,7 @@ export default function AdminOverviewPage() {
         {activityRows.length === 0 ? (
           <p className={styles.empty}>No recent platform activity.</p>
         ) : (
-          <div className={styles.tableScroll}>
+          <OverviewTableScroll>
             <table className={styles.queueTable}>
               <thead>
                 <tr>
@@ -621,7 +622,7 @@ export default function AdminOverviewPage() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </OverviewTableScroll>
         )}
       </section>
     </div>

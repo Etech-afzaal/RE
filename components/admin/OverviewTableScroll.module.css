@@ -1,0 +1,35 @@
+.scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.track {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .scroll {
+    scrollbar-width: none;
+  }
+
+  .scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .track {
+    display: block;
+    position: relative;
+    height: 5px;
+    margin: 0.5rem 0.75rem 0.75rem;
+    border-radius: 999px;
+    background: var(--gold-tint);
+  }
+
+  .thumb {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--gold);
+  }
+}
