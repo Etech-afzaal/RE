@@ -3,6 +3,10 @@
   scroll-margin-top: 110px;
 }
 
+:global(.agent-public-theme) .section {
+  margin-bottom: 4.5rem;
+}
+
 .searchSection {
   width: min(1240px, calc(100% - 2rem));
   margin: 1.5rem auto;
@@ -456,7 +460,7 @@
   }
 
   :global(.agent-public-theme) .section {
-    margin-bottom: 40px;
+    margin-bottom: 56px;
   }
 
   .searchBar {
