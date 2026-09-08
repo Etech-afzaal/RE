@@ -367,18 +367,6 @@ export default function AdminOverviewPage() {
       href: "/admin/dashboard/properties",
     },
     {
-      label: "Active Agents",
-      value: stats.activeAgents,
-      hint: `${stats.disabledAgents} disabled · ${stats.blockedAgents || 0} blocked`,
-      trend: stats.agentsTrend,
-      trendText: trendLabel(
-        stats.agentsTrend,
-        "vs last month",
-        `${stats.agentsThisMonth} new this month`,
-      ),
-      href: "/admin/dashboard/agents",
-    },
-    {
       label: "Pending Property Approvals",
       value: stats.pendingProperties,
       hint: stats.pendingProperties > 0 ? "Needs attention" : "Queue is clear",
@@ -396,6 +384,18 @@ export default function AdminOverviewPage() {
       trend: null,
       trendText: "Approved and live",
       href: "/admin/dashboard/properties?status=approved",
+    },
+    {
+      label: "Active Agents",
+      value: stats.activeAgents,
+      hint: `${stats.disabledAgents} disabled · ${stats.blockedAgents || 0} blocked`,
+      trend: stats.agentsTrend,
+      trendText: trendLabel(
+        stats.agentsTrend,
+        "vs last month",
+        `${stats.agentsThisMonth} new this month`,
+      ),
+      href: "/admin/dashboard/agents",
     },
     {
       label: "Pending Agent Requests",
