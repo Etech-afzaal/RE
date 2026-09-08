@@ -166,7 +166,7 @@ export default function AgentAdminDashboardPage() {
           </div>
         ) : (
           <div className={ui.tableWrap}>
-            <table className={ui.table}>
+            <table className={`${ui.table} ${ui.propertyCards}`}>
               <thead>
                 <tr>
                   <th>Property</th>

@@ -1550,6 +1550,10 @@ button.stepPillActive:hover {
     gap: 0.75rem;
   }
 
+  .propertyCards tbody {
+    gap: 1.25rem;
+  }
+
   .table tr {
     position: relative;
     display: flex;
