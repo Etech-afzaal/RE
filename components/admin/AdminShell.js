@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useCompactDashboardHeader } from "@/lib/useCompactDashboardHeader";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -176,6 +177,7 @@ function CollapseIcon({ collapsed }) {
 export default function AdminShell({ children }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { headerRef, compact, spacerHeight } = useCompactDashboardHeader();
   const { collapsed, toggleCollapsed } = useSidebarCollapsed(
     "admin.sidebarCollapsed",
   );
@@ -301,7 +303,7 @@ export default function AdminShell({ children }) {
       <SidebarTooltip tip={tip} />
 
       <div className={styles.main}>
-        <header className={styles.topbar}>
+        <header ref={headerRef} className={`${styles.topbar} ${compact ? styles.topbarCompact : ""}`}>
           <div className={styles.topbarLeft}>
             <button
               type="button"
@@ -354,6 +356,7 @@ export default function AdminShell({ children }) {
             <span className={styles.rolePill}>Superadmin</span>
           </div>
         </header>
+        <div aria-hidden="true" style={{ height: spacerHeight, flexShrink: 0 }} />
 
         <div className={styles.content}>{children}</div>
       </div>

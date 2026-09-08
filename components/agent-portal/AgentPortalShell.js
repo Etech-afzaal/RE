@@ -9,6 +9,7 @@ import {
   useSidebarTooltip,
 } from "@/components/SidebarTooltip";
 import { useSidebarCollapsed } from "@/lib/useSidebarCollapsed";
+import { useCompactDashboardHeader } from "@/lib/useCompactDashboardHeader";
 import styles from "./AgentPortalShell.module.css";
 
 function navItems(base) {
@@ -192,6 +193,7 @@ export default function AgentPortalShell({
   action,
 }) {
   const pathname = usePathname();
+  const { headerRef, compact, spacerHeight } = useCompactDashboardHeader();
   const [open, setOpen] = useState(false);
   const { collapsed, toggleCollapsed } = useSidebarCollapsed(
     "agent.sidebarCollapsed",
@@ -310,7 +312,7 @@ export default function AgentPortalShell({
       <SidebarTooltip tip={tip} />
 
       <div className={styles.main}>
-        <header className={styles.topbar}>
+        <header ref={headerRef} className={`${styles.topbar} ${compact ? styles.topbarCompact : ""}`}>
           <div className={styles.topbarLeft}>
             <button
               type="button"
@@ -361,6 +363,7 @@ export default function AgentPortalShell({
           </div>
           {action ? <div className={styles.topbarAction}>{action}</div> : null}
         </header>
+        <div aria-hidden="true" style={{ height: spacerHeight, flexShrink: 0 }} />
         <div className={styles.content}>{children}</div>
       </div>
     </div>
