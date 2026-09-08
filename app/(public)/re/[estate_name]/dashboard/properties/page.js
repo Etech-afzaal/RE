@@ -252,7 +252,7 @@ export default function AgentPropertiesPage() {
               Featured: {featuredCount} / {featuredLimit}
             </p>
             <div className={`${ui.tableWrap} ${styles.tableArea}`}>
-              <table className={ui.table}>
+            <table className={`${ui.table} ${ui.propertyCards}`}>
               <thead>
                 <tr>
                   <th>Property</th>
