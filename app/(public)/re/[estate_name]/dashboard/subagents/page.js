@@ -413,7 +413,7 @@ export default function AgentSubagentsPage() {
           />
         ) : totalSubagents === 0 ? (
           <p className={ui.empty}>
-            {appliedSearch ? `No results match your search "${appliedSearch}".` : "No subagents yet. Add marketing representatives."}
+            {appliedSearch ? `No Subagent match your search "${appliedSearch}"` : "No subagents yet. Add marketing representatives."}
           </p>
         ) : (
           <>
