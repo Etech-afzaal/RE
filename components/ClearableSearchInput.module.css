@@ -1,0 +1,45 @@
+.wrapper {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  align-self: stretch;
+  flex: 1;
+}
+
+.input {
+  grid-area: 1 / 1;
+  padding-right: 2.5rem !important;
+  min-width: 0;
+}
+
+.input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.wrapper .clearButton {
+  grid-area: 1 / 1;
+  position: relative;
+  justify-self: end;
+  align-self: center;
+  z-index: 1;
+  margin: 0 0.5rem 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #525252;
+  cursor: pointer;
+}
+
+.clearButton:focus-visible {
+  outline: 2px solid var(--gold, #f2bb46);
+  outline-offset: 1px;
+}

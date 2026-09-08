@@ -1,5 +1,7 @@
 "use client";
 
+import ClearableSearchInput from "@/components/ClearableSearchInput";
+
 import { useCallback, useEffect, useState } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Pagination from "@/components/Pagination";
@@ -115,7 +117,7 @@ export default function AdminLogsPage() {
       <div className={styles.toolbar}>
         <div className={styles.field}>
           <label htmlFor="logs-search">Search</label>
-          <input
+          <ClearableSearchInput
             id="logs-search"
             className={styles.input}
             placeholder="User, description, entity…"

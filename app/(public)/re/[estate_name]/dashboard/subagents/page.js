@@ -1,5 +1,7 @@
 "use client";
 
+import ClearableSearchInput from "@/components/ClearableSearchInput";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -369,7 +371,7 @@ export default function AgentSubagentsPage() {
 
       <div className={`${styles.searchField} ${styles.mobileSearch}`}>
         <Search className={styles.searchIcon} size={18} aria-hidden="true" />
-        <input
+        <ClearableSearchInput
           type="search"
           className={`${ui.input} ${styles.searchInput}`}
           aria-label="Search subagents by name or email"
@@ -395,7 +397,7 @@ export default function AgentSubagentsPage() {
           ) : null}
           <div className={`${styles.searchField} ${styles.desktopSearch}`}>
             <Search className={styles.searchIcon} size={18} aria-hidden="true" />
-            <input
+            <ClearableSearchInput
             type="search"
             className={`${ui.input} ${styles.searchInput}`}
             aria-label="Search subagents by name or email"

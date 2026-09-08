@@ -1,5 +1,7 @@
 "use client";
 
+import ClearableSearchInput from "@/components/ClearableSearchInput";
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -854,7 +856,7 @@ export default function HomeListings({
                 strokeLinecap="round"
               />
             </svg>
-            <input
+            <ClearableSearchInput
               type="search"
               value={query}
               onChange={(e) =>

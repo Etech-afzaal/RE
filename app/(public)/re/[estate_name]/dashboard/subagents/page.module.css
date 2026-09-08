@@ -71,6 +71,7 @@
 
 .searchIcon {
   position: absolute;
+  z-index: 1;
   left: 0.85rem;
   top: 50%;
   transform: translateY(-50%);

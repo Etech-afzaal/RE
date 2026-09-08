@@ -1,5 +1,7 @@
 "use client";
 
+import ClearableSearchInput from "@/components/ClearableSearchInput";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -189,7 +191,7 @@ export default function AdminAgentsPage() {
       <div className={styles.toolbar}>
         <div className={styles.field}>
           <label htmlFor="agent-search">Search</label>
-          <input
+          <ClearableSearchInput
             id="agent-search"
             className={styles.input}
             placeholder="Name, company, email, or estate…"

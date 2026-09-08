@@ -1,5 +1,7 @@
 "use client";
 
+import ClearableSearchInput from "@/components/ClearableSearchInput";
+
 import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Pagination from "@/components/Pagination";
@@ -88,7 +90,7 @@ export default function RequestsPage() {
       <div className={styles.toolbar}>
         <div className={styles.field}>
           <label htmlFor="search-filter">Search</label>
-          <input
+          <ClearableSearchInput
             id="search-filter"
             type="text"
             placeholder="Name, email, or estate…"
