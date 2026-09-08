@@ -26,6 +26,10 @@
   scroll-margin-top: 110px;
 }
 
+:global(.agent-public-theme) .section {
+  margin-bottom: 6.5rem;
+}
+
 .sectionHeader {
   display: flex;
   justify-content: space-between;
@@ -519,6 +523,10 @@
 
   .section {
     margin-bottom: 24px;
+  }
+
+  :global(.agent-public-theme) .section {
+    margin-bottom: 52px;
   }
 
   .contactSection {
