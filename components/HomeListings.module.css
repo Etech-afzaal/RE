@@ -548,6 +548,11 @@
     gap: 0.75rem;
   }
 
+  /* Match the one-card mobile page before the viewport hook hydrates. */
+  .grid > :nth-child(n + 2) {
+    display: none;
+  }
+
   :global(.agent-public-theme) .grid {
     grid-template-columns: minmax(0, 1fr);
   }
