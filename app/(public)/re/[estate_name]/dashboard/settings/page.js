@@ -304,7 +304,7 @@ export default function AgentSettingsPage() {
                       <span>{group.label}</span>
                     </label>
                     <div className={ui.prefChildren}>
-                      {group.subtypes.map((child) => (
+                      {group.subtypes.filter((child) => child.subtype !== "shop" && !(group.type === "sale" && child.subtype === "file")).map((child) => (
                         <label
                           key={child.subtype}
                           className={`${ui.prefChild}${
