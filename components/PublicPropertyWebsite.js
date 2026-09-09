@@ -30,7 +30,6 @@ const AGENT_PUBLIC_NAV = [
     children: [
       { label: "Houses", subtype: "house" },
       { label: "Apartments", subtype: "apartment" },
-      { label: "Shops", subtype: "shop" },
       { label: "Commercial", subtype: "commercial" },
     ],
   },
@@ -41,7 +40,6 @@ const AGENT_PUBLIC_NAV = [
     children: [
       { label: "Houses", subtype: "house" },
       { label: "Apartments", subtype: "apartment" },
-      { label: "Shops", subtype: "shop" },
       { label: "Commercial", subtype: "commercial" },
     ],
   },
@@ -391,7 +389,7 @@ export default function PublicPropertyWebsite({
           message={agentWebsiteWhatsAppMessage(agent.full_name)}
         />
       ) : null}
-      <BackToTop revealAtId="for-sale-shops" />
+      <BackToTop revealAtId="for-sale-commercial" />
     </div>
   );
 }

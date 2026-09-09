@@ -40,6 +40,7 @@ import {
   propertySubtypeLabel,
 } from "@/lib/propertyTaxonomy";
 import styles from "./page.module.css";
+import { publicPropertyDetails, publicPropertyInsight } from "@/lib/publicPropertyData";
 import "@/app/agent-public-theme.css";
 
 const formatPrice = (price, currency) =>
@@ -511,7 +512,8 @@ export default async function PropertyDetailPage({ params, searchParams }) {
   const companyName = companyNameFromAgent(agent);
   const sizeLabel = formatSize(property.size_value, property.size_unit);
   const locationInfo = resolveLocationInfo(property);
-  const attrs = parsePropertyAttributes(property);
+  const dynamicDetails = publicPropertyDetails(property);
+  const attrs = { ...parsePropertyAttributes(property), ...dynamicDetails.attributes };
   const propertyTypeLabel = inferPropertyTypeLabel(property);
   const statusLabel = listingTypeLabel(property);
   const isRent = inferPropertyTypeFromText(property) === "rent";
@@ -581,7 +583,7 @@ export default async function PropertyDetailPage({ params, searchParams }) {
   // Agent-edited marketing sections take priority. Fields that were never set
   // (existing properties) fall back to the existing generated content; a saved
   // empty array intentionally hides the section.
-  const savedHighlightsData = savedMarketingSection(property.property_highlights);
+  const savedHighlightsData = savedMarketingSection(publicPropertyInsight(property, "property_highlights"));
   const highlights = savedHighlightsData.present
     ? savedHighlightsData.value.map((item, index) => ({
         id: `db-${index}`,
@@ -597,8 +599,8 @@ export default async function PropertyDetailPage({ params, searchParams }) {
         propertyTypeLabel,
       });
 
-  const amenities = buildAmenities(attrs, property);
-  const savedWhyData = savedMarketingSection(property.why_this_home);
+  const amenities = dynamicDetails.amenities ?? buildAmenities(attrs, property);
+  const savedWhyData = savedMarketingSection(publicPropertyInsight(property, "why_this_home"));
   const lifestylePoints = savedWhyData.present
     ? savedWhyData.value
     : buildLifestylePoints({
@@ -607,7 +609,7 @@ export default async function PropertyDetailPage({ params, searchParams }) {
         propertyTypeLabel,
       });
   const savedInvestmentsData = savedMarketingSection(
-    property.investment_insights,
+    publicPropertyInsight(property, "investment_insights"),
   );
   const investmentPoints = savedInvestmentsData.present
     ? savedInvestmentsData.value
@@ -619,7 +621,7 @@ export default async function PropertyDetailPage({ params, searchParams }) {
   const showInvestment =
     Boolean(locationInfo.full || locationInfo.city) &&
     investmentPoints.length > 0;
-  const savedLocationData = savedMarketingSection(property.location_advantages);
+  const savedLocationData = savedMarketingSection(publicPropertyInsight(property, "location_advantages"));
   const locationAdvantageItems = savedLocationData.present
     ? savedLocationData.value.map((item) => ({
         name: item.name || "",
@@ -689,10 +691,10 @@ export default async function PropertyDetailPage({ params, searchParams }) {
                         <HighlightIcon name={item.icon} />
                       </span>
                       <div>
-                        <strong className={styles.highlightTitle}>
+                        {item.title ? <strong className={styles.highlightTitle}>
                           {item.title}
-                        </strong>
-                        <p className={styles.highlightCopy}>{item.copy}</p>
+                        </strong> : null}
+                        {item.copy ? <p className={styles.highlightCopy}>{item.copy}</p> : null}
                       </div>
                     </li>
                   ))}
@@ -724,6 +726,15 @@ export default async function PropertyDetailPage({ params, searchParams }) {
               referenceId={`#${property.id}`}
               listedAt={formatAddedDate(property.created_at)}
             />
+
+            {dynamicDetails.sections.map(section => (
+              <section key={section.key} className={styles.contentCard} aria-labelledby={`property-${section.key}-heading`}>
+                <h2 id={`property-${section.key}-heading`} className={styles.sectionTitle}>{section.title}</h2>
+                <ul className={styles.nearbyBulletList}>
+                  {section.rows.map(row => <li key={row.label}>{row.label}: {row.value}</li>)}
+                </ul>
+              </section>
+            ))}
 
             {/* 3. Why this home */}
             {lifestylePoints.length > 0 ? (

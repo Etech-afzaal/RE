@@ -192,6 +192,10 @@ export default function EditPropertyPage() {
         inferPropertySubtypeFromText(inferredType, p) ||
         "";
       const propertyData = readPropertyData(p.property_data);
+      const commercialInfo = readPropertyData(propertyData?.commercialInfo);
+      if (commercialInfo && !Object.hasOwn(commercialInfo, "commercialType") && commercialInfo.type != null) {
+        propertyData.commercialInfo = { ...commercialInfo, commercialType: commercialInfo.type };
+      }
       const insights = Object.fromEntries(INSIGHT_FIELDS.map(key => {
         let value = propertyData?.insights?.[key] ?? p[key];
         if (typeof value === "string") {
