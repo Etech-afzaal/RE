@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useId, useRef, useState } from "react";
+import { formatPropertyPriceConversion } from "@/lib/formatPropertyPriceConversion";
 import {
   DEFAULT_PRICE_CURRENCY,
   PRICE_CURRENCY_VALUES,
@@ -26,14 +27,31 @@ export default function PriceCurrencyInput({
   invalid = false,
   placeholder = "Enter price",
   inputMode = "numeric",
-  pattern = "[0-9]*",
+  pattern = "[0-9,]*",
   "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedby,
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
+  const inputRef = useRef(null);
+  const caretRef = useRef(null);
   const listboxId = useId();
   const selected = normalizePriceCurrency(currency);
+  const rawAmount = String(amount ?? "").replace(/,/g, "");
+  const [whole, fraction] = rawAmount.split(".");
+  const displayAmount = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (fraction === undefined ? "" : `.${fraction}`);
+  const conversion = formatPropertyPriceConversion(rawAmount, selected);
+
+  useLayoutEffect(() => {
+    if (caretRef.current == null || !inputRef.current) return;
+    let position = 0, characters = 0;
+    while (position < displayAmount.length && characters < caretRef.current) {
+      if (displayAmount[position] !== ",") characters++;
+      position++;
+    }
+    inputRef.current.setSelectionRange(position, position);
+    caretRef.current = null;
+  });
 
   useEffect(() => {
     if (!open) return undefined;
@@ -63,6 +81,7 @@ export default function PriceCurrencyInput({
   }
 
   return (
+    <>
     <div
       ref={rootRef}
       className={`${ui.priceField} ${invalid ? ui.priceFieldInvalid : ""} ${
@@ -70,15 +89,20 @@ export default function PriceCurrencyInput({
       }`}
     >
       <input
+        ref={inputRef}
         className={ui.priceAmountInput}
         inputMode={inputMode}
         pattern={pattern}
         placeholder={placeholder}
-        value={amount}
+        value={displayAmount}
         disabled={disabled}
         aria-invalid={ariaInvalid ?? invalid}
         aria-describedby={ariaDescribedby}
-        onChange={(event) => onAmountChange?.(event.target.value)}
+        onChange={(event) => {
+          const { value, selectionStart } = event.target;
+          caretRef.current = value.slice(0, selectionStart ?? value.length).replace(/,/g, "").length;
+          onAmountChange?.(value.replace(/,/g, ""));
+        }}
       />
       <div className={ui.priceCurrencyWrap}>
         <button
@@ -124,5 +148,7 @@ export default function PriceCurrencyInput({
         ) : null}
       </div>
     </div>
+    {conversion ? <span className={ui.fieldMessage} style={{ color: "#000" }} aria-live="polite">{conversion}</span> : null}
+    </>
   );
 }

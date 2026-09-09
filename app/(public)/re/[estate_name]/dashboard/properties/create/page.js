@@ -38,6 +38,8 @@ import {
   validatePropertyWizardFields,
 } from "@/lib/validators/propertyValidator";
 import { PROPERTY_KIND_OPTIONS, PROPERTY_KIND_LABELS, propertyKind, propertyWizardSteps, changePropertySelection, buildPropertyData, normalizePropertyData } from "@/lib/propertyData";
+import PlotSizeInput from "@/components/agent-portal/PlotSizeInput";
+import PropertyNumberInput from "@/components/agent-portal/PropertyNumberInput";
 import PropertyDataFields from "@/components/agent-portal/PropertyDataFields";
 import ui from "@/components/agent-portal/portal.module.css";
 import PropertyMarketingSectionsEditor from "@/components/agent-portal/PropertyMarketingSectionsEditor";
@@ -1136,66 +1138,41 @@ export default function CreatePropertyPage() {
 
         {step === 2 ? (
           <>
-            {kind === "plots" ? <label className={ui.field}>
-              <span className={ui.label}>Plot Size Preset</span>
-              <select className={ui.select} value={form.plotSizePreset || "Other"} onChange={e => {
-                const preset = e.target.value;
-                const [size, unit] = preset.split(" ");
-                setForm(previous => ({ ...previous, plotSizePreset: preset, size_value: preset === "Other" ? "" : size, size_unit: preset === "Other" ? "marla" : unit.toLowerCase() }));
-              }}>
-                {["3 Marla", "5 Marla", "7 Marla", "10 Marla", "1 Kanal", "2 Kanal", "Other"].map(value => <option key={value}>{value}</option>)}
-              </select>
-              <FieldMessage />
-            </label> : null}
-            <div className={ui.row2}>
-              <label className={ui.field}>
-                <span className={ui.label}>
-                  Plot Size
-                  <RequiredMark />
-                </span>
-                <input
-                  className={`${ui.input} ${fieldErrors.size_value ? ui.inputInvalid : ""}`}
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  value={form.size_value}
-                  onChange={(e) => update("size_value", e.target.value)}
-                  aria-invalid={Boolean(fieldErrors.size_value)}
-                  aria-describedby="size-error"
-                />
-                <FieldMessage id="size-error" error={fieldErrors.size_value} />
-              </label>
-              <label className={ui.field}>
-                <span className={ui.label}>Unit</span>
-                <select
-                  className={ui.select}
-                  value={form.size_unit}
-                  onChange={(e) => update("size_unit", e.target.value)}
-                >
-                  <option value="marla">Marla</option>
-                  <option value="kanal">Kanal</option>
-                  <option value="sqft">Sqft</option>
-                </select>
-                <FieldMessage />
-              </label>
+            <PropertyDataFields section={["plots", "file"].includes(kind) ? "plotInfo" : "landInfo"} kind={kind} data={form.property_data?.[["plots", "file"].includes(kind) ? "plotInfo" : "landInfo"]} onChange={(key, value) => updateData(["plots", "file"].includes(kind) ? "plotInfo" : "landInfo", key, value)} errors={fieldErrors} leadingField={
+            <div className={ui.field}>
+              <span className={ui.label}>Plot Size<RequiredMark /></span>
+              <PlotSizeInput value={form.size_value} unit={form.size_unit} onChange={value => update("size_value", value)} onUnitChange={value => update("size_unit", value)} invalid={fieldErrors.size_value} describedBy="size-error" />
+              <FieldMessage id="size-error" error={fieldErrors.size_value} />
             </div>
-            <PropertyDataFields section={["plots", "file"].includes(kind) ? "plotInfo" : "landInfo"} kind={kind} data={form.property_data?.[["plots", "file"].includes(kind) ? "plotInfo" : "landInfo"]} onChange={(key, value) => updateData(["plots", "file"].includes(kind) ? "plotInfo" : "landInfo", key, value)} errors={fieldErrors} />
+            } trailingField={["plots", "file"].includes(kind) ? <div className={ui.field}>
+              <span className={ui.label}>Price<RequiredMark /></span>
+              <PriceCurrencyInput
+                amount={form.price}
+                currency={form.price_currency}
+                onAmountChange={value => update("price", value)}
+                onCurrencyChange={value => update("price_currency", value)}
+                invalid={Boolean(fieldErrors.price)}
+                aria-invalid={Boolean(fieldErrors.price)}
+                aria-describedby="price-error"
+              />
+              <FieldMessage id="price-error" error={fieldErrors.price} />
+            </div> : null} />
           </>
         ) : null}
 
-        {step === PROPERTY_WIZARD_STEPS.DETAILS ? (
+        {step === PROPERTY_WIZARD_STEPS.DETAILS && !["plots", "file"].includes(kind) ? (
           <>
-            {!["plots", "file"].includes(kind) ? <>
-            <PropertyDataFields section="propertyDetails" kind={kind} data={form.property_data?.propertyDetails} onChange={(key, value) => updateData("propertyDetails", key, value)} errors={fieldErrors} />
-            {kind === "commercial" ? <PropertyDataFields section="commercialInfo" kind={kind} data={form.property_data?.commercialInfo} onChange={(key, value) => updateData("commercialInfo", key, value)} errors={fieldErrors} /> : null}
             <div className={ui.row2}>
+            {!["plots", "file"].includes(kind) ? <>
+              <PropertyDataFields section="propertyDetails" kind={kind} data={form.property_data?.propertyDetails} onChange={(key, value) => updateData("propertyDetails", key, value)} errors={fieldErrors} fieldKeys={["coveredArea","floors"]} unwrapped />
               <label className={ui.field}>
                 <span className={ui.label}>Bedrooms</span>
-                <input
+                <PropertyNumberInput step={1} max={99}
                   className={`${ui.input} ${fieldErrors.bedrooms ? ui.inputInvalid : ""}`}
                   inputMode="numeric"
                   pattern="[0-9]*"
                   value={form.bedrooms}
-                  onChange={(e) => update("bedrooms", e.target.value)}
+                  onChange={value => update("bedrooms", value)}
                   aria-invalid={Boolean(fieldErrors.bedrooms)}
                   aria-describedby="bedrooms-error"
                 />
@@ -1206,12 +1183,12 @@ export default function CreatePropertyPage() {
               </label>
               <label className={ui.field}>
                 <span className={ui.label}>Bathrooms</span>
-                <input
+                <PropertyNumberInput step={1} max={99}
                   className={`${ui.input} ${fieldErrors.bathrooms ? ui.inputInvalid : ""}`}
                   inputMode="numeric"
                   pattern="[0-9]*"
                   value={form.bathrooms}
-                  onChange={(e) => update("bathrooms", e.target.value)}
+                  onChange={value => update("bathrooms", value)}
                   aria-invalid={Boolean(fieldErrors.bathrooms)}
                   aria-describedby="bathrooms-error"
                 />
@@ -1220,36 +1197,17 @@ export default function CreatePropertyPage() {
                   error={fieldErrors.bathrooms}
                 />
               </label>
-            </div>
-              <div className={`${ui.field} ${ui.parkingField}`}>
-                {/* Spacer matches Price label row so the toggle lines up with the input. */}
-                <span className={ui.parkingLabelSpacer} aria-hidden="true" />
-                <div className={ui.parkingInline}>
-                  <span className={ui.label}>Parking</span>
-                  <div className={ui.parkingControl}>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={form.parking === "Yes"}
-                      aria-label="Parking available"
-                      className={`${ui.parkingSwitch} ${form.parking === "Yes" ? ui.parkingSwitchOn : ""}`}
-                      onClick={() =>
-                        update(
-                          "parking",
-                          form.parking === "Yes" ? "No" : "Yes",
-                        )
-                      }
-                    >
-                      <span className={ui.parkingThumb} aria-hidden="true" />
-                    </button>
-                    <div className={ui.parkingScale} aria-hidden="true">
-                      <span>No</span>
-                      <span>Yes</span>
-                    </div>
-                  </div>
-                </div>
+
+              <PropertyDataFields section="propertyDetails" kind={kind} data={form.property_data?.propertyDetails} onChange={(key, value) => updateData("propertyDetails", key, value)} errors={fieldErrors} fieldKeys={["kitchens"]} unwrapped />
+              <label className={ui.field}>
+                <span className={ui.label}>Parking</span>
+                <select className={ui.select} value={form.parking === "No" ? "" : form.parking} onChange={e => update("parking", e.target.value || "No")}>
+                  <option value="">Select parking</option>
+                  {["1 car", "2 cars", "3 cars", "4 cars+"].map(value => <option key={value} value={value}>{value}</option>)}
+                </select>
                 <FieldMessage />
-              </div>
+              </label>
+              <PropertyDataFields section="propertyDetails" kind={kind} data={form.property_data?.propertyDetails} onChange={(key, value) => updateData("propertyDetails", key, value)} errors={fieldErrors} fieldKeys={["amenities"]} unwrapped />
             </> : null}
               <div className={ui.field}>
                 <span className={ui.label}>
@@ -1267,6 +1225,9 @@ export default function CreatePropertyPage() {
                 />
                 <FieldMessage id="price-error" error={fieldErrors.price} />
               </div>
+
+            </div>
+            {kind === "commercial" ? <PropertyDataFields section="commercialInfo" kind={kind} data={form.property_data?.commercialInfo} onChange={(key, value) => updateData("commercialInfo", key, value)} errors={fieldErrors} /> : null}
           </>
         ) : null}
 
