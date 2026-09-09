@@ -426,6 +426,7 @@ export default function CreatePropertyPage() {
   }
 
   function propertyFieldToWizardStep(field) {
+    if (field?.startsWith("commercialInfo.") || (kind === "plots" && field === "plotInfo.plotType")) return 0;
     if (["title", "propertyType", "propertySubtype", "description"].includes(field)) return 0;
     if (["city", "area", "phase", "address"].includes(field)) return 1;
     if (field === "size_value" || field === "size_unit" || field?.startsWith("landInfo.") || field?.startsWith("plotInfo.")) return 2;
@@ -1055,6 +1056,8 @@ export default function CreatePropertyPage() {
                 error={fieldErrors.propertySubtype}
               />
             </label>
+            {kind === "commercial" ? <PropertyDataFields section="commercialInfo" kind={kind} data={form.property_data?.commercialInfo} onChange={(key, value) => updateData("commercialInfo", key, value)} errors={fieldErrors} /> : null}
+            {kind === "plots" ? <PropertyDataFields section="plotInfo" kind={kind} fieldKeys={["plotType"]} data={{ ...form.property_data?.plotInfo, plotType: form.propertySubtype === "commercial_plot" ? "Commercial" : "Residential" }} onChange={(key, value) => updateData("plotInfo", key, value)} errors={fieldErrors} /> : null}
             <label className={ui.field}>
               <span className={ui.label}>Description</span>
               <textarea
@@ -1138,7 +1141,7 @@ export default function CreatePropertyPage() {
 
         {step === 2 ? (
           <>
-            <PropertyDataFields section={["plots", "file"].includes(kind) ? "plotInfo" : "landInfo"} kind={kind} data={form.property_data?.[["plots", "file"].includes(kind) ? "plotInfo" : "landInfo"]} onChange={(key, value) => updateData(["plots", "file"].includes(kind) ? "plotInfo" : "landInfo", key, value)} errors={fieldErrors} leadingField={
+            <PropertyDataFields section={["plots", "file"].includes(kind) ? "plotInfo" : "landInfo"} kind={kind} data={form.property_data?.[["plots", "file"].includes(kind) ? "plotInfo" : "landInfo"]} onChange={(key, value) => updateData(["plots", "file"].includes(kind) ? "plotInfo" : "landInfo", key, value)} errors={fieldErrors} excludedKeys={kind === "plots" ? ["plotType"] : []} leadingField={
             <div className={ui.field}>
               <span className={ui.label}>Plot Size<RequiredMark /></span>
               <PlotSizeInput value={form.size_value} unit={form.size_unit} onChange={value => update("size_value", value)} onUnitChange={value => update("size_unit", value)} invalid={fieldErrors.size_value} describedBy="size-error" />
@@ -1227,7 +1230,7 @@ export default function CreatePropertyPage() {
               </div>
 
             </div>
-            {kind === "commercial" ? <PropertyDataFields section="commercialInfo" kind={kind} data={form.property_data?.commercialInfo} onChange={(key, value) => updateData("commercialInfo", key, value)} errors={fieldErrors} /> : null}
+
           </>
         ) : null}
 
