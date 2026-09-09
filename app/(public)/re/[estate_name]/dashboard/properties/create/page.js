@@ -1341,7 +1341,17 @@ export default function CreatePropertyPage() {
               </>
             ) : null}
 
-            <div className={ui.field}>
+            <div
+              className={ui.field}
+              onDragOver={(event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "copy";
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                addFiles(event.dataTransfer.files);
+              }}
+            >
               <div className={ui.filePicker}>
                 <input
                   ref={fileInputRef}
@@ -1369,7 +1379,7 @@ export default function CreatePropertyPage() {
                 </span>
               </div>
               <p className={ui.muted}>
-                Upload JPG, PNG, WEBP images. Maximum {MAX_PROPERTY_IMAGES}{" "}
+                Drag and drop images here or choose images above. Upload JPG, PNG, WEBP images. Maximum {MAX_PROPERTY_IMAGES}{" "}
                 images allowed.
               </p>
             </div>
