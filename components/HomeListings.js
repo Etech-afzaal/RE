@@ -24,6 +24,7 @@ import {
 } from "@/lib/agentPublicListingSections";
 import { filterListingGroupsByPreferences } from "@/lib/websiteListingPreferences";
 import { formatAddedDate } from "@/lib/agentPropertyListingHelpers";
+import { isFileProperty, publicListingSubtype } from "@/lib/publicPropertyData";
 import styles from "./HomeListings.module.css";
 
 const DESKTOP_PAGE_SIZE = 3;
@@ -276,6 +277,13 @@ function parsePlotFeatures(property) {
   return labels.slice(0, 2);
 }
 
+function FileIcon() {
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+    <path d="M14 2v6h6M8 13h8M8 17h5" />
+  </svg>;
+}
+
 function PropertyCard({ property }) {
   const sizeLabel = formatSizeLabel(property.size_value, property.size_unit);
   const location = formatPropertyLocation(property) || "";
@@ -341,7 +349,7 @@ function PropertyCard({ property }) {
                 <>
                   {subtypeLabel ? (
                     <span className={styles.attr}>
-                      <FeatureIcon />
+                      {isFileProperty(property) ? <FileIcon /> : <FeatureIcon />}
                       {subtypeLabel}
                     </span>
                   ) : null}
@@ -377,7 +385,7 @@ function PropertyCard({ property }) {
                   ) : null}
                   {subtypeLabel ? (
                     <span className={styles.attr}>
-                      <FeatureIcon />
+                      {isFileProperty(property) ? <FileIcon /> : <FeatureIcon />}
                       {subtypeLabel}
                     </span>
                   ) : null}
@@ -835,8 +843,8 @@ export default function HomeListings({
         title: listingSubsectionTitle(subtype),
         properties: filtered.filter(
           (property) =>
-            getCategory(property) === group.type &&
-            getSubtype(property) === subtype,
+            (isFileProperty(property) ? "plot" : getCategory(property)) === group.type &&
+            (publicListingSubtype(property) || getSubtype(property)) === subtype,
         ),
       })),
     }));
