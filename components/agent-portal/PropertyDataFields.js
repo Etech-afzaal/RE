@@ -6,8 +6,8 @@ import PropertyNumberInput from "./PropertyNumberInput";
 import PropertyAmenitiesInput from "./PropertyAmenitiesInput";
 import { Fragment } from "react";
 
-export default function PropertyDataFields({ section, kind, data, onChange, errors = {}, leadingField, trailingField, fieldKeys, unwrapped = false }) {
-  const fields = fieldsForSection(section, kind).filter(field => !fieldKeys || fieldKeys.includes(field.key));
+export default function PropertyDataFields({ section, kind, data, onChange, errors = {}, leadingField, trailingField, fieldKeys, excludedKeys = [], unwrapped = false }) {
+  const fields = fieldsForSection(section, kind).filter(field => (!fieldKeys || fieldKeys.includes(field.key)) && !excludedKeys.includes(field.key));
   const Wrapper = unwrapped ? Fragment : "div";
   const orderedFields = leadingField && section === "landInfo"
     ? ["plotPosition", "front", "dimension", "depth", "roadWidth"].map(key => fields.find(field => field.key === key))
