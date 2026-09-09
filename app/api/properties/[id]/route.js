@@ -20,7 +20,7 @@ import {
   PROPERTY_STATUS,
 } from "@/lib/status";
 import { validatePropertyDraftInput } from "@/lib/validators/propertyValidator";
-import { normalizeMarketingSections } from "@/lib/propertyMarketingSections";
+import { preparePropertyDataSave, readPropertyData, mergeEditedPropertyData } from "@/lib/propertyData";
 import { rm } from "fs/promises";
 import path from "path";
 
@@ -110,17 +110,6 @@ export async function PUT(req, { params }) {
   if (!validated.ok) {
     return NextResponse.json({ error: validated.error }, { status: 400 });
   }
-  const marketing = normalizeMarketingSections(body);
-  if (!marketing.ok) {
-    return NextResponse.json({ error: marketing.error }, { status: 400 });
-  }
-  const {
-    property_highlights,
-    why_this_home,
-    location_advantages,
-    investment_insights,
-  } = marketing.data;
-
   const {
     title,
     description,
@@ -139,7 +128,7 @@ export async function PUT(req, { params }) {
 
   const agentId = agentIdFrom(session);
   const existing = await query(
-    "SELECT id, status, approved_at, title, price_currency, property_type, property_subtype FROM properties WHERE id = ? AND agent_id = ?",
+    "SELECT id, status, approved_at, title, price_currency, property_type, property_subtype, property_data FROM properties WHERE id = ? AND agent_id = ?",
     [propertyId, agentId],
   );
   if (existing.length === 0) {
@@ -200,12 +189,29 @@ export async function PUT(req, { params }) {
     ? property_subtype || validated.data.propertySubtype || null
     : current.property_subtype || null;
 
-  const marketingSQL = `, property_highlights = ?, why_this_home = ?, location_advantages = ?, investment_insights = ?`;
+  const classificationChanged =
+    resolvedType !== current.property_type || resolvedSubtype !== current.property_subtype;
+  const existingData = readPropertyData(current.property_data);
+  const propertyData = preparePropertyDataSave(
+    body,
+    resolvedType,
+    resolvedSubtype,
+    classificationChanged && existingData
+      ? { insights: existingData.insights }
+      : existingData,
+  );
+  if (!propertyData.ok) {
+    return NextResponse.json({ error: propertyData.error, field: propertyData.field }, { status: 400 });
+  }
+  propertyData.data = mergeEditedPropertyData(existingData, propertyData.data, resolvedType, resolvedSubtype, classificationChanged);
+  const { property_highlights, why_this_home, location_advantages, investment_insights } = propertyData.marketing;
+  const marketingSQL = `, property_highlights = ?, why_this_home = ?, location_advantages = ?, investment_insights = ?, property_data = ?`;
   const marketingParams = [
     property_highlights ? JSON.stringify(property_highlights) : null,
     why_this_home ? JSON.stringify(why_this_home) : null,
     location_advantages ? JSON.stringify(location_advantages) : null,
     investment_insights ? JSON.stringify(investment_insights) : null,
+    propertyData.data == null ? null : JSON.stringify(propertyData.data),
   ];
 
   if (locationFields.hasStructured) {

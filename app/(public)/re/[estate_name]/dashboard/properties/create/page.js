@@ -29,21 +29,16 @@ import {
 } from "@/lib/videoUpload";
 import {
   DEFAULT_PRICE_CURRENCY,
-  PROPERTY_WIZARD_STEPS,
   WIZARD_DIGIT_LIMITS,
   WIZARD_TEXT_LIMITS,
   getPropertyWizardFieldError,
-  propertyFieldToWizardStep,
   sanitizeWizardCityInput,
   sanitizeWizardDigitInput,
   sanitizeWizardTextInput,
   validatePropertyWizardFields,
-  validatePropertyWizardStep,
 } from "@/lib/validators/propertyValidator";
-import {
-  isValidPropertyTypeSubtype,
-  subtypesForType,
-} from "@/lib/propertyTaxonomy";
+import { PROPERTY_KIND_OPTIONS, PROPERTY_KIND_LABELS, propertyKind, propertyWizardSteps, changePropertySelection, buildPropertyData, normalizePropertyData } from "@/lib/propertyData";
+import PropertyDataFields from "@/components/agent-portal/PropertyDataFields";
 import ui from "@/components/agent-portal/portal.module.css";
 import PropertyMarketingSectionsEditor from "@/components/agent-portal/PropertyMarketingSectionsEditor";
 import { persistDraftFiles, loadDraftFiles, clearDraftFiles } from "@/lib/propertyDraftFiles";
@@ -66,15 +61,6 @@ function clearDraft() {
     window.sessionStorage.removeItem(DRAFT_STORAGE_KEY);
   } catch {}
 }
-
-const STEPS = [
-  "Basic Information",
-  "Location",
-  "Property Details",
-  "Images",
-  "Video",
-  "Actions",
-];
 
 function RequiredMark() {
   return (
@@ -166,7 +152,13 @@ export default function CreatePropertyPage() {
   const username = decodeURIComponent(params.estate_name || "");
   const base = `/re/${encodeURIComponent(username)}/dashboard`;
 
-  const [step, setStep] = useState(() => readDraft()?.step ?? 0);
+  const [step, setStep] = useState(() => {
+    const draft = readDraft();
+    if (!draft) return 0;
+    if (Object.hasOwn(draft.form || {}, "propertyKind")) return draft.step ?? 0;
+    const steps = propertyWizardSteps(propertyKind(draft.form?.propertyType, draft.form?.propertySubtype));
+    return [0, 1, 2, steps.IMAGES, steps.VIDEO, steps.ACTIONS][draft.step] ?? 0;
+  });
   const [error, setError] = useState("");
   const [errorDetails, setErrorDetails] = useState([]);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -190,7 +182,7 @@ export default function CreatePropertyPage() {
   const [watermarkText, setWatermarkText] = useState("");
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
-  const [form, setForm] = useState(() => readDraft()?.form || {
+  const [form, setForm] = useState(() => ({
     title: "",
     propertyType: "sale",
     propertySubtype: "",
@@ -210,7 +202,17 @@ export default function CreatePropertyPage() {
     why_this_home: [],
     location_advantages: [],
     investment_insights: [],
-  });
+    ...readDraft()?.form,
+    propertyKind: propertyKind(readDraft()?.form?.propertyType, readDraft()?.form?.propertySubtype),
+  }));
+  const kind = propertyKind(form.propertyType, form.propertySubtype);
+  const listingType = form.propertyType === "plot" ? "sale" : form.propertyType;
+  const PROPERTY_WIZARD_STEPS = propertyWizardSteps(kind);
+  const STEPS = PROPERTY_WIZARD_STEPS.labels;
+
+  useEffect(() => {
+    setStep(current => Math.min(current, PROPERTY_WIZARD_STEPS.ACTIONS));
+  }, [PROPERTY_WIZARD_STEPS.ACTIONS]);
 
   useEffect(() => {
     return () => {
@@ -373,47 +375,9 @@ export default function CreatePropertyPage() {
     }
 
     const nextForm = { ...form, [field]: value };
-
-    // Reset subtype when it is no longer valid for the new top-level type.
-    if (field === "propertyType") {
-      if (!isValidPropertyTypeSubtype(value, form.propertySubtype)) {
-        nextForm.propertySubtype = "";
-      }
-    }
+    if (field === "size_value" || field === "size_unit") nextForm.plotSizePreset = "Other";
 
     setForm(nextForm);
-
-    // Property type changes only need to re-check type + subtype field errors.
-    if (field === "propertyType") {
-      setFieldErrors((prev) => {
-        const next = { ...prev };
-        const typeError = getPropertyWizardFieldError("propertyType", nextForm);
-        if (typeError) next.propertyType = typeError;
-        else delete next.propertyType;
-        const subtypeError = getPropertyWizardFieldError(
-          "propertySubtype",
-          nextForm,
-        );
-        if (subtypeError) next.propertySubtype = subtypeError;
-        else delete next.propertySubtype;
-        return next;
-      });
-      return;
-    }
-
-    if (field === "propertySubtype") {
-      setFieldErrors((prev) => {
-        const next = { ...prev };
-        const subtypeError = getPropertyWizardFieldError(
-          "propertySubtype",
-          nextForm,
-        );
-        if (subtypeError) next.propertySubtype = subtypeError;
-        else delete next.propertySubtype;
-        return next;
-      });
-      return;
-    }
 
     setLiveFieldError(field, nextForm, limitError);
   }
@@ -444,18 +408,43 @@ export default function CreatePropertyPage() {
     return { ok: true, fieldErrors: {} };
   }
 
+  function updateSelection(listing, selectedKind) {
+    setForm(changePropertySelection(form, listing, selectedKind));
+    clearStepFeedback();
+    setStep(0);
+  }
+
+  function updateData(section, key, value) {
+    setForm(previous => ({
+      ...previous,
+      ...(section === "plotInfo" && key === "plotType" && kind === "plots" ? { propertySubtype: value === "Commercial" ? "commercial_plot" : "residential_plot" } : {}),
+      property_data: { ...previous.property_data, [section]: { ...previous.property_data?.[section], [key]: value } },
+    }));
+    setFieldErrors(previous => { const next = { ...previous }; delete next[section + "." + key]; return next; });
+  }
+
+  function propertyFieldToWizardStep(field) {
+    if (["title", "propertyType", "propertySubtype", "description"].includes(field)) return 0;
+    if (["city", "area", "phase", "address"].includes(field)) return 1;
+    if (field === "size_value" || field === "size_unit" || field?.startsWith("landInfo.") || field?.startsWith("plotInfo.")) return 2;
+    if (["bedrooms", "bathrooms", "parking", "price", "price_currency"].includes(field) || field?.startsWith("propertyDetails.") || field?.startsWith("commercialInfo.")) return PROPERTY_WIZARD_STEPS.DETAILS;
+    if (field === "images") return PROPERTY_WIZARD_STEPS.IMAGES;
+    if (field === "videos") return PROPERTY_WIZARD_STEPS.VIDEO;
+    return PROPERTY_WIZARD_STEPS.ACTIONS;
+  }
+
   function validateWizardStep(stepIndex) {
-    if (
-      stepIndex === PROPERTY_WIZARD_STEPS.IMAGES ||
-      stepIndex === PROPERTY_WIZARD_STEPS.VIDEO
-    ) {
-      return validateMediaStep(stepIndex);
-    }
-    return validatePropertyWizardStep(stepIndex, form);
+    if (stepIndex === PROPERTY_WIZARD_STEPS.IMAGES || stepIndex === PROPERTY_WIZARD_STEPS.VIDEO) return validateMediaStep(stepIndex);
+    const fieldErrors = { ...validatePropertyWizardFields(form).fieldErrors };
+    const extra = normalizePropertyData(buildPropertyData(form), form.propertyType, form.propertySubtype);
+    if (!extra.ok) fieldErrors[extra.field] = extra.error;
+    const errors = Object.fromEntries(Object.entries(fieldErrors).filter(([field]) => propertyFieldToWizardStep(field) === stepIndex));
+    const field = Object.keys(errors)[0];
+    return { ok: !field, fieldErrors: errors, field, error: errors[field] };
   }
 
   function isStepComplete(stepIndex) {
-    // Actions has no required fields of its own.
+    // The submission tab is never marked complete before submitting.
     if (stepIndex === PROPERTY_WIZARD_STEPS.ACTIONS) return false;
     return validateWizardStep(stepIndex).ok;
   }
@@ -785,6 +774,12 @@ export default function CreatePropertyPage() {
       }
     }
 
+    const propertyData = normalizePropertyData(buildPropertyData(form), form.propertyType, form.propertySubtype);
+    if (!propertyData.ok) {
+      applyStepValidationFailure({ ...propertyData, fieldErrors: { [propertyData.field]: propertyData.error } }, propertyFieldToWizardStep(propertyData.field));
+      if (submit) showSubmitError(propertyData.error);
+      return;
+    }
     setBusyAction(submit ? "submit" : "draft");
     try {
       let propertyId = createdPropertyId;
@@ -811,6 +806,7 @@ export default function CreatePropertyPage() {
             why_this_home: form.why_this_home,
             location_advantages: form.location_advantages,
             investment_insights: form.investment_insights,
+            property_data: propertyData.data,
           }),
         });
         const createData = await createRes.json().catch(() => ({}));
@@ -844,6 +840,7 @@ export default function CreatePropertyPage() {
             why_this_home: form.why_this_home,
             location_advantages: form.location_advantages,
             investment_insights: form.investment_insights,
+            property_data: propertyData.data,
           }),
         });
         const updateData = await updateRes.json().catch(() => ({}));
@@ -1014,19 +1011,18 @@ export default function CreatePropertyPage() {
             </label>
             <label className={ui.field}>
               <span className={ui.label}>
-                Property type
+                Listing Type
                 <RequiredMark />
               </span>
               <select
                 className={`${ui.select} ${fieldErrors.propertyType ? ui.inputInvalid : ""}`}
-                value={form.propertyType}
-                onChange={(e) => update("propertyType", e.target.value)}
+                value={listingType}
+                onChange={(e) => updateSelection(e.target.value, kind)}
                 aria-invalid={Boolean(fieldErrors.propertyType)}
                 aria-describedby="propertyType-error"
               >
-                <option value="sale">Sale</option>
-                <option value="rent">Rent</option>
-                <option value="plot">Plot</option>
+                <option value="sale">For Sale</option>
+                <option value="rent">For Rent</option>
               </select>
               <FieldMessage
                 id="propertyType-error"
@@ -1035,20 +1031,20 @@ export default function CreatePropertyPage() {
             </label>
             <label className={ui.field}>
               <span className={ui.label}>
-                Property subtype
+                Property Type
                 <RequiredMark />
               </span>
               <select
                 className={`${ui.select} ${fieldErrors.propertySubtype ? ui.inputInvalid : ""}`}
-                value={form.propertySubtype}
-                onChange={(e) => update("propertySubtype", e.target.value)}
+                value={kind}
+                onChange={(e) => updateSelection(listingType, e.target.value)}
                 aria-invalid={Boolean(fieldErrors.propertySubtype)}
                 aria-describedby="propertySubtype-error"
               >
-                <option value="">Select subtype</option>
-                {subtypesForType(form.propertyType).map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
+                <option value="">Select property type</option>
+                {PROPERTY_KIND_OPTIONS[listingType].map((option) => (
+                  <option key={option} value={option}>
+                    {PROPERTY_KIND_LABELS[option]}
                   </option>
                 ))}
               </select>
@@ -1095,7 +1091,7 @@ export default function CreatePropertyPage() {
               <FieldMessage id="city-error" error={fieldErrors.city} />
             </label>
             <label className={ui.field}>
-              <span className={ui.label}>Area</span>
+              <span className={ui.label}>Area / Neighbourhood<RequiredMark /></span>
               <input
                 className={`${ui.input} ${fieldErrors.area ? ui.inputInvalid : ""}`}
                 value={form.area}
@@ -1122,8 +1118,7 @@ export default function CreatePropertyPage() {
             </label>
             <label className={ui.field}>
               <span className={ui.label}>
-                Address
-                <RequiredMark />
+                Street Address
               </span>
               <input
                 className={`${ui.input} ${fieldErrors.address ? ui.inputInvalid : ""}`}
@@ -1141,10 +1136,21 @@ export default function CreatePropertyPage() {
 
         {step === 2 ? (
           <>
+            {kind === "plots" ? <label className={ui.field}>
+              <span className={ui.label}>Plot Size Preset</span>
+              <select className={ui.select} value={form.plotSizePreset || "Other"} onChange={e => {
+                const preset = e.target.value;
+                const [size, unit] = preset.split(" ");
+                setForm(previous => ({ ...previous, plotSizePreset: preset, size_value: preset === "Other" ? "" : size, size_unit: preset === "Other" ? "marla" : unit.toLowerCase() }));
+              }}>
+                {["3 Marla", "5 Marla", "7 Marla", "10 Marla", "1 Kanal", "2 Kanal", "Other"].map(value => <option key={value}>{value}</option>)}
+              </select>
+              <FieldMessage />
+            </label> : null}
             <div className={ui.row2}>
               <label className={ui.field}>
                 <span className={ui.label}>
-                  Size
+                  Plot Size
                   <RequiredMark />
                 </span>
                 <input
@@ -1172,6 +1178,15 @@ export default function CreatePropertyPage() {
                 <FieldMessage />
               </label>
             </div>
+            <PropertyDataFields section={["plots", "file"].includes(kind) ? "plotInfo" : "landInfo"} kind={kind} data={form.property_data?.[["plots", "file"].includes(kind) ? "plotInfo" : "landInfo"]} onChange={(key, value) => updateData(["plots", "file"].includes(kind) ? "plotInfo" : "landInfo", key, value)} errors={fieldErrors} />
+          </>
+        ) : null}
+
+        {step === PROPERTY_WIZARD_STEPS.DETAILS ? (
+          <>
+            {!["plots", "file"].includes(kind) ? <>
+            <PropertyDataFields section="propertyDetails" kind={kind} data={form.property_data?.propertyDetails} onChange={(key, value) => updateData("propertyDetails", key, value)} errors={fieldErrors} />
+            {kind === "commercial" ? <PropertyDataFields section="commercialInfo" kind={kind} data={form.property_data?.commercialInfo} onChange={(key, value) => updateData("commercialInfo", key, value)} errors={fieldErrors} /> : null}
             <div className={ui.row2}>
               <label className={ui.field}>
                 <span className={ui.label}>Bedrooms</span>
@@ -1206,7 +1221,6 @@ export default function CreatePropertyPage() {
                 />
               </label>
             </div>
-            <div className={ui.row2}>
               <div className={`${ui.field} ${ui.parkingField}`}>
                 {/* Spacer matches Price label row so the toggle lines up with the input. */}
                 <span className={ui.parkingLabelSpacer} aria-hidden="true" />
@@ -1236,6 +1250,7 @@ export default function CreatePropertyPage() {
                 </div>
                 <FieldMessage />
               </div>
+            </> : null}
               <div className={ui.field}>
                 <span className={ui.label}>
                   Price
@@ -1252,11 +1267,10 @@ export default function CreatePropertyPage() {
                 />
                 <FieldMessage id="price-error" error={fieldErrors.price} />
               </div>
-            </div>
           </>
         ) : null}
 
-        {step === 3 ? (
+        {step === PROPERTY_WIZARD_STEPS.IMAGES ? (
           <>
             <span className={ui.label}>
               Property Images
@@ -1410,7 +1424,7 @@ export default function CreatePropertyPage() {
           </>
         ) : null}
 
-        {step === 4 ? (
+        {step === PROPERTY_WIZARD_STEPS.VIDEO ? (
           <>
             <span className={ui.label}>Property Videos (Optional)</span>
             <FieldMessage id="videos-error" error={fieldErrors.videos} />
@@ -1544,12 +1558,12 @@ export default function CreatePropertyPage() {
           </>
         ) : null}
 
-        {step === 5 ? (
+        {step === PROPERTY_WIZARD_STEPS.ACTIONS ? (
           <>
             <p className={ui.muted} style={{ marginBottom: "15px" }}>
               Save as draft to continue later, or submit for admin approval.
               Drafts never appear on your public website. Submitting needs a
-              title, property type, city, address, size, price, and at least
+              title, listing type, property type, city, area, size, price, and at least
               one image.
             </p>
             <PropertyMarketingSectionsEditor form={form} setForm={setForm} />
@@ -1574,7 +1588,7 @@ export default function CreatePropertyPage() {
           </>
         ) : null}
 
-        {step < 5 ? (
+        {step < PROPERTY_WIZARD_STEPS.ACTIONS ? (
           <div className={ui.formActions}>
             {step > 0 ? (
               <button
