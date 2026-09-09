@@ -38,7 +38,8 @@
     "migrate:website-listing-preferences": "node scripts/migrate-website-listing-preferences.js",
     "migrate:subagents-marketing-links": "node scripts/migrate-subagents-marketing-links.js",
     "migrate:subagent-contact-fields": "node scripts/migrate-subagent-contact-fields.js",
-    "migrate:agent-own-marketing-links": "node scripts/migrate-agent-own-marketing-links.js"
+    "migrate:agent-own-marketing-links": "node scripts/migrate-agent-own-marketing-links.js",
+    "migrate:property-data": "node scripts/migrate-property-data.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

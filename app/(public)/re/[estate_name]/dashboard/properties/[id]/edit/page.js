@@ -34,9 +34,13 @@ import {
 import {
   inferPropertySubtypeFromText,
   inferPropertyTypeFromText,
-  isValidPropertyTypeSubtype,
-  subtypesForType,
 } from "@/lib/propertyTaxonomy";
+import {
+  PROPERTY_KIND_OPTIONS, PROPERTY_KIND_LABELS, INSIGHT_FIELDS,
+  propertyKind, readPropertyData, changePropertySelection,
+  buildPropertyData, normalizePropertyData,
+} from "@/lib/propertyData";
+import PropertyDataFields from "@/components/agent-portal/PropertyDataFields";
 import ui from "@/components/agent-portal/portal.module.css";
 import PropertyMarketingSectionsEditor from "@/components/agent-portal/PropertyMarketingSectionsEditor";
 
@@ -106,6 +110,8 @@ export default function EditPropertyPage() {
     why_this_home: [],
     location_advantages: [],
     investment_insights: [],
+    property_data: null,
+    propertyDataDirty: false,
   });
   const [rejection, setRejection] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -185,6 +191,14 @@ export default function EditPropertyPage() {
         p.property_subtype ||
         inferPropertySubtypeFromText(inferredType, p) ||
         "";
+      const propertyData = readPropertyData(p.property_data);
+      const insights = Object.fromEntries(INSIGHT_FIELDS.map(key => {
+        let value = propertyData?.insights?.[key] ?? p[key];
+        if (typeof value === "string") {
+          try { value = JSON.parse(value); } catch { value = []; }
+        }
+        return [key, Array.isArray(value) ? value : []];
+      }));
       setForm({
         title: p.title || "",
         propertyType: inferredType,
@@ -199,16 +213,12 @@ export default function EditPropertyPage() {
         phase,
         address,
         status: p.status || "draft",
-        property_highlights: Array.isArray(p.property_highlights)
-          ? p.property_highlights
-          : [],
-        why_this_home: Array.isArray(p.why_this_home) ? p.why_this_home : [],
-        location_advantages: Array.isArray(p.location_advantages)
-          ? p.location_advantages
-          : [],
-        investment_insights: Array.isArray(p.investment_insights)
-          ? p.investment_insights
-          : [],
+        ...insights,
+        property_data: propertyData,
+        propertyDataDirty: false,
+        bedrooms: propertyData?.propertyDetails?.bedrooms ?? "",
+        bathrooms: propertyData?.propertyDetails?.bathrooms ?? "",
+        parking: propertyData?.propertyDetails?.parking ?? "",
       });
       setRejection(
         p.status === "rejected"
@@ -480,6 +490,30 @@ export default function EditPropertyPage() {
     });
   }
 
+  const kind = propertyKind(form.propertyType, form.propertySubtype);
+  const listingType = form.propertyType === "plot" ? "sale" : form.propertyType;
+
+  function updateSelection(listing, selectedKind) {
+    setForm(previous => ({
+      ...changePropertySelection(previous, listing, selectedKind),
+      size_value: previous.size_value,
+      size_unit: previous.size_unit,
+      propertyDataDirty: true,
+    }));
+    setFieldErrors({});
+  }
+
+  function updateData(section, key, value) {
+    setForm(previous => ({
+      ...previous,
+      propertyDataDirty: true,
+      ...(section === "propertyDetails" && ["bedrooms", "bathrooms", "parking"].includes(key) ? { [key]: value } : {}),
+      ...(section === "plotInfo" && key === "plotType" && kind === "plots" ? { propertySubtype: value === "Commercial" ? "commercial_plot" : "residential_plot" } : {}),
+      property_data: { ...previous.property_data, [section]: { ...readPropertyData(previous.property_data?.[section]), [key]: value } },
+    }));
+    clearFieldError(`${section}.${key}`);
+  }
+
   async function handleSave({ submit = false } = {}) {
     setSaving(true);
     setError("");
@@ -498,6 +532,23 @@ export default function EditPropertyPage() {
         setFieldErrors({ [validated.field]: validated.error });
         focusField(validated.field);
       }
+      setSaving(false);
+      return;
+    }
+
+    const editedData = form.property_data == null && !form.propertyDataDirty ? null : buildPropertyData(form);
+    if (editedData && form.propertySubtype === "shop") {
+      editedData.commercialInfo = { commercialType: "Shop", ...editedData.commercialInfo };
+    }
+    const propertyData = normalizePropertyData(
+      editedData,
+      form.propertyType,
+      form.propertySubtype,
+    );
+    if (!propertyData.ok) {
+      setError(propertyData.error);
+      setFieldErrors({ [propertyData.field]: propertyData.error });
+      focusField("property_data");
       setSaving(false);
       return;
     }
@@ -537,6 +588,7 @@ export default function EditPropertyPage() {
         why_this_home: form.why_this_home,
         location_advantages: form.location_advantages,
         investment_insights: form.investment_insights,
+        property_data: propertyData.data,
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -762,49 +814,36 @@ export default function EditPropertyPage() {
               ) : null}
             </label>
             <label id="field-propertyType" className={ui.field}>
-              <span className={ui.label}>Property type</span>
+              <span className={ui.label}>Listing Type</span>
               <select
                 className={`${ui.select} ${fieldErrors.propertyType ? ui.inputInvalid : ""}`}
-                value={form.propertyType}
+                value={listingType}
                 disabled={isPending}
                 onChange={(e) => {
-                  const propertyType = e.target.value;
-                  setForm((prev) => ({
-                    ...prev,
-                    propertyType,
-                    propertySubtype: isValidPropertyTypeSubtype(
-                      propertyType,
-                      prev.propertySubtype,
-                    )
-                      ? prev.propertySubtype
-                      : "",
-                  }));
-                  clearFieldError("propertyType");
+                  updateSelection(e.target.value, kind);
                 }}
               >
-                <option value="sale">Sale</option>
-                <option value="rent">Rent</option>
-                <option value="plot">Plot</option>
+                <option value="sale">For Sale</option>
+                <option value="rent">For Rent</option>
               </select>
               {fieldErrors.propertyType ? (
                 <p className={ui.fieldError}>{fieldErrors.propertyType}</p>
               ) : null}
             </label>
             <label id="field-propertySubtype" className={ui.field}>
-              <span className={ui.label}>Property subtype</span>
+              <span className={ui.label}>Property Type</span>
               <select
                 className={`${ui.select} ${fieldErrors.propertySubtype ? ui.inputInvalid : ""}`}
-                value={form.propertySubtype}
+                value={kind}
                 disabled={isPending}
                 onChange={(e) => {
-                  setForm({ ...form, propertySubtype: e.target.value });
-                  clearFieldError("propertySubtype");
+                  updateSelection(listingType, e.target.value);
                 }}
               >
-                <option value="">Select subtype</option>
-                {subtypesForType(form.propertyType).map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
+                <option value="">Select property type</option>
+                {(PROPERTY_KIND_OPTIONS[listingType] || []).map((option) => (
+                  <option key={option} value={option}>
+                    {PROPERTY_KIND_LABELS[option]}
                   </option>
                 ))}
               </select>
@@ -1147,6 +1186,28 @@ export default function EditPropertyPage() {
                 </select>
               </label>
             </div>
+            <fieldset id="field-property_data" disabled={isPending} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
+              {["house", "apartment", "commercial"].includes(kind) ? <>
+                <h3 className={ui.label}>Land Info</h3>
+                <PropertyDataFields section="landInfo" kind={kind} data={readPropertyData(form.property_data?.landInfo)} onChange={(key, value) => updateData("landInfo", key, value)} errors={fieldErrors} />
+                <h3 className={ui.label}>Property Details</h3>
+                <PropertyDataFields section="propertyDetails" kind={kind} data={readPropertyData(form.property_data?.propertyDetails)} onChange={(key, value) => updateData("propertyDetails", key, value)} errors={fieldErrors} />
+                <div className={ui.row2}>
+                  {["bedrooms", "bathrooms", "parking"].map(key => <label className={ui.field} key={key}>
+                    <span className={ui.label}>{key[0].toUpperCase() + key.slice(1)}</span>
+                    {key === "parking" ? <select className={ui.select} value={form.parking || ""} onChange={e => updateData("propertyDetails", key, e.target.value)}>
+                      <option value="">Select parking</option><option>Yes</option><option>No</option>
+                    </select> : <input className={ui.input} inputMode="numeric" value={form[key] ?? ""} onChange={e => updateData("propertyDetails", key, e.target.value)} />}
+                    {fieldErrors[`propertyDetails.${key}`] || fieldErrors[key] ? <p className={ui.fieldError}>{fieldErrors[`propertyDetails.${key}`] || fieldErrors[key]}</p> : null}
+                  </label>)}
+                </div>
+                {kind === "commercial" ? <PropertyDataFields section="commercialInfo" kind={kind} data={readPropertyData(form.property_data?.commercialInfo) || (form.propertySubtype === "shop" ? { commercialType: "Shop" } : null)} onChange={(key, value) => updateData("commercialInfo", key, value)} errors={fieldErrors} /> : null}
+              </> : null}
+              {["plots", "file"].includes(kind) ? <>
+                <h3 className={ui.label}>{kind === "plots" ? "Plot Information" : "Plot Info"}</h3>
+                <PropertyDataFields section="plotInfo" kind={kind} data={kind === "plots" ? { ...readPropertyData(form.property_data?.plotInfo), plotType: form.propertySubtype === "commercial_plot" ? "Commercial" : "Residential" } : readPropertyData(form.property_data?.plotInfo)} onChange={(key, value) => updateData("plotInfo", key, value)} errors={fieldErrors} />
+              </> : null}
+            </fieldset>
             <div id="field-price" className={ui.field}>
               <span className={ui.label}>Price</span>
               <PriceCurrencyInput
@@ -1402,7 +1463,7 @@ export default function EditPropertyPage() {
             </div>
 
             {isPending ? null : (
-              <PropertyMarketingSectionsEditor form={form} setForm={setForm} />
+              <PropertyMarketingSectionsEditor form={form} setForm={updater => setForm(previous => ({ ...(typeof updater === "function" ? updater(previous) : updater), propertyDataDirty: true }))} />
             )}
             <div className={ui.formActions}>
               {isPending ? null : (

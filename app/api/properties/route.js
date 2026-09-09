@@ -15,7 +15,7 @@ import { normalizeLocationFields } from "@/lib/propertyLocation";
 import { PROPERTY_STATUS } from "@/lib/status";
 import { sanitizeSearchInput } from "@/lib/validators/common";
 import { validatePropertyDraftInput } from "@/lib/validators/propertyValidator";
-import { normalizeMarketingSections } from "@/lib/propertyMarketingSections";
+import { preparePropertyDataSave } from "@/lib/propertyData";
 
 export async function GET(req) {
   const { session, error } = await requireAgent();
@@ -53,16 +53,16 @@ export async function POST(req) {
     if (!validated.ok) {
       return NextResponse.json({ error: validated.error }, { status: 400 });
     }
-    const marketing = normalizeMarketingSections(body);
-    if (!marketing.ok) {
-      return NextResponse.json({ error: marketing.error }, { status: 400 });
+    const propertyData = preparePropertyDataSave(body, validated.data.property_type, validated.data.property_subtype);
+    if (!propertyData.ok) {
+      return NextResponse.json({ error: propertyData.error, field: propertyData.field }, { status: 400 });
     }
     const {
       property_highlights,
       why_this_home,
       location_advantages,
       investment_insights,
-    } = marketing.data;
+    } = propertyData.marketing;
 
     const {
       title,
@@ -93,8 +93,8 @@ export async function POST(req) {
       `INSERT INTO properties
       (agent_id, title, property_type, property_subtype, description, size_value, size_unit, price, price_currency,
        location, city, area, phase, address, status,
-       property_highlights, why_this_home, location_advantages, investment_insights)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       property_highlights, why_this_home, location_advantages, investment_insights, property_data)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
       agentId,
       trimmedTitle,
@@ -115,6 +115,7 @@ export async function POST(req) {
       why_this_home ? JSON.stringify(why_this_home) : null,
       location_advantages ? JSON.stringify(location_advantages) : null,
       investment_insights ? JSON.stringify(investment_insights) : null,
+      propertyData.data == null ? null : JSON.stringify(propertyData.data),
       ],
     );
 
@@ -149,7 +150,7 @@ export async function POST(req) {
       return NextResponse.json(
         {
           error:
-            "Property creation is temporarily unavailable because the property marketing fields have not been set up. Please contact support.",
+            "Property creation is temporarily unavailable because the property information fields have not been set up. Please contact support.",
         },
         { status: 500 },
       );
