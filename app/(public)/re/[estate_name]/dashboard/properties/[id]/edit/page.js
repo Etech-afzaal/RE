@@ -40,6 +40,8 @@ import {
   propertyKind, readPropertyData, changePropertySelection,
   buildPropertyData, normalizePropertyData,
 } from "@/lib/propertyData";
+import PlotSizeInput from "@/components/agent-portal/PlotSizeInput";
+import PropertyNumberInput from "@/components/agent-portal/PropertyNumberInput";
 import PropertyDataFields from "@/components/agent-portal/PropertyDataFields";
 import ui from "@/components/agent-portal/portal.module.css";
 import PropertyMarketingSectionsEditor from "@/components/agent-portal/PropertyMarketingSectionsEditor";
@@ -1157,38 +1159,10 @@ export default function EditPropertyPage() {
                 <p className={ui.fieldError}>{fieldErrors.address}</p>
               ) : null}
             </label>
-            <div className={ui.row2}>
-              <label id="field-size_value" className={ui.field}>
-                <span className={ui.label}>Size</span>
-                <input
-                  className={`${ui.input} ${fieldErrors.size_value ? ui.inputInvalid : ""}`}
-                  type="number"
-                  value={form.size_value}
-                  disabled={isPending}
-                  onChange={(e) => {
-                    setForm({ ...form, size_value: e.target.value });
-                    clearFieldError("size_value");
-                  }}
-                />
-                {fieldErrors.size_value ? (
-                  <p className={ui.fieldError}>{fieldErrors.size_value}</p>
-                ) : null}
-              </label>
-              <label id="field-size_unit" className={ui.field}>
-                <span className={ui.label}>Unit</span>
-                <select
-                  className={ui.select}
-                  value={form.size_unit}
-                  disabled={isPending}
-                  onChange={(e) =>
-                    setForm({ ...form, size_unit: e.target.value })
-                  }
-                >
-                  <option value="marla">Marla</option>
-                  <option value="kanal">Kanal</option>
-                  <option value="sqft">Sqft</option>
-                </select>
-              </label>
+            <div id="field-size_value" className={ui.field}>
+              <span className={ui.label}>Plot Size</span>
+              <PlotSizeInput value={form.size_value} unit={form.size_unit} step={0.01} disabled={isPending} invalid={fieldErrors.size_value} onChange={value => { setForm({ ...form, size_value: value }); clearFieldError("size_value"); }} onUnitChange={value => setForm({ ...form, size_unit: value })} />
+              {fieldErrors.size_value ? <p className={ui.fieldError}>{fieldErrors.size_value}</p> : null}
             </div>
             <fieldset id="field-property_data" disabled={isPending} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
               {["house", "apartment", "commercial"].includes(kind) ? <>
@@ -1200,8 +1174,8 @@ export default function EditPropertyPage() {
                   {["bedrooms", "bathrooms", "parking"].map(key => <label className={ui.field} key={key}>
                     <span className={ui.label}>{key[0].toUpperCase() + key.slice(1)}</span>
                     {key === "parking" ? <select className={ui.select} value={form.parking || ""} onChange={e => updateData("propertyDetails", key, e.target.value)}>
-                      <option value="">Select parking</option><option>Yes</option><option>No</option>
-                    </select> : <input className={ui.input} inputMode="numeric" value={form[key] ?? ""} onChange={e => updateData("propertyDetails", key, e.target.value)} />}
+                      <option value="">Select parking</option>{["1 car", "2 cars", "3 cars", "4 cars+"].map(value => <option key={value}>{value}</option>)}{["Yes", "No"].includes(form.parking) ? <option>{form.parking}</option> : null}
+                    </select> : <PropertyNumberInput className={ui.input} step={1} max={99} value={form[key] ?? ""} onChange={value => updateData("propertyDetails", key, value)} />}
                     {fieldErrors[`propertyDetails.${key}`] || fieldErrors[key] ? <p className={ui.fieldError}>{fieldErrors[`propertyDetails.${key}`] || fieldErrors[key]}</p> : null}
                   </label>)}
                 </div>

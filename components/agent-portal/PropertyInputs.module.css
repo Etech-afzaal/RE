@@ -1,0 +1,14 @@
+.numberControl { position: relative; flex: 1; min-width: 0; width: 100%; }
+.numberInput { width: 100%; padding-right: 2rem !important; appearance: textfield; -moz-appearance: textfield; }
+.numberInput::-webkit-inner-spin-button, .numberInput::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.steppers { position: absolute; right: 4px; top: 4px; bottom: 4px; display: flex; flex-direction: column; width: 24px; }
+.steppers button { flex: 1; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; line-height: 1; }
+.steppers button:hover:not(:disabled) { background: var(--gold-tint); }
+.steppers button:disabled { opacity: .35; cursor: default; }
+.unitSelect { width: auto; border-radius: 0; }
+.amenities { position: relative; }
+.amenities summary { cursor: pointer; list-style-position: inside; }
+.amenitiesMenu { position: absolute; top: 100%; left: 0; right: 0; z-index: 20; background: white; border: 1px solid #ded8cb; border-radius: 8px; padding: .75rem; max-height: 280px; overflow: auto; box-shadow: 0 8px 24px #0002; }
+.amenityOption { display: flex; align-items: center; gap: .5rem; padding: .35rem 0; }
+.customAmenity { display: flex; align-items: center; gap: .5rem; margin-top: .5rem; }
+.customAmenity input { min-width: 0; }
