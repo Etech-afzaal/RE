@@ -184,6 +184,7 @@ export default function CreatePropertyPage() {
   const [watermarkText, setWatermarkText] = useState("");
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
+  const draggedMediaRef = useRef(null);
   const [form, setForm] = useState(() => ({
     title: "",
     propertyType: "sale",
@@ -529,6 +530,42 @@ export default function CreatePropertyPage() {
     setImages((prev) =>
       prev.map((item, i) => ({ ...item, isFeatured: i === index })),
     );
+  }
+
+  function mediaDragProps(type, url) {
+    return {
+      draggable: true,
+      onDragStart(event) {
+        draggedMediaRef.current = { type, url };
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", url);
+      },
+      onDragOver(event) {
+        if (draggedMediaRef.current?.type !== type) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+      },
+      onDrop(event) {
+        const dragged = draggedMediaRef.current;
+        if (dragged?.type !== type) return;
+        event.preventDefault();
+        event.stopPropagation();
+        draggedMediaRef.current = null;
+        const setMedia = type === "image" ? setImages : setVideos;
+        setMedia((previous) => {
+          const source = previous.findIndex((item) => item.url === dragged.url);
+          const target = previous.findIndex((item) => item.url === url);
+          if (source < 0 || target < 0 || source === target) return previous;
+          const next = [...previous];
+          const [moved] = next.splice(source, 1);
+          next.splice(target, 0, moved);
+          return next;
+        });
+      },
+      onDragEnd() {
+        draggedMediaRef.current = null;
+      },
+    };
   }
 
   function moveImage(index, offset) {
@@ -1247,7 +1284,7 @@ export default function CreatePropertyPage() {
                 <span className={ui.label}>Uploaded Images</span>
                 <div className={ui.imageManager}>
                   {images.map((item, index) => (
-                    <div key={item.url} className={ui.imageCard}>
+                    <div key={item.url} className={ui.imageCard} {...mediaDragProps("image", item.url)}>
                       <button
                         type="button"
                         className={ui.imageCardThumb}
@@ -1258,7 +1295,7 @@ export default function CreatePropertyPage() {
                         }}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={item.url} alt="" />
+                        <img src={item.url} alt="" draggable={false} />
                         {item.isFeatured ? (
                           <span className={ui.featuredTag}>Featured</span>
                         ) : null}
@@ -1343,6 +1380,7 @@ export default function CreatePropertyPage() {
 
             <div
               className={ui.field}
+              style={images.length > 0 ? { paddingTop: "20px" } : undefined}
               onDragOver={(event) => {
                 event.preventDefault();
                 event.dataTransfer.dropEffect = "copy";
@@ -1408,7 +1446,7 @@ export default function CreatePropertyPage() {
                 <span className={ui.label}>Uploaded Videos</span>
                 <div className={ui.imageManager}>
                   {videos.map((item, index) => (
-                    <div key={item.url} className={ui.imageCard}>
+                    <div key={item.url} className={ui.imageCard} {...mediaDragProps("video", item.url)}>
                       <div className={ui.imageCardThumb}>
                         <video
                           src={item.url}
@@ -1486,7 +1524,7 @@ export default function CreatePropertyPage() {
               </>
             ) : null}
 
-            <div className={ui.field}>
+            <div className={ui.field} style={videos.length > 0 ? { paddingTop: "20px" } : undefined}>
               <div className={ui.filePicker}>
                 <input
                   ref={videoInputRef}
