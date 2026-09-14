@@ -1584,6 +1584,10 @@ export default function CreatePropertyPage() {
         ) : null}
       </div>
 
+      {busyAction === "submit" ? (
+        <LoadingSpinner fullPage label="Loading" hint="We are processing your data" />
+      ) : null}
+
       {submitErrorOpen ? (
         <div className={ui.dialogBackdrop} role="presentation">
           <div
