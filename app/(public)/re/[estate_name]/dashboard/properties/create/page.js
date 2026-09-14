@@ -1524,7 +1524,18 @@ export default function CreatePropertyPage() {
               </>
             ) : null}
 
-            <div className={ui.field} style={videos.length > 0 ? { paddingTop: "20px" } : undefined}>
+            <div
+              className={ui.field}
+              style={videos.length > 0 ? { paddingTop: "20px" } : undefined}
+              onDragOver={(event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "copy";
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                addVideos(event.dataTransfer.files);
+              }}
+            >
               <div className={ui.filePicker}>
                 <input
                   ref={videoInputRef}
