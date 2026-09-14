@@ -48,7 +48,10 @@ export async function POST(req) {
     if (error) return error;
 
     const agentId = Number(session.user.agent_id || session.user.id);
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ error: "Request body must be a JSON object." }, { status: 400 });
+    }
     const validated = validatePropertyDraftInput(body);
     if (!validated.ok) {
       return NextResponse.json({ error: validated.error }, { status: 400 });

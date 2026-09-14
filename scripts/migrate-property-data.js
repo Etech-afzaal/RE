@@ -2,30 +2,14 @@
  * Add nullable properties.property_data for longer/type-specific information.
  * Run with `npm run migrate:property-data` (add `-- --down` to roll back).
  */
-const fs = require("fs");
 const path = require("path");
+const { loadEnvConfig } = require("@next/env");
 const mysql = require("mysql2/promise");
 
 const MIGRATION_ID = "030_property_data";
 
 function loadEnv() {
-  const envPath = path.join(__dirname, "..", ".env");
-  if (!fs.existsSync(envPath)) return;
-  for (const line of fs.readFileSync(envPath, "utf8").split("\n")) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const eq = trimmed.indexOf("=");
-    if (eq === -1) continue;
-    const key = trimmed.slice(0, eq).trim();
-    let value = trimmed.slice(eq + 1).trim();
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-    if (!(key in process.env)) process.env[key] = value;
-  }
+  loadEnvConfig(path.join(__dirname, ".."), process.env.NODE_ENV !== "production");
 }
 
 async function columnExists(conn, table, column) {
@@ -39,6 +23,7 @@ async function columnExists(conn, table, column) {
 }
 
 async function migrateUp(conn) {
+  const [before] = await conn.query("SHOW FULL COLUMNS FROM properties");
   if (await columnExists(conn, "properties", "property_data")) {
     console.log("  properties.property_data already exists");
   } else {
@@ -47,6 +32,17 @@ async function migrateUp(conn) {
     );
     console.log("+ properties.property_data");
   }
+
+  const [after] = await conn.query("SHOW FULL COLUMNS FROM properties");
+  const column = after.find(column => column.Field === "property_data");
+  if (column?.Type !== "json" || column.Null !== "YES") {
+    throw new Error("properties.property_data must be JSON NULL; migration was not recorded.");
+  }
+  if (JSON.stringify(before.filter(column => column.Field !== "property_data")) !==
+      JSON.stringify(after.filter(column => column.Field !== "property_data"))) {
+    throw new Error("Existing properties columns changed unexpectedly; migration was not recorded.");
+  }
+  console.log("Verified properties.property_data: JSON NULL; all existing columns unchanged.");
 
   await conn.query(
     "INSERT INTO schema_migrations (id) VALUES (?) ON DUPLICATE KEY UPDATE applied_at = applied_at",

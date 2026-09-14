@@ -105,7 +105,10 @@ export async function PUT(req, { params }) {
   if (error) return error;
 
   const propertyId = Number(params.id);
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "Request body must be a JSON object." }, { status: 400 });
+  }
   const validated = validatePropertyDraftInput(body);
   if (!validated.ok) {
     return NextResponse.json({ error: validated.error }, { status: 400 });
@@ -128,7 +131,7 @@ export async function PUT(req, { params }) {
 
   const agentId = agentIdFrom(session);
   const existing = await query(
-    "SELECT id, status, approved_at, title, price_currency, property_type, property_subtype, property_data FROM properties WHERE id = ? AND agent_id = ?",
+    "SELECT id, status, approved_at, title, price_currency, property_type, property_subtype, property_data, property_highlights, why_this_home, location_advantages, investment_insights FROM properties WHERE id = ? AND agent_id = ?",
     [propertyId, agentId],
   );
   if (existing.length === 0) {
@@ -199,6 +202,7 @@ export async function PUT(req, { params }) {
     classificationChanged && existingData
       ? { insights: existingData.insights }
       : existingData,
+    current,
   );
   if (!propertyData.ok) {
     return NextResponse.json({ error: propertyData.error, field: propertyData.field }, { status: 400 });
