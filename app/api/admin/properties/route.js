@@ -1,4 +1,5 @@
 import { query } from "@/lib/db";
+import { propertyRecord } from "@/lib/propertyRecord";
 import { requireAdmin } from "@/lib/adminAuth";
 import {
   PROPERTY_STATUS_INPUTS,
@@ -38,9 +39,8 @@ export async function GET(req) {
          p.submitted_at,
          p.approved_by,
          p.approved_at,
-         p.rejected_reason,
+         p.property_data,
          p.rejected_at,
-         p.rejected_by,
          p.created_at,
          p.updated_at,
          a.id AS agent_id,
@@ -63,7 +63,7 @@ export async function GET(req) {
 
     return Response.json({
       properties: properties.map((p) => ({
-        ...p,
+        ...propertyRecord(p),
         status: toClientPropertyStatus(p.status),
         agent_status: toClientAgentStatus(p.agent_status),
       })),

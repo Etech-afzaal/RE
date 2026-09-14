@@ -66,7 +66,7 @@ export async function POST(req, { params }) {
   await query(
     `UPDATE properties
      SET status = ?, submitted_at = NOW(),
-         rejected_reason = NULL, rejected_at = NULL, rejected_by = NULL
+         property_data = JSON_SET(COALESCE(property_data, JSON_OBJECT()), '$.rejection', JSON_OBJECT('reason', NULL, 'rejected_by', NULL)), rejected_at = NULL
      WHERE id = ? AND agent_id = ?
        AND status IN (?, ?)`,
     [

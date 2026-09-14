@@ -7,6 +7,7 @@ import {
   getRequestIp,
 } from "@/lib/auditLogger";
 import { query } from "@/lib/db";
+import { propertyRecord, propertyRequest } from "@/lib/propertyRecord";
 import {
   imageCategoryLabel,
   normalizeImageCategory,
@@ -92,7 +93,7 @@ export async function GET(_req, { params }) {
 
   return NextResponse.json({
     property: {
-      ...property,
+      ...propertyRecord(property),
       video_url: displayVideoUrl,
       images,
       videos,
@@ -105,10 +106,11 @@ export async function PUT(req, { params }) {
   if (error) return error;
 
   const propertyId = Number(params.id);
-  const body = await req.json().catch(() => null);
+  let body = await req.json().catch(() => null);
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     return NextResponse.json({ error: "Request body must be a JSON object." }, { status: 400 });
   }
+  body = propertyRequest(body);
   const validated = validatePropertyDraftInput(body);
   if (!validated.ok) {
     return NextResponse.json({ error: validated.error }, { status: 400 });
@@ -131,14 +133,14 @@ export async function PUT(req, { params }) {
 
   const agentId = agentIdFrom(session);
   const existing = await query(
-    "SELECT id, status, approved_at, title, price_currency, property_type, property_subtype, property_data, property_highlights, why_this_home, location_advantages, investment_insights FROM properties WHERE id = ? AND agent_id = ?",
+    "SELECT id, status, approved_at, title, price_currency, property_data FROM properties WHERE id = ? AND agent_id = ?",
     [propertyId, agentId],
   );
   if (existing.length === 0) {
     return NextResponse.json({ error: "Property not found." }, { status: 404 });
   }
 
-  const current = existing[0];
+  const current = propertyRecord(existing[0]);
   if (isPropertyLockedForAgent(current.status)) {
     return NextResponse.json(
       { error: PROPERTY_LOCKED_MESSAGE },
@@ -202,72 +204,32 @@ export async function PUT(req, { params }) {
     classificationChanged && existingData
       ? { insights: existingData.insights }
       : existingData,
-    current,
   );
   if (!propertyData.ok) {
     return NextResponse.json({ error: propertyData.error, field: propertyData.field }, { status: 400 });
   }
   propertyData.data = mergeEditedPropertyData(existingData, propertyData.data, resolvedType, resolvedSubtype, classificationChanged);
-  const { property_highlights, why_this_home, location_advantages, investment_insights } = propertyData.marketing;
-  const marketingSQL = `, property_highlights = ?, why_this_home = ?, location_advantages = ?, investment_insights = ?, property_data = ?`;
-  const marketingParams = [
-    property_highlights ? JSON.stringify(property_highlights) : null,
-    why_this_home ? JSON.stringify(why_this_home) : null,
-    location_advantages ? JSON.stringify(location_advantages) : null,
-    investment_insights ? JSON.stringify(investment_insights) : null,
-    propertyData.data == null ? null : JSON.stringify(propertyData.data),
-  ];
-
-  if (locationFields.hasStructured) {
-    await query(
-      `UPDATE properties
-       SET title = ?, property_type = ?, property_subtype = ?, description = ?, size_value = ?, size_unit = ?, price = ?,
-           price_currency = ?, location = ?, city = ?, area = ?, phase = ?,
-           address = ?, status = ?${marketingSQL}
-       WHERE id = ? AND agent_id = ?`,
-      [
-        trimmedTitle,
-        resolvedType,
-        resolvedSubtype,
-        description || null,
-        size_value ?? null,
-        size_unit || "marla",
-        price ?? null,
-        nextCurrency,
-        locationFields.location,
-        locationFields.city,
-        locationFields.area,
-        locationFields.phase,
-        locationFields.address,
-        nextStatus,
-        ...marketingParams,
-        propertyId,
-        agentId,
-      ],
-    );
-  } else {
-    await query(
-      `UPDATE properties
-       SET title = ?, property_type = ?, property_subtype = ?, description = ?, size_value = ?, size_unit = ?, price = ?,
-           price_currency = ?, location = ?, status = ?${marketingSQL}
-       WHERE id = ? AND agent_id = ?`,
-      [
-        trimmedTitle,
-        resolvedType,
-        resolvedSubtype,
-        description || null,
-        size_value ?? null,
-        size_unit || "marla",
-        price ?? null,
-        nextCurrency,
-        locationFields.location,
-        nextStatus,
-        ...marketingParams,
-        propertyId,
-        agentId,
-      ],
-    );
+  const savedData = {
+    ...propertyData.data,
+    listing_type: resolvedType,
+    property_type: resolvedSubtype,
+    location: { ...existingData?.location },
+    // Agent edits cannot change reviewer-owned information.
+    rejection: existingData?.rejection || { reason: null, rejected_by: null },
+    insights: { ...propertyData.data?.insights, ...propertyData.marketing },
+  };
+  for (const key of ["city", "area", "phase", "address"]) {
+    if (Object.hasOwn(body, key)) savedData.location[key] = locationFields[key];
   }
+  await query(
+    `UPDATE properties
+     SET title = ?, description = ?, size_value = ?, size_unit = ?, price = ?,
+         price_currency = ?, location = ?, status = ?, property_data = ?
+     WHERE id = ? AND agent_id = ?`,
+    [trimmedTitle, description || null, size_value ?? null, size_unit || "marla",
+      price ?? null, nextCurrency, locationFields.location, nextStatus,
+      JSON.stringify(savedData), propertyId, agentId],
+  );
 
   const agentName = session.user.name || "Agent";
   const agentHandle = session.user.username || session.user.estate_name || null;

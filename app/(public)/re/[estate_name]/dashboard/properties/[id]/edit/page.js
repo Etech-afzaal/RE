@@ -199,7 +199,7 @@ export default function EditPropertyPage() {
         propertyData.commercialInfo = { ...commercialInfo, commercialType: commercialInfo.type };
       }
       const insights = Object.fromEntries(INSIGHT_FIELDS.map(key => {
-        let value = propertyData?.insights?.[key] ?? p[key];
+        let value = propertyData?.insights?.[key];
         if (typeof value === "string") {
           try { value = JSON.parse(value); } catch { value = []; }
         }

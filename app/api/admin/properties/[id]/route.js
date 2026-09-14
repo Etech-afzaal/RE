@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { propertyRecord } from "@/lib/propertyRecord";
 import { requireAdmin } from "@/lib/adminAuth";
 import {
   AUDIT_ACTIONS,
@@ -113,7 +114,7 @@ export async function GET(_req, { params }) {
 
     return NextResponse.json({
       property: {
-        ...property,
+        ...propertyRecord(property),
         video_url: displayVideoUrl,
         images,
         videos,
@@ -198,14 +199,14 @@ export async function PATCH(req, { params }) {
       await query(
         `UPDATE properties
          SET status = ?, approved_by = ?, approved_at = NOW(),
-             rejected_reason = NULL, rejected_at = NULL, rejected_by = NULL
+             property_data = JSON_SET(COALESCE(property_data, JSON_OBJECT()), '$.rejection', JSON_OBJECT('reason', NULL, 'rejected_by', NULL)), rejected_at = NULL
          WHERE id = ?`,
         [nextStatus, reviewer, propertyId],
       );
     } else if (nextStatus === PROPERTY_STATUS.REJECTED) {
       await query(
         `UPDATE properties
-         SET status = ?, rejected_reason = ?, rejected_at = NOW(), rejected_by = ?,
+         SET status = ?, property_data = JSON_SET(COALESCE(property_data, JSON_OBJECT()), '$.rejection', JSON_OBJECT('reason', ?, 'rejected_by', ?)), rejected_at = NOW(),
              approved_by = NULL, approved_at = NULL
          WHERE id = ?`,
         [nextStatus, reason, reviewer, propertyId],
