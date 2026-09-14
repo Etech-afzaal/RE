@@ -62,32 +62,20 @@ CREATE TABLE IF NOT EXISTS properties (
   id INT AUTO_INCREMENT PRIMARY KEY,
   agent_id INT NOT NULL,
   title VARCHAR(255) NOT NULL,
-  property_type ENUM('sale','rent','plot') NULL,  -- top-level listing class
-  property_subtype VARCHAR(32) NULL,              -- house|apartment|shop|commercial|residential_plot|commercial_plot
   description TEXT,
   size_value DECIMAL(10,2),
   size_unit ENUM('marla','kanal','sqft') DEFAULT 'marla',
   price DECIMAL(15,2),
   price_currency ENUM('PKR','USD') NOT NULL DEFAULT 'PKR', -- amount is stored as-entered; no conversion
   location VARCHAR(255),                           -- denormalized display: "{area} {phase}, {city}"
-  city VARCHAR(100) NULL,
-  area VARCHAR(100) NULL,
-  phase VARCHAR(100) NULL,
-  address VARCHAR(255) NULL,
   -- Workflow: draft → pending_approval → approved | rejected; plus sold | hidden
   -- Only 'approved' is publicly visible, so new listings start as drafts.
   status ENUM('draft','pending_approval','approved','rejected','sold','hidden') NOT NULL DEFAULT 'draft',
-  property_highlights JSON NULL,        -- agent-editable marketing highlights (title/description/icon)
-  why_this_home JSON NULL,              -- agent-editable lifestyle checklist
-  location_advantages JSON NULL,        -- agent-editable nearby places (name/description)
-  investment_insights JSON NULL,        -- agent-editable investment checklist
   is_featured BOOLEAN NOT NULL DEFAULT FALSE,       -- agent homepage hero (max 10 approved per agent)
   submitted_at DATETIME NULL,                      -- set when the agent submits for review
   approved_by VARCHAR(100) NULL,                   -- admin identifier (env admin has no users row)
   approved_at DATETIME NULL,
-  rejected_reason TEXT NULL,
   rejected_at DATETIME NULL,
-  rejected_by VARCHAR(100) NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   property_data JSON NULL,

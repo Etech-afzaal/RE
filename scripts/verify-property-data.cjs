@@ -110,13 +110,16 @@ async function main() {
     const agent = agents[0]; assert.ok(agent, "An existing approved agent is required");
     const seams = {
       "@/lib/db": { query },
-      "@/lib/adminAuth": { requireAgent: async () => ({ session: { user: agent } }) },
+      "@/lib/adminAuth": { requireAgent: async () => ({ session: { user: agent } }), requireAdmin: async () => ({ session: { user: { email: "verification@example.test", name: "Verification" } } }) },
       "@/lib/auditLogger": { AUDIT_ACTIONS: {}, AUDIT_ENTITY_TYPES: {}, createAuditLog: async () => {}, getRequestIp: () => null },
     };
     const load = loader(seams);
     const data = load("@/lib/propertyData");
     const create = load("@/app/api/properties/route").POST;
     const api = load("@/app/api/properties/[id]/route");
+    const admin = load("@/app/api/admin/properties/[id]/route");
+    const adminList = load("@/app/api/admin/properties/route");
+    const record = load("@/lib/propertyRecord").propertyRecord;
     const queries = load("@/lib/queries");
     const mapping = load("@/lib/publicPropertyData");
     const uiMocks = {
@@ -153,8 +156,14 @@ async function main() {
       const [[committed]] = await observer.execute("SELECT * FROM properties WHERE id = ?", [id]);
       assert.ok(committed, "A separate MySQL connection sees the committed insert");
       assert.equal(committed.status, "draft");
-      assert.deepEqual(committed.property_data, legacy ? null : data.normalizePropertyData(body.property_data, form.propertyType, form.propertySubtype).data);
-      for (const field of ["title", "description", "city", "area", "phase", "address", "size_unit", "price_currency"]) assert.equal(committed[field], body[field]);
+      const normalized = data.preparePropertyDataSave(body, form.propertyType, form.propertySubtype);
+      assert.deepEqual(committed.property_data, {
+        ...normalized.data,
+        listing_type: form.propertyType, property_type: form.propertySubtype,
+        location: { city: form.city, area: form.area, phase: form.phase, address: form.address },
+        rejection: { reason: null, rejected_by: null }, insights: normalized.marketing,
+      });
+      for (const field of ["title", "description", "city", "area", "phase", "address", "size_unit", "price_currency"]) assert.equal(record(committed)[field], body[field]);
       assert.equal(Number(committed.size_value), 5); assert.equal(Number(committed.price), 25000000);
       const get = await api.GET({}, { params: { id } });
       assert.equal(get.status, 200);
@@ -166,21 +175,32 @@ async function main() {
         assert.equal((await api.PUT({ json: async () => partial }, { params: { id } })).status, 200);
         const [updated] = await query("SELECT * FROM properties WHERE id = ?", [id]);
         for (const section of data.sectionsForKind(kind)) assert.deepEqual(updated.property_data[section], committed.property_data[section]);
-        assert.deepEqual(updated.property_data.insights.investment_insights, committed.investment_insights);
+        assert.deepEqual(updated.property_data.insights.investment_insights, committed.property_data.insights.investment_insights);
       } else {
         const omitted = { ...body }; delete omitted.property_data;
         for (const key of data.INSIGHT_FIELDS) delete omitted[key];
         assert.equal((await api.PUT({ json: async () => omitted }, { params: { id } })).status, 200);
         const [updated] = await query("SELECT * FROM properties WHERE id = ?", [id]);
-        assert.equal(updated.property_data, null);
-        assert.deepEqual(updated.why_this_home, committed.why_this_home);
+        assert.equal(updated.property_data.listing_type, form.propertyType);
+        assert.deepEqual(updated.property_data.insights.why_this_home, committed.property_data.insights.why_this_home);
       }
       const edited = await editPage(api, id, agent, kind, legacy);
       const [[updated]] = await observer.execute("SELECT * FROM properties WHERE id = ?", [id]);
       assert.deepEqual(updated.property_data, edited.property_data, "Edit is committed and retrievable");
       await conn.beginTransaction();
       try {
-        await query("UPDATE properties SET status = 'approved' WHERE id = ?", [id]);
+        assert.equal((await admin.PATCH({ json: async () => ({ status: "rejected", rejected_reason: "Please correct the property information" }) }, { params: { id } })).status, 200);
+        const rejectedResponse = await admin.GET({}, { params: { id } });
+        assert.equal(rejectedResponse.status, 200);
+        const rejected = (await rejectedResponse.json()).property;
+        assert.equal(rejected.property_data.rejection.reason, "Please correct the property information");
+        assert.equal(rejected.property_data.rejection.rejected_by, "verification@example.test");
+        assert.ok(rejected.rejected_at);
+        assert.deepEqual(rejected.property_data.insights, edited.property_data.insights);
+        const adminListing = await adminList.GET({ url: "http://localhost/api/admin/properties?status=rejected" });
+        assert.equal(adminListing.status, 200);
+        assert.ok((await adminListing.json()).properties.some(row => row.id === id && row.rejected_reason === rejected.property_data.rejection.reason));
+        assert.equal((await admin.PATCH({ json: async () => ({ status: "approved" }) }, { params: { id } })).status, 200);
         const publicRow = await queries.getPropertyByAgentAndSlug(agent.id, String(id));
         assert.deepEqual(publicRow.property_data, edited.property_data);
         const detail = await PublicPage({ params: { estate_name: agent.username || agent.estate_name, propertyId: String(id) }, searchParams: {} });
@@ -195,19 +215,47 @@ async function main() {
         assert.equal(listing.filter(n => n.type === "Link" && n.props.className === "card").length, 1);
         assert.ok(!listing.some(n => /shops|for-sale-file/.test(n.props?.id || "")));
         if (kind === "file") assert.ok(listing.some(n => n.type === "path" && n.props.d?.startsWith("M14 2H6")));
+        const searched = await queries.getManagedPropertiesPageByAgent(agent.id, { search: "lahore", pageSize: 100 });
+        assert.ok(searched.properties.some(row => row.id === id), "Case-insensitive JSON location search");
+        const cities = await queries.getAgentDiscoveryCities();
+        assert.ok(cities.some(row => row.name === "Lahore"));
       } finally { await conn.rollback(); }
-      console.log(`PASS ${listing}/${kind} ${legacy ? "NULL legacy" : "JSON"}: committed create, SQL/API retrieval, partial update, edit UI/save, public query/detail/cards`);
+      console.log(`PASS ${listing}/${kind} ${legacy ? "legacy input" : "JSON"}: committed create, SQL/API retrieval, partial update, edit UI/save, admin rejection/approval, public query/detail/cards, location search`);
     }
     for (const old of existing) {
-      assert.doesNotThrow(() => mapping.publicPropertyDetails(old));
-      for (const key of data.INSIGHT_FIELDS) assert.doesNotThrow(() => mapping.publicPropertyInsight(old, key));
+      const loaded = await queries.getPropertyById(old.id);
+      assert.deepEqual(loaded.property_data, old.property_data);
+      const adminResponse = await admin.GET({}, { params: { id: old.id } });
+      assert.equal(adminResponse.status, 200);
+      const adminProperty = (await adminResponse.json()).property;
+      assert.deepEqual(adminProperty.property_data, old.property_data);
+      const images = await query("SELECT * FROM property_images WHERE property_id = ? ORDER BY sort_order ASC, id ASC", [old.id]);
+      assert.equal(loaded.images.length, images.length);
+      assert.equal(loaded.featuredImage?.id, (images.find(image => image.is_featured) || images[0])?.id);
+      assert.deepEqual(loaded.images.map(image => image.hero_display), images.map(image => image.hero_display));
+      const videos = await query("SELECT * FROM property_videos WHERE property_id = ?", [old.id]);
+      assert.equal(adminProperty.videos.length, videos.length);
+      assert.doesNotThrow(() => mapping.publicPropertyDetails(loaded));
+      const [ownerIdentity] = await query("SELECT username, estate_name FROM users WHERE id = ?", [old.agent_id]);
+      const owner = await queries.getAgentByUsername(ownerIdentity?.username || ownerIdentity?.estate_name);
+      if (old.status === "approved" && owner) {
+        const tree = await PublicPage({ params: { estate_name: owner.username || owner.estate_name, propertyId: String(old.id) }, searchParams: {} });
+        for (const key of data.INSIGHT_FIELDS) {
+          const values = mapping.publicPropertyInsight(loaded, key) || [];
+          for (const value of values) {
+            for (const detail of typeof value === "string" ? [value] : [value.title || value.name, value.description]) {
+              if (detail) assert.ok(text(tree).includes(detail), `Existing saved insight ${old.id}.${key}`);
+            }
+          }
+        }
+      }
     }
-    const legacyPublic = existing.find(row => row.agent_id === agent.id && row.status === "approved" && row.property_data == null);
+    const legacyPublic = existing.find(row => row.agent_id === agent.id && row.status === "approved");
     if (legacyPublic) {
       await PublicPage({ params: { estate_name: agent.username || agent.estate_name, propertyId: String(legacyPublic.id) }, searchParams: {} });
-      console.log("PASS actual existing NULL property through public DB query and detail page");
+      console.log("PASS actual migrated property through public DB query and detail page");
     }
-    console.log(`PASS legacy read compatibility: ${existing.length} existing records`);
+    console.log(`PASS ${existing.length} existing records: database/admin reads, public details/insights, featured images, hero flags and video retrieval`);
   } finally {
     await conn.rollback();
     for (const id of ids) await query("DELETE FROM properties WHERE id = ? AND title LIKE ?", [id, `${prefix}%`]);

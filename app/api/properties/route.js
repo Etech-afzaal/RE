@@ -16,6 +16,7 @@ import { PROPERTY_STATUS } from "@/lib/status";
 import { sanitizeSearchInput } from "@/lib/validators/common";
 import { validatePropertyDraftInput } from "@/lib/validators/propertyValidator";
 import { preparePropertyDataSave } from "@/lib/propertyData";
+import { propertyRequest } from "@/lib/propertyRecord";
 
 export async function GET(req) {
   const { session, error } = await requireAgent();
@@ -48,10 +49,11 @@ export async function POST(req) {
     if (error) return error;
 
     const agentId = Number(session.user.agent_id || session.user.id);
-    const body = await req.json().catch(() => null);
+    let body = await req.json().catch(() => null);
     if (!body || typeof body !== "object" || Array.isArray(body)) {
       return NextResponse.json({ error: "Request body must be a JSON object." }, { status: 400 });
     }
+    body = propertyRequest(body);
     const validated = validatePropertyDraftInput(body);
     if (!validated.ok) {
       return NextResponse.json({ error: validated.error }, { status: 400 });
@@ -60,13 +62,6 @@ export async function POST(req) {
     if (!propertyData.ok) {
       return NextResponse.json({ error: propertyData.error, field: propertyData.field }, { status: 400 });
     }
-    const {
-      property_highlights,
-      why_this_home,
-      location_advantages,
-      investment_insights,
-    } = propertyData.marketing;
-
     const {
       title,
       description,
@@ -94,31 +89,27 @@ export async function POST(req) {
 
     const result = await query(
       `INSERT INTO properties
-      (agent_id, title, property_type, property_subtype, description, size_value, size_unit, price, price_currency,
-       location, city, area, phase, address, status,
-       property_highlights, why_this_home, location_advantages, investment_insights, property_data)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (agent_id, title, description, size_value, size_unit, price, price_currency,
+       location, status, property_data)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
       agentId,
       trimmedTitle,
-      nextType,
-      nextSubtype,
       description || null,
       size_value ?? null,
       size_unit || "marla",
       price ?? null,
       price_currency || "PKR",
       location,
-      city,
-      area,
-      phase,
-      address,
       status,
-      property_highlights ? JSON.stringify(property_highlights) : null,
-      why_this_home ? JSON.stringify(why_this_home) : null,
-      location_advantages ? JSON.stringify(location_advantages) : null,
-      investment_insights ? JSON.stringify(investment_insights) : null,
-      propertyData.data == null ? null : JSON.stringify(propertyData.data),
+      JSON.stringify({
+        ...propertyData.data,
+        listing_type: nextType,
+        property_type: nextSubtype,
+        location: { city, area, phase, address },
+        rejection: { reason: null, rejected_by: null },
+        insights: propertyData.marketing,
+      }),
       ],
     );
 
