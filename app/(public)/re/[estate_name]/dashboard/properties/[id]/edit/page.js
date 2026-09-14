@@ -594,7 +594,7 @@ export default function EditPropertyPage() {
         why_this_home: form.why_this_home,
         location_advantages: form.location_advantages,
         investment_insights: form.investment_insights,
-        property_data: propertyData.data,
+        property_data: editedData,
       }),
     });
     const data = await res.json().catch(() => ({}));
