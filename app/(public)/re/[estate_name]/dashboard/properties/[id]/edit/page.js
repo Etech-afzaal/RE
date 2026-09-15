@@ -44,6 +44,7 @@ import PlotSizeInput from "@/components/agent-portal/PlotSizeInput";
 import PropertyNumberInput from "@/components/agent-portal/PropertyNumberInput";
 import PropertyDataFields from "@/components/agent-portal/PropertyDataFields";
 import ui from "@/components/agent-portal/portal.module.css";
+import layout from "./layout.module.css";
 import PropertyMarketingSectionsEditor from "@/components/agent-portal/PropertyMarketingSectionsEditor";
 
 function buildTitle(title, propertyType) {
@@ -804,6 +805,8 @@ export default function EditPropertyPage() {
             <p className={ui.muted}>
               Current status: <strong>{String(form.status).replace(/_/g, " ")}</strong>
             </p>
+            <section className={layout.section} aria-labelledby="edit-basic">
+              <h2 id="edit-basic" className={layout.heading}>Basic Information</h2>
             <label id="field-title" className={ui.field}>
               <span className={ui.label}>Title</span>
               <input
@@ -819,6 +822,7 @@ export default function EditPropertyPage() {
                 <p className={ui.fieldError}>{fieldErrors.title}</p>
               ) : null}
             </label>
+            <div className={ui.row2}>
             <label id="field-propertyType" className={ui.field}>
               <span className={ui.label}>Listing Type</span>
               <select
@@ -857,231 +861,13 @@ export default function EditPropertyPage() {
                 <p className={ui.fieldError}>{fieldErrors.propertySubtype}</p>
               ) : null}
             </label>
-            <div className={ui.field}>
-              <span className={ui.label}>Property Videos (Optional)</span>
-              {existingVideos.length === 0 && newVideos.length === 0 ? (
-                <p className={ui.muted}>No videos uploaded yet.</p>
-              ) : null}
-
-              {existingVideos.length > 0 ? (
-                <div className={ui.imageManager}>
-                  {existingVideos.map((video, index) => {
-                    const rowKey = `existing:${video.id ?? "legacy"}`;
-                    const title = videoTitle(video, index);
-                    const isFeatured =
-                      featuredVideoKey === rowKey ||
-                      (!featuredVideoKey && Boolean(video.is_featured));
-                    return (
-                      <div
-                        key={video.id ?? `legacy-${index}`}
-                        className={ui.imageCard}
-                      >
-                        <div className={ui.imageCardThumb}>
-                          <button
-                            type="button"
-                            className={ui.thumbPreviewBtn}
-                            aria-label={`Preview ${title}`}
-                            disabled={isPending}
-                            onClick={() => {
-                              setVideoPreviewIndex(index);
-                              setVideoPreviewOpen(true);
-                            }}
-                          >
-                            {video.thumbnail_url || video.thumbnail ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={video.thumbnail_url || video.thumbnail}
-                                alt=""
-                              />
-                            ) : (
-                              <video
-                                src={video.video_url}
-                                muted
-                                playsInline
-                                preload="none"
-                              />
-                            )}
-                            <PropertyWatermark text={watermarkText} compact />
-                            <span
-                              className={ui.thumbPlayOverlay}
-                              aria-hidden="true"
-                            >
-                              <svg viewBox="0 0 24 24" fill="none">
-                                <path
-                                  d="M8 5.5v13l11-6.5-11-6.5z"
-                                  fill="currentColor"
-                                />
-                              </svg>
-                            </span>
-                            {isFeatured ? (
-                              <span className={ui.featuredTag}>Featured</span>
-                            ) : null}
-                          </button>
-                          <button
-                            type="button"
-                            className={ui.thumbRemoveBtn}
-                            disabled={
-                              isPending || deletingVideoKey === rowKey
-                            }
-                            aria-label={`Delete ${title}`}
-                            onClick={() => removeExistingVideo(video, index)}
-                          >
-                            ×
-                          </button>
-                        </div>
-                        <div className={ui.imageCardBody}>
-                          <p className={ui.imageCardLabel}>{title}</p>
-                          <p className={ui.muted}>
-                            Saved video · Order {index + 1}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : null}
-
-              {newVideos.length > 0 ? (
-                <>
-                  <span className={ui.label}>New videos (save to upload)</span>
-                  <div className={ui.imageManager}>
-                    {newVideos.map((item, index) => {
-                      const previewAt = existingVideos.length + index;
-                      return (
-                        <div key={item.key} className={ui.imageCard}>
-                          <div className={ui.imageCardThumb}>
-                            <button
-                              type="button"
-                              className={ui.thumbPreviewBtn}
-                              aria-label={`Preview new video ${index + 1}`}
-                              disabled={isPending}
-                              onClick={() => {
-                                setVideoPreviewIndex(previewAt);
-                                setVideoPreviewOpen(true);
-                              }}
-                            >
-                              <video
-                                src={item.url}
-                                muted
-                                playsInline
-                                preload="metadata"
-                              />
-                              <PropertyWatermark text={watermarkText} compact />
-                              <span
-                                className={ui.thumbPlayOverlay}
-                                aria-hidden="true"
-                              >
-                                <svg viewBox="0 0 24 24" fill="none">
-                                  <path
-                                    d="M8 5.5v13l11-6.5-11-6.5z"
-                                    fill="currentColor"
-                                  />
-                                </svg>
-                              </span>
-                              {featuredVideoKey === `new:${item.key}` ? (
-                                <span className={ui.featuredTag}>Featured</span>
-                              ) : null}
-                            </button>
-                            <button
-                              type="button"
-                              className={ui.thumbRemoveBtn}
-                              disabled={isPending}
-                              aria-label={`Delete new video ${index + 1}`}
-                              onClick={() => removeNewVideo(item.key)}
-                            >
-                              ×
-                            </button>
-                          </div>
-                          <div className={ui.imageCardBody}>
-                            <label className={ui.field}>
-                              <span className={ui.imageCardLabel}>
-                                Category
-                              </span>
-                              <ImageCategorySelect
-                                className={ui.select}
-                                inputClassName={ui.input}
-                                value={item.category}
-                                disabled={isPending}
-                            propertyKind={kind}
-                            mediaType="video"
-                            ariaLabel={`Category for new video ${index + 1}`}
-                                onChange={(category) =>
-                                  setNewVideos((prev) =>
-                                    prev.map((entry) =>
-                                      entry.key === item.key
-                                        ? {
-                                            ...entry,
-                                            category: category || "",
-                                          }
-                                        : entry,
-                                    ),
-                                  )
-                                }
-                              />
-                            </label>
-                            <div className={ui.imageCardMeta}>
-                              <label className={ui.imageCardCheck}>
-                                <input
-                                  type="radio"
-                                  name="featured-video"
-                                  checked={
-                                    featuredVideoKey === `new:${item.key}`
-                                  }
-                                  disabled={isPending}
-                                  onChange={() =>
-                                    setFeaturedVideoKey(`new:${item.key}`)
-                                  }
-                                />
-                                Featured video
-                              </label>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              ) : null}
-
-              {existingVideos.length + newVideos.length < MAX_PROPERTY_VIDEOS ? (
-                <div className={ui.filePicker}>
-                  <input
-                    ref={newVideoInputRef}
-                    type="file"
-                    accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
-                    multiple
-                    className={ui.srOnlyInput}
-                    disabled={isPending}
-                    onChange={(e) => {
-                      addVideos(e.target.files);
-                      e.target.value = "";
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className={ui.filePickerBtn}
-                    disabled={isPending}
-                    onClick={() => newVideoInputRef.current?.click()}
-                  >
-                    + Upload More Videos
-                  </button>
-                  <span className={ui.filePickerStatus}>
-                    {existingVideos.length + newVideos.length === 0
-                      ? "No videos selected"
-                      : `${existingVideos.length + newVideos.length} of ${MAX_PROPERTY_VIDEOS} videos`}
-                  </span>
-                </div>
-              ) : (
-                <p className={ui.muted}>
-                  Maximum of {MAX_PROPERTY_VIDEOS} videos reached. Delete a video
-                  to upload another.
-                </p>
-              )}
-              <p className={ui.muted}>
-                MP4, WebM, or MOV. Maximum {MAX_PROPERTY_VIDEOS} videos.
-                New uploads are saved when you click Save.
-              </p>
             </div>
+            <fieldset disabled={isPending} className={layout.fields}>
+                {kind === "commercial" ? <PropertyDataFields section="commercialInfo" kind={kind} data={readPropertyData(form.property_data?.commercialInfo) || (form.propertySubtype === "shop" ? { commercialType: "Shop" } : null)} onChange={(key, value) => updateData("commercialInfo", key, value)} errors={fieldErrors} /> : null}
+              {kind === "plots" ? (
+                <PropertyDataFields section="plotInfo" fieldKeys={["plotType"]} kind={kind} data={kind === "plots" ? { ...readPropertyData(form.property_data?.plotInfo), plotType: form.propertySubtype === "commercial_plot" ? "Commercial" : "Residential" } : readPropertyData(form.property_data?.plotInfo)} onChange={(key, value) => updateData("plotInfo", key, value)} errors={fieldErrors} />
+              ) : null}
+            </fieldset>
             <label id="field-description" className={ui.field}>
               <span className={ui.label}>Description</span>
               <textarea
@@ -1097,6 +883,10 @@ export default function EditPropertyPage() {
                 <p className={ui.fieldError}>{fieldErrors.description}</p>
               ) : null}
             </label>
+            </section>
+            <section className={layout.section} aria-labelledby="edit-location">
+              <h2 id="edit-location" className={layout.heading}>Location</h2>
+<div className={ui.row2}>
             <label id="field-city" className={ui.field}>
               <span className={ui.label}>City</span>
               <input
@@ -1114,7 +904,7 @@ export default function EditPropertyPage() {
               ) : null}
             </label>
             <label id="field-area" className={ui.field}>
-              <span className={ui.label}>Area</span>
+              <span className={ui.label}>Area / Neighbourhood</span>
               <input
                 className={`${ui.input} ${fieldErrors.area ? ui.inputInvalid : ""}`}
                 value={form.area}
@@ -1130,7 +920,7 @@ export default function EditPropertyPage() {
               ) : null}
             </label>
             <label id="field-phase" className={ui.field}>
-              <span className={ui.label}>Phase</span>
+              <span className={ui.label}>Phase / Sector</span>
               <input
                 className={`${ui.input} ${fieldErrors.phase ? ui.inputInvalid : ""}`}
                 value={form.phase}
@@ -1146,7 +936,7 @@ export default function EditPropertyPage() {
               ) : null}
             </label>
             <label id="field-address" className={ui.field}>
-              <span className={ui.label}>Address</span>
+              <span className={ui.label}>Street Address</span>
               <input
                 className={`${ui.input} ${fieldErrors.address ? ui.inputInvalid : ""}`}
                 value={form.address}
@@ -1161,6 +951,10 @@ export default function EditPropertyPage() {
                 <p className={ui.fieldError}>{fieldErrors.address}</p>
               ) : null}
             </label>
+</div>
+            </section>
+            <section className={layout.section} aria-labelledby="edit-property">
+              <h2 id="edit-property" className={layout.heading}>{["plots", "file"].includes(kind) ? "Plot Information" : "Land Info"}</h2>
             <div id="field-size_value" className={ui.field}>
               <span className={ui.label}>Plot Size</span>
               <PlotSizeInput value={form.size_value} unit={form.size_unit} step={0.01} disabled={isPending} invalid={fieldErrors.size_value} onChange={value => { setForm({ ...form, size_value: value }); clearFieldError("size_value"); }} onUnitChange={value => setForm({ ...form, size_unit: value })} />
@@ -1168,9 +962,8 @@ export default function EditPropertyPage() {
             </div>
             <fieldset id="field-property_data" disabled={isPending} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
               {["house", "apartment", "commercial"].includes(kind) ? <>
-                <h3 className={ui.label}>Land Info</h3>
                 <PropertyDataFields section="landInfo" kind={kind} data={readPropertyData(form.property_data?.landInfo)} onChange={(key, value) => updateData("landInfo", key, value)} errors={fieldErrors} />
-                <h3 className={ui.label}>Property Details</h3>
+                <h2 className={`${layout.heading} ${layout.subsection}`}>Property Details</h2>
                 <PropertyDataFields section="propertyDetails" kind={kind} data={readPropertyData(form.property_data?.propertyDetails)} onChange={(key, value) => updateData("propertyDetails", key, value)} errors={fieldErrors} />
                 <div className={ui.row2}>
                   {["bedrooms", "bathrooms", "parking"].map(key => <label className={ui.field} key={key}>
@@ -1181,11 +974,9 @@ export default function EditPropertyPage() {
                     {fieldErrors[`propertyDetails.${key}`] || fieldErrors[key] ? <p className={ui.fieldError}>{fieldErrors[`propertyDetails.${key}`] || fieldErrors[key]}</p> : null}
                   </label>)}
                 </div>
-                {kind === "commercial" ? <PropertyDataFields section="commercialInfo" kind={kind} data={readPropertyData(form.property_data?.commercialInfo) || (form.propertySubtype === "shop" ? { commercialType: "Shop" } : null)} onChange={(key, value) => updateData("commercialInfo", key, value)} errors={fieldErrors} /> : null}
               </> : null}
               {["plots", "file"].includes(kind) ? <>
-                <h3 className={ui.label}>{kind === "plots" ? "Plot Information" : "Plot Info"}</h3>
-                <PropertyDataFields section="plotInfo" kind={kind} data={kind === "plots" ? { ...readPropertyData(form.property_data?.plotInfo), plotType: form.propertySubtype === "commercial_plot" ? "Commercial" : "Residential" } : readPropertyData(form.property_data?.plotInfo)} onChange={(key, value) => updateData("plotInfo", key, value)} errors={fieldErrors} />
+                <PropertyDataFields section="plotInfo" excludedKeys={kind === "plots" ? ["plotType"] : []} kind={kind} data={kind === "plots" ? { ...readPropertyData(form.property_data?.plotInfo), plotType: form.propertySubtype === "commercial_plot" ? "Commercial" : "Residential" } : readPropertyData(form.property_data?.plotInfo)} onChange={(key, value) => updateData("plotInfo", key, value)} errors={fieldErrors} />
               </> : null}
             </fieldset>
             <div id="field-price" className={ui.field}>
@@ -1207,6 +998,9 @@ export default function EditPropertyPage() {
                 <p className={ui.fieldError}>{fieldErrors.price}</p>
               ) : null}
             </div>
+            </section>
+            <section className={layout.section} aria-labelledby="edit-images">
+              <h2 id="edit-images" className={layout.heading}>Images</h2>
             <div className={ui.field}>
               <span className={ui.label}>Property Images</span>
               {existingImages.length === 0 ? (
@@ -1446,6 +1240,237 @@ export default function EditPropertyPage() {
               ) : null}
             </div>
 
+            </section>
+            <section className={layout.section} aria-labelledby="edit-videos">
+              <h2 id="edit-videos" className={layout.heading}>Videos</h2>
+            <div className={ui.field}>
+              <span className={ui.label}>Property Videos (Optional)</span>
+              {existingVideos.length === 0 && newVideos.length === 0 ? (
+                <p className={ui.muted}>No videos uploaded yet.</p>
+              ) : null}
+
+              {existingVideos.length > 0 ? (
+                <div className={ui.imageManager}>
+                  {existingVideos.map((video, index) => {
+                    const rowKey = `existing:${video.id ?? "legacy"}`;
+                    const title = videoTitle(video, index);
+                    const isFeatured =
+                      featuredVideoKey === rowKey ||
+                      (!featuredVideoKey && Boolean(video.is_featured));
+                    return (
+                      <div
+                        key={video.id ?? `legacy-${index}`}
+                        className={ui.imageCard}
+                      >
+                        <div className={ui.imageCardThumb}>
+                          <button
+                            type="button"
+                            className={ui.thumbPreviewBtn}
+                            aria-label={`Preview ${title}`}
+                            disabled={isPending}
+                            onClick={() => {
+                              setVideoPreviewIndex(index);
+                              setVideoPreviewOpen(true);
+                            }}
+                          >
+                            {video.thumbnail_url || video.thumbnail ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={video.thumbnail_url || video.thumbnail}
+                                alt=""
+                              />
+                            ) : (
+                              <video
+                                src={video.video_url}
+                                muted
+                                playsInline
+                                preload="none"
+                              />
+                            )}
+                            <PropertyWatermark text={watermarkText} compact />
+                            <span
+                              className={ui.thumbPlayOverlay}
+                              aria-hidden="true"
+                            >
+                              <svg viewBox="0 0 24 24" fill="none">
+                                <path
+                                  d="M8 5.5v13l11-6.5-11-6.5z"
+                                  fill="currentColor"
+                                />
+                              </svg>
+                            </span>
+                            {isFeatured ? (
+                              <span className={ui.featuredTag}>Featured</span>
+                            ) : null}
+                          </button>
+                          <button
+                            type="button"
+                            className={ui.thumbRemoveBtn}
+                            disabled={
+                              isPending || deletingVideoKey === rowKey
+                            }
+                            aria-label={`Delete ${title}`}
+                            onClick={() => removeExistingVideo(video, index)}
+                          >
+                            ×
+                          </button>
+                        </div>
+                        <div className={ui.imageCardBody}>
+                          <p className={ui.imageCardLabel}>{title}</p>
+                          <p className={ui.muted}>
+                            Saved video · Order {index + 1}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
+
+              {newVideos.length > 0 ? (
+                <>
+                  <span className={ui.label}>New videos (save to upload)</span>
+                  <div className={ui.imageManager}>
+                    {newVideos.map((item, index) => {
+                      const previewAt = existingVideos.length + index;
+                      return (
+                        <div key={item.key} className={ui.imageCard}>
+                          <div className={ui.imageCardThumb}>
+                            <button
+                              type="button"
+                              className={ui.thumbPreviewBtn}
+                              aria-label={`Preview new video ${index + 1}`}
+                              disabled={isPending}
+                              onClick={() => {
+                                setVideoPreviewIndex(previewAt);
+                                setVideoPreviewOpen(true);
+                              }}
+                            >
+                              <video
+                                src={item.url}
+                                muted
+                                playsInline
+                                preload="metadata"
+                              />
+                              <PropertyWatermark text={watermarkText} compact />
+                              <span
+                                className={ui.thumbPlayOverlay}
+                                aria-hidden="true"
+                              >
+                                <svg viewBox="0 0 24 24" fill="none">
+                                  <path
+                                    d="M8 5.5v13l11-6.5-11-6.5z"
+                                    fill="currentColor"
+                                  />
+                                </svg>
+                              </span>
+                              {featuredVideoKey === `new:${item.key}` ? (
+                                <span className={ui.featuredTag}>Featured</span>
+                              ) : null}
+                            </button>
+                            <button
+                              type="button"
+                              className={ui.thumbRemoveBtn}
+                              disabled={isPending}
+                              aria-label={`Delete new video ${index + 1}`}
+                              onClick={() => removeNewVideo(item.key)}
+                            >
+                              ×
+                            </button>
+                          </div>
+                          <div className={ui.imageCardBody}>
+                            <label className={ui.field}>
+                              <span className={ui.imageCardLabel}>
+                                Category
+                              </span>
+                              <ImageCategorySelect
+                                className={ui.select}
+                                inputClassName={ui.input}
+                                value={item.category}
+                                disabled={isPending}
+                            propertyKind={kind}
+                            mediaType="video"
+                            ariaLabel={`Category for new video ${index + 1}`}
+                                onChange={(category) =>
+                                  setNewVideos((prev) =>
+                                    prev.map((entry) =>
+                                      entry.key === item.key
+                                        ? {
+                                            ...entry,
+                                            category: category || "",
+                                          }
+                                        : entry,
+                                    ),
+                                  )
+                                }
+                              />
+                            </label>
+                            <div className={ui.imageCardMeta}>
+                              <label className={ui.imageCardCheck}>
+                                <input
+                                  type="radio"
+                                  name="featured-video"
+                                  checked={
+                                    featuredVideoKey === `new:${item.key}`
+                                  }
+                                  disabled={isPending}
+                                  onChange={() =>
+                                    setFeaturedVideoKey(`new:${item.key}`)
+                                  }
+                                />
+                                Featured video
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : null}
+
+              {existingVideos.length + newVideos.length < MAX_PROPERTY_VIDEOS ? (
+                <div className={ui.filePicker}>
+                  <input
+                    ref={newVideoInputRef}
+                    type="file"
+                    accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
+                    multiple
+                    className={ui.srOnlyInput}
+                    disabled={isPending}
+                    onChange={(e) => {
+                      addVideos(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className={ui.filePickerBtn}
+                    disabled={isPending}
+                    onClick={() => newVideoInputRef.current?.click()}
+                  >
+                    + Upload More Videos
+                  </button>
+                  <span className={ui.filePickerStatus}>
+                    {existingVideos.length + newVideos.length === 0
+                      ? "No videos selected"
+                      : `${existingVideos.length + newVideos.length} of ${MAX_PROPERTY_VIDEOS} videos`}
+                  </span>
+                </div>
+              ) : (
+                <p className={ui.muted}>
+                  Maximum of {MAX_PROPERTY_VIDEOS} videos reached. Delete a video
+                  to upload another.
+                </p>
+              )}
+              <p className={ui.muted}>
+                MP4, WebM, or MOV. Maximum {MAX_PROPERTY_VIDEOS} videos.
+                New uploads are saved when you click Save.
+              </p>
+            </div>
+            </section>
+            <section className={layout.section} aria-labelledby="edit-insights">
+              <h2 id="edit-insights" className={layout.heading}>Insights &amp; Submission</h2>
             {isPending ? null : (
               <PropertyMarketingSectionsEditor form={form} setForm={updater => setForm(previous => ({ ...(typeof updater === "function" ? updater(previous) : updater), propertyDataDirty: true }))} />
             )}
@@ -1478,6 +1503,7 @@ export default function EditPropertyPage() {
                 Back to list
               </button>
             </div>
+            </section>
           </>
         ) : null}
       </div>
