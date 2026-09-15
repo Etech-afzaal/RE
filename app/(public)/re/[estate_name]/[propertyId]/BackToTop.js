@@ -39,41 +39,13 @@ export default function BackToTop({ revealAtId, revealAtEnd = false }) {
       aria-label="Back to top"
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
     >
-      <svg
-          width="27"
-          height="30"
-          viewBox="0 0 24 26"
-          fill="none"
-          aria-hidden="true"
->
-      {/* Taller top arrow */}
-        <path
-          d="M12 9V2m-3 3L12 2l3 3"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-
-      {/* Slightly taller lift */}
-        <rect
-          x="4"
-          y="9"
-          width="16"
-          height="16"
-          rx="2"
-          stroke="currentColor"
-          strokeWidth="2"
-        />
-
-      {/* Lift doors */}
-       <path
-          d="M4.5 12.5h15M12 12.5v11"
-          stroke="currentColor"
-          strokeWidth="1.8"
-         strokeLinecap="round"
-       />
-      </svg>
+      <img
+        src="/go-top-icon.png"
+        width={27}
+        height={30}
+        alt=""
+        aria-hidden="true"
+      />
     </button>
   );
 }
