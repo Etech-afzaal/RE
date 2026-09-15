@@ -1002,7 +1002,9 @@ export default function EditPropertyPage() {
                                 inputClassName={ui.input}
                                 value={item.category}
                                 disabled={isPending}
-                                ariaLabel={`Category for new video ${index + 1}`}
+                            propertyKind={kind}
+                            mediaType="video"
+                            ariaLabel={`Category for new video ${index + 1}`}
                                 onChange={(category) =>
                                   setNewVideos((prev) =>
                                     prev.map((entry) =>
@@ -1236,7 +1238,9 @@ export default function EditPropertyPage() {
                           inputClassName={ui.input}
                           value={image.category}
                           disabled={isPending}
-                          ariaLabel={`Category for image ${index + 1}`}
+                            propertyKind={kind}
+                            mediaType="image"
+                            ariaLabel={`Category for image ${index + 1}`}
                           onChange={(category) =>
                             updateExistingImage(image.id, { category })
                           }
@@ -1344,7 +1348,9 @@ export default function EditPropertyPage() {
                           inputClassName={ui.input}
                           value={item.category}
                           disabled={isPending}
-                          ariaLabel={`Category for new image ${index + 1}`}
+                            propertyKind={kind}
+                            mediaType="image"
+                            ariaLabel={`Category for new image ${index + 1}`}
                           onChange={(category) =>
                             setNewImages((prev) =>
                               prev.map((entry) =>
