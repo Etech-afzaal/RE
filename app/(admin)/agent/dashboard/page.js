@@ -389,7 +389,7 @@ export default function AgentDashboardPage() {
                 <div style={{ position: "absolute", top: 8, right: 8 }}>
                   <ActionMenu
                     ariaLabel={`Actions for ${property.title}`}
-                    onEdit={() => router.push(`/agent/properties/${property.id}/edit`)}
+                    onEdit={property.status === "pending_approval" ? undefined : () => router.push(`/agent/properties/${property.id}/edit`)}
                     onDelete={() => handleDelete(property.id)}
                   />
                 </div>

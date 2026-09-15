@@ -40,7 +40,7 @@ export default function PropertyListingActions({
   const showQuickResubmit = isRejected;
   const showQuickPendingView = isPending;
 
-  const menuOnEdit = showQuickEdit ? undefined : goToEdit;
+  const menuOnEdit = showQuickEdit || isPending ? undefined : goToEdit;
   const menuOnView =
     property.status === "approved"
       ? () =>
