@@ -24,7 +24,7 @@ import {
 } from "@/lib/agentPublicListingSections";
 import { filterListingGroupsByPreferences } from "@/lib/websiteListingPreferences";
 import { formatAddedDate } from "@/lib/agentPropertyListingHelpers";
-import { isFileProperty, publicListingSubtype } from "@/lib/publicPropertyData";
+import { isFileProperty, publicListingSubtype, publicPropertyCardTypeLabel } from "@/lib/publicPropertyData";
 import styles from "./HomeListings.module.css";
 
 const DESKTOP_PAGE_SIZE = 3;
@@ -293,6 +293,7 @@ function PropertyCard({ property }) {
   const { beds, baths } = parseRoomCounts(property);
   const plotFeatures = isPlot ? parsePlotFeatures(property) : [];
   const subtypeLabel = propertySubtypeLabel(getSubtype(property));
+  const cardTypeLabel = publicPropertyCardTypeLabel(property, subtypeLabel);
   const priceConversion = formatPropertyPriceConversion(
     property.price,
     property.price_currency,
@@ -350,7 +351,7 @@ function PropertyCard({ property }) {
                   {subtypeLabel ? (
                     <span className={styles.attr}>
                       {isFileProperty(property) ? <FileIcon /> : <FeatureIcon />}
-                      {subtypeLabel}
+                      {cardTypeLabel}
                     </span>
                   ) : null}
                   {plotFeatures
@@ -386,7 +387,7 @@ function PropertyCard({ property }) {
                   {subtypeLabel ? (
                     <span className={styles.attr}>
                       {isFileProperty(property) ? <FileIcon /> : <FeatureIcon />}
-                      {subtypeLabel}
+                      {cardTypeLabel}
                     </span>
                   ) : null}
                 </>
