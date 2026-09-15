@@ -1339,6 +1339,8 @@ export default function CreatePropertyPage() {
                             className={ui.select}
                             inputClassName={ui.input}
                             value={item.category}
+                            propertyKind={kind}
+                            mediaType="image"
                             ariaLabel={`Category for image ${index + 1}`}
                             onChange={(category) =>
                               updateImage(index, { category: category || "" })
@@ -1498,6 +1500,8 @@ export default function CreatePropertyPage() {
                             className={ui.select}
                             inputClassName={ui.input}
                             value={item.category}
+                            propertyKind={kind}
+                            mediaType="video"
                             ariaLabel={`Category for video ${index + 1}`}
                             onChange={(category) =>
                               updateVideo(index, { category: category || "" })

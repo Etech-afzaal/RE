@@ -1,7 +1,8 @@
 "use client";
 
 import {
-  IMAGE_CATEGORY_GROUPS,
+  propertyMediaCategoryGroups,
+  imageCategoryLabel,
   OTHER_CATEGORY_VALUE,
   imageCategoryCustomValue,
   imageCategorySelectValue,
@@ -21,8 +22,16 @@ export default function ImageCategorySelect({
   inputClassName,
   inputStyle,
   ariaLabel = "Image category",
+  propertyKind,
+  mediaType = "image",
 }) {
-  const selectValue = imageCategorySelectValue(value);
+  const groups = propertyMediaCategoryGroups(propertyKind, mediaType);
+  const options = groups.flatMap(group => group.categories);
+  const selectedOption = options.find(option => option.value === value);
+  const selectValue = selectedOption ? selectedOption.value : imageCategorySelectValue(value);
+  // Keep legacy categories selected when switching types; never rewrite media.
+  const retainedOption = selectValue && selectValue !== OTHER_CATEGORY_VALUE &&
+    !options.some(option => option.value === selectValue);
   const customValue = imageCategoryCustomValue(value);
   const showCustom = selectValue === OTHER_CATEGORY_VALUE;
 
@@ -49,7 +58,8 @@ export default function ImageCategorySelect({
         }}
       >
         <option value="">Select category</option>
-        {IMAGE_CATEGORY_GROUPS.map((group) => (
+        {retainedOption ? <option value={selectValue}>{imageCategoryLabel(value)}</option> : null}
+        {groups.map((group) => (
           <optgroup key={group.id} label={group.label}>
             {group.categories.map((category) => (
               <option key={category.value} value={category.value}>
