@@ -1144,7 +1144,7 @@ export default function CreatePropertyPage() {
         ) : null}
 
         {step === 1 ? (
-          <>
+          <div className={ui.row2}>
             <label className={ui.field}>
               <span className={ui.label}>
                 City
@@ -1202,7 +1202,7 @@ export default function CreatePropertyPage() {
               />
               <FieldMessage id="address-error" error={fieldErrors.address} />
             </label>
-          </>
+          </div>
         ) : null}
 
         {step === 2 ? (
