@@ -163,6 +163,18 @@ export default function CreatePropertyPage() {
     return [0, 1, 2, steps.IMAGES, steps.VIDEO, steps.ACTIONS][draft.step] ?? 0;
   });
   const stepNavigationRef = useRef(null);
+  const formCardRef = useRef(null);
+
+  useEffect(() => {
+    function closeOutsideDropdowns(event) {
+      formCardRef.current?.querySelectorAll("details[open]").forEach(dropdown => {
+        if (!dropdown.contains(event.target)) dropdown.open = false;
+      });
+    }
+    document.addEventListener("pointerdown", closeOutsideDropdowns, true);
+    return () => document.removeEventListener("pointerdown", closeOutsideDropdowns, true);
+  }, []);
+
   const scrollAfterContinueRef = useRef(false);
 
   useEffect(() => {
@@ -1042,7 +1054,7 @@ export default function CreatePropertyPage() {
           })}
         </nav>
 
-      <div className={`${ui.formCard} ${stepStyles.formControls}`}>
+      <div ref={formCardRef} className={`${ui.formCard} ${stepStyles.formControls}`}>
         {error ? (
           <div className={ui.error}>
             <p className={ui.noticeTitle}>{error}</p>
