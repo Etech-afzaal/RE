@@ -762,7 +762,7 @@ export default function EditPropertyPage() {
           : "Update listing details and submission status"
       }
     >
-      <div className={ui.formCard}>
+      <div className={`${ui.formCard} ${layout.formControls}`}>
         {loading ? (
           <LoadingSpinner
             fullPage={false}
@@ -805,7 +805,7 @@ export default function EditPropertyPage() {
             <p className={ui.muted}>
               Current status: <strong>{String(form.status).replace(/_/g, " ")}</strong>
             </p>
-            <section className={layout.section} aria-labelledby="edit-basic">
+            <section className={`${layout.section} ${layout.uniformFields}`} aria-labelledby="edit-basic">
               <h2 id="edit-basic" className={layout.heading}>Basic Information</h2>
             <label id="field-title" className={ui.field}>
               <span className={ui.label}>Title</span>
@@ -884,7 +884,7 @@ export default function EditPropertyPage() {
               ) : null}
             </label>
             </section>
-            <section className={layout.section} aria-labelledby="edit-location">
+            <section className={`${layout.section} ${layout.uniformFields}`} aria-labelledby="edit-location">
               <h2 id="edit-location" className={layout.heading}>Location</h2>
 <div className={ui.row2}>
             <label id="field-city" className={ui.field}>
@@ -953,32 +953,39 @@ export default function EditPropertyPage() {
             </label>
 </div>
             </section>
-            <section className={layout.section} aria-labelledby="edit-property">
+            <section className={`${layout.section} ${layout.uniformFields}`} aria-labelledby="edit-property">
               <h2 id="edit-property" className={layout.heading}>{["plots", "file"].includes(kind) ? "Plot Information" : "Land Info"}</h2>
-            <div id="field-size_value" className={ui.field}>
+            <fieldset id="field-property_data" disabled={isPending} className={`${layout.fields} ${layout.propertyFields}`}>
+              {["house", "apartment", "commercial"].includes(kind) ? <>
+                <div className={layout.compactSection}>
+                  <PropertyDataFields section="landInfo" kind={kind} data={readPropertyData(form.property_data?.landInfo)} onChange={(key, value) => updateData("landInfo", key, value)} errors={fieldErrors} leadingField={            <div id="field-size_value" className={ui.field}>
               <span className={ui.label}>Plot Size</span>
               <PlotSizeInput value={form.size_value} unit={form.size_unit} step={0.01} disabled={isPending} invalid={fieldErrors.size_value} onChange={value => { setForm({ ...form, size_value: value }); clearFieldError("size_value"); }} onUnitChange={value => setForm({ ...form, size_unit: value })} />
               {fieldErrors.size_value ? <p className={ui.fieldError}>{fieldErrors.size_value}</p> : null}
             </div>
-            <fieldset id="field-property_data" disabled={isPending} style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
-              {["house", "apartment", "commercial"].includes(kind) ? <>
-                <PropertyDataFields section="landInfo" kind={kind} data={readPropertyData(form.property_data?.landInfo)} onChange={(key, value) => updateData("landInfo", key, value)} errors={fieldErrors} />
+} />
+                </div>
                 <h2 className={`${layout.heading} ${layout.subsection}`}>Property Details</h2>
-                <PropertyDataFields section="propertyDetails" kind={kind} data={readPropertyData(form.property_data?.propertyDetails)} onChange={(key, value) => updateData("propertyDetails", key, value)} errors={fieldErrors} />
-                <div className={ui.row2}>
-                  {["bedrooms", "bathrooms", "parking"].map(key => <label className={ui.field} key={key}>
+                <div className={`${ui.row2} ${layout.compactGrid}`}>
+                  <PropertyDataFields section="propertyDetails" kind={kind} data={readPropertyData(form.property_data?.propertyDetails)} onChange={(key, value) => updateData("propertyDetails", key, value)} errors={fieldErrors} fieldKeys={["coveredArea", "floors"]} unwrapped />
+                  {["bedrooms", "bathrooms"].map(key => <label className={ui.field} key={key}>
                     <span className={ui.label}>{key[0].toUpperCase() + key.slice(1)}</span>
                     {key === "parking" ? <select className={ui.select} value={form.parking || ""} onChange={e => updateData("propertyDetails", key, e.target.value)}>
                       <option value="">Select parking</option>{["1 car", "2 cars", "3 cars", "4 cars+"].map(value => <option key={value}>{value}</option>)}{["Yes", "No"].includes(form.parking) ? <option>{form.parking}</option> : null}
                     </select> : <PropertyNumberInput className={ui.input} step={1} max={99} value={form[key] ?? ""} onChange={value => updateData("propertyDetails", key, value)} />}
                     {fieldErrors[`propertyDetails.${key}`] || fieldErrors[key] ? <p className={ui.fieldError}>{fieldErrors[`propertyDetails.${key}`] || fieldErrors[key]}</p> : null}
                   </label>)}
-                </div>
-              </> : null}
-              {["plots", "file"].includes(kind) ? <>
-                <PropertyDataFields section="plotInfo" excludedKeys={kind === "plots" ? ["plotType"] : []} kind={kind} data={kind === "plots" ? { ...readPropertyData(form.property_data?.plotInfo), plotType: form.propertySubtype === "commercial_plot" ? "Commercial" : "Residential" } : readPropertyData(form.property_data?.plotInfo)} onChange={(key, value) => updateData("plotInfo", key, value)} errors={fieldErrors} />
-              </> : null}
-            </fieldset>
+
+                  <PropertyDataFields section="propertyDetails" kind={kind} data={readPropertyData(form.property_data?.propertyDetails)} onChange={(key, value) => updateData("propertyDetails", key, value)} errors={fieldErrors} fieldKeys={["kitchens"]} unwrapped />
+                  {["parking"].map(key => <label className={ui.field} key={key}>
+                    <span className={ui.label}>{key[0].toUpperCase() + key.slice(1)}</span>
+                    {key === "parking" ? <select className={ui.select} value={form.parking || ""} onChange={e => updateData("propertyDetails", key, e.target.value)}>
+                      <option value="">Select parking</option>{["1 car", "2 cars", "3 cars", "4 cars+"].map(value => <option key={value}>{value}</option>)}{["Yes", "No"].includes(form.parking) ? <option>{form.parking}</option> : null}
+                    </select> : <PropertyNumberInput className={ui.input} step={1} max={99} value={form[key] ?? ""} onChange={value => updateData("propertyDetails", key, value)} />}
+                    {fieldErrors[`propertyDetails.${key}`] || fieldErrors[key] ? <p className={ui.fieldError}>{fieldErrors[`propertyDetails.${key}`] || fieldErrors[key]}</p> : null}
+                  </label>)}
+
+                  <PropertyDataFields section="propertyDetails" kind={kind} data={readPropertyData(form.property_data?.propertyDetails)} onChange={(key, value) => updateData("propertyDetails", key, value)} errors={fieldErrors} fieldKeys={["amenities"]} unwrapped />
             <div id="field-price" className={ui.field}>
               <span className={ui.label}>Price</span>
               <PriceCurrencyInput
@@ -998,6 +1005,40 @@ export default function EditPropertyPage() {
                 <p className={ui.fieldError}>{fieldErrors.price}</p>
               ) : null}
             </div>
+
+                  <PropertyDataFields section="propertyDetails" kind={kind} data={readPropertyData(form.property_data?.propertyDetails)} onChange={(key, value) => updateData("propertyDetails", key, value)} errors={fieldErrors} fieldKeys={["lounge"]} unwrapped />
+                </div>
+              </> : null}
+              {["plots", "file"].includes(kind) ? <>
+            <div id="field-size_value" className={ui.field}>
+              <span className={ui.label}>Plot Size</span>
+              <PlotSizeInput value={form.size_value} unit={form.size_unit} step={0.01} disabled={isPending} invalid={fieldErrors.size_value} onChange={value => { setForm({ ...form, size_value: value }); clearFieldError("size_value"); }} onUnitChange={value => setForm({ ...form, size_unit: value })} />
+              {fieldErrors.size_value ? <p className={ui.fieldError}>{fieldErrors.size_value}</p> : null}
+            </div>
+
+                <PropertyDataFields section="plotInfo" excludedKeys={kind === "plots" ? ["plotType"] : []} kind={kind} data={kind === "plots" ? { ...readPropertyData(form.property_data?.plotInfo), plotType: form.propertySubtype === "commercial_plot" ? "Commercial" : "Residential" } : readPropertyData(form.property_data?.plotInfo)} onChange={(key, value) => updateData("plotInfo", key, value)} errors={fieldErrors} />
+            <div id="field-price" className={ui.field}>
+              <span className={ui.label}>Price</span>
+              <PriceCurrencyInput
+                amount={form.price}
+                currency={form.price_currency}
+                disabled={isPending}
+                invalid={Boolean(fieldErrors.price)}
+                onAmountChange={(value) => {
+                  setForm({ ...form, price: value });
+                  clearFieldError("price");
+                }}
+                onCurrencyChange={(value) =>
+                  setForm({ ...form, price_currency: value })
+                }
+              />
+              {fieldErrors.price ? (
+                <p className={ui.fieldError}>{fieldErrors.price}</p>
+              ) : null}
+            </div>
+
+              </> : null}
+            </fieldset>
             </section>
             <section className={layout.section} aria-labelledby="edit-images">
               <h2 id="edit-images" className={layout.heading}>Images</h2>
