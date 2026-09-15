@@ -1144,7 +1144,7 @@ export default function CreatePropertyPage() {
         ) : null}
 
         {step === 1 ? (
-          <div className={ui.row2}>
+          <div className={`${ui.row2} ${stepStyles.compactGrid}`}>
             <label className={ui.field}>
               <span className={ui.label}>
                 City
@@ -1206,7 +1206,7 @@ export default function CreatePropertyPage() {
         ) : null}
 
         {step === 2 ? (
-          <>
+          <div className={stepStyles.compactSection}>
             <PropertyDataFields section={["plots", "file"].includes(kind) ? "plotInfo" : "landInfo"} kind={kind} data={form.property_data?.[["plots", "file"].includes(kind) ? "plotInfo" : "landInfo"]} onChange={(key, value) => updateData(["plots", "file"].includes(kind) ? "plotInfo" : "landInfo", key, value)} errors={fieldErrors} excludedKeys={kind === "plots" ? ["plotType"] : []} leadingField={
             <div className={ui.field}>
               <span className={ui.label}>Plot Size<RequiredMark /></span>
@@ -1226,12 +1226,12 @@ export default function CreatePropertyPage() {
               />
               <FieldMessage id="price-error" error={fieldErrors.price} />
             </div> : null} />
-          </>
+          </div>
         ) : null}
 
         {step === PROPERTY_WIZARD_STEPS.DETAILS && !["plots", "file"].includes(kind) ? (
           <>
-            <div className={ui.row2}>
+            <div className={`${ui.row2} ${stepStyles.compactGrid}`}>
             {!["plots", "file"].includes(kind) ? <>
               <PropertyDataFields section="propertyDetails" kind={kind} data={form.property_data?.propertyDetails} onChange={(key, value) => updateData("propertyDetails", key, value)} errors={fieldErrors} fieldKeys={["coveredArea","floors"]} unwrapped />
               <label className={ui.field}>
