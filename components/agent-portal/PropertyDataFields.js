@@ -4,10 +4,11 @@ import { fieldsForSection } from "@/lib/propertyData";
 import ui from "./portal.module.css";
 import PropertyNumberInput from "./PropertyNumberInput";
 import PropertyAmenitiesInput from "./PropertyAmenitiesInput";
+import CommercialTypeInput from "./CommercialTypeInput";
 import { Fragment } from "react";
 
 export default function PropertyDataFields({ section, kind, data, onChange, errors = {}, leadingField, trailingField, fieldKeys, excludedKeys = [], unwrapped = false }) {
-  const fields = fieldsForSection(section, kind).filter(field => (!fieldKeys || fieldKeys.includes(field.key)) && !excludedKeys.includes(field.key));
+  const fields = fieldsForSection(section, kind).filter(field => (!fieldKeys || fieldKeys.includes(field.key)) && !excludedKeys.includes(field.key) && field.key !== "commercialTypeOther");
   const Wrapper = unwrapped ? Fragment : "div";
   const orderedFields = leadingField && section === "landInfo"
     ? ["plotPosition", "front", "dimension", "depth", "roadWidth"].map(key => fields.find(field => field.key === key))
@@ -18,6 +19,11 @@ export default function PropertyDataFields({ section, kind, data, onChange, erro
       const value = data?.[key] ?? (key === "amenities" && options ? [] : "");
       const error = errors[`${section}.${key}`];
       const id = `${section}-${key}`;
+      if (key === "commercialType") return <fieldset key={key} className={ui.field} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+        <legend className={ui.label}>{label}</legend>
+        <CommercialTypeInput value={value} customValue={data?.commercialTypeOther || ""} options={options} error={error || errors[`${section}.commercialTypeOther`]} onChange={(type, custom) => { onChange("commercialType", type); onChange("commercialTypeOther", custom); }} />
+        <p className={ui.fieldMessage} role={error || errors[`${section}.commercialTypeOther`] ? "alert" : undefined}>{error || errors[`${section}.commercialTypeOther`] || ""}</p>
+      </fieldset>;
       if (key === "amenities") return <fieldset key={key} className={ui.field} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         <legend className={ui.label}>{label}</legend>
         <PropertyAmenitiesInput key={`${kind}-${section}`} value={value} options={options || ["Electricity", "Gas", "Sewerage", "Water", "Lounge", "Others"]} onChange={value => onChange(key, value)} />

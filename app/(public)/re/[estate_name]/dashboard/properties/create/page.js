@@ -42,6 +42,7 @@ import PlotSizeInput from "@/components/agent-portal/PlotSizeInput";
 import PropertyNumberInput from "@/components/agent-portal/PropertyNumberInput";
 import PropertyDataFields from "@/components/agent-portal/PropertyDataFields";
 import ui from "@/components/agent-portal/portal.module.css";
+import stepStyles from "./steps.module.css";
 import PropertyMarketingSectionsEditor from "@/components/agent-portal/PropertyMarketingSectionsEditor";
 import { persistDraftFiles, loadDraftFiles, clearDraftFiles } from "@/lib/propertyDraftFiles";
 
@@ -998,26 +999,30 @@ export default function CreatePropertyPage() {
       title="Add Property"
       subtitle="Create a draft or submit for approval"
     >
-      <div className={ui.formCard}>
-        <div className={ui.steps}>
+        <nav className={stepStyles.steps} aria-label="Add Property steps">
           {STEPS.map((label, index) => {
             const isActive = step === index;
             // Only mark steps the user has already passed, and that still validate.
             const isComplete = index < step && isStepComplete(index);
             return (
-              <button
+              <div
                 key={label}
-                type="button"
-                className={`${ui.stepPill} ${isActive ? ui.stepPillActive : ""} ${isComplete ? ui.stepPillCompleted : ""}`}
-                aria-current={isActive ? "step" : undefined}
-                onClick={() => handleStepClick(index)}
+                className={`${stepStyles.step} ${isActive ? stepStyles.active : ""} ${isComplete ? stepStyles.completed : ""}`}
               >
-                {index + 1}. {label}
-              </button>
+                <button
+                  type="button"
+                  className={stepStyles.label}
+                  aria-current={isActive ? "step" : undefined}
+                  onClick={() => handleStepClick(index)}
+                >
+                  {label}
+                </button>
+              </div>
             );
           })}
-        </div>
+        </nav>
 
+      <div className={ui.formCard}>
         {error ? (
           <div className={ui.error}>
             <p className={ui.noticeTitle}>{error}</p>
@@ -1049,6 +1054,7 @@ export default function CreatePropertyPage() {
               />
               <FieldMessage id="title-error" error={fieldErrors.title} />
             </label>
+            <div className={ui.row2}>
             <label className={ui.field}>
               <span className={ui.label}>
                 Listing Type
@@ -1069,6 +1075,7 @@ export default function CreatePropertyPage() {
                 error={fieldErrors.propertyType}
               />
             </label>
+            <div>
             <label className={ui.field}>
               <span className={ui.label}>
                 Property Type
@@ -1093,8 +1100,10 @@ export default function CreatePropertyPage() {
                 error={fieldErrors.propertySubtype}
               />
             </label>
-            {kind === "commercial" ? <PropertyDataFields section="commercialInfo" kind={kind} data={form.property_data?.commercialInfo} onChange={(key, value) => updateData("commercialInfo", key, value)} errors={fieldErrors} /> : null}
-            {kind === "plots" ? <PropertyDataFields section="plotInfo" kind={kind} fieldKeys={["plotType"]} data={{ ...form.property_data?.plotInfo, plotType: form.propertySubtype === "commercial_plot" ? "Commercial" : "Residential" }} onChange={(key, value) => updateData("plotInfo", key, value)} errors={fieldErrors} /> : null}
+            {kind === "commercial" ? <PropertyDataFields section="commercialInfo" kind={kind} data={form.property_data?.commercialInfo} onChange={(key, value) => updateData("commercialInfo", key, value)} errors={fieldErrors} unwrapped /> : null}
+            {kind === "plots" ? <PropertyDataFields section="plotInfo" kind={kind} fieldKeys={["plotType"]} data={{ ...form.property_data?.plotInfo, plotType: form.propertySubtype === "commercial_plot" ? "Commercial" : "Residential" }} onChange={(key, value) => updateData("plotInfo", key, value)} errors={fieldErrors} unwrapped /> : null}
+            </div>
+            </div>
             <label className={ui.field}>
               <span className={ui.label}>Description</span>
               <textarea
