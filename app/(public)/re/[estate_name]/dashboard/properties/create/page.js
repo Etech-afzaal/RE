@@ -1022,7 +1022,7 @@ export default function CreatePropertyPage() {
           })}
         </nav>
 
-      <div className={ui.formCard}>
+      <div className={`${ui.formCard} ${stepStyles.formControls}`}>
         {error ? (
           <div className={ui.error}>
             <p className={ui.noticeTitle}>{error}</p>
