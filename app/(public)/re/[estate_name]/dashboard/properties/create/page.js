@@ -162,6 +162,25 @@ export default function CreatePropertyPage() {
     const steps = propertyWizardSteps(propertyKind(draft.form?.propertyType, draft.form?.propertySubtype));
     return [0, 1, 2, steps.IMAGES, steps.VIDEO, steps.ACTIONS][draft.step] ?? 0;
   });
+  const stepNavigationRef = useRef(null);
+  const scrollAfterContinueRef = useRef(false);
+
+  useEffect(() => {
+    if (!scrollAfterContinueRef.current) return;
+    scrollAfterContinueRef.current = false;
+    const frame = requestAnimationFrame(() => {
+      let container = stepNavigationRef.current?.parentElement;
+      while (container && container !== document.body) {
+        if (/^(auto|scroll)$/.test(window.getComputedStyle(container).overflowY)) {
+          container.scrollTo({ top: 0, behavior: "smooth" });
+        }
+        container = container.parentElement;
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [step]);
+
   const [error, setError] = useState("");
   const [errorDetails, setErrorDetails] = useState([]);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -741,6 +760,7 @@ export default function CreatePropertyPage() {
       return;
     }
     clearStepFeedback();
+    scrollAfterContinueRef.current = true;
     setStep((s) => Math.min(PROPERTY_WIZARD_STEPS.ACTIONS, s + 1));
   }
 
@@ -999,7 +1019,7 @@ export default function CreatePropertyPage() {
       title="Add Property"
       subtitle="Create a draft or submit for approval"
     >
-        <nav className={stepStyles.steps} aria-label="Add Property steps">
+      <nav ref={stepNavigationRef} className={stepStyles.steps} aria-label="Add Property steps">
           {STEPS.map((label, index) => {
             const isActive = step === index;
             // Only mark steps the user has already passed, and that still validate.
