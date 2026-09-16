@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { CircleCheck, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ImagePreviewModal from "@/components/ImagePreviewModal";
@@ -13,6 +14,7 @@ import { formatPropertyPrice } from "@/lib/formatPrice";
 import { propertySubtypeLabel } from "@/lib/propertyTaxonomy";
 import { getPropertyUrl } from "@/lib/propertySlug";
 import styles from "@/components/admin/adminUi.module.css";
+import reviewStyles from "./ReviewClient.module.css";
 
 const STATUS_BADGE = {
   approved: "badgeSuccess",
@@ -54,6 +56,9 @@ export default function ReviewClient({ propertyId }) {
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [approved, setApproved] = useState(false);
+  const reviewLock = useRef(false);
+  const redirectTimer = useRef(null);
   const [rejecting, setRejecting] = useState(false);
   const [error, setError] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -80,9 +85,14 @@ export default function ReviewClient({ propertyId }) {
     load();
   }, [load]);
 
+  useEffect(() => () => clearTimeout(redirectTimer.current), []);
+
   async function review(status, rejectedReason) {
+    if (reviewLock.current) return;
+    reviewLock.current = true;
     setBusy(true);
     setError("");
+    let navigating = false;
     try {
       const res = await fetch(`/api/admin/properties/${propertyId}`, {
         method: "PATCH",
@@ -96,12 +106,22 @@ export default function ReviewClient({ propertyId }) {
         return;
       }
       setRejecting(false);
-      router.push("/admin/dashboard/approvals");
-      router.refresh();
+      navigating = true;
+      if (status === "approved") {
+        setApproved(true);
+        redirectTimer.current = setTimeout(() => {
+          router.push("/admin/dashboard/approvals");
+        }, 700);
+      } else {
+        router.push("/admin/dashboard/approvals");
+      }
     } catch {
       setError("Could not update this property.");
     } finally {
-      setBusy(false);
+      if (!navigating) {
+        reviewLock.current = false;
+        setBusy(false);
+      }
     }
   }
 
@@ -153,6 +173,16 @@ export default function ReviewClient({ propertyId }) {
       </Link>
 
       {error ? <p className={styles.noticeDanger}>{error}</p> : null}
+
+      {approved ? (
+        <div className={reviewStyles.successOverlay}>
+          <div className={reviewStyles.successCard} role="status" aria-live="polite">
+            <CircleCheck size={48} aria-hidden="true" />
+            <h2>Property approved</h2>
+            <p>Returning to approvals…</p>
+          </div>
+        </div>
+      ) : null}
 
       <div className={styles.reviewGrid}>
         <div>
@@ -269,7 +299,12 @@ export default function ReviewClient({ propertyId }) {
                     disabled={busy}
                     onClick={() => review("approved")}
                   >
-                    {busy ? "Working…" : "Approve Property"}
+                    {busy && !rejecting ? (
+                      <span className={reviewStyles.buttonProgress}>
+                        {approved ? <CircleCheck size={18} aria-hidden="true" /> : <LoaderCircle size={18} className={reviewStyles.spinner} aria-hidden="true" />}
+                        {approved ? "Approved" : "Approving…"}
+                      </span>
+                    ) : "Approve Property"}
                   </button>
                   <button
                     type="button"

@@ -40,7 +40,7 @@ import {
   propertySubtypeLabel,
 } from "@/lib/propertyTaxonomy";
 import styles from "./page.module.css";
-import { publicPropertyDetails, publicPropertyInsight } from "@/lib/publicPropertyData";
+import { publicPropertyDetails, publicPropertyInsight, apartmentCoveredAreaLabel } from "@/lib/publicPropertyData";
 import "@/app/agent-public-theme.css";
 
 const formatPrice = (price, currency) =>
@@ -510,7 +510,9 @@ export default async function PropertyDetailPage({ params, searchParams }) {
   }
 
   const companyName = companyNameFromAgent(agent);
-  const sizeLabel = formatSize(property.size_value, property.size_unit);
+  const sizeLabel = property.property_subtype === "apartment"
+    ? apartmentCoveredAreaLabel(property) || formatSize(property.size_value, property.size_unit)
+    : formatSize(property.size_value, property.size_unit);
   const locationInfo = resolveLocationInfo(property);
   const dynamicDetails = publicPropertyDetails(property);
   const attrs = { ...parsePropertyAttributes(property), ...dynamicDetails.attributes };
