@@ -101,7 +101,8 @@ export default function PriceCurrencyInput({
         onChange={(event) => {
           const { value, selectionStart } = event.target;
           caretRef.current = value.slice(0, selectionStart ?? value.length).replace(/,/g, "").length;
-          onAmountChange?.(value.replace(/,/g, ""));
+          const raw = value.replace(/,/g, "").replace(/^0+(?=\d)/, "");
+          onAmountChange?.(raw);
         }}
       />
       <div className={ui.priceCurrencyWrap}>
