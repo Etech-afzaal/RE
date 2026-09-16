@@ -777,6 +777,25 @@
   z-index: 1;
 }
 
+@media (min-width: 861px) {
+  .videoSection {
+    container-type: inline-size;
+  }
+
+  .videoFrame {
+    min-height: 0;
+    height: calc((100cqw - 280px - 1rem) * 9 / 16);
+  }
+
+  .videoContent {
+    min-height: 0;
+    height: 100%;
+    padding: 1rem;
+    overflow-y: auto;
+    justify-content: safe center;
+  }
+}
+
 .videoPlay {
   display: grid;
   place-items: center;
