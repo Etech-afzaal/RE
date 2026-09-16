@@ -308,6 +308,18 @@
   font-size: 0.76rem;
 }
 
+/* Match the desktop playlist player's height without narrowing a solo video. */
+@media (min-width: 861px) {
+  .gallerySolo:not(.galleryCompact) {
+    container-type: inline-size;
+  }
+
+  .gallerySolo:not(.galleryCompact) .frame {
+    aspect-ratio: auto;
+    height: calc((100cqw - 280px - 1rem) * 9 / 16);
+  }
+}
+
 /* ---------- Mobile: player first, horizontal strip ---------- */
 @media (max-width: 860px) {
   .gallerySplit {
