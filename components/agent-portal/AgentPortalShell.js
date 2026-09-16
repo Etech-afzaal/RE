@@ -8,7 +8,7 @@ import {
   SidebarTooltip,
   useSidebarTooltip,
 } from "@/components/SidebarTooltip";
-import { useSidebarCollapsed } from "@/lib/useSidebarCollapsed";
+import { useAgentSidebar } from "./AgentSidebarProvider";
 import { useCompactDashboardHeader } from "@/lib/useCompactDashboardHeader";
 import styles from "./AgentPortalShell.module.css";
 
@@ -195,9 +195,7 @@ export default function AgentPortalShell({
   const pathname = usePathname();
   const { headerRef, compact, spacerHeight } = useCompactDashboardHeader();
   const [open, setOpen] = useState(false);
-  const { collapsed, toggleCollapsed } = useSidebarCollapsed(
-    "agent.sidebarCollapsed",
-  );
+  const { collapsed, toggleCollapsed } = useAgentSidebar();
   const { tip, tipHandlers, hideTooltip } = useSidebarTooltip(collapsed);
   const base = `/re/${encodeURIComponent(username)}/dashboard`;
   const items = useMemo(() => navItems(base), [base]);
