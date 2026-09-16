@@ -25,7 +25,7 @@ import {
 } from "@/lib/agentPublicListingSections";
 import { filterListingGroupsByPreferences } from "@/lib/websiteListingPreferences";
 import { formatAddedDate } from "@/lib/agentPropertyListingHelpers";
-import { isFileProperty, publicListingSubtype, publicPropertyCardTypeLabel } from "@/lib/publicPropertyData";
+import { isFileProperty, publicListingSubtype, publicPropertyCardTypeLabel, apartmentCoveredAreaLabel } from "@/lib/publicPropertyData";
 import styles from "./HomeListings.module.css";
 
 const DESKTOP_PAGE_SIZE = 3;
@@ -286,7 +286,9 @@ function FileIcon() {
 }
 
 function PropertyCard({ property }) {
-  const sizeLabel = formatSizeLabel(property.size_value, property.size_unit);
+  const sizeLabel = property.property_subtype === "apartment"
+    ? apartmentCoveredAreaLabel(property) || formatSizeLabel(property.size_value, property.size_unit)
+    : formatSizeLabel(property.size_value, property.size_unit);
   const location = formatPropertyLocation(property) || "";
   const title = property.title || location || "Property";
   const category = getCategory(property);
