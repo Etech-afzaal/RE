@@ -1,4 +1,5 @@
 "use client";
+import FilePropertyPlaceholder from "@/components/FilePropertyPlaceholder";
 
 import ClearableSearchInput from "@/components/ClearableSearchInput";
 
@@ -315,7 +316,7 @@ function PropertyCard({ property }) {
             className={styles.image}
           />
         ) : (
-          <div className={styles.fallback} />
+          property.property_subtype === "file" ? <FilePropertyPlaceholder fill /> : <div className={styles.fallback} />
         )}
       </div>
 

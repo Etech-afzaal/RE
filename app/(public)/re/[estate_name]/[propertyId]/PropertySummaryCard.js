@@ -1,4 +1,5 @@
 import Image from "next/image";
+import FilePropertyPlaceholder from "@/components/FilePropertyPlaceholder";
 import ExpandableText from "./ExpandableText";
 import styles from "./PropertySummaryCard.module.css";
 
@@ -201,6 +202,7 @@ function IdIcon() {
 export default function PropertySummaryCard({
   title,
   imageUrl,
+  isFile = false,
   imageAlt,
   address,
   phase,
@@ -263,7 +265,7 @@ export default function PropertySummaryCard({
               className={styles.mediaImage}
             />
           ) : (
-            <div className={styles.mediaFallback} aria-hidden="true" />
+            isFile ? <FilePropertyPlaceholder fill /> : <div className={styles.mediaFallback} aria-hidden="true" />
           )}
         </div>
 

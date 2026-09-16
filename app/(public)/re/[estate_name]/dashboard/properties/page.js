@@ -1,4 +1,5 @@
 "use client";
+import FilePropertyPlaceholder from "@/components/FilePropertyPlaceholder";
 
 import ClearableSearchInput from "@/components/ClearableSearchInput";
 
@@ -309,10 +310,10 @@ export default function AgentPropertiesPage() {
                               className={ui.thumbButton}
                               aria-label={`Edit ${property.title}`}
                             >
-                              <div className={ui.thumbFallback}>P</div>
+                              <div className={ui.thumbFallback}>{property.property_subtype === "file" ? <FilePropertyPlaceholder size={28} /> : "P"}</div>
                             </Link>
                           ) : (
-                            <div className={ui.thumbFallback}>P</div>
+                            <div className={ui.thumbFallback}>{property.property_subtype === "file" ? <FilePropertyPlaceholder size={28} /> : "P"}</div>
                           )}
                           <div>
                             {linksToEdit ? (
