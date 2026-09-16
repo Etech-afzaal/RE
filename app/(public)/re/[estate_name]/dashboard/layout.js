@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { isAgentRole } from "@/lib/roles";
+import AgentSidebarProvider from "@/components/agent-portal/AgentSidebarProvider";
 
 export default async function AgentAdminAreaLayout({ children, params }) {
   const session = await getServerSession(authOptions);
@@ -18,5 +19,5 @@ export default async function AgentAdminAreaLayout({ children, params }) {
     redirect(`/re/${encodeURIComponent(tokenUsername)}/dashboard`);
   }
 
-  return children;
+  return <AgentSidebarProvider>{children}</AgentSidebarProvider>;
 }
