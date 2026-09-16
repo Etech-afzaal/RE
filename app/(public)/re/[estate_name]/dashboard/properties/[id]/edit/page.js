@@ -1006,7 +1006,6 @@ export default function EditPropertyPage() {
               ) : null}
             </div>
 
-                  <PropertyDataFields section="propertyDetails" kind={kind} data={readPropertyData(form.property_data?.propertyDetails)} onChange={(key, value) => updateData("propertyDetails", key, value)} errors={fieldErrors} fieldKeys={["lounge"]} unwrapped />
                 </div>
               </> : null}
               {["plots", "file"].includes(kind) ? <>
