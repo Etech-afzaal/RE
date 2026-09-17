@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CircleCheck, LoaderCircle } from "lucide-react";
+import { CircleCheck, CircleX, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ImagePreviewModal from "@/components/ImagePreviewModal";
@@ -56,9 +56,9 @@ export default function ReviewClient({ propertyId }) {
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [approved, setApproved] = useState(false);
+  const [reviewAction, setReviewAction] = useState(null);
+  const [reviewComplete, setReviewComplete] = useState(false);
   const reviewLock = useRef(false);
-  const redirectTimer = useRef(null);
   const [rejecting, setRejecting] = useState(false);
   const [error, setError] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -85,12 +85,12 @@ export default function ReviewClient({ propertyId }) {
     load();
   }, [load]);
 
-  useEffect(() => () => clearTimeout(redirectTimer.current), []);
 
   async function review(status, rejectedReason) {
     if (reviewLock.current) return;
     reviewLock.current = true;
     setBusy(true);
+    setReviewAction(status);
     setError("");
     let navigating = false;
     try {
@@ -107,20 +107,15 @@ export default function ReviewClient({ propertyId }) {
       }
       setRejecting(false);
       navigating = true;
-      if (status === "approved") {
-        setApproved(true);
-        redirectTimer.current = setTimeout(() => {
-          router.push("/admin/dashboard/approvals");
-        }, 700);
-      } else {
-        router.push("/admin/dashboard/approvals");
-      }
+      setReviewComplete(true);
+      router.push("/admin/dashboard/approvals");
     } catch {
       setError("Could not update this property.");
     } finally {
       if (!navigating) {
         reviewLock.current = false;
         setBusy(false);
+        setReviewAction(null);
       }
     }
   }
@@ -174,11 +169,11 @@ export default function ReviewClient({ propertyId }) {
 
       {error ? <p className={styles.noticeDanger}>{error}</p> : null}
 
-      {approved ? (
+      {reviewComplete ? (
         <div className={reviewStyles.successOverlay}>
-          <div className={reviewStyles.successCard} role="status" aria-live="polite">
-            <CircleCheck size={48} aria-hidden="true" />
-            <h2>Property approved</h2>
+          <div className={reviewStyles.successCard} style={reviewAction === "rejected" ? { color: "#b91c1c" } : undefined} role="status" aria-live="polite">
+            {reviewAction === "approved" ? <CircleCheck size={48} aria-hidden="true" /> : <CircleX size={48} aria-hidden="true" />}
+            <h2>{reviewAction === "approved" ? "Property approved" : "Property rejected"}</h2>
             <p>Returning to approvals…</p>
           </div>
         </div>
@@ -299,10 +294,10 @@ export default function ReviewClient({ propertyId }) {
                     disabled={busy}
                     onClick={() => review("approved")}
                   >
-                    {busy && !rejecting ? (
+                    {busy && reviewAction === "approved" ? (
                       <span className={reviewStyles.buttonProgress}>
-                        {approved ? <CircleCheck size={18} aria-hidden="true" /> : <LoaderCircle size={18} className={reviewStyles.spinner} aria-hidden="true" />}
-                        {approved ? "Approved" : "Approving…"}
+                        {reviewComplete ? <CircleCheck size={18} aria-hidden="true" /> : <LoaderCircle size={18} className={reviewStyles.spinner} aria-hidden="true" />}
+                        {reviewComplete ? "Approved" : "Approving…"}
                       </span>
                     ) : "Approve Property"}
                   </button>
@@ -312,7 +307,12 @@ export default function ReviewClient({ propertyId }) {
                     disabled={busy}
                     onClick={() => setRejecting(true)}
                   >
-                    Reject Property
+                    {busy && reviewAction === "rejected" ? (
+                      <span className={reviewStyles.buttonProgress}>
+                        {reviewComplete ? <CircleX size={18} aria-hidden="true" /> : <LoaderCircle size={18} className={reviewStyles.spinner} aria-hidden="true" />}
+                        {reviewComplete ? "Rejected" : "Rejecting…"}
+                      </span>
+                    ) : "Reject Property"}
                   </button>
                 </div>
               ) : isRejected ? (
