@@ -1008,14 +1008,14 @@ export default function EditPropertyPage() {
 
                 </div>
               </> : null}
-              {["plots", "file"].includes(kind) ? <>
+              {["plots", "file"].includes(kind) ? <div className={`${ui.row2} ${layout.compactGrid}`}>
             <div id="field-size_value" className={ui.field}>
               <span className={ui.label}>Plot Size</span>
               <PlotSizeInput value={form.size_value} unit={form.size_unit} step={0.01} disabled={isPending} invalid={fieldErrors.size_value} onChange={value => { setForm({ ...form, size_value: value }); clearFieldError("size_value"); }} onUnitChange={value => setForm({ ...form, size_unit: value })} />
               {fieldErrors.size_value ? <p className={ui.fieldError}>{fieldErrors.size_value}</p> : null}
             </div>
 
-                <PropertyDataFields section="plotInfo" excludedKeys={kind === "plots" ? ["plotType"] : []} kind={kind} data={kind === "plots" ? { ...readPropertyData(form.property_data?.plotInfo), plotType: form.propertySubtype === "commercial_plot" ? "Commercial" : "Residential" } : readPropertyData(form.property_data?.plotInfo)} onChange={(key, value) => updateData("plotInfo", key, value)} errors={fieldErrors} />
+                <PropertyDataFields section="plotInfo" excludedKeys={kind === "plots" ? ["plotType"] : []} kind={kind} data={kind === "plots" ? { ...readPropertyData(form.property_data?.plotInfo), plotType: form.propertySubtype === "commercial_plot" ? "Commercial" : "Residential" } : readPropertyData(form.property_data?.plotInfo)} onChange={(key, value) => updateData("plotInfo", key, value)} errors={fieldErrors} unwrapped />
             <div id="field-price" className={ui.field}>
               <span className={ui.label}>Price</span>
               <PriceCurrencyInput
@@ -1036,7 +1036,7 @@ export default function EditPropertyPage() {
               ) : null}
             </div>
 
-              </> : null}
+              </div> : null}
             </fieldset>
             </section>
             <section className={layout.section} aria-labelledby="edit-images">
