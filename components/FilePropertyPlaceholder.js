@@ -10,6 +10,8 @@ export default function FilePropertyPlaceholder({ size = 80, fill = false }) {
         display: "grid",
         placeItems: "center",
         background: "#f3eee3",
+        borderRadius: "inherit",
+        overflow: "hidden",
         color: "#a88945",
       }}
     >
