@@ -868,24 +868,6 @@ export default function EditPropertyPage() {
                 <PropertyDataFields section="plotInfo" fieldKeys={["plotType"]} kind={kind} data={kind === "plots" ? { ...readPropertyData(form.property_data?.plotInfo), plotType: form.propertySubtype === "commercial_plot" ? "Commercial" : "Residential" } : readPropertyData(form.property_data?.plotInfo)} onChange={(key, value) => updateData("plotInfo", key, value)} errors={fieldErrors} />
               ) : null}
             </fieldset>
-            <label id="field-description" className={ui.field}>
-              <span className={ui.label}>Description</span>
-              <textarea
-                className={`${ui.textarea} ${fieldErrors.description ? ui.inputInvalid : ""}`}
-                value={form.description}
-                disabled={isPending}
-                onChange={(e) => {
-                  setForm({ ...form, description: e.target.value });
-                  clearFieldError("description");
-                }}
-              />
-              {fieldErrors.description ? (
-                <p className={ui.fieldError}>{fieldErrors.description}</p>
-              ) : null}
-            </label>
-            </section>
-            <section className={`${layout.section} ${layout.uniformFields}`} aria-labelledby="edit-location">
-              <h2 id="edit-location" className={layout.heading}>Location</h2>
 <div className={ui.row2}>
             <label id="field-city" className={ui.field}>
               <span className={ui.label}>City</span>
@@ -952,7 +934,24 @@ export default function EditPropertyPage() {
               ) : null}
             </label>
 </div>
+
+            <label id="field-description" className={ui.field}>
+              <span className={ui.label}>Description</span>
+              <textarea
+                className={`${ui.textarea} ${fieldErrors.description ? ui.inputInvalid : ""}`}
+                value={form.description}
+                disabled={isPending}
+                onChange={(e) => {
+                  setForm({ ...form, description: e.target.value });
+                  clearFieldError("description");
+                }}
+              />
+              {fieldErrors.description ? (
+                <p className={ui.fieldError}>{fieldErrors.description}</p>
+              ) : null}
+            </label>
             </section>
+
             <section className={`${layout.section} ${layout.uniformFields}`} aria-labelledby="edit-property">
               <h2 id="edit-property" className={layout.heading}>{["plots", "file"].includes(kind) ? "Plot Information" : "Land Info"}</h2>
             <fieldset id="field-property_data" disabled={isPending} className={`${layout.fields} ${layout.propertyFields}`}>
