@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export function useAgentPropertyActions({ onReload, getReloadPage }) {
   const [busyId, setBusyId] = useState(null);
@@ -10,11 +10,19 @@ export function useAgentPropertyActions({ onReload, getReloadPage }) {
   const [error, setError] = useState("");
   const [errorDetails, setErrorDetails] = useState([]);
   const [success, setSuccess] = useState("");
+  const [successPopup, setSuccessPopup] = useState("");
+
+  useEffect(() => {
+    if (!successPopup) return;
+    const timer = setTimeout(() => setSuccessPopup(""), 2000);
+    return () => clearTimeout(timer);
+  }, [successPopup]);
 
   function clearMessages() {
     setError("");
     setErrorDetails([]);
     setSuccess("");
+    setSuccessPopup("");
   }
 
   async function markAsSold(property) {
@@ -53,7 +61,7 @@ export function useAgentPropertyActions({ onReload, getReloadPage }) {
         setErrorDetails(Array.isArray(data.errors) ? data.errors : []);
         return;
       }
-      setSuccess("Property submitted for approval.");
+      setSuccessPopup("Property submitted for approval.");
       await onReload?.();
     } catch {
       setError("Could not submit this property for approval.");
@@ -79,7 +87,7 @@ export function useAgentPropertyActions({ onReload, getReloadPage }) {
         return;
       }
       setPropertyToCancelApproval(null);
-      setSuccess("Approval request cancelled. Property returned to draft.");
+      setSuccessPopup("Approval request cancelled. Property returned to draft.");
       await onReload?.();
     } catch {
       setError("Could not cancel this approval request.");
@@ -181,6 +189,7 @@ export function useAgentPropertyActions({ onReload, getReloadPage }) {
     error,
     errorDetails,
     success,
+    successPopup,
     setPropertyToDelete,
     setPropertyToCancelApproval,
     setPropertyForLinks,

@@ -293,6 +293,7 @@ export default function AgentAdminDashboardPage() {
       </div>
 
       <AgentPropertyActionModals
+        successPopup={actions.successPopup}
         username={username}
         propertyToDelete={actions.propertyToDelete}
         propertyToCancelApproval={actions.propertyToCancelApproval}
