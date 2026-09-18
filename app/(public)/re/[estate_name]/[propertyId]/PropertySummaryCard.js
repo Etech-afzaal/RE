@@ -229,6 +229,9 @@ export default function PropertySummaryCard({
   const compactPropertyType = ["apartment", "commercial", "residential"].includes(
     String(propertyType || "").trim().toLowerCase(),
   );
+  const plotPropertyType = /^(residential|commercial)\s+plot$/i.exec(
+    String(propertyType || "").trim(),
+  );
 
   const stats = [
     sizeLabel ? { label: "Size", value: sizeLabel, Icon: SizeIcon } : null,
@@ -310,9 +313,17 @@ export default function PropertySummaryCard({
                     <span
                       className={`${styles.topCardValue} ${styles.propertyTypeValue} ${
                         compactPropertyType ? styles.compactPropertyTypeValue : ""
+                      } ${
+                        plotPropertyType ? styles.plotPropertyTypeValue : ""
                       }`.trim()}
                     >
-                      {propertyType}
+                      {plotPropertyType ? (
+                        <>
+                          {plotPropertyType[1]}
+                          <br />
+                          plot
+                        </>
+                      ) : propertyType}
                     </span>
                   </div>
                 </div>

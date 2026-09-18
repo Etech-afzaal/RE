@@ -183,6 +183,12 @@
   font-size: 0.78rem;
 }
 
+.plotPropertyTypeValue {
+  font-size: 0.78rem;
+  line-height: 1.15;
+  white-space: normal;
+}
+
 .divider {
   margin: 1.15rem 0 0;
   border: none;
