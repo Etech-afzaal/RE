@@ -59,9 +59,7 @@ export default function PendingPropertyInfo({ propertyTitle }) {
               Property Under Review
             </h2>
             <p id={descriptionId} className={ui.dialogText}>
-              We are reviewing your property request. It will appear on your
-              public website after approval. We will update its status once the
-              review is complete.
+              We are reviewing your property to ensure the information is complete and suitable for publication. It will appear on your public website after approval.
             </p>
             <div className={ui.dialogActions}>
               <button type="button" className={ui.btnPrimary} onClick={() => setOpen(false)} autoFocus>
