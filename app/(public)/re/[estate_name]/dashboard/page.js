@@ -127,7 +127,11 @@ export default function AgentAdminDashboardPage() {
                 ? `${base}/properties?status=${card.status}`
                 : `${base}/properties`
             }
-            className={`${ui.statCard} ${ui.statCardLink}`}
+            className={`${ui.statCard} ${ui.statCardLink} ${
+              card.id === "total" || card.id === "pending_approval"
+                ? ui.statDescriptionUnderHeading
+                : ""
+            }`}
             onClick={(event) => {
               if (event.target.closest("[data-stat-why]")) {
                 event.preventDefault();
@@ -141,11 +145,7 @@ export default function AgentAdminDashboardPage() {
               </p>
             </div>
             <div
-              className={`${ui.statDetail} ${
-                card.id === "total" || card.id === "pending_approval"
-                  ? ui.statDetailBelowHeading
-                  : ""
-              }`}
+              className={ui.statDetail}
             >
               <span>{card.description}</span>
               {card.id === "pending_approval" ? (

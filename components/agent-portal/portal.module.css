@@ -190,12 +190,35 @@
     line-height: 1.35;
   }
 
-  .statDetailBelowHeading {
-    align-self: end;
-  }
-
   .statLabel {
     white-space: nowrap;
+  }
+
+  .statCard.statDescriptionUnderHeading {
+    grid-template-rows: auto auto;
+    align-items: start;
+    column-gap: 1.05rem;
+  }
+
+  .statDescriptionUnderHeading .statPrimary {
+    display: contents;
+  }
+
+  .statDescriptionUnderHeading .statLabel {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .statDescriptionUnderHeading .statValue {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .statDescriptionUnderHeading .statDetail {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
+    margin-top: 0.45rem;
   }
 
   .statWhy {
