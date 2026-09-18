@@ -39,6 +39,8 @@ function formatDateTime(value) {
 }
 
 function statusLabel(status) {
+  if (status === "approved") return "Published";
+  if (status === "rejected") return "Requires Updates";
   return String(status || "draft").replace(/_/g, " ");
 }
 
@@ -173,7 +175,7 @@ export default function ReviewClient({ propertyId }) {
         <div className={reviewStyles.successOverlay}>
           <div className={reviewStyles.successCard} style={reviewAction === "rejected" ? { color: "#b91c1c" } : undefined} role="status" aria-live="polite">
             {reviewAction === "approved" ? <CircleCheck size={48} aria-hidden="true" /> : <CircleX size={48} aria-hidden="true" />}
-            <h2>{reviewAction === "approved" ? "Property approved" : "Property rejected"}</h2>
+            <h2>{reviewAction === "approved" ? "Property published" : "Property requires updates"}</h2>
             <p>Returning to approvals…</p>
           </div>
         </div>
@@ -297,9 +299,9 @@ export default function ReviewClient({ propertyId }) {
                     {busy && reviewAction === "approved" ? (
                       <span className={reviewStyles.buttonProgress}>
                         {reviewComplete ? <CircleCheck size={18} aria-hidden="true" /> : <LoaderCircle size={18} className={reviewStyles.spinner} aria-hidden="true" />}
-                        {reviewComplete ? "Approved" : "Approving…"}
+                        {reviewComplete ? "Published" : "Publishing…"}
                       </span>
-                    ) : "Approve Property"}
+                    ) : "Publish Property"}
                   </button>
                   <button
                     type="button"
@@ -310,9 +312,9 @@ export default function ReviewClient({ propertyId }) {
                     {busy && reviewAction === "rejected" ? (
                       <span className={reviewStyles.buttonProgress}>
                         {reviewComplete ? <CircleX size={18} aria-hidden="true" /> : <LoaderCircle size={18} className={reviewStyles.spinner} aria-hidden="true" />}
-                        {reviewComplete ? "Rejected" : "Rejecting…"}
+                        {reviewComplete ? "Updates requested" : "Requesting…"}
                       </span>
-                    ) : "Reject Property"}
+                    ) : "Request Updates"}
                   </button>
                 </div>
               ) : isRejected ? (
@@ -320,12 +322,12 @@ export default function ReviewClient({ propertyId }) {
                   <span
                     className={`${styles.badge} ${styles.badgeDanger}`}
                   >
-                    Rejected
+                    Requires Updates
                   </span>
-                  <InfoRow label="Rejection reason">
+                  <InfoRow label="Required updates">
                     {property.rejected_reason || "No reason was recorded."}
                   </InfoRow>
-                  <InfoRow label="Rejected">
+                  <InfoRow label="Updates requested">
                     {formatDateTime(property.rejected_at)}
                     {property.rejected_by ? ` · ${property.rejected_by}` : ""}
                   </InfoRow>
@@ -337,7 +339,7 @@ export default function ReviewClient({ propertyId }) {
               )}
 
               {property.approved_at ? (
-                <InfoRow label="Approved">
+                <InfoRow label="Published">
                   {formatDateTime(property.approved_at)}
                   {property.approved_by ? ` · ${property.approved_by}` : ""}
                 </InfoRow>

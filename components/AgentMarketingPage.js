@@ -41,7 +41,7 @@ function CustomDomainIcon({ size = 24, ...props }) {
 const BENEFITS = [
   [Globe2, "Get discovered", "Help potential buyers find you and your listings."],
   [ShieldCheck, "Build credibility", "Present your experience and agency professionally."],
-  [House, "Showcase properties", "Give every approved listing a polished public page."],
+  [House, "Showcase properties", "Give every published listing a polished public page."],
   [MessageCircle, "Make contact easy", "Give interested buyers a direct way to reach you."],
   [Clock3, "Stay visible online", "Keep your business and listings available around the clock."],
 ];

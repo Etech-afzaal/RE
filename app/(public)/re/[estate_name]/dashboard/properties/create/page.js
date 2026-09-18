@@ -1728,7 +1728,7 @@ export default function CreatePropertyPage() {
               Your property has been submitted for approval.
             </p>
             <p className={ui.dialogText}>
-              Our team will review your listing. Once approved, it will be
+              Our team will review your listing. Once published, it will be
               published on your public profile.
             </p>
             <div className={ui.dialogActions}>

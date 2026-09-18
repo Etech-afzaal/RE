@@ -24,7 +24,7 @@ const FEATURE_LIMIT_MESSAGE =
   "You can feature up to 10 properties. Remove a featured property before adding another.";
 
 /**
- * Feature an approved listing on the agent's public homepage hero.
+ * Feature a published listing on the agent's public homepage hero.
  * Ownership comes from the session; never trust a client-supplied agent id.
  */
 export async function POST(req, { params }) {
@@ -69,10 +69,10 @@ export async function POST(req, { params }) {
       });
     }
 
-    if (property.status !== PROPERTY_STATUS.APPROVED) {
+    if (property.status !== PROPERTY_STATUS.PUBLISHED) {
       await conn.rollback();
       return NextResponse.json(
-        { error: "Only approved properties can be featured." },
+        { error: "Only published properties can be featured." },
         { status: 403 },
       );
     }
@@ -84,7 +84,7 @@ export async function POST(req, { params }) {
        WHERE agent_id = ?
          AND is_featured = TRUE
          AND status = ?`,
-      [agentId, PROPERTY_STATUS.APPROVED],
+      [agentId, PROPERTY_STATUS.PUBLISHED],
     );
 
     if (Number(countRows[0]?.total) >= MAX_FEATURED_PROPERTIES_PER_AGENT) {
@@ -96,7 +96,7 @@ export async function POST(req, { params }) {
       `UPDATE properties
        SET is_featured = TRUE
        WHERE id = ? AND agent_id = ? AND status = ? AND is_featured = FALSE`,
-      [propertyId, agentId, PROPERTY_STATUS.APPROVED],
+      [propertyId, agentId, PROPERTY_STATUS.PUBLISHED],
     );
 
     await conn.commit();

@@ -43,7 +43,7 @@ export async function POST(req, { params }) {
 
   if (!canAgentSubmitFrom(property.status)) {
     return NextResponse.json(
-      { error: "Only draft or rejected properties can be submitted for approval." },
+      { error: "Only draft or properties requiring updates can be submitted for approval." },
       { status: 409 },
     );
   }
@@ -74,7 +74,7 @@ export async function POST(req, { params }) {
       propertyId,
       agentId,
       PROPERTY_STATUS.DRAFT,
-      PROPERTY_STATUS.REJECTED,
+      PROPERTY_STATUS.REQUIRES_UPDATES,
     ],
   );
 

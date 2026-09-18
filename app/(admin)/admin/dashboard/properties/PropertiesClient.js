@@ -41,13 +41,15 @@ const STATUS_FILTER_OPTIONS = [
   "hidden",
 ];
 
-/** API returns approved listings as "active"; dropdown uses "approved". */
+/** API returns published listings as "active"; dropdown uses the stored "approved" value. */
 function normalizePropertyStatus(status) {
   if (status === "active") return "approved";
   return status || "draft";
 }
 
 function statusLabel(status) {
+  if (normalizePropertyStatus(status) === "approved") return "Published";
+  if (normalizePropertyStatus(status) === "rejected") return "Requires Updates";
   return String(normalizePropertyStatus(status)).replace(/_/g, " ");
 }
 
@@ -228,9 +230,9 @@ export default function AdminPropertiesPage() {
             onChange={(e) => handleStatusChange(e.target.value)}
           >
             <option value="all">All</option>
-            <option value="approved">Approved</option>
+            <option value="approved">Published</option>
             <option value="pending_approval">Pending approval</option>
-            <option value="rejected">Rejected</option>
+            <option value="rejected">Requires Updates</option>
             <option value="sold">Sold</option>
             <option value="draft">Draft</option>
             <option value="hidden">Hidden</option>

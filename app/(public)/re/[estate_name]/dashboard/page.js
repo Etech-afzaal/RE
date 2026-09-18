@@ -27,7 +27,7 @@ import ui from "@/components/agent-portal/portal.module.css";
 /** `id` matches the stats payload key; `status` filters the properties list. */
 const STAT_CARDS = [
   { id: "total", label: "Total Properties", status: null, description: "All properties added to your account." },
-  { id: "approved", label: "Approved", status: "approved", description: "Properties currently live on your website." },
+  { id: "approved", label: "Published", status: "approved", description: "Properties currently live on your website." },
   { id: "pending_approval", label: "Pending Approval", status: "pending_approval", description: "Properties waiting for admin review." },
   { id: "draft", label: "Draft", status: "draft", description: "Properties saved but not yet submitted." },
 ];
@@ -211,7 +211,7 @@ export default function AgentAdminDashboardPage() {
             </button>
             <h2 id="pending-why-title" className={ui.dialogTitle}>Why is my property under review?</h2>
             <p className={ui.dialogText}>
-              Properties are reviewed to make sure the information, images, and listing details are complete and suitable for publication. Once the review is complete, the property will be approved or returned with feedback if changes are required.
+              Properties are reviewed to make sure the information, images, and listing details are complete and suitable for publication. Once the review is complete, the property will be published or returned with feedback if changes are required.
             </p>
           </div>
         </div>

@@ -5,7 +5,7 @@ import styles from "@/components/admin/adminUi.module.css";
 import { validateRejectionReason } from "@/lib/validators/userValidator";
 
 /**
- * Rejection reason prompt. The reason is what the agent sees on their dashboard,
+ * Required updates prompt. The reason is what the agent sees on their dashboard,
  * so it is mandatory here as well as on the server.
  */
 export default function RejectPropertyDialog({
@@ -32,7 +32,7 @@ export default function RejectPropertyDialog({
     if (!reasonCheck.ok) {
       setError(
         reasonCheck.error ||
-          "Please tell the agent why this listing was rejected.",
+          "Please tell the agent what updates this listing requires.",
       );
       textareaRef.current?.focus();
       return;
@@ -49,7 +49,7 @@ export default function RejectPropertyDialog({
         aria-labelledby="reject-property-title"
       >
         <h2 id="reject-property-title" className={styles.dialogTitle}>
-          Reject Property
+          Request Updates
         </h2>
         <p className={styles.dialogText}>
           {propertyTitle
@@ -58,7 +58,7 @@ export default function RejectPropertyDialog({
         </p>
 
         <div className={styles.field}>
-          <label htmlFor="reject-reason">Reason for rejection</label>
+          <label htmlFor="reject-reason">Required updates</label>
           <textarea
             id="reject-reason"
             ref={textareaRef}
@@ -90,7 +90,7 @@ export default function RejectPropertyDialog({
             disabled={busy || !reason.trim()}
             onClick={confirm}
           >
-            {busy ? "Rejecting…" : "Reject"}
+            {busy ? "Requesting…" : "Request Updates"}
           </button>
         </div>
       </div>
