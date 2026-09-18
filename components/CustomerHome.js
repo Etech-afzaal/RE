@@ -481,7 +481,7 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
                 setNoMatchArea(null);
                 setLocationFilterActive(false);
               }}
-              placeholder="Search by area, name, or agency"
+              placeholder="Search by agent name, area or agency"
               aria-label="Search agents"
             />
           </div>
@@ -530,7 +530,7 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
             className={styles.searchBtn}
             onClick={() => {
               document
-                .getElementById("agent-grid")
+                .getElementById("agents")
                 ?.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
           >
@@ -575,7 +575,7 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
               <div>
                 <p className={styles.kicker}>Find an agent</p>
                 <h2 className={styles.sectionTitle}>
-                  Verified estate agents across Lahore
+                  Verified estate agents across {area && area !== "all" ? area : "Lahore"}
                 </h2>
               </div>
             </div>
