@@ -5,7 +5,6 @@ import ClearableSearchInput from "@/components/ClearableSearchInput";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
 import { Search } from "lucide-react";
 import AgentAvatar from "@/components/AgentAvatar";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
@@ -45,7 +44,6 @@ export default function AgentSubagentsPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const username = decodeURIComponent(params.estate_name || "");
-  const base = `/re/${encodeURIComponent(username)}/dashboard`;
 
   const [subagents, setSubagents] = useState([]);
   const [search, setSearch] = useState("");
@@ -334,7 +332,7 @@ export default function AgentSubagentsPage() {
         username={username}
         agentName={session?.user?.name || "Agent"}
         title="Subagents"
-        subtitle="Marketing representatives for tracked property links"
+        subtitle="Subagents help market your properties through tracked links. You manage their profiles; they cannot log in or manage properties."
       >
         <LoadingSpinner
           fullPage={false}
@@ -354,7 +352,7 @@ export default function AgentSubagentsPage() {
       username={username}
       agentName={session?.user?.name}
       title="Subagents"
-      subtitle="Marketing representatives for tracked property links"
+      subtitle="Subagents help market your properties through tracked links. You manage their profiles; they cannot log in or manage properties."
       action={
         <button
           type="button"
@@ -743,11 +741,6 @@ export default function AgentSubagentsPage() {
         </div>
       ) : null}
 
-      <p className={ui.propMeta} style={{ marginTop: 16 }}>
-        Subagents are marketing profiles only — they cannot log in or manage
-        properties.{" "}
-        <Link href={`${base}/properties`}>Back to properties</Link>
-      </p>
     </AgentPortalShell>
   );
 }
