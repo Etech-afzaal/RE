@@ -1457,7 +1457,7 @@ export default function CreatePropertyPage() {
                 </span>
               </div>
               <p className={ui.muted}>
-                Drag and drop images here or choose images above. Upload JPG, PNG, WEBP images. Maximum {MAX_PROPERTY_IMAGES}{" "}
+                Drag and drop images here or choose multiple images above. Upload JPG, PNG, WEBP images. Maximum {MAX_PROPERTY_IMAGES}{" "}
                 images allowed.
               </p>
             </div>

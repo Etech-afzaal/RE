@@ -26,10 +26,10 @@ import ui from "@/components/agent-portal/portal.module.css";
 
 /** `id` matches the stats payload key; `status` filters the properties list. */
 const STAT_CARDS = [
-  { id: "total", label: "Total Properties", status: null },
-  { id: "approved", label: "Approved", status: "approved" },
-  { id: "pending_approval", label: "Pending Approval", status: "pending_approval" },
-  { id: "draft", label: "Draft", status: "draft" },
+  { id: "total", label: "Total Properties", status: null, description: "All properties added to your account." },
+  { id: "approved", label: "Approved", status: "approved", description: "Properties currently live on your website." },
+  { id: "pending_approval", label: "Pending Approval", status: "pending_approval", description: "Properties waiting for admin review." },
+  { id: "draft", label: "Draft", status: "draft", description: "Properties saved but not yet submitted." },
 ];
 
 function greeting() {
@@ -52,6 +52,7 @@ export default function AgentAdminDashboardPage() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [greetingLabel, setGreetingLabel] = useState("Good Morning");
+  const [pendingWhyOpen, setPendingWhyOpen] = useState(false);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -72,6 +73,17 @@ export default function AgentAdminDashboardPage() {
   useEffect(() => {
     setGreetingLabel(greeting());
   }, []);
+
+  useEffect(() => {
+    if (!pendingWhyOpen) return undefined;
+
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setPendingWhyOpen(false);
+    };
+
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [pendingWhyOpen]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -116,14 +128,79 @@ export default function AgentAdminDashboardPage() {
                 : `${base}/properties`
             }
             className={`${ui.statCard} ${ui.statCardLink}`}
+            onClick={(event) => {
+              if (event.target.closest("[data-stat-why]")) {
+                event.preventDefault();
+              }
+            }}
           >
-            <p className={ui.statLabel}>{card.label}</p>
-            <p className={ui.statValue}>
-              {stats?.[card.id] ?? (loading ? "…" : 0)}
-            </p>
+            <div className={ui.statPrimary}>
+              <p className={ui.statLabel}>{card.label}</p>
+              <p className={ui.statValue}>
+                {stats?.[card.id] ?? (loading ? "…" : 0)}
+              </p>
+            </div>
+            <div
+              className={`${ui.statDetail} ${
+                card.id === "total" || card.id === "pending_approval"
+                  ? ui.statDetailBelowHeading
+                  : ""
+              }`}
+            >
+              <span>{card.description}</span>
+              {card.id === "pending_approval" ? (
+                <span
+                  className={ui.statWhy}
+                  role="button"
+                  tabIndex={0}
+                  aria-haspopup="dialog"
+                  data-stat-why
+                  onClick={() => {
+                    setPendingWhyOpen(true);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setPendingWhyOpen(true);
+                    }
+                  }}
+                >
+                  Why?
+                </span>
+              ) : null}
+            </div>
           </Link>
         ))}
       </div>
+
+      {pendingWhyOpen ? (
+        <div
+          className={ui.dialogBackdrop}
+          role="presentation"
+          onClick={() => setPendingWhyOpen(false)}
+        >
+          <div
+            className={`${ui.dialog} ${ui.statModal}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pending-why-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className={ui.statModalClose}
+              aria-label="Close"
+              onClick={() => setPendingWhyOpen(false)}
+            >
+              &times;
+            </button>
+            <h2 id="pending-why-title" className={ui.dialogTitle}>Why is my property under review?</h2>
+            <p className={ui.dialogText}>
+              Properties are reviewed to make sure the information, images, and listing details are complete and suitable for publication. Once the review is complete, the property will be approved or returned with feedback if changes are required.
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <div className={ui.panel}>
         <div className={ui.panelHeader}>
