@@ -384,6 +384,7 @@ export default function AgentPropertiesPage() {
         )}
       </div>
       <AgentPropertyActionModals
+        successPopup={actions.successPopup}
         username={username}
         propertyToDelete={actions.propertyToDelete}
         propertyToCancelApproval={actions.propertyToCancelApproval}

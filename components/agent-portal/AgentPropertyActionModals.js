@@ -5,6 +5,7 @@ import ui from "@/components/agent-portal/portal.module.css";
 
 export default function AgentPropertyActionModals({
   username,
+  successPopup,
   propertyToDelete,
   propertyToCancelApproval,
   propertyForLinks,
@@ -17,6 +18,14 @@ export default function AgentPropertyActionModals({
 }) {
   return (
     <>
+      {successPopup ? (
+        <div className={ui.dialogBackdrop} role="presentation">
+          <div className={`${ui.dialog} ${ui.dialogSuccess}`} role="status" aria-live="polite" aria-labelledby="property-action-success-title">
+            <div className={ui.dialogSuccessIcon} aria-hidden="true">✓</div>
+            <h2 id="property-action-success-title" className={ui.dialogTitle}>{successPopup}</h2>
+          </div>
+        </div>
+      ) : null}
       {propertyToDelete ? (
         <div className={ui.dialogBackdrop} role="presentation">
           <div
