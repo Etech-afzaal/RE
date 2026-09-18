@@ -160,6 +160,61 @@
   overflow: visible;
 }
 
+.statDetail,
+.statWhy {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .statCard.statCardLink {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.7rem;
+  }
+
+  .statPrimary {
+    display: block;
+    position: relative;
+    z-index: 1;
+  }
+
+  .statDetail {
+    display: block;
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    padding-right: 1.8rem;
+    color: var(--muted);
+    font-size: 0.79rem;
+    line-height: 1.35;
+  }
+
+  .statDetailBelowHeading {
+    align-self: end;
+  }
+
+  .statLabel {
+    white-space: nowrap;
+  }
+
+  .statWhy {
+    display: inline;
+    margin-left: 0.35rem;
+    color: var(--gold-deep);
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+
+  .statWhy:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
 .table {
   min-width: 0;
   width: 100%;
@@ -1019,6 +1074,31 @@ button.stepPillActive:hover {
   margin: 0 0 0.55rem;
   color: var(--ink);
   font-size: 1.2rem;
+}
+
+.statModal {
+  position: relative;
+}
+
+.statModalClose {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.7rem;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.statModalClose:hover,
+.statModalClose:focus-visible {
+  background: var(--gold-tint);
+  color: var(--ink);
 }
 
 .pendingDialogIcon {
