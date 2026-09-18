@@ -790,12 +790,12 @@ export default function EditPropertyPage() {
               <div className={ui.noticePending}>
                 <p className={ui.noticeTitle}>Waiting for admin review</p>
                 You will be able to edit this listing again once it has been
-                approved or rejected.
+                published or returned with required updates.
               </div>
             ) : null}
             {isRejected ? (
               <div className={ui.noticeRejected}>
-                <p className={ui.noticeTitle}>Property Rejected</p>
+                <p className={ui.noticeTitle}>Property Requires Updates</p>
                 <p className={ui.noticeFeedbackLabel}>Admin Feedback:</p>
                 <p className={ui.noticeFeedbackBody}>
                   {rejection?.reason || "No reason was recorded."}
@@ -803,7 +803,7 @@ export default function EditPropertyPage() {
               </div>
             ) : null}
             <p className={ui.muted}>
-              Current status: <strong>{String(form.status).replace(/_/g, " ")}</strong>
+              Current status: <strong>{form.status === "rejected" ? "Requires Updates" : String(form.status).replace(/_/g, " ")}</strong>
             </p>
             <section className={`${layout.section} ${layout.uniformFields}`} aria-labelledby="edit-basic">
               <h2 id="edit-basic" className={layout.heading}>Basic Information</h2>

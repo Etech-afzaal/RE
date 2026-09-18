@@ -150,7 +150,7 @@ export async function PATCH(req, { params }) {
     return NextResponse.json(
       {
         error:
-          "status must be draft, pending_approval, approved, rejected, sold, hidden, or active.",
+          "status must be draft, pending_approval, approved, requires updates, sold, hidden, or active.",
       },
       { status: 400 },
     );
@@ -165,11 +165,11 @@ export async function PATCH(req, { params }) {
   }
 
   let reason = "";
-  if (nextStatus === PROPERTY_STATUS.REJECTED) {
+  if (nextStatus === PROPERTY_STATUS.REQUIRES_UPDATES) {
     const reasonCheck = validateRejectionReason(body?.rejected_reason);
     if (!reasonCheck.ok) {
       return NextResponse.json(
-        { error: reasonCheck.error || "A rejection reason is required." },
+        { error: reasonCheck.error || "A reason for required updates is required." },
         { status: 400 },
       );
     }
@@ -195,7 +195,7 @@ export async function PATCH(req, { params }) {
     const adminUserId = Number(session?.user?.id) || null;
     const adminName = session?.user?.name || "Superadmin";
 
-    if (nextStatus === PROPERTY_STATUS.APPROVED) {
+    if (nextStatus === PROPERTY_STATUS.PUBLISHED) {
       await query(
         `UPDATE properties
          SET status = ?, approved_by = ?, approved_at = NOW(),
@@ -203,7 +203,7 @@ export async function PATCH(req, { params }) {
          WHERE id = ?`,
         [nextStatus, reviewer, propertyId],
       );
-    } else if (nextStatus === PROPERTY_STATUS.REJECTED) {
+    } else if (nextStatus === PROPERTY_STATUS.REQUIRES_UPDATES) {
       await query(
         `UPDATE properties
          SET status = ?, property_data = JSON_SET(COALESCE(property_data, JSON_OBJECT()), '$.rejection', JSON_OBJECT('reason', ?, 'rejected_by', ?)), rejected_at = NOW(),
@@ -219,10 +219,10 @@ export async function PATCH(req, { params }) {
     }
 
     if (
-      nextStatus === PROPERTY_STATUS.APPROVED ||
-      nextStatus === PROPERTY_STATUS.REJECTED
+      nextStatus === PROPERTY_STATUS.PUBLISHED ||
+      nextStatus === PROPERTY_STATUS.REQUIRES_UPDATES
     ) {
-      const approved = nextStatus === PROPERTY_STATUS.APPROVED;
+      const approved = nextStatus === PROPERTY_STATUS.PUBLISHED;
       await createAuditLog({
         userId: adminUserId,
         action: approved
@@ -231,8 +231,8 @@ export async function PATCH(req, { params }) {
         entityType: AUDIT_ENTITY_TYPES.PROPERTY,
         entityId: propertyId,
         description: approved
-          ? `Approved property "${property.title}"`
-          : `Rejected property "${property.title}"`,
+          ? `Published property "${property.title}"`
+          : `Property requires updates: "${property.title}"`,
         metadata: {
           property_title: property.title,
           agent_name: property.agent_name,

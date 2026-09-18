@@ -98,7 +98,7 @@ const CONTACT_FAQS = [
   {
     question: "Are the listed properties verified?",
     answer:
-      "Properties are reviewed and managed by registered agents. Only approved listings are displayed publicly.",
+      "Properties are reviewed and managed by registered agents. Only published listings are displayed publicly.",
   },
   {
     question: "Which areas of Lahore do your agents cover?",

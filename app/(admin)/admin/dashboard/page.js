@@ -245,11 +245,11 @@ function normalizeActivity(item) {
     },
     property_approved: {
       user: "Superadmin",
-      action: "Approved Property",
+      action: "Published Property",
     },
     property_rejected: {
       user: "Superadmin",
-      action: "Rejected Property",
+      action: "Property Requires Updates",
     },
     agent: {
       user: item.detail?.split(" · ")[0] || "Agent",
@@ -383,7 +383,7 @@ export default function AdminOverviewPage() {
       value: stats.activeProperties,
       hint: "Publicly visible",
       trend: null,
-      trendText: "Approved and live",
+      trendText: "Published and live",
       href: "/admin/dashboard/properties?status=approved",
     },
     {

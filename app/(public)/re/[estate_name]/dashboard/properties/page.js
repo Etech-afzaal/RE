@@ -33,8 +33,8 @@ const TABS = [
   { id: "featured", label: "Featured" },
   { id: "draft", label: "Draft" },
   { id: "pending_approval", label: "Pending Approval" },
-  { id: "approved", label: "Approved" },
-  { id: "rejected", label: "Rejected" },
+  { id: "approved", label: "Published" },
+  { id: "rejected", label: "Requires Updates" },
   { id: "sold", label: "Sold" },
 ];
 

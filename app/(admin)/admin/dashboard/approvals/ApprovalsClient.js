@@ -84,8 +84,8 @@ export default function ApprovalsClient() {
       setRejecting(null);
       setNotice(
         status === "approved"
-          ? `“${property.title}” is approved and now listed publicly.`
-          : `“${property.title}” was rejected. The agent can edit and resubmit it.`,
+          ? `“${property.title}” is published and now listed publicly.`
+          : `“${property.title}” requires updates. The agent can edit and resubmit it.`,
       );
     } catch {
       setError("Could not update this submission.");
@@ -209,13 +209,13 @@ export default function ApprovalsClient() {
                               ),
                           },
                           {
-                            label: "Approve",
+                            label: "Publish",
                             icon: CircleCheck,
                             disabled: busyId === property.id,
                             onSelect: () => review(property, "approved"),
                           },
                           {
-                            label: "Reject",
+                            label: "Request Updates",
                             icon: CircleX,
                             destructive: true,
                             disabled: busyId === property.id,

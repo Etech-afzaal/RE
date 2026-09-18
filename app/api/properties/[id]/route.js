@@ -165,7 +165,7 @@ export async function PUT(req, { params }) {
         { status: 400 },
       );
     }
-    if (status === PROPERTY_STATUS.APPROVED && !current.approved_at) {
+    if (status === PROPERTY_STATUS.PUBLISHED && !current.approved_at) {
       return NextResponse.json(
         { error: "Only an admin can approve a property." },
         { status: 403 },
@@ -291,7 +291,7 @@ export async function PATCH(req, { params }) {
   }
   if (!canAgentTransition(current.status, PROPERTY_STATUS.SOLD)) {
     return NextResponse.json(
-      { error: "Only an approved listing can be marked as sold." },
+      { error: "Only a published listing can be marked as sold." },
       { status: 403 },
     );
   }
