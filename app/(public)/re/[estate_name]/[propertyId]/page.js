@@ -740,7 +740,7 @@ export default async function PropertyDetailPage({ params, searchParams }) {
               </section>
             ))}
 
-            {/* 3. Why this home */}
+            {/* 3. Why this property */}
             {lifestylePoints.length > 0 ? (
               <section
                 className={styles.contentCard}
@@ -748,7 +748,7 @@ export default async function PropertyDetailPage({ params, searchParams }) {
               >
                 <p className={styles.sectionKicker}>Lifestyle</p>
                 <h2 id="why-heading" className={styles.sectionTitle}>
-                  Why This Home?
+                  Why This Property?
                 </h2>
                 <ul className={styles.checkList}>
                   {lifestylePoints.map((point) => (

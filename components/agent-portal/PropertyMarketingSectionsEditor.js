@@ -398,10 +398,10 @@ export default function PropertyMarketingSectionsEditor({ form, setForm }) {
         ))}
       </div>
 
-      {/* Why This Home */}
+      {/* Why This Property */}
       <div className={ui.marketingSection}>
         <span className={ui.label}>
-          Why This Home?{" "}
+          Why This Property?{" "}
           <span className={ui.muted}>
             (optional · max {MARKETING_LIMITS.whyThisHome})
           </span>
