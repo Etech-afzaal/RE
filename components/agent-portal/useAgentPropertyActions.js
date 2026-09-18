@@ -156,7 +156,10 @@ export function useAgentPropertyActions({ onReload, getReloadPage }) {
       }
 
       setPropertyToDelete(null);
-      setSuccess("Property deleted successfully.");
+      setSuccessPopup({
+        message: "Property deleted successfully.",
+        showIcon: false,
+      });
       const page = getReloadPage?.();
       await onReload?.(page);
     } catch (err) {
