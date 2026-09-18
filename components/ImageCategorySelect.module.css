@@ -1,0 +1,10 @@
+.control:focus-within > select {
+  border-color: var(--gold, #f2bb46);
+  box-shadow: 0 0 0 3px rgba(242, 187, 70, 0.16);
+  outline: none;
+}
+
+.control > input:focus {
+  box-shadow: none;
+  outline: none;
+}

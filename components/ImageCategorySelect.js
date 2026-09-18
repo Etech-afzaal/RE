@@ -1,91 +1,61 @@
-"use client";
+﻿"use client";
 
+import styles from "./ImageCategorySelect.module.css";
 import {
   propertyMediaCategoryGroups,
-  imageCategoryLabel,
+  IMAGE_CATEGORIES,
   OTHER_CATEGORY_VALUE,
-  imageCategoryCustomValue,
-  imageCategorySelectValue,
+  MAX_CUSTOM_CATEGORY_LENGTH,
 } from "@/lib/imageCategories";
 
-/**
- * Room/area picker for a property image.
- * Selecting "Other" reveals a custom label field; the stored value becomes
- * that custom label (not the literal "other"), so galleries can show it.
- */
+/** Editable text with the original grouped native category dropdown. */
 export default function ImageCategorySelect({
-  value,
-  onChange,
-  disabled = false,
-  className,
-  style,
-  inputClassName,
-  inputStyle,
-  ariaLabel = "Image category",
-  propertyKind,
-  mediaType = "image",
+  value, onChange, disabled = false, className, style, inputClassName,
+  inputStyle, ariaLabel = "Image category", propertyKind, mediaType = "image",
 }) {
-  const groups = propertyMediaCategoryGroups(propertyKind, mediaType);
+  const groups = propertyMediaCategoryGroups(propertyKind, mediaType)
+    .map(group => ({ ...group, categories: group.categories.filter(option => option.value !== OTHER_CATEGORY_VALUE) }))
+    .filter(group => group.categories.length);
   const options = groups.flatMap(group => group.categories);
-  const selectedOption = options.find(option => option.value === value);
-  const selectValue = selectedOption ? selectedOption.value : imageCategorySelectValue(value);
-  // Keep legacy categories selected when switching types; never rewrite media.
-  const retainedOption = selectValue && selectValue !== OTHER_CATEGORY_VALUE &&
-    !options.some(option => option.value === selectValue);
-  const customValue = imageCategoryCustomValue(value);
-  const showCustom = selectValue === OTHER_CATEGORY_VALUE;
+  const known = IMAGE_CATEGORIES.find(option => option.value === value);
+  const displayValue = value === OTHER_CATEGORY_VALUE ? "" : known?.label ?? value ?? "";
 
   return (
-    <div style={{ display: "grid", gap: "0.45rem" }}>
+    <div className={styles.control} style={{ position: "relative" }}>
       <select
         className={className}
-        style={style}
-        aria-label={ariaLabel}
-        value={selectValue}
+        style={{ ...style, color: "transparent" }}
+        aria-label={`${ariaLabel} options`}
         disabled={disabled}
-        onChange={(event) => {
-          const next = event.target.value || "";
-          if (!next) {
-            onChange(null);
-            return;
-          }
-          if (next === OTHER_CATEGORY_VALUE) {
-            // Keep an existing custom label when re-selecting Other.
-            onChange(customValue || OTHER_CATEGORY_VALUE);
-            return;
-          }
-          onChange(next);
-        }}
+        value={options.some(option => option.value === value) ? value : ""}
+        onChange={event => onChange(event.target.value || null)}
       >
-        <option value="">Select category</option>
-        {retainedOption ? <option value={selectValue}>{imageCategoryLabel(value)}</option> : null}
-        {groups.map((group) => (
-          <optgroup key={group.id} label={group.label}>
-            {group.categories.map((category) => (
-              <option key={category.value} value={category.value}>
-                {category.label}
-              </option>
-            ))}
+        <option value="" style={{ color: "var(--ink, #1a1a1a)" }}>Select category</option>
+        {groups.map(group => (
+          <optgroup key={group.id} label={group.label} style={{ color: "var(--ink, #1a1a1a)" }}>
+            {group.categories.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
           </optgroup>
         ))}
       </select>
-
-      {showCustom ? (
-        <input
-          type="text"
-          className={inputClassName || className}
-          style={inputStyle || style}
-          disabled={disabled}
-          maxLength={60}
-          placeholder="Custom category (e.g. Swimming Pool)"
-          aria-label="Custom category"
-          value={customValue}
-          onChange={(event) => {
-            const next = event.target.value;
-            onChange(next.trim() ? next : OTHER_CATEGORY_VALUE);
-          }}
-        />
-      ) : null}
+      <input
+        type="text"
+        className={inputClassName || className}
+        style={{ ...(inputStyle || style), position: "absolute", top: 0, left: 0, width: "calc(100% - 2.5rem)", background: "transparent", borderColor: "transparent", paddingRight: "0.25rem" }}
+        aria-label={ariaLabel}
+        placeholder="Select or type category"
+        value={displayValue}
+        disabled={disabled}
+        maxLength={MAX_CUSTOM_CATEGORY_LENGTH}
+        autoComplete="off"
+        onChange={event => {
+          const text = event.target.value;
+          const match = [...options, ...IMAGE_CATEGORIES].find(option =>
+            option.label.toLowerCase() === text.toLowerCase() ||
+            option.value.toLowerCase() === text.toLowerCase()
+          );
+          onChange(text.trim() ? match?.value ?? text : null);
+        }}
+      />
     </div>
   );
 }
