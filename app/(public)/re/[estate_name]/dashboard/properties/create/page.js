@@ -158,9 +158,9 @@ export default function CreatePropertyPage() {
   const [step, setStep] = useState(() => {
     const draft = readDraft();
     if (!draft) return 0;
-    if (Object.hasOwn(draft.form || {}, "propertyKind")) return draft.step ?? 0;
+    if (Object.hasOwn(draft.form || {}, "propertyKind")) return draft.stepsVersion === 2 ? draft.step ?? 0 : Math.max(0, (draft.step ?? 0) - 1);
     const steps = propertyWizardSteps(propertyKind(draft.form?.propertyType, draft.form?.propertySubtype));
-    return [0, 1, 2, steps.IMAGES, steps.VIDEO, steps.ACTIONS][draft.step] ?? 0;
+    return [0, 0, steps.DETAILS, steps.IMAGES, steps.VIDEO, steps.ACTIONS][draft.step] ?? 0;
   });
   const stepNavigationRef = useRef(null);
   const formCardRef = useRef(null);
@@ -313,7 +313,8 @@ export default function CreatePropertyPage() {
     try {
       window.sessionStorage.setItem(
         DRAFT_STORAGE_KEY,
-        JSON.stringify({ step, form }),
+        JSON.stringify({
+          stepsVersion: 2, step, form }),
       );
     } catch {}
   }, [step, form]);
@@ -461,8 +462,8 @@ export default function CreatePropertyPage() {
   function propertyFieldToWizardStep(field) {
     if (field?.startsWith("commercialInfo.") || (kind === "plots" && field === "plotInfo.plotType")) return 0;
     if (["title", "propertyType", "propertySubtype", "description"].includes(field)) return 0;
-    if (["city", "area", "phase", "address"].includes(field)) return 1;
-    if (field === "size_value" || field === "size_unit" || field?.startsWith("landInfo.") || field?.startsWith("plotInfo.")) return 2;
+    if (["city", "area", "phase", "address"].includes(field)) return PROPERTY_WIZARD_STEPS.BASIC;
+    if (field === "size_value" || field === "size_unit" || field?.startsWith("landInfo.") || field?.startsWith("plotInfo.")) return PROPERTY_WIZARD_STEPS.LAND;
     if (["bedrooms", "bathrooms", "parking", "price", "price_currency"].includes(field) || field?.startsWith("propertyDetails.") || field?.startsWith("commercialInfo.")) return PROPERTY_WIZARD_STEPS.DETAILS;
     if (field === "images") return PROPERTY_WIZARD_STEPS.IMAGES;
     if (field === "videos") return PROPERTY_WIZARD_STEPS.VIDEO;
@@ -1136,26 +1137,6 @@ export default function CreatePropertyPage() {
             {kind === "plots" ? <PropertyDataFields section="plotInfo" kind={kind} fieldKeys={["plotType"]} data={{ ...form.property_data?.plotInfo, plotType: form.propertySubtype === "commercial_plot" ? "Commercial" : "Residential" }} onChange={(key, value) => updateData("plotInfo", key, value)} errors={fieldErrors} unwrapped /> : null}
             </div>
             </div>
-            <label className={ui.field}>
-              <span className={ui.label}>Description</span>
-              <textarea
-                className={`${ui.textarea} ${fieldErrors.description ? ui.inputInvalid : ""}`}
-                value={form.description}
-                onChange={(e) => update("description", e.target.value)}
-                placeholder="Describe the property"
-                maxLength={WIZARD_TEXT_LIMITS.description}
-                aria-invalid={Boolean(fieldErrors.description)}
-                aria-describedby="description-error"
-              />
-              <FieldMessage
-                id="description-error"
-                error={fieldErrors.description}
-              />
-            </label>
-          </>
-        ) : null}
-
-        {step === 1 ? (
           <div className={`${ui.row2} ${stepStyles.compactGrid}`}>
             <label className={ui.field}>
               <span className={ui.label}>
@@ -1215,18 +1196,35 @@ export default function CreatePropertyPage() {
               <FieldMessage id="address-error" error={fieldErrors.address} />
             </label>
           </div>
+            <label className={ui.field}>
+              <span className={ui.label}>Description</span>
+              <textarea
+                className={`${ui.textarea} ${fieldErrors.description ? ui.inputInvalid : ""}`}
+                value={form.description}
+                onChange={(e) => update("description", e.target.value)}
+                placeholder="Describe the property"
+                maxLength={WIZARD_TEXT_LIMITS.description}
+                aria-invalid={Boolean(fieldErrors.description)}
+                aria-describedby="description-error"
+              />
+              <FieldMessage
+                id="description-error"
+                error={fieldErrors.description}
+              />
+            </label>
+          </>
         ) : null}
 
-        {step === 2 ? (
+        {step === PROPERTY_WIZARD_STEPS.LAND ? (
           <div className={stepStyles.compactSection}>
             <PropertyDataFields section={["plots", "file"].includes(kind) ? "plotInfo" : "landInfo"} kind={kind} data={form.property_data?.[["plots", "file"].includes(kind) ? "plotInfo" : "landInfo"]} onChange={(key, value) => updateData(["plots", "file"].includes(kind) ? "plotInfo" : "landInfo", key, value)} errors={fieldErrors} excludedKeys={kind === "plots" ? ["plotType"] : []} leadingField={
             <div className={ui.field}>
-              <span className={ui.label}>Plot Size<RequiredMark /></span>
+              <span className={ui.label}>Plot Size</span>
               <PlotSizeInput value={form.size_value} unit={form.size_unit} onChange={value => update("size_value", value)} onUnitChange={value => update("size_unit", value)} invalid={fieldErrors.size_value} describedBy="size-error" />
               <FieldMessage id="size-error" error={fieldErrors.size_value} />
             </div>
             } trailingField={["plots", "file"].includes(kind) ? <div className={ui.field}>
-              <span className={ui.label}>Price<RequiredMark /></span>
+              <span className={ui.label}>Price</span>
               <PriceCurrencyInput
                 amount={form.price}
                 currency={form.price_currency}
@@ -1293,7 +1291,6 @@ export default function CreatePropertyPage() {
               <div className={ui.field}>
                 <span className={ui.label}>
                   Price
-                  <RequiredMark />
                 </span>
                 <PriceCurrencyInput
                   amount={form.price}
@@ -1631,7 +1628,7 @@ export default function CreatePropertyPage() {
             <p className={ui.muted} style={{ marginBottom: "15px" }}>
               Save as draft to continue later, or submit for admin approval.
               Drafts never appear on your public website. Submitting needs a
-              title, listing type, property type, city, area, size, price{kind === "file" ? ". Images are optional for File properties." : ", and at least one image."}
+              title, listing type, property type, city, area{kind === "file" ? ". Images are optional for File properties." : ", and at least one image."} Plot size and price are optional.
             </p>
             <PropertyMarketingSectionsEditor form={form} setForm={setForm} />
             <div className={ui.formActions}>
