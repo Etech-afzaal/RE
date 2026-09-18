@@ -671,7 +671,7 @@ export default async function PropertyDetailPage({ params, searchParams }) {
         </header>
 
         {/* 2. Hero property media — unchanged */}
-        <HeroGallery images={heroImages} title={property.title} isFile={property.property_subtype === "file"} />
+        <HeroGallery images={heroImages} title={property.title} isFile={property.property_subtype === "file"} isPlot={property.property_type === "plot"} />
 
         {/* 3–4. Property summary + sticky agent contact */}
         <section className={styles.overview}>
@@ -710,6 +710,7 @@ export default async function PropertyDetailPage({ params, searchParams }) {
               title={property.title}
               imageUrl={heroImage?.image_url || null}
               isFile={property.property_subtype === "file"}
+              isPlot={property.property_type === "plot"}
               imageAlt={property.title}
               address={locationInfo.address}
               phase={locationInfo.phase}

@@ -1,5 +1,6 @@
 "use client";
 import FilePropertyPlaceholder from "@/components/FilePropertyPlaceholder";
+import PlotPropertyPlaceholder from "@/components/PlotPropertyPlaceholder";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -224,10 +225,10 @@ export default function AgentAdminDashboardPage() {
                               className={ui.thumbButton}
                               aria-label={`Edit ${property.title}`}
                             >
-                              <div className={ui.thumbFallback}>{property.property_subtype === "file" ? <FilePropertyPlaceholder size={28} /> : "P"}</div>
+                              <div className={ui.thumbFallback}>{property.property_subtype === "file" ? <FilePropertyPlaceholder size={28} /> : property.property_type === "plot" ? <PlotPropertyPlaceholder size={28} /> : "P"}</div>
                             </Link>
                           ) : (
-                            <div className={ui.thumbFallback}>{property.property_subtype === "file" ? <FilePropertyPlaceholder size={28} /> : "P"}</div>
+                            <div className={ui.thumbFallback}>{property.property_subtype === "file" ? <FilePropertyPlaceholder size={28} /> : property.property_type === "plot" ? <PlotPropertyPlaceholder size={28} /> : "P"}</div>
                           )}
                           <div>
                             {linksToEdit ? (

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import FilePropertyPlaceholder from "@/components/FilePropertyPlaceholder";
+import PlotPropertyPlaceholder from "@/components/PlotPropertyPlaceholder";
 import ImagePreviewModal from "@/components/ImagePreviewModal";
 import styles from "./HeroGallery.module.css";
 
@@ -11,7 +12,7 @@ import styles from "./HeroGallery.module.css";
  * Uses the listing's own images only; no third-party carousel library.
  * Click / tap (without a drag) opens the shared image preview modal.
  */
-export default function HeroGallery({ images = [], title = "Property", isFile = false }) {
+export default function HeroGallery({ images = [], title = "Property", isFile = false, isPlot = false }) {
   const [index, setIndex] = useState(0);
   const [previewOpen, setPreviewOpen] = useState(false);
   const dragRef = useRef({ active: false, startX: 0, deltaX: 0 });
@@ -114,7 +115,7 @@ export default function HeroGallery({ images = [], title = "Property", isFile = 
       <section className={styles.hero} aria-label="Property photos">
         <div className={styles.stage}>
           <div className={styles.main}>
-            {isFile ? <FilePropertyPlaceholder size={120} fill /> : <>
+            {isFile ? <FilePropertyPlaceholder size={120} fill /> : isPlot ? <PlotPropertyPlaceholder size={120} fill /> : <>
               <div className={styles.fallback} />
               <p className={styles.fallbackLabel}>Photos coming soon</p>
             </>}
