@@ -119,21 +119,13 @@ export default function AgentAdminDashboardPage() {
       }
     >
       <div className={ui.gridStats}>
-        {STAT_CARDS.map((card) => (
-          <Link
-            key={card.id}
-            href={
-              card.status
-                ? `${base}/properties?status=${card.status}`
-                : `${base}/properties`
-            }
-            className={`${ui.statCard} ${ui.statCardLink} ${ui.statDescriptionUnderHeading}`}
-            onClick={(event) => {
-              if (event.target.closest("[data-stat-why]")) {
-                event.preventDefault();
-              }
-            }}
-          >
+        {STAT_CARDS.map((card) => {
+          const href = card.status
+            ? `${base}/properties?status=${card.status}`
+            : `${base}/properties`;
+          const cardClassName = `${ui.statCard} ${ui.statCardLink} ${ui.statDescriptionUnderHeading}`;
+          const cardContent = (
+            <>
             <div className={ui.statPrimary}>
               <p className={ui.statLabel}>{card.label}</p>
               <p className={ui.statValue}>
@@ -151,12 +143,15 @@ export default function AgentAdminDashboardPage() {
                   tabIndex={0}
                   aria-haspopup="dialog"
                   data-stat-why
-                  onClick={() => {
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
                     setPendingWhyOpen(true);
                   }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
+                      event.stopPropagation();
                       setPendingWhyOpen(true);
                     }
                   }}
@@ -165,8 +160,32 @@ export default function AgentAdminDashboardPage() {
                 </span>
               ) : null}
             </div>
-          </Link>
-        ))}
+            </>
+          );
+
+          if (card.id === "pending_approval") {
+            return (
+              <div
+                key={card.id}
+                className={cardClassName}
+                role="link"
+                tabIndex={0}
+                onClick={() => router.push(href)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") router.push(href);
+                }}
+              >
+                {cardContent}
+              </div>
+            );
+          }
+
+          return (
+            <Link key={card.id} href={href} className={cardClassName}>
+              {cardContent}
+            </Link>
+          );
+        })}
       </div>
 
       {pendingWhyOpen ? (
