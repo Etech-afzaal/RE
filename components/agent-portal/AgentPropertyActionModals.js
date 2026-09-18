@@ -1,5 +1,6 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
 import PropertyLinksModal from "@/components/agent-portal/PropertyLinksModal";
 import ui from "@/components/agent-portal/portal.module.css";
 
@@ -16,13 +17,24 @@ export default function AgentPropertyActionModals({
   onConfirmCancelApproval,
   onCloseLinks,
 }) {
+  const successMessage =
+    typeof successPopup === "string" ? successPopup : successPopup?.message;
+  const showSuccessIcon =
+    typeof successPopup === "string" || successPopup?.showIcon !== false;
+
   return (
     <>
       {successPopup ? (
         <div className={ui.dialogBackdrop} role="presentation">
           <div className={`${ui.dialog} ${ui.dialogSuccess}`} role="status" aria-live="polite" aria-labelledby="property-action-success-title">
-            <div className={ui.dialogSuccessIcon} aria-hidden="true">✓</div>
-            <h2 id="property-action-success-title" className={ui.dialogTitle}>{successPopup}</h2>
+            {showSuccessIcon ? (
+              <div className={ui.dialogSuccessIcon} aria-hidden="true">✓</div>
+            ) : (
+              <div className={ui.dialogSuccessIcon} aria-hidden="true">
+                <Trash2 size={20} strokeWidth={2.2} />
+              </div>
+            )}
+            <h2 id="property-action-success-title" className={ui.dialogTitle}>{successMessage}</h2>
           </div>
         </div>
       ) : null}
