@@ -737,7 +737,7 @@ export default function CreatePropertyPage() {
   }
 
   function validateImagesStep() {
-    if (images.length === 0 && kind !== "file") {
+    if (images.length === 0 && !["plots", "file"].includes(kind)) {
       return "Please upload at least one image.";
     }
     for (let i = 0; i < images.length; i += 1) {
@@ -1313,7 +1313,7 @@ export default function CreatePropertyPage() {
           <>
             <span className={ui.label}>
               Property Images
-              {kind === "file" ? " (optional)" : <RequiredMark />}
+              {["plots", "file"].includes(kind) ? " (optional)" : <RequiredMark />}
             </span>
             <FieldMessage id="images-error" error={fieldErrors.images} />
 
@@ -1628,7 +1628,7 @@ export default function CreatePropertyPage() {
             <p className={ui.muted} style={{ marginBottom: "15px" }}>
               Save as draft to continue later, or submit for admin approval.
               Drafts never appear on your public website. Submitting needs a
-              title, listing type, property type, city, area{kind === "file" ? ". Images are optional for File properties." : ", and at least one image."} Plot size and price are optional.
+              title, listing type, property type, city, area{["plots", "file"].includes(kind) ? ". Images are optional for Plot and File properties." : ", and at least one image."} Plot size and price are optional.
             </p>
             <PropertyMarketingSectionsEditor form={form} setForm={setForm} />
             <div className={ui.formActions}>

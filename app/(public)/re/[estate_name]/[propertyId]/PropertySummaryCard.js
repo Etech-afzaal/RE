@@ -1,5 +1,6 @@
 import Image from "next/image";
 import FilePropertyPlaceholder from "@/components/FilePropertyPlaceholder";
+import PlotPropertyPlaceholder from "@/components/PlotPropertyPlaceholder";
 import ExpandableText from "./ExpandableText";
 import styles from "./PropertySummaryCard.module.css";
 
@@ -203,6 +204,7 @@ export default function PropertySummaryCard({
   title,
   imageUrl,
   isFile = false,
+  isPlot = false,
   imageAlt,
   address,
   phase,
@@ -265,7 +267,7 @@ export default function PropertySummaryCard({
               className={styles.mediaImage}
             />
           ) : (
-            isFile ? <FilePropertyPlaceholder fill /> : <div className={styles.mediaFallback} aria-hidden="true" />
+            isFile ? <FilePropertyPlaceholder fill /> : isPlot ? <PlotPropertyPlaceholder fill /> : <div className={styles.mediaFallback} aria-hidden="true" />
           )}
         </div>
 
