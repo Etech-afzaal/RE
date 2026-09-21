@@ -66,6 +66,7 @@ export default function PublicPropertyWebsite({
   locations = [],
   agent = null,
   agentStats = null,
+  blogs = [],
 }) {
   const listingPreferences = normalizeWebsiteListingPreferences(
     agent?.website_listing_preferences,
@@ -310,6 +311,51 @@ export default function PublicPropertyWebsite({
               </div>
             </div>
           </section>
+
+          {blogs.length > 0 ? (
+            <section id="blogs" className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <div>
+                  <p className={styles.kicker}>Insights</p>
+                  <h2 className={styles.sectionTitle}>Latest articles</h2>
+                </div>
+              </div>
+
+              <div className={styles.blogGrid}>
+                {blogs.map((blog) => {
+                  const blogHref = `/re/${encodeURIComponent(agent?.username || agent?.estate_name || "")}/blogs/${encodeURIComponent(blog.slug)}`;
+                  return (
+                    <Link key={blog.id} href={blogHref} className={styles.blogCard}>
+                      {blog.cover_image ? (
+                        <div className={styles.blogMedia}>
+                          <Image
+                            src={blog.cover_image}
+                            alt={blog.title || "Blog article"}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 33vw"
+                            className={styles.blogImage}
+                          />
+                        </div>
+                      ) : (
+                        <div className={styles.blogMedia}>
+                          <div className={styles.blogMediaFallback} />
+                        </div>
+                      )}
+                      <div className={styles.blogBody}>
+                        <h3 className={styles.blogTitle}>{blog.title}</h3>
+                        {blog.short_description ? (
+                          <p className={styles.blogExcerpt}>
+                            {blog.short_description}
+                          </p>
+                        ) : null}
+                        <span className={styles.blogReadMore}>Read article</span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
         </div>
 
         <footer className={styles.footer}>

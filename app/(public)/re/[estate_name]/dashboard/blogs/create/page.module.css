@@ -1,0 +1,14 @@
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 1.1rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ink-soft, #525252);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--gold-deep);
+}

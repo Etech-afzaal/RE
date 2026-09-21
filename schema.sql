@@ -157,6 +157,27 @@ CREATE INDEX idx_images_category ON property_images(property_id, category);
 CREATE INDEX idx_videos_property ON property_videos(property_id);
 CREATE INDEX idx_videos_category ON property_videos(property_id, category);
 
+-- Agent-authored blog articles shown on the agent public website.
+-- Mirrors the properties ownership model; only `published` blogs are public.
+CREATE TABLE IF NOT EXISTS blogs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  agent_id INT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  slug VARCHAR(255) NOT NULL,
+  short_description VARCHAR(500) NULL,
+  content LONGTEXT NULL,
+  cover_image VARCHAR(500) NULL,
+  status ENUM('draft','published') NOT NULL DEFAULT 'draft',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_blogs_agent_slug (agent_id, slug),
+  FOREIGN KEY (agent_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_blogs_agent ON blogs(agent_id);
+CREATE INDEX idx_blogs_status ON blogs(status);
+CREATE INDEX idx_blogs_agent_status ON blogs(agent_id, status);
+
 -- Demo / realistic listings live in seed.sql (agent users, sale/rent/plot properties, images).
 -- After creating tables, run:
 --   mysql -u root -p real_estate < seed.sql

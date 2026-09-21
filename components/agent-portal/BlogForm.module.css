@@ -1,0 +1,97 @@
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 1.1rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ink-soft, #525252);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--gold-deep);
+}
+
+.coverSection {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.coverPreview {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line, rgba(26, 26, 26, 0.12));
+  background: #f0efed;
+  flex-shrink: 0;
+}
+
+.coverImage {
+  object-fit: cover;
+}
+
+.coverFallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #f3eee3, var(--gold-tint));
+}
+
+.coverActions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.coverHint {
+  margin: 0.35rem 0 1rem;
+}
+
+.contentTextarea {
+  min-height: 320px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.statusRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.05rem;
+}
+
+.statusSelect {
+  min-width: 12rem;
+}
+
+.statusHint {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  color: var(--ink-soft, #525252);
+}
+
+@media (max-width: 768px) {
+  .coverSection {
+    flex-direction: column;
+  }
+
+  .coverPreview {
+    max-width: 100%;
+  }
+}

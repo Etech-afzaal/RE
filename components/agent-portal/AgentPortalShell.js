@@ -86,6 +86,35 @@ function navItems(base) {
       ),
     },
     {
+      href: `${base}/blogs`,
+      label: "Blogs",
+      icon: (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M5 4h9a3 3 0 0 1 3 3v13H7a2 2 0 0 1-2-2V4Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M17 7h2a2 2 0 0 1 2 2v11h-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M8 8h5M8 11.5h5M8 15h3"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+        </svg>
+      ),
+    },
+    {
       href: `${base}/profile`,
       label: "My Profile",
       icon: (
@@ -153,6 +182,16 @@ function isActive(pathname, item) {
       pathname === item.href ||
       (pathname.startsWith(`${item.href}/`) &&
         !pathname.includes("/properties/create"))
+    );
+  }
+  if (item.href.endsWith("/blogs/create")) {
+    return pathname === item.href;
+  }
+  if (item.href.endsWith("/blogs")) {
+    return (
+      pathname === item.href ||
+      (pathname.startsWith(`${item.href}/`) &&
+        !pathname.includes("/blogs/create"))
     );
   }
   return pathname === item.href || pathname.startsWith(`${item.href}/`);

@@ -1,0 +1,162 @@
+.tabsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.15rem;
+}
+
+.tabsRowTabs {
+  margin-bottom: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.searchWrap {
+  position: relative;
+  flex: 1 1 20rem;
+  width: 100%;
+  max-width: 26rem;
+  min-width: 18rem;
+  margin-left: auto;
+}
+
+.searchIcon {
+  position: absolute;
+  z-index: 1;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  min-height: 2.35rem;
+  padding: 0.62rem 1rem 0.62rem 2.2rem;
+  border: 1px solid var(--line, rgba(26, 26, 26, 0.12));
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink, #1a1a1a);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.searchInput::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background-color: var(--gold);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 4l-8 8' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 4l8 8M12 4l-8 8' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  cursor: pointer;
+}
+
+.searchInput::placeholder {
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: rgba(242, 187, 70, 0.45);
+  box-shadow: 0 0 0 2px rgba(242, 187, 70, 0.12);
+}
+
+.listingPanel {
+  --listing-count-h: 2.85rem;
+  --listing-thead-h: 2.7rem;
+  --listing-row-h: 5.05rem;
+  --listing-page-size: 10;
+  --listing-pagination-h: 4.6rem;
+
+  display: flex;
+  flex-direction: column;
+  min-height: calc(
+    var(--listing-count-h) +
+      var(--listing-thead-h) +
+      (var(--listing-row-h) * var(--listing-page-size)) +
+      var(--listing-pagination-h)
+  );
+}
+
+.tableArea {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.paginationSlot {
+  margin-top: auto;
+  padding-bottom: 1.1rem;
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.65rem;
+}
+
+.titleLink {
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.titleLink:hover {
+  color: var(--gold-deep);
+}
+
+@media (min-width: 769px) {
+  .tabsRow .tabsRowTabs {
+    align-items: center;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-bottom: 0;
+  }
+
+  .tabsRowTabs > button,
+  .searchWrap .searchInput {
+    box-sizing: border-box;
+    height: 2.35rem;
+    min-height: 2.35rem;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .tabsRowTabs > button {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .tabsRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchWrap {
+    order: -1;
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    margin-left: 0;
+  }
+
+  .tabsRowTabs {
+    flex: 0 0 auto;
+  }
+
+  .listingPanel {
+    min-height: 0;
+  }
+
+  .paginationSlot {
+    margin-top: 0;
+  }
+}
