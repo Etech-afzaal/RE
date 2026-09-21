@@ -69,6 +69,29 @@ function navItems(base) {
       ),
     },
     {
+      href: `${base}/files-updates`,
+      label: "Files Updates",
+      icon: (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M6 3h7l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M13 3v5h5M8 13h8M8 16.5h8M8 9.5h3"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ),
+    },
+    {
       href: `${base}/subagents`,
       label: "Subagents",
       icon: (
@@ -82,6 +105,45 @@ function navItems(base) {
             strokeWidth="1.8"
             strokeLinecap="round"
           />
+        </svg>
+      ),
+    },
+    {
+      href: `${base}/profile`,
+      label: "My Profile",
+      icon: (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="8" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <path
+            d="M5 19.5c1.8-3.2 4.1-4.8 7-4.8s5.2 1.6 7 4.8"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+        </svg>
+      ),
+    },
+    {
+      href: `${base}/company-branding`,
+      label: "Company Branding",
+      icon: (
+       <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M4 7.5h16v12H4v-12Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M7 7.5 8.5 4h7L17 7.5M8 11h8M8 14.5h5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+           />
         </svg>
       ),
     },
@@ -143,68 +205,6 @@ function navItems(base) {
             strokeWidth="1.8"
             strokeLinecap="round"
           />
-        </svg>
-      ),
-    },
-    {
-      href: `${base}/files-updates`,
-      label: "Files Updates",
-      icon: (
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M6 3h7l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M13 3v5h5M8 13h8M8 16.5h8M8 9.5h3"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      ),
-    },
-    {
-      href: `${base}/profile`,
-      label: "My Profile",
-      icon: (
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="8" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.8" />
-          <path
-            d="M5 19.5c1.8-3.2 4.1-4.8 7-4.8s5.2 1.6 7 4.8"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-        </svg>
-      ),
-    },
-    {
-      href: `${base}/company-branding`,
-      label: "Company Branding",
-      icon: (
-       <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M4 7.5h16v12H4v-12Z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M7 7.5 8.5 4h7L17 7.5M8 11h8M8 14.5h5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-           />
         </svg>
       ),
     },
