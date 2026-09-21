@@ -200,6 +200,24 @@ CREATE INDEX idx_video_posts_agent ON video_posts(agent_id);
 CREATE INDEX idx_video_posts_status ON video_posts(status);
 CREATE INDEX idx_video_posts_agent_status ON video_posts(agent_id, status);
 
+-- Agent files updates — a SINGLE live market/file price update page per agent.
+-- One row per agent (UNIQUE on agent_id). Content stores sanitized HTML from
+-- the dashboard WYSIWYG editor (headings, paragraphs, lists, tables, images).
+-- Only `published` content is visible on the public website.
+CREATE TABLE IF NOT EXISTS agent_files_updates (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  agent_id INT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  content LONGTEXT NULL,
+  status ENUM('draft','published') NOT NULL DEFAULT 'draft',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_agent_files_updates_agent (agent_id),
+  FOREIGN KEY (agent_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_agent_files_updates_status ON agent_files_updates(status);
+
 -- Demo / realistic listings live in seed.sql (agent users, sale/rent/plot properties, images).
 -- After creating tables, run:
 --   mysql -u root -p real_estate < seed.sql

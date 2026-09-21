@@ -1,0 +1,36 @@
+.hint {
+  margin: 0 0 1.15rem;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--ink-soft, #525252);
+}
+
+.contentField {
+  margin-bottom: 1.25rem;
+}
+
+.contentLabel {
+  display: block;
+  margin: 0 0 0.45rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--ink, #1a1a1a);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.deleteBtn {
+  margin-left: auto;
+}
+
+.lastUpdated {
+  margin: 1rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted, #9ca3af);
+}

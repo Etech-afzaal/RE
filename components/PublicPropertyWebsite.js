@@ -68,14 +68,27 @@ export default function PublicPropertyWebsite({
   agentStats = null,
   blogs = [],
   videoPosts = [],
+  filesUpdate = null,
 }) {
   const listingPreferences = normalizeWebsiteListingPreferences(
     agent?.website_listing_preferences,
   );
-  const navLinks = filterNavLinksByPreferences(
-    AGENT_PUBLIC_NAV,
-    listingPreferences,
-  );
+  const agentHandle =
+    agent?.username || agent?.estate_name || "";
+  const navLinks = [
+    ...filterNavLinksByPreferences(
+      AGENT_PUBLIC_NAV,
+      listingPreferences,
+    ),
+    ...(filesUpdate
+      ? [
+          {
+            label: "Files Updates",
+            href: `/re/${encodeURIComponent(agentHandle)}/files-updates`,
+          },
+        ]
+      : []),
+  ];
 
   const trustBackground =
     properties.find((property) => property.featuredImage?.image_url)

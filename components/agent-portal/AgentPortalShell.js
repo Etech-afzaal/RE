@@ -147,6 +147,29 @@ function navItems(base) {
       ),
     },
     {
+      href: `${base}/files-updates`,
+      label: "Files Updates",
+      icon: (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M6 3h7l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M13 3v5h5M8 13h8M8 16.5h8M8 9.5h3"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ),
+    },
+    {
       href: `${base}/profile`,
       label: "My Profile",
       icon: (
