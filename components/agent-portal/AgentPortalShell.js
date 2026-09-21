@@ -125,6 +125,28 @@ function navItems(base) {
       ),
     },
     {
+      href: `${base}/marketing`,
+      label: "Marketing",
+      icon: (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M3 10v4a1 1 0 0 0 1 1h2.5l4 3.5V6.5L6.5 10H4a1 1 0 0 0-1 1Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7 7 0 0 1 0 11"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+        </svg>
+      ),
+    },
+    {
       href: `${base}/profile`,
       label: "My Profile",
       icon: (
