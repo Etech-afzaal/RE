@@ -15,6 +15,7 @@ import { agentPhoneEntries } from "@/lib/agentContact";
 import { agentWebsiteWhatsAppMessage, resolveAgentWhatsAppNumber } from "@/lib/whatsapp";
 import {
   filterNavLinksByPreferences,
+  getPropertyViewMode,
   isCategoryEnabled,
   normalizeWebsiteListingPreferences,
 } from "@/lib/websiteListingPreferences";
@@ -73,12 +74,25 @@ export default function PublicPropertyWebsite({
   const listingPreferences = normalizeWebsiteListingPreferences(
     agent?.website_listing_preferences,
   );
+  const viewMode = getPropertyViewMode(listingPreferences);
   const agentHandle =
     agent?.username || agent?.estate_name || "";
-  const baseNavLinks = filterNavLinksByPreferences(
-    AGENT_PUBLIC_NAV,
-    listingPreferences,
-  );
+
+  const baseNavLinks = (() => {
+    if (viewMode === "flat") {
+      // Flat view: replace For Sale / For Rent / Plots with a single Properties link.
+      // Keep Home and Search Areas; Files Updates is injected below.
+      return AGENT_PUBLIC_NAV.filter(
+        (item) => !item.type,
+      ).map((item) =>
+        item.label === "Search Areas"
+          ? { label: "Properties", href: "#properties" }
+          : item,
+      );
+    }
+    return filterNavLinksByPreferences(AGENT_PUBLIC_NAV, listingPreferences);
+  })();
+
   const navLinks = (() => {
     if (!filesUpdate) return baseNavLinks;
     const filesUpdateLink = {
@@ -127,6 +141,7 @@ export default function PublicPropertyWebsite({
       <HomeListings
         properties={properties}
         listingPreferences={listingPreferences}
+        viewMode={viewMode}
       >
         <HeroSlider slides={heroSlides} />
         <div className={styles.container}>
@@ -449,15 +464,21 @@ export default function PublicPropertyWebsite({
 
             <div className={styles.footerCol}>
               <h4>Properties</h4>
-              {isCategoryEnabled(listingPreferences, "sale") ? (
-                <Link href="#for-sale">For Sale</Link>
-              ) : null}
-              {isCategoryEnabled(listingPreferences, "rent") ? (
-                <Link href="#for-rent">For Rent</Link>
-              ) : null}
-              {isCategoryEnabled(listingPreferences, "plot") ? (
-                <Link href="#plots">Plots</Link>
-              ) : null}
+              {viewMode === "flat" ? (
+                <Link href="#properties">Properties</Link>
+              ) : (
+                <>
+                  {isCategoryEnabled(listingPreferences, "sale") ? (
+                    <Link href="#for-sale">For Sale</Link>
+                  ) : null}
+                  {isCategoryEnabled(listingPreferences, "rent") ? (
+                    <Link href="#for-rent">For Rent</Link>
+                  ) : null}
+                  {isCategoryEnabled(listingPreferences, "plot") ? (
+                    <Link href="#plots">Plots</Link>
+                  ) : null}
+                </>
+              )}
               <Link href="#why-us">How It Works</Link>
             </div>
 

@@ -699,6 +699,7 @@ export default function HomeListings({
   properties = [],
   children,
   listingPreferences = null,
+  viewMode = "categorized",
 }) {
   const isMobile = useIsMobile(768);
   const pageSize = isMobile ? MOBILE_PAGE_SIZE : DESKTOP_PAGE_SIZE;
@@ -837,6 +838,11 @@ export default function HomeListings({
     return base;
   }, [properties, query, location, sort]);
 
+  const flatSection = useMemo(() => ({
+    mainId: "properties",
+    properties: filtered,
+  }), [filtered]);
+
   const groupedSections = useMemo(() => {
     const groups = filterListingGroupsByPreferences(listingPreferences);
     return groups.map((group) => ({
@@ -916,35 +922,59 @@ export default function HomeListings({
       {children}
 
       <div className={styles.listingsWrap}>
-        {groupedSections.length === 0 ? (
-          <div className={styles.empty}>No listings available.</div>
-        ) : (
-          groupedSections.map((group) => (
+        {viewMode === "flat" ? (
+          flatSection.properties.length === 0 ? (
+            <div className={styles.empty}>No listings available.</div>
+          ) : (
             <div
-              key={group.type}
-              id={group.mainId}
+              id={flatSection.mainId}
               className={styles.listingGroup}
             >
-              {group.subsections.map((section) => {
-                const key = pageKey(group.type, section.subtype);
-                return (
-                  <PropertySection
-                    key={section.id}
-                    id={section.id}
-                    title={section.title}
-                    kicker={group.title}
-                    subtype={section.subtype}
-                    properties={section.properties}
-                    currentPage={pages[key] || 1}
-                    pageSize={pageSize}
-                    onPageChange={(page) =>
-                      setPages((prev) => ({ ...prev, [key]: page }))
-                    }
-                  />
-                );
-              })}
+              <PropertySection
+                id="properties"
+                title="Properties"
+                kicker="All Listings"
+                subtype="property"
+                properties={flatSection.properties}
+                currentPage={pages["properties"] || 1}
+                pageSize={pageSize}
+                onPageChange={(page) =>
+                  setPages((prev) => ({ ...prev, ["properties"]: page }))
+                }
+              />
             </div>
-          ))
+          )
+        ) : (
+          groupedSections.length === 0 ? (
+            <div className={styles.empty}>No listings available.</div>
+          ) : (
+            groupedSections.map((group) => (
+              <div
+                key={group.type}
+                id={group.mainId}
+                className={styles.listingGroup}
+              >
+                {group.subsections.map((section) => {
+                  const key = pageKey(group.type, section.subtype);
+                  return (
+                    <PropertySection
+                      key={section.id}
+                      id={section.id}
+                      title={section.title}
+                      kicker={group.title}
+                      subtype={section.subtype}
+                      properties={section.properties}
+                      currentPage={pages[key] || 1}
+                      pageSize={pageSize}
+                      onPageChange={(page) =>
+                        setPages((prev) => ({ ...prev, [key]: page }))
+                      }
+                    />
+                  );
+                })}
+              </div>
+            ))
+          )
         )}
       </div>
     </>

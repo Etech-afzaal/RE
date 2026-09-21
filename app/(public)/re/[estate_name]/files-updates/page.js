@@ -7,6 +7,7 @@ import SiteHeader from "@/components/SiteHeader";
 import { AGENT_PUBLIC_NAV } from "@/components/PublicPropertyWebsite";
 import {
   filterNavLinksByPreferences,
+  getPropertyViewMode,
   normalizeWebsiteListingPreferences,
 } from "@/lib/websiteListingPreferences";
 import AgentWhatsAppFab from "@/components/AgentWhatsAppFab";
@@ -41,10 +42,21 @@ export default async function FilesUpdatesPage({ params }) {
   const listingPreferences = normalizeWebsiteListingPreferences(
     agent?.website_listing_preferences,
   );
-  const filteredNav = filterNavLinksByPreferences(
-    AGENT_PUBLIC_NAV,
-    listingPreferences,
-  );
+  const viewMode = getPropertyViewMode(listingPreferences);
+
+  const filteredNav = (() => {
+    if (viewMode === "flat") {
+      return AGENT_PUBLIC_NAV.filter(
+        (item) => !item.type,
+      ).map((item) =>
+        item.label === "Search Areas"
+          ? { label: "Properties", href: "#properties" }
+          : item,
+      );
+    }
+    return filterNavLinksByPreferences(AGENT_PUBLIC_NAV, listingPreferences);
+  })();
+
   const navLinks = filteredNav.map((item) => {
     if (item.label === "Home") return { label: "Home", href: "/" };
     if (item.href.startsWith("#")) {

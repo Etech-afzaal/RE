@@ -12,6 +12,7 @@ import { validateNewPassword } from "@/lib/validators/userValidator";
 import {
   defaultWebsiteListingPreferences,
   WEBSITE_LISTING_PREF_OPTIONS,
+  PROPERTY_VIEW_MODES,
 } from "@/lib/websiteListingPreferences";
 
 export default function AgentSettingsPage() {
@@ -33,6 +34,15 @@ export default function AgentSettingsPage() {
   const [prefsSaving, setPrefsSaving] = useState(false);
   const [prefsError, setPrefsError] = useState("");
   const [prefsSuccess, setPrefsSuccess] = useState("");
+
+  const viewMode = PROPERTY_VIEW_MODES.includes(prefs.property_view_mode)
+    ? prefs.property_view_mode
+    : "categorized";
+
+  function setViewMode(mode) {
+    setPrefs((prev) => ({ ...prev, property_view_mode: mode }));
+    setPrefsSuccess("");
+  }
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -287,7 +297,43 @@ export default function AgentSettingsPage() {
           {prefsLoading ? (
             <p className={ui.settingsMuted}>Loading preferences…</p>
           ) : (
-            <div className={ui.prefGroups}>
+            <>
+              <div className={ui.prefViewMode}>
+                <h3 className={ui.prefViewModeTitle}>Property Display Mode</h3>
+                <label className={ui.prefRadio}>
+                  <input
+                    type="radio"
+                    name="property_view_mode"
+                    value="categorized"
+                    checked={viewMode === "categorized"}
+                    onChange={() => setViewMode("categorized")}
+                  />
+                  <span>
+                    <strong>Categorized View</strong>
+                    <span className={ui.prefRadioHint}>
+                      Show properties grouped by: For Sale, For Rent, Plots
+                    </span>
+                  </span>
+                </label>
+                <label className={ui.prefRadio}>
+                  <input
+                    type="radio"
+                    name="property_view_mode"
+                    value="flat"
+                    checked={viewMode === "flat"}
+                    onChange={() => setViewMode("flat")}
+                  />
+                  <span>
+                    <strong>Flat View</strong>
+                    <span className={ui.prefRadioHint}>
+                      Show all properties under one Properties menu
+                    </span>
+                  </span>
+                </label>
+              </div>
+
+              {viewMode === "categorized" ? (
+              <div className={ui.prefGroups}>
               {WEBSITE_LISTING_PREF_OPTIONS.map((group) => {
                 const category = prefs[group.type];
                 const parentEnabled = Boolean(category?.enabled);
@@ -332,7 +378,9 @@ export default function AgentSettingsPage() {
                   </div>
                 );
               })}
-            </div>
+              </div>
+              ) : null}
+            </>
           )}
 
           <div className={ui.formActions}>
