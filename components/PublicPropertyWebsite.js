@@ -21,7 +21,7 @@ import {
 import styles from "@/app/page.module.css";
 import "@/app/agent-public-theme.css";
 
-const AGENT_PUBLIC_NAV = [
+export const AGENT_PUBLIC_NAV = [
   { label: "Home", href: "/" },
   {
     label: "For Sale",
@@ -75,20 +75,24 @@ export default function PublicPropertyWebsite({
   );
   const agentHandle =
     agent?.username || agent?.estate_name || "";
-  const navLinks = [
-    ...filterNavLinksByPreferences(
-      AGENT_PUBLIC_NAV,
-      listingPreferences,
-    ),
-    ...(filesUpdate
-      ? [
-          {
-            label: "Files Updates",
-            href: `/re/${encodeURIComponent(agentHandle)}/files-updates`,
-          },
-        ]
-      : []),
-  ];
+  const baseNavLinks = filterNavLinksByPreferences(
+    AGENT_PUBLIC_NAV,
+    listingPreferences,
+  );
+  const navLinks = (() => {
+    if (!filesUpdate) return baseNavLinks;
+    const filesUpdateLink = {
+      label: "Files Updates",
+      href: `/re/${encodeURIComponent(agentHandle)}/files-updates`,
+    };
+    const areasIndex = baseNavLinks.findIndex(
+      (item) => item.label === "Search Areas",
+    );
+    if (areasIndex === -1) return [...baseNavLinks, filesUpdateLink];
+    const result = [...baseNavLinks];
+    result.splice(areasIndex, 0, filesUpdateLink);
+    return result;
+  })();
 
   const trustBackground =
     properties.find((property) => property.featuredImage?.image_url)

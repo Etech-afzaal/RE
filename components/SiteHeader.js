@@ -355,6 +355,15 @@ export default function SiteHeader({
 
   /** Main nav active: scroll section or listing area (agent public). */
   const isNavLinkActive = (link) => {
+    // Full-path nav links (e.g. Files Updates page): active when pathname matches.
+    if (
+      isAgentPublicSite &&
+      !link.href.startsWith("#") &&
+      link.href !== homeHref &&
+      pathname === link.href
+    ) return true;
+    // Home link: not active when on a sub-page (e.g. Files Updates).
+    if (isAgentPublicSite && link.href === homeHref && pathname !== homeHref) return false;
     if (isActiveLink(link.href)) return true;
     if (isAgentPublicSite && link.type && activeType === link.type) return true;
     return false;

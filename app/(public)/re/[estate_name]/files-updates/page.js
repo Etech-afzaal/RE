@@ -4,6 +4,11 @@ import { getAgentByUsername } from "@/lib/queries";
 import { getPublishedFilesUpdateByAgent } from "@/lib/filesUpdates";
 import { agentPublicUsername } from "@/lib/propertySlug";
 import SiteHeader from "@/components/SiteHeader";
+import { AGENT_PUBLIC_NAV } from "@/components/PublicPropertyWebsite";
+import {
+  filterNavLinksByPreferences,
+  normalizeWebsiteListingPreferences,
+} from "@/lib/websiteListingPreferences";
 import AgentWhatsAppFab from "@/components/AgentWhatsAppFab";
 import { agentPhoneEntries } from "@/lib/agentContact";
 import { resolveAgentWhatsAppNumber, agentWebsiteWhatsAppMessage } from "@/lib/whatsapp";
@@ -33,6 +38,31 @@ export default async function FilesUpdatesPage({ params }) {
   const agentHandle = agentPublicUsername(agent);
   const agentHomeHref = `/re/${encodeURIComponent(agentHandle)}`;
 
+  const listingPreferences = normalizeWebsiteListingPreferences(
+    agent?.website_listing_preferences,
+  );
+  const filteredNav = filterNavLinksByPreferences(
+    AGENT_PUBLIC_NAV,
+    listingPreferences,
+  );
+  const navLinks = filteredNav.map((item) => {
+    if (item.label === "Home") return { label: "Home", href: "/" };
+    if (item.href.startsWith("#")) {
+      return { label: item.label, href: `${agentHomeHref}${item.href}` };
+    }
+    return { label: item.label, href: item.href };
+  });
+  const filesUpdateLink = {
+    label: "Files Updates",
+    href: `${agentHomeHref}/files-updates`,
+  };
+  const areasIndex = navLinks.findIndex((item) => item.label === "Search Areas");
+  if (areasIndex === -1) {
+    navLinks.push(filesUpdateLink);
+  } else {
+    navLinks.splice(areasIndex, 0, filesUpdateLink);
+  }
+
   const phoneEntries = agent ? agentPhoneEntries(agent) : [];
   const waNumber = agent ? resolveAgentWhatsAppNumber(agent) : null;
   const waMessage = agent ? agentWebsiteWhatsAppMessage(agent) : "";
@@ -53,10 +83,7 @@ export default async function FilesUpdatesPage({ params }) {
   return (
     <div className={`agent-public-theme ${styles.wrapper}`}>
       <SiteHeader
-        navLinks={[
-          { label: "Home", href: agentHomeHref },
-          { label: "Files Updates", href: `/re/${encodeURIComponent(agentHandle)}/files-updates` },
-        ]}
+        navLinks={navLinks}
         ctaLabel="Contact"
         ctaHref={`${agentHomeHref}#contact`}
         logoSrc={agent.company_logo || "/logo.svg"}

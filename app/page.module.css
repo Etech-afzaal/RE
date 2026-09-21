@@ -701,7 +701,7 @@
 }
 
 .contactDetailLink:hover {
-  color: var(--gold-deep);
+  color: var(--gold, #c8a45d);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
