@@ -1,0 +1,211 @@
+.wrapper {
+  min-height: 100vh;
+  color: var(--ink, #1a1a1a);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, color-mix(in srgb, var(--gold) 14%, transparent), transparent 55%),
+    linear-gradient(180deg, #ffffff 0%, var(--paper, #faf9f6) 28%, var(--surface-sunken, #f7f4ec) 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.article {
+  width: min(860px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0 4rem;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 1.75rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ink-soft, #525252);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--gold-deep);
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.kicker {
+  margin: 0 0 0.45rem;
+  color: var(--gold-deep);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.75rem, 4vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: #1a1a1a;
+  line-height: 1.15;
+}
+
+.description {
+  margin: 0 0 1rem;
+  color: var(--ink-soft, #525252);
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  color: var(--ink-soft, #525252);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.author {
+  color: #1a1a1a;
+}
+
+.dot {
+  color: var(--gold);
+}
+
+.date {
+  font-weight: 500;
+}
+
+.player {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 18px;
+  overflow: hidden;
+  margin-bottom: 2.5rem;
+  background: #000;
+  border: 1px solid rgba(26, 26, 26, 0.08);
+  box-shadow: 0 12px 36px rgba(26, 26, 26, 0.1);
+}
+
+.empty {
+  color: var(--muted, #737373);
+  font-style: italic;
+  padding: 1rem 0;
+}
+
+.contactSection {
+  margin-top: 3.5rem;
+}
+
+.contactCard {
+  background: #fff;
+  border: 1px solid rgba(26, 26, 26, 0.08);
+  border-radius: 20px;
+  padding: 2.25rem;
+  box-shadow: 0 12px 32px rgba(26, 26, 26, 0.05);
+}
+
+.contactKicker {
+  margin: 0 0 0.4rem;
+  color: var(--gold-deep);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.contactHeading {
+  margin: 0 0 0.6rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #1a1a1a;
+}
+
+.contactCopy {
+  margin: 0 0 1.4rem;
+  color: var(--ink-soft, #525252);
+  font-size: 0.98rem;
+  line-height: 1.55;
+}
+
+.contactActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.contactButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1.5rem;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #111111;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.contactButton:hover {
+  background: var(--gold-deep);
+  transform: translateY(-1px);
+}
+
+.contactButtonGhost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1.5rem;
+  border-radius: 999px;
+  background: transparent;
+  color: #1a1a1a;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid rgba(26, 26, 26, 0.18);
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.contactButtonGhost:hover {
+  border-color: var(--gold);
+  color: var(--gold-deep);
+}
+
+@media (max-width: 768px) {
+  .article {
+    padding: 1.5rem 0 3rem;
+  }
+
+  .title {
+    font-size: clamp(1.5rem, 6vw, 2rem);
+  }
+
+  .player {
+    margin-bottom: 1.75rem;
+  }
+
+  .contactCard {
+    padding: 1.5rem;
+    border-radius: 16px;
+  }
+
+  .contactHeading {
+    font-size: 1.25rem;
+  }
+}

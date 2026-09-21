@@ -41,7 +41,8 @@
     "migrate:agent-own-marketing-links": "node scripts/migrate-agent-own-marketing-links.js",
     "migrate:property-data": "node scripts/migrate-property-data.js",
     "migrate:property-json": "node scripts/migrate-property-json.cjs",
-    "migrate:agent-blogs": "node scripts/migrate-agent-blogs.js"
+    "migrate:agent-blogs": "node scripts/migrate-agent-blogs.js",
+    "migrate:agent-video-posts": "node scripts/migrate-agent-video-posts.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

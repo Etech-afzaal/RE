@@ -115,6 +115,16 @@ function navItems(base) {
       ),
     },
     {
+      href: `${base}/video-posts`,
+      label: "Video Posts",
+      icon: (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="5" width="18" height="14" rx="3" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M10.5 9.5v5l4.5-2.5-4.5-2.5Z" fill="currentColor" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+        </svg>
+      ),
+    },
+    {
       href: `${base}/profile`,
       label: "My Profile",
       icon: (
@@ -192,6 +202,16 @@ function isActive(pathname, item) {
       pathname === item.href ||
       (pathname.startsWith(`${item.href}/`) &&
         !pathname.includes("/blogs/create"))
+    );
+  }
+  if (item.href.endsWith("/video-posts/create")) {
+    return pathname === item.href;
+  }
+  if (item.href.endsWith("/video-posts")) {
+    return (
+      pathname === item.href ||
+      (pathname.startsWith(`${item.href}/`) &&
+        !pathname.includes("/video-posts/create"))
     );
   }
   return pathname === item.href || pathname.startsWith(`${item.href}/`);

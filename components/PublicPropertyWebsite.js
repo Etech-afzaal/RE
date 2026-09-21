@@ -67,6 +67,7 @@ export default function PublicPropertyWebsite({
   agent = null,
   agentStats = null,
   blogs = [],
+  videoPosts = [],
 }) {
   const listingPreferences = normalizeWebsiteListingPreferences(
     agent?.website_listing_preferences,
@@ -349,6 +350,54 @@ export default function PublicPropertyWebsite({
                           </p>
                         ) : null}
                         <span className={styles.blogReadMore}>Read article</span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
+
+          {videoPosts.length > 0 ? (
+            <section id="videos" className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <div>
+                  <p className={styles.kicker}>Watch</p>
+                  <h2 className={styles.sectionTitle}>Video posts</h2>
+                </div>
+              </div>
+
+              <div className={styles.videoPostGrid}>
+                {videoPosts.map((videoPost) => {
+                  const videoHref = `/re/${encodeURIComponent(agent?.username || agent?.estate_name || "")}/videos/${encodeURIComponent(videoPost.slug)}`;
+                  return (
+                    <Link key={videoPost.id} href={videoHref} className={styles.videoPostCard}>
+                      <div className={styles.videoPostMedia}>
+                        {videoPost.thumbnail_url ? (
+                          <Image
+                            src={videoPost.thumbnail_url}
+                            alt={videoPost.title || "Video post"}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 33vw"
+                            className={styles.videoPostImage}
+                          />
+                        ) : (
+                          <div className={styles.videoPostMediaFallback} />
+                        )}
+                        <span className={styles.videoPostPlay} aria-hidden="true">
+                          <svg viewBox="0 0 24 24" width="28" height="28">
+                            <circle cx="12" cy="12" r="11" fill="rgba(0,0,0,0.45)" />
+                            <path d="M9 7v10l8-5-8-5Z" fill="white" />
+                          </svg>
+                        </span>
+                      </div>
+                      <div className={styles.videoPostBody}>
+                        <h3 className={styles.videoPostTitle}>{videoPost.title}</h3>
+                        {videoPost.description ? (
+                          <p className={styles.videoPostExcerpt}>
+                            {videoPost.description}
+                          </p>
+                        ) : null}
                       </div>
                     </Link>
                   );
