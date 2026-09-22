@@ -125,11 +125,15 @@ export default function AgentPropertyActionModals({
             <h2 id="property-status-change-title" className={ui.dialogTitle}>
               {propertyStatusChange.status === "under_contract"
                 ? "Mark as Under Contract?"
+                : propertyStatusChange.property.status === "sold"
+                  ? "Mark as Unsold?"
                 : "Mark as Published?"}
             </h2>
             <p className={ui.dialogText}>
               {propertyStatusChange.status === "under_contract"
                 ? "This property will be marked as Under Contract and will no longer appear as an available property."
+                : propertyStatusChange.property.status === "sold"
+                  ? "This property will return to the active market as Published."
                 : "This property will return to the active market as Published."}
             </p>
             <div className={ui.dialogActions}>
@@ -139,6 +143,8 @@ export default function AgentPropertyActionModals({
                   ? "Updating…"
                   : propertyStatusChange.status === "under_contract"
                     ? "Mark as Under Contract"
+                    : propertyStatusChange.property.status === "sold"
+                      ? "Mark as Unsold"
                     : "Mark as Published"}
               </button>
             </div>

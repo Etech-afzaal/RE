@@ -29,6 +29,7 @@ export default function PropertyListingActions({
   const featured = isFeaturedProperty(property);
   const isApproved = property.status === "approved";
   const isUnderContract = property.status === "under_contract";
+  const isSold = property.status === "sold";
   const isBusy = busyId === property.id;
 
   const goToEdit = () => router.push(editHref);
@@ -87,7 +88,9 @@ export default function PropertyListingActions({
       ? [{ label: "Mark as Under Contract", icon: Handshake, onSelect: () => onOpenPropertyStatusChange(property, "under_contract"), disabled: isBusy }]
       : isUnderContract
         ? [{ label: "Mark as Published", icon: Undo2, onSelect: () => onOpenPropertyStatusChange(property, "approved"), disabled: isBusy }]
-        : []),
+        : isSold
+          ? [{ label: "Mark as Unsold", icon: Undo2, onSelect: () => onOpenPropertyStatusChange(property, "approved"), disabled: isBusy }]
+          : []),
     ...(isApproved || isUnderContract || property.status === "hidden"
       ? [{ label: "Mark as sold", icon: CircleCheck, onSelect: () => onMarkSold(property), disabled: isBusy }]
       : []),

@@ -40,7 +40,7 @@ export function useAgentPropertyActions({ onReload, getReloadPage }) {
         setError(data.error || "Could not mark this property as sold.");
         return;
       }
-      setSuccess("Property marked as sold.");
+      setSuccessPopup("Property marked as Sold.");
       await onReload?.();
     } catch {
       setError("Could not mark this property as sold.");
@@ -70,6 +70,8 @@ export function useAgentPropertyActions({ onReload, getReloadPage }) {
       setSuccessPopup(
         status === "under_contract"
           ? "Property marked as Under Contract."
+          : property.status === "sold"
+            ? "Property marked as Unsold and Published."
           : "Property marked as Published.",
       );
       await onReload?.();
