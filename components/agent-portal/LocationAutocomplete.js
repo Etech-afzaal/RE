@@ -21,8 +21,10 @@ export default function LocationAutocomplete({
   const [showDropdown, setShowDropdown] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [googleReady, setGoogleReady] = useState(false);
+  const [biasLatLng, setBiasLatLng] = useState(null);
   const debounceRef = useRef(null);
   const autocompleteRef = useRef(null);
+  const geocoderRef = useRef(null);
   const wrapRef = useRef(null);
 
   useEffect(() => {
@@ -33,6 +35,7 @@ export default function LocationAutocomplete({
         if (window.google?.maps?.places?.AutocompleteService) {
           autocompleteRef.current =
             new window.google.maps.places.AutocompleteService();
+          geocoderRef.current = new window.google.maps.Geocoder();
           setGoogleReady(true);
         }
       })
@@ -42,23 +45,55 @@ export default function LocationAutocomplete({
     };
   }, []);
 
+  // Geocode the city (locationBias) to coordinates for location-biased search.
+  useEffect(() => {
+    if (!googleReady || !geocoderRef.current) return;
+    const city = String(locationBias || "").trim();
+    if (!city) {
+      setBiasLatLng(null);
+      return;
+    }
+    let cancelled = false;
+    geocoderRef.current.geocode(
+      { address: city, componentRestrictions: { country } },
+      (results, status) => {
+        if (cancelled) return;
+        if (
+          status === window.google.maps.GeocoderStatus.OK &&
+          results?.[0]?.geometry?.location
+        ) {
+          setBiasLatLng(results[0].geometry.location);
+        } else {
+          setBiasLatLng(null);
+        }
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [locationBias, googleReady, country]);
+
   useEffect(() => {
     if (!googleReady || !autocompleteRef.current) return;
     const trimmed = String(value || "").trim();
-    if (trimmed.length < 2) {
+    if (trimmed.length < 1) {
       setSuggestions([]);
       return;
     }
 
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      const input = locationBias ? `${trimmed} ${locationBias}` : trimmed;
+      const request = {
+        input: trimmed,
+        types,
+        componentRestrictions: { country },
+      };
+      if (biasLatLng) {
+        request.location = biasLatLng;
+        request.radius = 100000;
+      }
       autocompleteRef.current.getPlacePredictions(
-        {
-          input,
-          types,
-          componentRestrictions: { country },
-        },
+        request,
         (predictions, status) => {
           if (
             status !== window.google.maps.places.PlacesServiceStatus.OK ||
@@ -73,7 +108,7 @@ export default function LocationAutocomplete({
     }, 120);
 
     return () => clearTimeout(debounceRef.current);
-  }, [value, googleReady, types, country, locationBias]);
+  }, [value, googleReady, types, country, biasLatLng]);
 
   useEffect(() => {
     function handleClickOutside(e) {
