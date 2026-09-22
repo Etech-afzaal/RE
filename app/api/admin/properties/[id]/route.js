@@ -150,7 +150,7 @@ export async function PATCH(req, { params }) {
     return NextResponse.json(
       {
         error:
-          "status must be draft, pending_approval, approved, requires updates, sold, hidden, or active.",
+          "status must be draft, pending_approval, approved, requires updates, under contract, sold, hidden, or active.",
       },
       { status: 400 },
     );

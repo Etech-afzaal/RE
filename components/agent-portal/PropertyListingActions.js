@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleCheck, Eye, Link2, Send, SquarePen, Star, StarOff, Undo2 } from "lucide-react";
+import { CircleCheck, Eye, Handshake, Link2, Send, SquarePen, Star, StarOff, Undo2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import ActionMenu from "@/components/ActionMenu";
 import { getPropertyUrl } from "@/lib/propertySlug";
@@ -14,6 +14,7 @@ export default function PropertyListingActions({
   base,
   busyId,
   onMarkSold,
+  onOpenPropertyStatusChange,
   onSubmitForApproval,
   onAddFeatured,
   onRemoveFeatured,
@@ -27,6 +28,7 @@ export default function PropertyListingActions({
   const isRejected = property.status === "rejected";
   const featured = isFeaturedProperty(property);
   const isApproved = property.status === "approved";
+  const isUnderContract = property.status === "under_contract";
   const isBusy = busyId === property.id;
 
   const goToEdit = () => router.push(editHref);
@@ -35,6 +37,7 @@ export default function PropertyListingActions({
     isRejected ||
     property.status === "draft" ||
     property.status === "sold" ||
+    isUnderContract ||
     property.status === "hidden";
   const showQuickLinks = isApproved;
   const showQuickResubmit = isRejected;
@@ -80,7 +83,12 @@ export default function PropertyListingActions({
     ...(property.status === "approved" && featured
       ? [{ label: "Remove from Featured", icon: StarOff, onSelect: () => onRemoveFeatured(property), disabled: isBusy }]
       : []),
-    ...(property.status === "approved" || property.status === "hidden"
+    ...(isApproved
+      ? [{ label: "Mark as Under Contract", icon: Handshake, onSelect: () => onOpenPropertyStatusChange(property, "under_contract"), disabled: isBusy }]
+      : isUnderContract
+        ? [{ label: "Mark as Published", icon: Undo2, onSelect: () => onOpenPropertyStatusChange(property, "approved"), disabled: isBusy }]
+        : []),
+    ...(isApproved || isUnderContract || property.status === "hidden"
       ? [{ label: "Mark as sold", icon: CircleCheck, onSelect: () => onMarkSold(property), disabled: isBusy }]
       : []),
     ...(showQuickLinks

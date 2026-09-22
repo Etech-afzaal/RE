@@ -12,7 +12,7 @@ import {
 } from "@/lib/queries";
 import { query } from "@/lib/db";
 import { normalizeLocationFields } from "@/lib/propertyLocation";
-import { PROPERTY_STATUS } from "@/lib/status";
+import { PROPERTY_DB_STATUSES, PROPERTY_STATUS } from "@/lib/status";
 import { sanitizeSearchInput } from "@/lib/validators/common";
 import { validatePropertyDraftInput } from "@/lib/validators/propertyValidator";
 import { preparePropertyDataSave } from "@/lib/propertyData";
@@ -29,6 +29,10 @@ export async function GET(req) {
   const search = sanitizeSearchInput(searchParams.get("search")).value;
   const page = searchParams.get("page");
   const includeStats = searchParams.get("stats") === "1";
+
+  if (status && status !== "all" && !PROPERTY_DB_STATUSES.has(status)) {
+    return NextResponse.json({ error: "Unknown property status filter." }, { status: 400 });
+  }
 
   const payload = await getManagedPropertiesPageByAgent(agentId, {
     page,

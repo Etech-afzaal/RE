@@ -9,12 +9,15 @@ export default function AgentPropertyActionModals({
   successPopup,
   propertyToDelete,
   propertyToCancelApproval,
+  propertyStatusChange,
   propertyForLinks,
   busyId,
   onCloseDelete,
   onConfirmDelete,
   onCloseCancelApproval,
   onConfirmCancelApproval,
+  onClosePropertyStatusChange,
+  onConfirmPropertyStatusChange,
   onCloseLinks,
 }) {
   const successMessage =
@@ -110,6 +113,33 @@ export default function AgentPropertyActionModals({
                 {busyId === propertyToCancelApproval.id
                   ? "Cancelling…"
                   : "Cancel Approval Request"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {propertyStatusChange ? (
+        <div className={ui.dialogBackdrop} role="presentation">
+          <div className={ui.dialog} role="dialog" aria-modal="true" aria-labelledby="property-status-change-title">
+            <h2 id="property-status-change-title" className={ui.dialogTitle}>
+              {propertyStatusChange.status === "under_contract"
+                ? "Mark as Under Contract?"
+                : "Mark as Published?"}
+            </h2>
+            <p className={ui.dialogText}>
+              {propertyStatusChange.status === "under_contract"
+                ? "This property will be marked as Under Contract and will no longer appear as an available property."
+                : "This property will return to the active market as Published."}
+            </p>
+            <div className={ui.dialogActions}>
+              <button type="button" className={ui.btnGhost} disabled={busyId === propertyStatusChange.property.id} onClick={onClosePropertyStatusChange}>Cancel</button>
+              <button type="button" className={ui.btnPrimary} disabled={busyId === propertyStatusChange.property.id} onClick={onConfirmPropertyStatusChange}>
+                {busyId === propertyStatusChange.property.id
+                  ? "Updating…"
+                  : propertyStatusChange.status === "under_contract"
+                    ? "Mark as Under Contract"
+                    : "Mark as Published"}
               </button>
             </div>
           </div>

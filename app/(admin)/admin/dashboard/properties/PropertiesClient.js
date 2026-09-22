@@ -28,6 +28,7 @@ const statusClass = {
   draft: "badgeMuted",
   pending_approval: "badgePending",
   rejected: "badgeDanger",
+  under_contract: "badgePending",
   hidden: "badgeMuted",
 };
 
@@ -36,6 +37,7 @@ const STATUS_FILTER_OPTIONS = [
   "approved",
   "pending_approval",
   "rejected",
+  "under_contract",
   "sold",
   "draft",
   "hidden",
@@ -50,6 +52,7 @@ function normalizePropertyStatus(status) {
 function statusLabel(status) {
   if (normalizePropertyStatus(status) === "approved") return "Published";
   if (normalizePropertyStatus(status) === "rejected") return "Requires Updates";
+  if (normalizePropertyStatus(status) === "under_contract") return "Under Contract";
   return String(normalizePropertyStatus(status)).replace(/_/g, " ");
 }
 
@@ -233,6 +236,7 @@ export default function AdminPropertiesPage() {
             <option value="approved">Published</option>
             <option value="pending_approval">Pending approval</option>
             <option value="rejected">Requires Updates</option>
+            <option value="under_contract">Under Contract</option>
             <option value="sold">Sold</option>
             <option value="draft">Draft</option>
             <option value="hidden">Hidden</option>

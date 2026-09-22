@@ -34,6 +34,7 @@ const TABS = [
   { id: "draft", label: "Draft" },
   { id: "pending_approval", label: "Pending Approval" },
   { id: "approved", label: "Published" },
+  { id: "under_contract", label: "Under Contract" },
   { id: "rejected", label: "Requires Updates" },
   { id: "sold", label: "Sold" },
 ];
@@ -273,8 +274,9 @@ export default function AgentPropertiesPage() {
                   const editHref = `${base}/properties/${property.id}/edit`;
                   const isApproved = property.status === "approved";
                   const isRejected = property.status === "rejected";
+                  const isUnderContract = property.status === "under_contract";
                   const featured = isFeaturedProperty(property);
-                  const linksToEdit = isApproved || isRejected;
+                  const linksToEdit = isApproved || isRejected || isUnderContract;
                   const note = statusNote(property.status);
                   const addedOn = formatAddedDate(property.created_at);
                   return (
@@ -360,6 +362,7 @@ export default function AgentPropertiesPage() {
                           base={base}
                           busyId={actions.busyId}
                           onMarkSold={actions.markAsSold}
+                          onOpenPropertyStatusChange={actions.openPropertyStatusChange}
                           onSubmitForApproval={actions.submitForApproval}
                           onAddFeatured={actions.addToFeatured}
                           onRemoveFeatured={actions.removeFromFeatured}
@@ -389,12 +392,15 @@ export default function AgentPropertiesPage() {
         username={username}
         propertyToDelete={actions.propertyToDelete}
         propertyToCancelApproval={actions.propertyToCancelApproval}
+        propertyStatusChange={actions.propertyStatusChange}
         propertyForLinks={actions.propertyForLinks}
         busyId={actions.busyId}
         onCloseDelete={() => actions.setPropertyToDelete(null)}
         onConfirmDelete={actions.deleteProperty}
         onCloseCancelApproval={() => actions.setPropertyToCancelApproval(null)}
         onConfirmCancelApproval={actions.cancelApprovalRequest}
+        onClosePropertyStatusChange={() => actions.setPropertyStatusChange(null)}
+        onConfirmPropertyStatusChange={actions.confirmPropertyStatusChange}
         onCloseLinks={() => actions.setPropertyForLinks(null)}
       />
     </AgentPortalShell>

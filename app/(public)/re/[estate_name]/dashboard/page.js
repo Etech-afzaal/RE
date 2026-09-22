@@ -280,8 +280,9 @@ export default function AgentAdminDashboardPage() {
                   const editHref = `${base}/properties/${property.id}/edit`;
                   const isApproved = property.status === "approved";
                   const isRejected = property.status === "rejected";
+                  const isUnderContract = property.status === "under_contract";
                   const featured = isFeaturedProperty(property);
-                  const linksToEdit = isApproved || isRejected;
+                  const linksToEdit = isApproved || isRejected || isUnderContract;
                   const note = statusNote(property.status);
                   return (
                     <tr key={property.id}>
@@ -368,6 +369,7 @@ export default function AgentAdminDashboardPage() {
                           base={base}
                           busyId={actions.busyId}
                           onMarkSold={actions.markAsSold}
+                          onOpenPropertyStatusChange={actions.openPropertyStatusChange}
                           onSubmitForApproval={actions.submitForApproval}
                           onAddFeatured={actions.addToFeatured}
                           onRemoveFeatured={actions.removeFromFeatured}
@@ -390,12 +392,15 @@ export default function AgentAdminDashboardPage() {
         username={username}
         propertyToDelete={actions.propertyToDelete}
         propertyToCancelApproval={actions.propertyToCancelApproval}
+        propertyStatusChange={actions.propertyStatusChange}
         propertyForLinks={actions.propertyForLinks}
         busyId={actions.busyId}
         onCloseDelete={() => actions.setPropertyToDelete(null)}
         onConfirmDelete={actions.deleteProperty}
         onCloseCancelApproval={() => actions.setPropertyToCancelApproval(null)}
         onConfirmCancelApproval={actions.cancelApprovalRequest}
+        onClosePropertyStatusChange={() => actions.setPropertyStatusChange(null)}
+        onConfirmPropertyStatusChange={actions.confirmPropertyStatusChange}
         onCloseLinks={() => actions.setPropertyForLinks(null)}
       />
     </AgentPortalShell>

@@ -98,7 +98,7 @@ const NAV = [
   {
     href: "/admin/dashboard/properties",
     label: "Properties",
-    subtitle: "Oversee listings across estates — publish, unpublish, or mark sold.",
+    subtitle: "Oversee listings across estates — publish, unpublish, or review status changes.",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path

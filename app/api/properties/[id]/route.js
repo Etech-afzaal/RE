@@ -269,9 +269,16 @@ export async function PATCH(req, { params }) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  if (body?.status !== PROPERTY_STATUS.SOLD) {
+  const nextStatus = body?.status;
+  if (
+    ![
+      PROPERTY_STATUS.SOLD,
+      PROPERTY_STATUS.UNDER_CONTRACT,
+      PROPERTY_STATUS.PUBLISHED,
+    ].includes(nextStatus)
+  ) {
     return NextResponse.json(
-      { error: "Only marking a property as sold is allowed." },
+      { error: "That property status change is not allowed." },
       { status: 400 },
     );
   }
@@ -286,18 +293,18 @@ export async function PATCH(req, { params }) {
   }
 
   const current = existing[0];
-  if (current.status === PROPERTY_STATUS.SOLD) {
-    return NextResponse.json({ success: true, status: PROPERTY_STATUS.SOLD });
+  if (current.status === nextStatus) {
+    return NextResponse.json({ success: true, status: nextStatus });
   }
-  if (!canAgentTransition(current.status, PROPERTY_STATUS.SOLD)) {
+  if (!canAgentTransition(current.status, nextStatus)) {
     return NextResponse.json(
-      { error: "Only a published listing can be marked as sold." },
+      { error: "You cannot set that property status." },
       { status: 403 },
     );
   }
 
   await query("UPDATE properties SET status = ? WHERE id = ? AND agent_id = ?", [
-    PROPERTY_STATUS.SOLD,
+    nextStatus,
     propertyId,
     agentId,
   ]);
@@ -309,19 +316,25 @@ export async function PATCH(req, { params }) {
     action: AUDIT_ACTIONS.PROPERTY_UPDATED,
     entityType: AUDIT_ENTITY_TYPES.PROPERTY,
     entityId: propertyId,
-    description: `${agentName} marked property "${current.title}" as sold`,
+    description: `${agentName} changed property "${current.title}" to ${
+      nextStatus === PROPERTY_STATUS.UNDER_CONTRACT
+        ? "Under Contract"
+        : nextStatus === PROPERTY_STATUS.PUBLISHED
+          ? "Published"
+          : "Sold"
+    }`,
     metadata: {
       property_title: current.title,
       agent_name: agentName,
       agent_username: agentHandle,
       estate_name: session.user.estate_name || agentHandle,
       old_status: current.status,
-      new_status: PROPERTY_STATUS.SOLD,
+      new_status: nextStatus,
     },
     ipAddress: getRequestIp(req),
   });
 
-  return NextResponse.json({ success: true, status: PROPERTY_STATUS.SOLD });
+  return NextResponse.json({ success: true, status: nextStatus });
 }
 
 export async function DELETE(req, { params }) {

@@ -402,6 +402,11 @@
   color: #1d4ed8;
 }
 
+.badgeUnderContract {
+  background: rgba(242, 187, 70, 0.18);
+  color: var(--gold-deep);
+}
+
 .statusNote {
   margin: 0.35rem 0 0;
   max-width: 22ch;

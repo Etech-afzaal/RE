@@ -148,6 +148,7 @@
 
   .tabsRowTabs > [data-status="pending_approval"],
   .tabsRowTabs > [data-status="rejected"],
+  .tabsRowTabs > [data-status="under_contract"],
   .tabsRowTabs > [data-status="sold"] {
     order: 1;
   }

@@ -82,6 +82,7 @@ export async function GET() {
          (SELECT COUNT(*) FROM properties WHERE status = 'sold') AS soldProperties,
          (SELECT COUNT(*) FROM properties WHERE status = 'draft') AS draftProperties,
          (SELECT COUNT(*) FROM properties WHERE status = 'rejected') AS rejectedProperties,
+         (SELECT COUNT(*) FROM properties WHERE status = 'under_contract') AS underContractProperties,
          (SELECT COUNT(*) FROM properties WHERE status = 'hidden') AS hiddenProperties,
          (SELECT COUNT(*) FROM properties) AS totalProperties,
          (SELECT COUNT(*) FROM properties
@@ -199,6 +200,7 @@ export async function GET() {
         soldProperties: Number(stats.soldProperties) || 0,
         draftProperties: Number(stats.draftProperties) || 0,
         rejectedProperties: Number(stats.rejectedProperties) || 0,
+        underContractProperties: Number(stats.underContractProperties) || 0,
         hiddenProperties: Number(stats.hiddenProperties) || 0,
         totalProperties: Number(stats.totalProperties) || 0,
         propertiesThisMonth,

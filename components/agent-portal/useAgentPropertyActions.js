@@ -6,6 +6,7 @@ export function useAgentPropertyActions({ onReload, getReloadPage }) {
   const [busyId, setBusyId] = useState(null);
   const [propertyToDelete, setPropertyToDelete] = useState(null);
   const [propertyToCancelApproval, setPropertyToCancelApproval] = useState(null);
+  const [propertyStatusChange, setPropertyStatusChange] = useState(null);
   const [propertyForLinks, setPropertyForLinks] = useState(null);
   const [error, setError] = useState("");
   const [errorDetails, setErrorDetails] = useState([]);
@@ -43,6 +44,37 @@ export function useAgentPropertyActions({ onReload, getReloadPage }) {
       await onReload?.();
     } catch {
       setError("Could not mark this property as sold.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function confirmPropertyStatusChange() {
+    if (!propertyStatusChange) return;
+
+    const { property, status } = propertyStatusChange;
+    setBusyId(property.id);
+    clearMessages();
+    try {
+      const res = await fetch(`/api/properties/${property.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Could not update this property status.");
+        return;
+      }
+      setPropertyStatusChange(null);
+      setSuccessPopup(
+        status === "under_contract"
+          ? "Property marked as Under Contract."
+          : "Property marked as Published.",
+      );
+      await onReload?.();
+    } catch {
+      setError("Could not update this property status.");
     } finally {
       setBusyId(null);
     }
@@ -184,10 +216,16 @@ export function useAgentPropertyActions({ onReload, getReloadPage }) {
     setPropertyToCancelApproval(property);
   }
 
+  function openPropertyStatusChange(property, status) {
+    clearMessages();
+    setPropertyStatusChange({ property, status });
+  }
+
   return {
     busyId,
     propertyToDelete,
     propertyToCancelApproval,
+    propertyStatusChange,
     propertyForLinks,
     error,
     errorDetails,
@@ -195,8 +233,10 @@ export function useAgentPropertyActions({ onReload, getReloadPage }) {
     successPopup,
     setPropertyToDelete,
     setPropertyToCancelApproval,
+    setPropertyStatusChange,
     setPropertyForLinks,
     markAsSold,
+    confirmPropertyStatusChange,
     submitForApproval,
     cancelApprovalRequest,
     addToFeatured,
@@ -205,5 +245,6 @@ export function useAgentPropertyActions({ onReload, getReloadPage }) {
     openLinks,
     openDelete,
     openCancelApproval,
+    openPropertyStatusChange,
   };
 }

@@ -158,6 +158,7 @@ function inferPropertyTypeLabel(property) {
 }
 
 function listingTypeLabel(property) {
+  if (property.status === "under_contract") return "Under Contract";
   if (property.status === "sold") return "Sold";
   if (property.status === "draft") return "Draft";
   const type = inferPropertyTypeFromText(property);

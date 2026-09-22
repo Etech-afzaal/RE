@@ -20,6 +20,7 @@ const STATUS_BADGE = {
   approved: "badgeSuccess",
   pending_approval: "badgePending",
   rejected: "badgeDanger",
+  under_contract: "badgePending",
   sold: "badgeInfo",
 };
 
@@ -41,6 +42,7 @@ function formatDateTime(value) {
 function statusLabel(status) {
   if (status === "approved") return "Published";
   if (status === "rejected") return "Requires Updates";
+  if (status === "under_contract") return "Under Contract";
   return String(status || "draft").replace(/_/g, " ");
 }
 
