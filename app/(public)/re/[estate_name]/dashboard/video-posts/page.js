@@ -5,11 +5,12 @@ import ClearableSearchInput from "@/components/ClearableSearchInput";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Pagination from "@/components/Pagination";
+import AgentMessagePopup from "@/components/agent-portal/AgentMessagePopup";
 import ui from "@/components/agent-portal/portal.module.css";
 import styles from "./page.module.css";
 
@@ -61,6 +62,7 @@ function ThumbCell({ videoPost }) {
 export default function AgentVideoPostsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, status } = useSession();
   const username = decodeURIComponent(params.estate_name || "");
   const base = `/re/${encodeURIComponent(username)}/dashboard`;
@@ -107,6 +109,14 @@ export default function AgentVideoPostsPage() {
     },
     [],
   );
+
+  useEffect(() => {
+    const notice = searchParams.get("notice");
+    if (notice) {
+      setActionSuccess(notice);
+      router.replace(`${base}/video-posts`, { scroll: false });
+    }
+  }, [base, router, searchParams]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -210,6 +220,15 @@ export default function AgentVideoPostsPage() {
         </Link>
       }
     >
+      <AgentMessagePopup
+        message={actionError || loadError || actionSuccess}
+        tone={actionError || loadError ? "error" : "success"}
+        onClose={() => {
+          setActionError("");
+          setLoadError("");
+          setActionSuccess("");
+        }}
+      />
       <div className={styles.tabsRow}>
         <div className={`${ui.tabs} ${styles.tabsRowTabs}`}>
           {TABS.map((item) => (
@@ -253,14 +272,6 @@ export default function AgentVideoPostsPage() {
         }`}
         ref={listSectionRef}
       >
-        {loadError ? (
-          <div className={ui.error}>
-            <p className={ui.noticeTitle}>{loadError}</p>
-          </div>
-        ) : null}
-        {actionError ? <p className={ui.error}>{actionError}</p> : null}
-        {actionSuccess ? <p className={ui.success}>{actionSuccess}</p> : null}
-
         {loading ? (
           <LoadingSpinner
             fullPage={false}

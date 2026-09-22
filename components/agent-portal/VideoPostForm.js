@@ -13,6 +13,7 @@ import {
   VIDEO_POST_TITLE_MAX,
 } from "@/lib/validators/videoPostValidator";
 import ui from "@/components/agent-portal/portal.module.css";
+import AgentMessagePopup from "@/components/agent-portal/AgentMessagePopup";
 import styles from "./VideoPostForm.module.css";
 
 const EMPTY_FORM = {
@@ -188,7 +189,7 @@ export default function VideoPostForm({
       setSelectedVideo(null);
       setSuccess(isEdit ? "Video post updated." : "Video post created.");
       if (!isEdit) {
-        router.push(`${base}/video-posts`);
+        router.push(`${base}/video-posts?notice=${encodeURIComponent("Video post created.")}`);
       }
     } catch (err) {
       setError(err.message || "Could not save video post.");
@@ -201,9 +202,17 @@ export default function VideoPostForm({
   const showRemoveVideo = isEdit && Boolean(videoUrl) && !selectedVideo;
 
   return (
-    <form className={ui.formCard} onSubmit={submit}>
-      {error ? <p className={ui.error}>{error}</p> : null}
-      {success ? <p className={ui.success}>{success}</p> : null}
+    <>
+      <AgentMessagePopup
+        message={success || error || videoError}
+        tone={success ? "success" : "error"}
+        onClose={() => {
+          setSuccess("");
+          setError("");
+          setVideoError("");
+        }}
+      />
+      <form className={ui.formCard} onSubmit={submit}>
 
       <div className={styles.videoSection}>
         <div className={styles.videoPreview}>
@@ -288,9 +297,6 @@ export default function VideoPostForm({
           {uploading ? ` — ${uploadProgress}` : ""}
         </p>
       ) : null}
-      {videoError ? (
-        <p className={ui.fieldError} role="alert">{videoError}</p>
-      ) : null}
       <p className={`${ui.propMeta} ${styles.videoHint}`}>
         MP4, WebM, or MOV. Maximum size 100 MB. Video is processed server-side
         (compressed to H.264 MP4 with a generated thumbnail).
@@ -365,6 +371,7 @@ export default function VideoPostForm({
                 : "Create Video Post"}
         </button>
       </div>
-    </form>
+      </form>
+    </>
   );
 }

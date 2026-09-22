@@ -16,6 +16,7 @@ import {
   BLOG_TITLE_MAX,
 } from "@/lib/validators/blogValidator";
 import ui from "@/components/agent-portal/portal.module.css";
+import AgentMessagePopup from "@/components/agent-portal/AgentMessagePopup";
 import styles from "./BlogForm.module.css";
 
 const EMPTY_FORM = {
@@ -188,7 +189,7 @@ export default function BlogForm({ mode, blogId, initial, base, username, agentN
       setSelectedImage(null);
       setSuccess(isEdit ? "Blog updated." : "Blog created.");
       if (!isEdit) {
-        router.push(`${base}/blogs`);
+        router.push(`${base}/blogs?notice=${encodeURIComponent("Blog created.")}`);
       }
     } catch (err) {
       setError(err.message || "Could not save blog.");
@@ -201,9 +202,17 @@ export default function BlogForm({ mode, blogId, initial, base, username, agentN
   const showRemoveCover = isEdit && Boolean(coverImage) && !selectedImage;
 
   return (
-    <form className={ui.formCard} onSubmit={submit}>
-      {error ? <p className={ui.error}>{error}</p> : null}
-      {success ? <p className={ui.success}>{success}</p> : null}
+    <>
+      <AgentMessagePopup
+        message={success || error || imageError}
+        tone={success ? "success" : "error"}
+        onClose={() => {
+          setSuccess("");
+          setError("");
+          setImageError("");
+        }}
+      />
+      <form className={ui.formCard} onSubmit={submit}>
 
       <div className={styles.coverSection}>
         <div className={styles.coverPreview}>
@@ -255,9 +264,6 @@ export default function BlogForm({ mode, blogId, initial, base, username, agentN
           ) : null}
         </div>
       </div>
-      {imageError ? (
-        <p className={ui.fieldError} role="alert">{imageError}</p>
-      ) : null}
       <p className={`${ui.propMeta} ${styles.coverHint}`}>
         JPG, PNG or WEBP. Maximum size 5 MB. Optional but recommended.
       </p>
@@ -342,6 +348,7 @@ export default function BlogForm({ mode, blogId, initial, base, username, agentN
               : "Create Blog"}
         </button>
       </div>
-    </form>
+      </form>
+    </>
   );
 }
