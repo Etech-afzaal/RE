@@ -48,7 +48,7 @@ export default function PropertyListingActions({
 
   const menuOnEdit = showQuickEdit || isPending ? undefined : goToEdit;
   const menuOnView =
-    property.status === "approved"
+    isApproved || isUnderContract || isSold
       ? () =>
           window.open(
             getPropertyUrl(property, username),
