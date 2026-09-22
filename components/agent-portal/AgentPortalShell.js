@@ -128,7 +128,7 @@ function navItems(base) {
       href: `${base}/company-branding`,
       label: "Company Branding",
       icon: (
-       <svg viewBox="0 0 24 24" aria-hidden="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
           <path
             d="M4 7.5h16v12H4v-12Z"
             fill="none"
@@ -143,7 +143,30 @@ function navItems(base) {
             strokeWidth="1.8"
             strokeLinecap="round"
             strokeLinejoin="round"
-           />
+          />
+        </svg>
+      ),
+    },
+    {
+      href: `${base}/pricing-plans`,
+      label: "Pricing & Plans",
+      icon: (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M12 2 3 6.5v6C3 15.5 6.5 19.5 12 22c5.5-2.5 9-6.5 9-9.5v-6L12 2Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M8.5 12.5 11 15l4.5-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       ),
     },

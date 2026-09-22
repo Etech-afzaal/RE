@@ -1,0 +1,190 @@
+.page {
+  max-width: 980px;
+}
+
+.loading {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.currentPlan {
+  background:
+    radial-gradient(ellipse 60% 80% at 100% -10%, color-mix(in srgb, var(--gold) 22%, transparent), transparent 60%),
+    linear-gradient(135deg, var(--surface) 0%, var(--gold-tint) 100%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  padding: 1.75rem 2rem;
+  margin-bottom: 1.75rem;
+  overflow: hidden;
+}
+
+.currentKicker {
+  margin: 0 0 0.9rem;
+  color: var(--gold-deep);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.currentBody {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.currentInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.currentName {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.currentStatus {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.7rem;
+  border-radius: var(--radius-full);
+  background: var(--success-tint);
+  color: var(--success);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.currentDuration {
+  text-align: right;
+}
+
+.durationLabel {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.durationValue {
+  margin: 0.15rem 0 0;
+  color: var(--ink);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  padding: 1.75rem 1.5rem 1.5rem;
+}
+
+.cardCurrent {
+  border-color: var(--gold);
+  box-shadow: 0 6px 18px rgba(242, 187, 70, 0.18);
+}
+
+.badge {
+  position: absolute;
+  top: -0.6rem;
+  left: 1.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: var(--shadow-sm);
+}
+
+.cardName {
+  margin: 0 0 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.cardPrice {
+  margin: 0 0 1.25rem;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--gold-deep);
+  letter-spacing: -0.01em;
+}
+
+.featureList {
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  flex: 1;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.featureCheck {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  flex-shrink: 0;
+  color: var(--gold-deep);
+}
+
+.featureCheck svg {
+  width: 100%;
+  height: 100%;
+}
+
+.cardButton {
+  width: 100%;
+  opacity: 0.65;
+  cursor: default;
+}
+
+.cardButton:disabled {
+  cursor: default;
+}
+
+@media (max-width: 768px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .currentBody {
+    justify-content: flex-start;
+  }
+
+  .currentDuration {
+    text-align: left;
+  }
+}
