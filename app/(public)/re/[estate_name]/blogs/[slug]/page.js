@@ -57,7 +57,7 @@ export default async function BlogDetailPage({ params }) {
   return (
     <div className={`agent-public-theme ${styles.wrapper}`}>
       <SiteHeader
-        navLinks={[{ label: "Home", href: agentHomeHref }]}
+        navLinks={[]}
         ctaLabel="Contact"
         ctaHref="#contact"
         logoSrc={agent.company_logo || "/logo.svg"}

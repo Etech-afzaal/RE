@@ -84,6 +84,55 @@ export async function PATCH(req, { params }) {
     );
   }
 
+  if (Object.keys(body).length === 1 && Object.prototype.hasOwnProperty.call(body, "status")) {
+    const statusCheck = validateBlogStatus(body.status);
+    if (!statusCheck.ok) {
+      return NextResponse.json({ error: statusCheck.error }, { status: 400 });
+    }
+    const nextStatus = statusCheck.value;
+    const validated = validateBlogInput(existing, {
+      requireContent: nextStatus === BLOG_STATUS.PUBLISHED,
+    });
+    if (!validated.ok) {
+      return NextResponse.json(
+        { error: validated.error, ...(validated.field ? { field: validated.field } : {}) },
+        { status: 400 },
+      );
+    }
+
+    const result = await updateBlog(agentId, blogId, {
+      title: existing.title,
+      slug: existing.slug,
+      short_description: existing.short_description,
+      content: existing.content,
+      cover_image: existing.cover_image,
+      status: nextStatus,
+    });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+
+    const actorName = agentDisplayName(session);
+    await createAuditLog({
+      userId: Number(session?.user?.id) || null,
+      action: AUDIT_ACTIONS.BLOG_UPDATED,
+      entityType: AUDIT_ENTITY_TYPES.BLOG,
+      entityId: blogId,
+      description: `${actorName} ${nextStatus === BLOG_STATUS.PUBLISHED ? "published" : "unpublished"} blog "${existing.title}"`,
+      metadata: {
+        blog_title: existing.title,
+        blog_slug: existing.slug,
+        actor_name: actorName,
+        old_status: existing.status,
+        new_status: nextStatus,
+      },
+      ipAddress: getRequestIp(req),
+    });
+
+    const blog = await getBlogForAgent(agentId, blogId);
+    return NextResponse.json({ success: true, blog });
+  }
+
   const statusCheck = validateBlogStatus(body.status);
   if (!statusCheck.ok) {
     return NextResponse.json({ error: statusCheck.error }, { status: 400 });

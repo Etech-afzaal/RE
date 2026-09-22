@@ -350,7 +350,7 @@ export default function PublicPropertyWebsite({
               <div className={styles.sectionHeader}>
                 <div>
                   <p className={styles.kicker}>Insights</p>
-                  <h2 className={styles.sectionTitle}>Latest articles</h2>
+                  <h2 className={styles.sectionTitle}>Latest Articles</h2>
                 </div>
               </div>
 

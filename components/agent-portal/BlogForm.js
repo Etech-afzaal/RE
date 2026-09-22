@@ -46,6 +46,7 @@ export default function BlogForm({ mode, blogId, initial, base, username, agentN
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [submitIntent, setSubmitIntent] = useState(isEdit ? "edit" : "draft");
 
   useEffect(() => {
     if (!selectedImage) {
@@ -112,6 +113,11 @@ export default function BlogForm({ mode, blogId, initial, base, username, agentN
 
   async function submit(e) {
     e.preventDefault();
+    const requestedStatus = isEdit
+      ? form.status
+      : e.nativeEvent.submitter?.value === "publish"
+        ? "published"
+        : "draft";
     setSaving(true);
     setError("");
     setSuccess("");
@@ -129,7 +135,7 @@ export default function BlogForm({ mode, blogId, initial, base, username, agentN
       setError("Short description must be at least 10 characters.");
       return;
     }
-    if (form.status === "published" && !form.content.trim()) {
+    if (requestedStatus === "published" && !form.content.trim()) {
       setSaving(false);
       setError("Content is required to publish a blog.");
       return;
@@ -148,7 +154,7 @@ export default function BlogForm({ mode, blogId, initial, base, username, agentN
         const res = await fetch(`/api/blogs/${blogId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
+          body: JSON.stringify({ ...form, status: requestedStatus }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
@@ -159,7 +165,7 @@ export default function BlogForm({ mode, blogId, initial, base, username, agentN
         const res = await fetch("/api/blogs", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
+          body: JSON.stringify({ ...form, status: requestedStatus }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
@@ -311,42 +317,43 @@ export default function BlogForm({ mode, blogId, initial, base, username, agentN
         />
       </label>
 
-      <div className={styles.statusRow}>
-        <label className={ui.field}>
-          <span className={ui.label}>Status</span>
-          <select
-            className={`${ui.input} ${styles.statusSelect}`}
-            value={form.status}
-            onChange={(e) => setForm({ ...form, status: e.target.value })}
-            disabled={saving}
-          >
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-          </select>
-        </label>
-        <p className={styles.statusHint}>
-          {form.status === "published"
-            ? "Published blogs appear on your public website."
-            : "Drafts are hidden from your public website."}
-        </p>
-      </div>
-
       <div className={ui.formActions}>
-        <button
-          type="button"
-          className={ui.btnGhost}
-          disabled={saving}
-          onClick={() => router.push(`${base}/blogs`)}
-        >
-          Cancel
-        </button>
-        <button type="submit" className={ui.btnPrimary} disabled={saving}>
-          {saving
-            ? "Saving…"
-            : isEdit
-              ? "Save Changes"
-              : "Create Blog"}
-        </button>
+        {isEdit ? (
+          <>
+            <button
+              type="button"
+              className={ui.btnGhost}
+              disabled={saving}
+              onClick={() => router.push(`${base}/blogs`)}
+            >
+              Cancel
+            </button>
+            <button type="submit" className={ui.btnPrimary} disabled={saving}>
+              {saving ? "Saving…" : "Save Changes"}
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="submit"
+              value="draft"
+              className={ui.btnGhost}
+              disabled={saving}
+              onClick={() => setSubmitIntent("draft")}
+            >
+              {saving && submitIntent === "draft" ? "Saving…" : "Save Draft"}
+            </button>
+            <button
+              type="submit"
+              value="publish"
+              className={ui.btnPrimary}
+              disabled={saving}
+              onClick={() => setSubmitIntent("publish")}
+            >
+              {saving && submitIntent === "publish" ? "Publishing…" : "Publish"}
+            </button>
+          </>
+        )}
       </div>
       </form>
     </>

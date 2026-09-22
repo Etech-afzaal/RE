@@ -4,8 +4,10 @@ import ClearableSearchInput from "@/components/ClearableSearchInput";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { FilePenLine, Send, Trash2, Undo2 } from "lucide-react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Pagination from "@/components/Pagination";
@@ -164,6 +166,23 @@ export default function AgentBlogsPage() {
     }
   }
 
+  async function updateStatus(blog, nextStatus) {
+    setActionError("");
+    try {
+      const res = await fetch(`/api/blogs/${blog.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not update blog status.");
+      setActionSuccess(nextStatus === "published" ? "Blog published." : "Blog unpublished.");
+      await load(currentPage, tab, debouncedSearch);
+    } catch (err) {
+      setActionError(err.message || "Could not update blog status.");
+    }
+  }
+
   if (status === "loading") {
     return (
       <AgentPortalShell
@@ -282,6 +301,15 @@ export default function AgentBlogsPage() {
                       <tr key={blog.id}>
                         <td data-label="Title">
                           <div className={ui.propCell}>
+                            {blog.cover_image ? (
+                              <Link
+                                href={editHref}
+                                className={styles.coverThumbLink}
+                                aria-label={`Edit ${blog.title}`}
+                              >
+                                <Image src={blog.cover_image} alt="" width={64} height={44} className={styles.coverThumb} />
+                              </Link>
+                            ) : null}
                             <div>
                               <Link
                                 href={editHref}
@@ -313,15 +341,29 @@ export default function AgentBlogsPage() {
                           <div className={styles.rowActions}>
                             <Link
                               href={editHref}
-                              className={ui.btnGhost}
+                              className={`${ui.btnGhost} ${styles.actionButton}`}
                             >
+                              <FilePenLine size={16} aria-hidden="true" />
                               Edit
                             </Link>
                             <button
                               type="button"
-                              className={ui.btnDanger}
+                              className={`${ui.btnGhost} ${styles.actionButton}`}
+                              onClick={() => updateStatus(blog, isPublished ? "draft" : "published")}
+                            >
+                              {isPublished ? (
+                                <Undo2 size={16} aria-hidden="true" />
+                              ) : (
+                                <Send size={16} aria-hidden="true" />
+                              )}
+                              {isPublished ? "Unpublish" : "Publish"}
+                            </button>
+                            <button
+                              type="button"
+                              className={`${ui.btnDanger} ${styles.actionButton}`}
                               onClick={() => setDeleteTarget(blog)}
                             >
+                              <Trash2 size={16} aria-hidden="true" />
                               Delete
                             </button>
                           </div>
