@@ -9,25 +9,25 @@
 
 .tabsRow {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
   gap: 0.75rem;
   margin-bottom: 1.15rem;
 }
 
 .tabsRowTabs {
   margin-bottom: 0;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-width: 0;
 }
 
 .searchWrap {
   position: relative;
-  flex: 1 1 20rem;
+  flex: 0 0 auto;
   width: 100%;
-  max-width: 26rem;
-  min-width: 18rem;
-  margin-left: auto;
+  max-width: 32rem;
+  min-width: 0;
+  margin-left: 0;
 }
 
 .searchIcon {
@@ -134,7 +134,6 @@
   }
 
   .searchWrap {
-    order: -1;
     flex: 0 0 auto;
     width: 100%;
     min-width: 0;

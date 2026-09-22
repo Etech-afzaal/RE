@@ -175,19 +175,6 @@ export default function AgentPropertiesPage() {
       }
     >
       <div className={styles.tabsRow}>
-        <div className={`${ui.tabs} ${styles.tabsRowTabs}`}>
-          {TABS.map((item) => (
-            <button
-              key={item.id}
-              data-status={item.id}
-              type="button"
-              className={`${ui.tab} ${tab === item.id ? ui.tabActive : ""}`}
-              onClick={() => changeTab(item.id)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
         <label className={styles.searchWrap}>
           <span className={styles.searchIcon} aria-hidden="true">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
@@ -209,6 +196,19 @@ export default function AgentPropertiesPage() {
             aria-label="Search properties by title or location"
           />
         </label>
+        <div className={`${ui.tabs} ${styles.tabsRowTabs}`}>
+          {TABS.map((item) => (
+            <button
+              key={item.id}
+              data-status={item.id}
+              type="button"
+              className={`${ui.tab} ${tab === item.id ? ui.tabActive : ""}`}
+              onClick={() => changeTab(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div

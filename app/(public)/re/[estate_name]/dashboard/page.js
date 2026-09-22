@@ -30,7 +30,6 @@ const STAT_CARDS = [
   { id: "approved", label: "Published", status: "approved", description: "Properties currently live on your website." },
   { id: "pending_approval", label: "Pending Approval", status: "pending_approval", description: "Properties waiting for admin review." },
   { id: "draft", label: "Draft", status: "draft", description: "Properties saved but not yet submitted." },
-  { id: "hidden", label: "Hidden", visibility: "hidden", description: "Properties hidden from public listings." },
 ];
 
 function greeting() {
@@ -123,9 +122,7 @@ export default function AgentAdminDashboardPage() {
         {STAT_CARDS.map((card) => {
           const href = card.status
             ? `${base}/properties?status=${card.status}`
-            : card.visibility
-              ? `${base}/properties?visibility=${card.visibility}`
-              : `${base}/properties`;
+            : `${base}/properties`;
           const cardClassName = `${ui.statCard} ${ui.statCardLink} ${ui.statDescriptionUnderHeading}`;
           const cardContent = (
             <>
