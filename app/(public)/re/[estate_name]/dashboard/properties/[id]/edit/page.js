@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
+import LocationAutocomplete from "@/components/agent-portal/LocationAutocomplete";
 import PriceCurrencyInput from "@/components/agent-portal/PriceCurrencyInput";
 import ImageCategorySelect from "@/components/ImageCategorySelect";
 import ImagePreviewModal from "@/components/ImagePreviewModal";
@@ -871,7 +872,7 @@ export default function EditPropertyPage() {
 <div className={ui.row2}>
             <label id="field-city" className={ui.field}>
               <span className={ui.label}>City</span>
-              <input
+              <LocationAutocomplete
                 className={`${ui.input} ${fieldErrors.city ? ui.inputInvalid : ""}`}
                 value={form.city}
                 disabled={isPending}
@@ -880,6 +881,8 @@ export default function EditPropertyPage() {
                   clearFieldError("city");
                 }}
                 placeholder="e.g. Lahore"
+                types={["(cities)"]}
+                country="pk"
               />
               {fieldErrors.city ? (
                 <p className={ui.fieldError}>{fieldErrors.city}</p>
@@ -887,7 +890,7 @@ export default function EditPropertyPage() {
             </label>
             <label id="field-area" className={ui.field}>
               <span className={ui.label}>Area / Neighbourhood</span>
-              <input
+              <LocationAutocomplete
                 className={`${ui.input} ${fieldErrors.area ? ui.inputInvalid : ""}`}
                 value={form.area}
                 disabled={isPending}
@@ -896,6 +899,9 @@ export default function EditPropertyPage() {
                   clearFieldError("area");
                 }}
                 placeholder="e.g. DHA,Gulberg"
+                types={["geocode"]}
+                country="pk"
+                locationBias={form.city || null}
               />
               {fieldErrors.area ? (
                 <p className={ui.fieldError}>{fieldErrors.area}</p>

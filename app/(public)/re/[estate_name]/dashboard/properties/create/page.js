@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
+import LocationAutocomplete from "@/components/agent-portal/LocationAutocomplete";
 import PriceCurrencyInput from "@/components/agent-portal/PriceCurrencyInput";
 import ImageCategorySelect from "@/components/ImageCategorySelect";
 import ImagePreviewModal from "@/components/ImagePreviewModal";
@@ -1143,27 +1144,32 @@ export default function CreatePropertyPage() {
                 City
                 <RequiredMark />
               </span>
-              <input
+              <LocationAutocomplete
                 className={`${ui.input} ${fieldErrors.city ? ui.inputInvalid : ""}`}
                 value={form.city}
                 onChange={(e) => update("city", e.target.value)}
                 placeholder="e.g. Lahore"
                 maxLength={WIZARD_TEXT_LIMITS.city}
-                aria-invalid={Boolean(fieldErrors.city)}
-                aria-describedby="city-error"
+                ariaInvalid={Boolean(fieldErrors.city)}
+                ariaDescribedBy="city-error"
+                types={["(cities)"]}
+                country="pk"
               />
               <FieldMessage id="city-error" error={fieldErrors.city} />
             </label>
             <label className={ui.field}>
               <span className={ui.label}>Area / Neighbourhood<RequiredMark /></span>
-              <input
+              <LocationAutocomplete
                 className={`${ui.input} ${fieldErrors.area ? ui.inputInvalid : ""}`}
                 value={form.area}
                 onChange={(e) => update("area", e.target.value)}
                 placeholder="e.g. DHA,Gulberg"
                 maxLength={WIZARD_TEXT_LIMITS.area}
-                aria-invalid={Boolean(fieldErrors.area)}
-                aria-describedby="area-error"
+                ariaInvalid={Boolean(fieldErrors.area)}
+                ariaDescribedBy="area-error"
+                types={["geocode"]}
+                country="pk"
+                locationBias={form.city || null}
               />
               <FieldMessage id="area-error" error={fieldErrors.area} />
             </label>
