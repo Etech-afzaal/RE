@@ -69,6 +69,16 @@ function navItems(base) {
       ),
     },
     {
+      href: `${base}/finder`,
+      label: "Property Finder",
+      icon: (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M16 16 21 21" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      ),
+    },
+    {
       href: `${base}/files-updates`,
       label: "Files Updates",
       icon: (
