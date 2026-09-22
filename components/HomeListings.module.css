@@ -290,6 +290,28 @@
   overflow: hidden;
 }
 
+.statusBadge {
+  position: absolute;
+  z-index: 2;
+  top: 0.8rem;
+  left: 0.8rem;
+  padding: 0.38rem 0.62rem;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(26, 26, 26, 0.18);
+}
+
+.statusBadgeSold {
+  background: #5b616b;
+}
+
+.statusBadgeUnderContract {
+  background: #a68134;
+}
+
 .image {
   object-fit: cover;
   transition: transform 0.45s ease;

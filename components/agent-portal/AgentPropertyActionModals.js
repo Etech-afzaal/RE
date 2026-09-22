@@ -125,6 +125,10 @@ export default function AgentPropertyActionModals({
             <h2 id="property-status-change-title" className={ui.dialogTitle}>
               {propertyStatusChange.status === "under_contract"
                 ? "Mark as Under Contract?"
+                : propertyStatusChange.status === "hidden"
+                  ? "Remove from Public Listing?"
+                  : propertyStatusChange.property.status === "hidden"
+                    ? "Make Available on Public Listing?"
                 : propertyStatusChange.property.status === "sold"
                   ? "Mark as Unsold?"
                 : "Mark as Published?"}
@@ -132,6 +136,10 @@ export default function AgentPropertyActionModals({
             <p className={ui.dialogText}>
               {propertyStatusChange.status === "under_contract"
                 ? "This property will be marked as Under Contract and will no longer appear as an available property."
+                : propertyStatusChange.status === "hidden"
+                  ? "This property will no longer appear on your public website."
+                  : propertyStatusChange.property.status === "hidden"
+                    ? "This property will be published and appear on your public website."
                 : propertyStatusChange.property.status === "sold"
                   ? "This property will return to the active market as Published."
                 : "This property will return to the active market as Published."}
@@ -143,6 +151,10 @@ export default function AgentPropertyActionModals({
                   ? "Updating…"
                   : propertyStatusChange.status === "under_contract"
                     ? "Mark as Under Contract"
+                    : propertyStatusChange.status === "hidden"
+                      ? "Remove from Public Listing"
+                      : propertyStatusChange.property.status === "hidden"
+                        ? "Make Available"
                     : propertyStatusChange.property.status === "sold"
                       ? "Mark as Unsold"
                     : "Mark as Published"}

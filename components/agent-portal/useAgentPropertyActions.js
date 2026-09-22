@@ -70,6 +70,10 @@ export function useAgentPropertyActions({ onReload, getReloadPage }) {
       setSuccessPopup(
         status === "under_contract"
           ? "Property marked as Under Contract."
+          : status === "hidden"
+            ? "Property removed from public listings."
+          : property.status === "hidden"
+            ? "Property made available on public listings."
           : property.status === "sold"
             ? "Property marked as Unsold and Published."
           : "Property marked as Published.",

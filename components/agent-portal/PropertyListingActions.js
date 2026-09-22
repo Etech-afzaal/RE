@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleCheck, Eye, Handshake, Link2, Send, SquarePen, Star, StarOff, Undo2 } from "lucide-react";
+import { CircleCheck, Eye, EyeOff, Handshake, Link2, Send, SquarePen, Star, StarOff, Undo2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import ActionMenu from "@/components/ActionMenu";
 import { getPropertyUrl } from "@/lib/propertySlug";
@@ -30,6 +30,7 @@ export default function PropertyListingActions({
   const isApproved = property.status === "approved";
   const isUnderContract = property.status === "under_contract";
   const isSold = property.status === "sold";
+  const isHidden = property.status === "hidden";
   const isBusy = busyId === property.id;
 
   const goToEdit = () => router.push(editHref);
@@ -94,6 +95,11 @@ export default function PropertyListingActions({
     ...(isApproved || isUnderContract || property.status === "hidden"
       ? [{ label: "Mark as sold", icon: CircleCheck, onSelect: () => onMarkSold(property), disabled: isBusy }]
       : []),
+    ...(isUnderContract || isSold
+      ? [{ label: "Remove from Public Listing", icon: EyeOff, onSelect: () => onOpenPropertyStatusChange(property, "hidden"), disabled: isBusy }]
+      : isHidden
+        ? [{ label: "Make Available on Public Listing", icon: Eye, onSelect: () => onOpenPropertyStatusChange(property, "approved"), disabled: isBusy }]
+        : []),
     ...(showQuickLinks
       ? []
       : isApproved

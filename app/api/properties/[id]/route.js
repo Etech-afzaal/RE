@@ -275,6 +275,7 @@ export async function PATCH(req, { params }) {
       PROPERTY_STATUS.SOLD,
       PROPERTY_STATUS.UNDER_CONTRACT,
       PROPERTY_STATUS.PUBLISHED,
+      PROPERTY_STATUS.HIDDEN,
     ].includes(nextStatus)
   ) {
     return NextResponse.json(
@@ -321,7 +322,9 @@ export async function PATCH(req, { params }) {
         ? "Under Contract"
         : nextStatus === PROPERTY_STATUS.PUBLISHED
           ? "Published"
-          : "Sold"
+          : nextStatus === PROPERTY_STATUS.HIDDEN
+            ? "Hidden from public listings"
+            : "Sold"
     }`,
     metadata: {
       property_title: current.title,

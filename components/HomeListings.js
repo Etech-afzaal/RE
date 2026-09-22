@@ -310,6 +310,11 @@ function PropertyCard({ property }) {
       className={styles.card}
     >
       <div className={styles.media}>
+        {property.status === "sold" || property.status === "under_contract" ? (
+          <span className={`${styles.statusBadge} ${property.status === "sold" ? styles.statusBadgeSold : styles.statusBadgeUnderContract}`}>
+            {property.status === "sold" ? "Sold" : "Under Contract"}
+          </span>
+        ) : null}
         {property.featuredImage ? (
           <Image
             src={property.featuredImage.image_url}
