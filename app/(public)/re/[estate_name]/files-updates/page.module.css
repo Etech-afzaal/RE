@@ -258,16 +258,17 @@
   justify-content: center;
   padding: 0.7rem 1.5rem;
   border-radius: 999px;
-  background: var(--gold);
-  color: #111111;
+  background: #111111;
+  color: #ffffff;
   font-size: 0.92rem;
   font-weight: 700;
   text-decoration: none;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
 .contactButton:hover {
-  background: var(--gold-deep);
+  background: var(--brass);
+  color: #111111;
   transform: translateY(-1px);
 }
 
