@@ -45,6 +45,14 @@
   object-fit: cover;
 }
 
+.videoPreviewVideo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #111;
+}
+
 .playBadge {
   position: absolute;
   inset: 0;
@@ -79,24 +87,6 @@
   margin: 0 0 0.5rem;
   font-weight: 600;
   color: var(--ink, #1a1a1a);
-}
-
-.statusRow {
-  display: flex;
-  align-items: flex-end;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-bottom: 1.05rem;
-}
-
-.statusSelect {
-  min-width: 12rem;
-}
-
-.statusHint {
-  margin: 0 0 0.35rem;
-  font-size: 0.8rem;
-  color: var(--ink-soft, #525252);
 }
 
 @media (max-width: 768px) {

@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { FilePenLine, Send, Trash2, Undo2 } from "lucide-react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Pagination from "@/components/Pagination";
@@ -191,6 +192,23 @@ export default function AgentVideoPostsPage() {
     }
   }
 
+  async function updateStatus(videoPost, nextStatus) {
+    setActionError("");
+    try {
+      const res = await fetch(`/api/video-posts/${videoPost.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not update video post status.");
+      setActionSuccess(nextStatus === "published" ? "Video post published." : "Video post unpublished.");
+      await load(currentPage, tab, debouncedSearch);
+    } catch (err) {
+      setActionError(err.message || "Could not update video post status.");
+    }
+  }
+
   if (status === "loading") {
     return (
       <AgentPortalShell
@@ -295,7 +313,6 @@ export default function AgentVideoPostsPage() {
               <table className={ui.table}>
                 <thead>
                   <tr>
-                    <th>Video</th>
                     <th>Title</th>
                     <th>Status</th>
                     <th>Created</th>
@@ -308,21 +325,29 @@ export default function AgentVideoPostsPage() {
                     const isPublished = videoPost.status === "published";
                     return (
                       <tr key={videoPost.id}>
-                        <td data-label="Video">
-                          <ThumbCell videoPost={videoPost} />
-                        </td>
                         <td data-label="Title">
-                          <Link
-                            href={editHref}
-                            className={`${ui.propTitle} ${ui.propTitleLink} ${styles.titleLink}`}
-                          >
-                            {videoPost.title}
-                          </Link>
-                          {videoPost.description ? (
-                            <p className={ui.propMeta}>
-                              {videoPost.description.slice(0, 80)}
-                            </p>
-                          ) : null}
+                          <div className={styles.videoTitleCell}>
+                            <Link
+                              href={editHref}
+                              className={styles.thumbLink}
+                              aria-label={`Edit ${videoPost.title}`}
+                            >
+                              <ThumbCell videoPost={videoPost} />
+                            </Link>
+                            <div>
+                              <Link
+                                href={editHref}
+                                className={`${ui.propTitle} ${ui.propTitleLink} ${styles.titleLink}`}
+                              >
+                                {videoPost.title}
+                              </Link>
+                              {videoPost.description ? (
+                                <p className={ui.propMeta}>
+                                  {videoPost.description.slice(0, 80)}
+                                </p>
+                              ) : null}
+                            </div>
+                          </div>
                         </td>
                         <td data-label="Status">
                           <span
@@ -340,15 +365,25 @@ export default function AgentVideoPostsPage() {
                           <div className={styles.rowActions}>
                             <Link
                               href={editHref}
-                              className={ui.btnGhost}
+                              className={`${ui.btnGhost} ${styles.actionButton}`}
                             >
+                              <FilePenLine size={16} aria-hidden="true" />
                               Edit
                             </Link>
                             <button
                               type="button"
-                              className={ui.btnDanger}
+                              className={`${ui.btnGhost} ${styles.actionButton}`}
+                              onClick={() => updateStatus(videoPost, isPublished ? "draft" : "published")}
+                            >
+                              {isPublished ? <Undo2 size={16} aria-hidden="true" /> : <Send size={16} aria-hidden="true" />}
+                              {isPublished ? "Unpublish" : "Publish"}
+                            </button>
+                            <button
+                              type="button"
+                              className={`${ui.btnDanger} ${styles.actionButton}`}
                               onClick={() => setDeleteTarget(videoPost)}
                             >
+                              <Trash2 size={16} aria-hidden="true" />
                               Delete
                             </button>
                           </div>

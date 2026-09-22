@@ -10,6 +10,7 @@ import TrustStats from "@/components/TrustStats";
 import LocationCarousel from "@/components/LocationCarousel";
 import AgentInquiryForm from "@/components/AgentInquiryForm";
 import AgentWhatsAppFab from "@/components/AgentWhatsAppFab";
+import LazyVideoPlayer from "@/components/LazyVideoPlayer";
 import BackToTop from "@/app/(public)/re/[estate_name]/[propertyId]/BackToTop";
 import { agentPhoneEntries } from "@/lib/agentContact";
 import { agentWebsiteWhatsAppMessage, resolveAgentWhatsAppNumber } from "@/lib/whatsapp";
@@ -401,27 +402,18 @@ export default function PublicPropertyWebsite({
 
               <div className={styles.videoPostGrid}>
                 {videoPosts.map((videoPost) => {
-                  const videoHref = `/re/${encodeURIComponent(agent?.username || agent?.estate_name || "")}/videos/${encodeURIComponent(videoPost.slug)}`;
                   return (
-                    <Link key={videoPost.id} href={videoHref} className={styles.videoPostCard}>
+                    <article key={videoPost.id} className={styles.videoPostCard}>
                       <div className={styles.videoPostMedia}>
-                        {videoPost.thumbnail_url ? (
-                          <Image
-                            src={videoPost.thumbnail_url}
-                            alt={videoPost.title || "Video post"}
-                            fill
-                            sizes="(max-width: 768px) 100vw, 33vw"
-                            className={styles.videoPostImage}
+                        {videoPost.video_url ? (
+                          <LazyVideoPlayer
+                            videoUrl={videoPost.video_url}
+                            thumbnailUrl={videoPost.thumbnail_url}
+                            title={videoPost.title}
                           />
                         ) : (
                           <div className={styles.videoPostMediaFallback} />
                         )}
-                        <span className={styles.videoPostPlay} aria-hidden="true">
-                          <svg viewBox="0 0 24 24" width="28" height="28">
-                            <circle cx="12" cy="12" r="11" fill="rgba(0,0,0,0.45)" />
-                            <path d="M9 7v10l8-5-8-5Z" fill="white" />
-                          </svg>
-                        </span>
                       </div>
                       <div className={styles.videoPostBody}>
                         <h3 className={styles.videoPostTitle}>{videoPost.title}</h3>
@@ -431,7 +423,7 @@ export default function PublicPropertyWebsite({
                           </p>
                         ) : null}
                       </div>
-                    </Link>
+                    </article>
                   );
                 })}
               </div>

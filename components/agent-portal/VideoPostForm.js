@@ -49,13 +49,25 @@ export default function VideoPostForm({
   );
   const [videoUrl, setVideoUrl] = useState(initial?.video_url || null);
   const [thumbnailUrl, setThumbnailUrl] = useState(initial?.thumbnail_url || null);
+  const [selectedVideoPreview, setSelectedVideoPreview] = useState(null);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
   const [videoError, setVideoError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [submitIntent, setSubmitIntent] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    if (!selectedVideo) {
+      setSelectedVideoPreview(null);
+      return undefined;
+    }
+    const previewUrl = URL.createObjectURL(selectedVideo);
+    setSelectedVideoPreview(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [selectedVideo]);
 
   async function selectVideo(file) {
     if (!file) return;
@@ -136,6 +148,11 @@ export default function VideoPostForm({
 
   async function submit(e) {
     e.preventDefault();
+    const requestedStatus = isEdit
+      ? form.status
+      : e.nativeEvent.submitter?.value === "publish"
+        ? "published"
+        : "draft";
     setSaving(true);
     setError("");
     setSuccess("");
@@ -150,7 +167,7 @@ export default function VideoPostForm({
       setError(`Description must be ${VIDEO_POST_DESCRIPTION_MAX} characters or fewer.`);
       return;
     }
-    if (form.status === "published" && !videoUrl && !selectedVideo) {
+    if (requestedStatus === "published" && !videoUrl && !selectedVideo) {
       setSaving(false);
       setError("A video file is required to publish a video post.");
       return;
@@ -158,12 +175,15 @@ export default function VideoPostForm({
 
     try {
       let resultId = videoPostId;
+      const saveStatus = !isEdit && requestedStatus === "published"
+        ? "draft"
+        : requestedStatus;
 
       if (isEdit) {
         const res = await fetch(`/api/video-posts/${videoPostId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
+          body: JSON.stringify({ ...form, status: saveStatus }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
@@ -173,7 +193,7 @@ export default function VideoPostForm({
         const res = await fetch("/api/video-posts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
+          body: JSON.stringify({ ...form, status: saveStatus }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
@@ -184,6 +204,18 @@ export default function VideoPostForm({
 
       if (selectedVideo && resultId) {
         await uploadVideo(resultId);
+      }
+
+      if (requestedStatus === "published" && saveStatus !== requestedStatus) {
+        const publishRes = await fetch(`/api/video-posts/${resultId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "published" }),
+        });
+        const publishData = await publishRes.json().catch(() => ({}));
+        if (!publishRes.ok) {
+          throw new Error(publishData.error || "Could not publish video post.");
+        }
       }
 
       setSelectedVideo(null);
@@ -198,7 +230,7 @@ export default function VideoPostForm({
     }
   }
 
-  const showVideoPreview = Boolean(thumbnailUrl || videoUrl);
+  const showVideoPreview = Boolean(thumbnailUrl || videoUrl || selectedVideoPreview);
   const showRemoveVideo = isEdit && Boolean(videoUrl) && !selectedVideo;
 
   return (
@@ -230,6 +262,15 @@ export default function VideoPostForm({
                   </svg>
                 </span>
               </div>
+            ) : selectedVideoPreview || videoUrl ? (
+              <video
+                className={styles.videoPreviewVideo}
+                src={selectedVideoPreview || videoUrl}
+                controls
+                muted
+                preload="metadata"
+                aria-label="Video preview"
+              />
             ) : (
               <div className={styles.videoFallback}>
                 <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
@@ -328,48 +369,26 @@ export default function VideoPostForm({
         />
       </label>
 
-      <div className={styles.statusRow}>
-        <label className={ui.field}>
-          <span className={ui.label}>Status</span>
-          <select
-            className={`${ui.input} ${styles.statusSelect}`}
-            value={form.status}
-            onChange={(e) => setForm({ ...form, status: e.target.value })}
-            disabled={saving || uploading}
-          >
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-          </select>
-        </label>
-        <p className={styles.statusHint}>
-          {form.status === "published"
-            ? "Published videos appear on your public website."
-            : "Drafts are hidden from your public website."}
-        </p>
-      </div>
-
       <div className={ui.formActions}>
-        <button
-          type="button"
-          className={ui.btnGhost}
-          disabled={saving || uploading}
-          onClick={() => router.push(`${base}/video-posts`)}
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className={ui.btnPrimary}
-          disabled={saving || uploading}
-        >
-          {uploading
-            ? "Uploading…"
-            : saving
-              ? "Saving…"
-              : isEdit
-                ? "Save Changes"
-                : "Create Video Post"}
-        </button>
+        {isEdit ? (
+          <>
+            <button type="button" className={ui.btnGhost} disabled={saving || uploading} onClick={() => router.push(`${base}/video-posts`)}>
+              Cancel
+            </button>
+            <button type="submit" className={ui.btnPrimary} disabled={saving || uploading}>
+              {uploading ? "Uploading…" : saving ? "Saving…" : "Save Changes"}
+            </button>
+          </>
+        ) : (
+          <>
+            <button type="submit" value="draft" className={ui.btnGhost} disabled={submitIntent === "publish" && (saving || uploading)} onClick={() => setSubmitIntent("draft")}>
+              {uploading && submitIntent === "draft" ? "Uploading…" : saving && submitIntent === "draft" ? "Saving…" : "Save Draft"}
+            </button>
+            <button type="submit" value="publish" className={ui.btnPrimary} disabled={submitIntent === "draft" && (saving || uploading)} onClick={() => setSubmitIntent("publish")}>
+              {uploading && submitIntent === "publish" ? "Uploading…" : saving && submitIntent === "publish" ? "Publishing…" : "Publish"}
+            </button>
+          </>
+        )}
       </div>
       </form>
     </>

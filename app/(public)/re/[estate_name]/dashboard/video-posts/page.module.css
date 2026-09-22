@@ -99,11 +99,38 @@
   align-items: center;
   justify-content: flex-start;
   gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
 }
 
 .titleLink {
   cursor: pointer;
   transition: color 0.15s ease;
+}
+
+.videoTitleCell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.thumbLink {
+  display: block;
+  flex: 0 0 auto;
+  line-height: 0;
+  border-radius: 8px;
+}
+
+.thumbLink:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
 }
 
 .titleLink:hover {

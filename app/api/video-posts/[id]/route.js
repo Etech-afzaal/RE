@@ -84,6 +84,39 @@ export async function PATCH(req, { params }) {
     );
   }
 
+  if (Object.keys(body).length === 1 && Object.prototype.hasOwnProperty.call(body, "status")) {
+    const statusCheck = validateVideoPostStatus(body.status);
+    if (!statusCheck.ok) {
+      return NextResponse.json({ error: statusCheck.error }, { status: 400 });
+    }
+    const nextStatus = statusCheck.value;
+    const validated = validateVideoPostInput(existing, {
+      requireVideo: nextStatus === VIDEO_POST_STATUS.PUBLISHED && !existing.video_url,
+    });
+    if (!validated.ok) {
+      return NextResponse.json({ error: validated.error, ...(validated.field ? { field: validated.field } : {}) }, { status: 400 });
+    }
+    const result = await updateVideoPost(agentId, videoPostId, {
+      title: existing.title,
+      slug: existing.slug,
+      description: existing.description,
+      status: nextStatus,
+    });
+    if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+    const actorName = agentDisplayName(session);
+    await createAuditLog({
+      userId: Number(session?.user?.id) || null,
+      action: AUDIT_ACTIONS.VIDEO_POST_UPDATED,
+      entityType: AUDIT_ENTITY_TYPES.VIDEO_POST,
+      entityId: videoPostId,
+      description: `${actorName} ${nextStatus === VIDEO_POST_STATUS.PUBLISHED ? "published" : "unpublished"} video post "${existing.title}"`,
+      metadata: { video_post_title: existing.title, video_post_slug: existing.slug, old_status: existing.status, new_status: nextStatus },
+      ipAddress: getRequestIp(req),
+    });
+    const videoPost = await getVideoPostForAgent(agentId, videoPostId);
+    return NextResponse.json({ success: true, videoPost });
+  }
+
   const statusCheck = validateVideoPostStatus(body.status);
   if (!statusCheck.ok) {
     return NextResponse.json({ error: statusCheck.error }, { status: 400 });
