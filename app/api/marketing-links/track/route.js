@@ -35,7 +35,7 @@ export async function POST(req) {
     return NextResponse.json({ error: "Invalid referral link." }, { status: 404 });
   }
 
-  if (link.property_status !== PROPERTY_PUBLIC_STATUS) {
+  if (link.property_status !== PROPERTY_PUBLIC_STATUS || link.property_is_hidden) {
     return NextResponse.json({ error: "Property not available." }, { status: 404 });
   }
 

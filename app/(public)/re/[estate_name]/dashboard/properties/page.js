@@ -37,6 +37,7 @@ const TABS = [
   { id: "under_contract", label: "Under Contract" },
   { id: "rejected", label: "Requires Updates" },
   { id: "sold", label: "Sold" },
+  { id: "hidden", label: "Hidden", visibility: "hidden" },
 ];
 
 function formatPrice(value, currency) {
@@ -70,9 +71,10 @@ export default function AgentPropertiesPage() {
     const params = new URLSearchParams({ page: String(page) });
     if (selectedTab === "featured") {
       params.set("featured", "1");
-    } else if (selectedTab !== "all") {
+    } else if (selectedTab !== "all" && selectedTab !== "hidden") {
       params.set("status", selectedTab);
     }
+    if (selectedTab === "hidden") params.set("visibility", "hidden");
     const trimmedSearch = String(searchQuery || "").trim();
     if (trimmedSearch) {
       params.set("search", trimmedSearch);
@@ -277,7 +279,7 @@ export default function AgentPropertiesPage() {
                   const isUnderContract = property.status === "under_contract";
                   const featured = isFeaturedProperty(property);
                   const linksToEdit = isApproved || isRejected || isUnderContract;
-                  const note = statusNote(property.status);
+                  const note = statusNote(property.status, property.is_hidden);
                   const addedOn = formatAddedDate(property.created_at);
                   return (
                     <tr key={property.id}>
@@ -346,6 +348,11 @@ export default function AgentPropertiesPage() {
                           >
                             {statusLabel(property.status)}
                           </span>
+                          {property.is_hidden ? (
+                            <span className={`${ui.badge} ${ui.badgeHidden}`}>
+                              Hidden
+                            </span>
+                          ) : null}
                           {property.status === "pending_approval" ? (
                             <PendingPropertyInfo propertyTitle={property.title} />
                           ) : null}
@@ -363,6 +370,7 @@ export default function AgentPropertiesPage() {
                           busyId={actions.busyId}
                           onMarkSold={actions.markAsSold}
                           onOpenPropertyStatusChange={actions.openPropertyStatusChange}
+                          onOpenPropertyVisibilityChange={actions.openPropertyVisibilityChange}
                           onSubmitForApproval={actions.submitForApproval}
                           onAddFeatured={actions.addToFeatured}
                           onRemoveFeatured={actions.removeFromFeatured}
@@ -393,6 +401,7 @@ export default function AgentPropertiesPage() {
         propertyToDelete={actions.propertyToDelete}
         propertyToCancelApproval={actions.propertyToCancelApproval}
         propertyStatusChange={actions.propertyStatusChange}
+        propertyVisibilityChange={actions.propertyVisibilityChange}
         propertyForLinks={actions.propertyForLinks}
         busyId={actions.busyId}
         onCloseDelete={() => actions.setPropertyToDelete(null)}
@@ -401,6 +410,8 @@ export default function AgentPropertiesPage() {
         onConfirmCancelApproval={actions.cancelApprovalRequest}
         onClosePropertyStatusChange={() => actions.setPropertyStatusChange(null)}
         onConfirmPropertyStatusChange={actions.confirmPropertyStatusChange}
+        onClosePropertyVisibilityChange={() => actions.setPropertyVisibilityChange(null)}
+        onConfirmPropertyVisibilityChange={actions.confirmPropertyVisibilityChange}
         onCloseLinks={() => actions.setPropertyForLinks(null)}
       />
     </AgentPortalShell>

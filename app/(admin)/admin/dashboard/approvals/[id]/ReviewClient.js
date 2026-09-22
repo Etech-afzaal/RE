@@ -195,6 +195,11 @@ export default function ReviewClient({ propertyId }) {
               >
                 {statusLabel(property.status)}
               </span>
+              {property.is_hidden ? (
+                <span className={`${styles.badge} ${styles.badgeMuted}`}>
+                  Hidden
+                </span>
+              ) : null}
             </div>
             <div className={styles.panelBody}>
               {images.length === 0 ? (

@@ -145,12 +145,45 @@ export async function PATCH(req, { params }) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
+  const hasVisibilityChange = Object.prototype.hasOwnProperty.call(body || {}, "is_hidden");
+  if (hasVisibilityChange) {
+    if (typeof body.is_hidden !== "boolean") {
+      return NextResponse.json({ error: "is_hidden must be a boolean." }, { status: 400 });
+    }
+    try {
+      const rows = await query(
+        "SELECT id, is_hidden, title, status FROM properties WHERE id = ?",
+        [propertyId],
+      );
+      if (!rows[0]) return NextResponse.json({ error: "Property not found." }, { status: 404 });
+      await query("UPDATE properties SET is_hidden = ? WHERE id = ?", [body.is_hidden, propertyId]);
+      await createAuditLog({
+        userId: Number(session?.user?.id) || null,
+        action: AUDIT_ACTIONS.PROPERTY_UPDATED,
+        entityType: AUDIT_ENTITY_TYPES.PROPERTY,
+        entityId: propertyId,
+        description: `${adminIdentity(session)} ${body.is_hidden ? "hid" : "unhid"} property "${rows[0].title}"`,
+        metadata: {
+          property_title: rows[0].title,
+          old_is_hidden: Boolean(rows[0].is_hidden),
+          new_is_hidden: body.is_hidden,
+          status: rows[0].status,
+        },
+        ipAddress: getRequestIp(req),
+      });
+      return NextResponse.json({ success: true, status: rows[0].status, is_hidden: body.is_hidden });
+    } catch (err) {
+      console.error("Failed to update property visibility:", err);
+      return NextResponse.json({ error: "Could not update property visibility." }, { status: 500 });
+    }
+  }
+
   const requested = body?.status;
   if (!PROPERTY_STATUS_INPUTS.has(requested)) {
     return NextResponse.json(
       {
         error:
-          "status must be draft, pending_approval, approved, requires updates, under contract, sold, hidden, or active.",
+          "status must be draft, pending_approval, approved, requires updates, under contract, sold, or active.",
       },
       { status: 400 },
     );

@@ -69,8 +69,8 @@ CREATE TABLE IF NOT EXISTS properties (
   price_currency ENUM('PKR','USD') NOT NULL DEFAULT 'PKR', -- amount is stored as-entered; no conversion
   location VARCHAR(255),                           -- denormalized display: "{area} {phase}, {city}"
   -- Workflow: draft → pending_approval → approved | rejected; approved → under_contract → sold
-  -- Only 'approved' is publicly visible, so new listings start as drafts.
-  status ENUM('draft','pending_approval','approved','rejected','under_contract','sold','hidden') NOT NULL DEFAULT 'draft',
+  status ENUM('draft','pending_approval','approved','rejected','under_contract','sold') NOT NULL DEFAULT 'draft',
+  is_hidden BOOLEAN NOT NULL DEFAULT FALSE,        -- independent public-listing visibility
   is_featured BOOLEAN NOT NULL DEFAULT FALSE,       -- agent homepage hero (max 10 approved per agent)
   submitted_at DATETIME NULL,                      -- set when the agent submits for review
   approved_by VARCHAR(100) NULL,                   -- admin identifier (env admin has no users row)

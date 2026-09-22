@@ -15,6 +15,7 @@ export default function PropertyListingActions({
   busyId,
   onMarkSold,
   onOpenPropertyStatusChange,
+  onOpenPropertyVisibilityChange,
   onSubmitForApproval,
   onAddFeatured,
   onRemoveFeatured,
@@ -30,7 +31,7 @@ export default function PropertyListingActions({
   const isApproved = property.status === "approved";
   const isUnderContract = property.status === "under_contract";
   const isSold = property.status === "sold";
-  const isHidden = property.status === "hidden";
+  const isHidden = Boolean(property.is_hidden);
   const isBusy = busyId === property.id;
 
   const goToEdit = () => router.push(editHref);
@@ -40,7 +41,7 @@ export default function PropertyListingActions({
     property.status === "draft" ||
     property.status === "sold" ||
     isUnderContract ||
-    property.status === "hidden";
+    isHidden;
   const showQuickLinks = isApproved;
   const showQuickResubmit = isRejected;
   const showQuickPendingView = isPending;
@@ -92,14 +93,17 @@ export default function PropertyListingActions({
         : isSold
           ? [{ label: "Mark as Unsold", icon: Undo2, onSelect: () => onOpenPropertyStatusChange(property, "approved"), disabled: isBusy }]
           : []),
-    ...(isApproved || isUnderContract || property.status === "hidden"
+    ...(isApproved || isUnderContract
       ? [{ label: "Mark as sold", icon: CircleCheck, onSelect: () => onMarkSold(property), disabled: isBusy }]
       : []),
-    ...(isUnderContract || isSold
-      ? [{ label: "Remove from Public Listing", icon: EyeOff, onSelect: () => onOpenPropertyStatusChange(property, "hidden"), disabled: isBusy }]
-      : isHidden
-        ? [{ label: "Make Available on Public Listing", icon: Eye, onSelect: () => onOpenPropertyStatusChange(property, "approved"), disabled: isBusy }]
-        : []),
+    ...(isApproved || isUnderContract || isSold
+      ? [{
+          label: isHidden ? "Unhide" : "Hide from Listing",
+          icon: isHidden ? Eye : EyeOff,
+          onSelect: () => onOpenPropertyVisibilityChange(property, !isHidden),
+          disabled: isBusy,
+        }]
+      : []),
     ...(showQuickLinks
       ? []
       : isApproved

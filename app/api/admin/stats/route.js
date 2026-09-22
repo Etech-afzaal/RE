@@ -83,7 +83,7 @@ export async function GET() {
          (SELECT COUNT(*) FROM properties WHERE status = 'draft') AS draftProperties,
          (SELECT COUNT(*) FROM properties WHERE status = 'rejected') AS rejectedProperties,
          (SELECT COUNT(*) FROM properties WHERE status = 'under_contract') AS underContractProperties,
-         (SELECT COUNT(*) FROM properties WHERE status = 'hidden') AS hiddenProperties,
+         (SELECT COUNT(*) FROM properties WHERE is_hidden = TRUE) AS hiddenProperties,
          (SELECT COUNT(*) FROM properties) AS totalProperties,
          (SELECT COUNT(*) FROM properties
            WHERE created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')) AS propertiesThisMonth,

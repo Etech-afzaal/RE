@@ -269,13 +269,27 @@ export async function PATCH(req, { params }) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
+  const hasVisibilityChange = Object.prototype.hasOwnProperty.call(body || {}, "is_hidden");
+  if (hasVisibilityChange && Object.prototype.hasOwnProperty.call(body || {}, "status")) {
+    return NextResponse.json(
+      { error: "Visibility and status must be updated separately." },
+      { status: 400 },
+    );
+  }
+
   const nextStatus = body?.status;
+  if (hasVisibilityChange && typeof body.is_hidden !== "boolean") {
+    return NextResponse.json(
+      { error: "is_hidden must be a boolean." },
+      { status: 400 },
+    );
+  }
   if (
+    !hasVisibilityChange &&
     ![
       PROPERTY_STATUS.SOLD,
       PROPERTY_STATUS.UNDER_CONTRACT,
       PROPERTY_STATUS.PUBLISHED,
-      PROPERTY_STATUS.HIDDEN,
     ].includes(nextStatus)
   ) {
     return NextResponse.json(
@@ -286,7 +300,7 @@ export async function PATCH(req, { params }) {
 
   const agentId = agentIdFrom(session);
   const existing = await query(
-    "SELECT id, status, title FROM properties WHERE id = ? AND agent_id = ?",
+    "SELECT id, status, is_hidden, title FROM properties WHERE id = ? AND agent_id = ?",
     [propertyId, agentId],
   );
   if (existing.length === 0) {
@@ -294,6 +308,53 @@ export async function PATCH(req, { params }) {
   }
 
   const current = existing[0];
+  if (hasVisibilityChange) {
+    if (current.status === PROPERTY_STATUS.PENDING_APPROVAL) {
+      return NextResponse.json(
+        { error: PROPERTY_LOCKED_MESSAGE },
+        { status: 409 },
+      );
+    }
+    if (Boolean(current.is_hidden) === body.is_hidden) {
+      return NextResponse.json({
+        success: true,
+        status: current.status,
+        is_hidden: body.is_hidden,
+      });
+    }
+
+    await query(
+      "UPDATE properties SET is_hidden = ? WHERE id = ? AND agent_id = ?",
+      [body.is_hidden, propertyId, agentId],
+    );
+
+    const agentName = session.user.name || "Agent";
+    const agentHandle = session.user.username || session.user.estate_name || null;
+    await createAuditLog({
+      userId: agentId,
+      action: AUDIT_ACTIONS.PROPERTY_UPDATED,
+      entityType: AUDIT_ENTITY_TYPES.PROPERTY,
+      entityId: propertyId,
+      description: `${agentName} ${body.is_hidden ? "hid" : "unhid"} property "${current.title}"`,
+      metadata: {
+        property_title: current.title,
+        agent_name: agentName,
+        agent_username: agentHandle,
+        estate_name: session.user.estate_name || agentHandle,
+        status: current.status,
+        old_is_hidden: Boolean(current.is_hidden),
+        new_is_hidden: body.is_hidden,
+      },
+      ipAddress: getRequestIp(req),
+    });
+
+    return NextResponse.json({
+      success: true,
+      status: current.status,
+      is_hidden: body.is_hidden,
+    });
+  }
+
   if (current.status === nextStatus) {
     return NextResponse.json({ success: true, status: nextStatus });
   }
@@ -322,9 +383,7 @@ export async function PATCH(req, { params }) {
         ? "Under Contract"
         : nextStatus === PROPERTY_STATUS.PUBLISHED
           ? "Published"
-          : nextStatus === PROPERTY_STATUS.HIDDEN
-            ? "Hidden from public listings"
-            : "Sold"
+          : "Sold"
     }`,
     metadata: {
       property_title: current.title,

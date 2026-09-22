@@ -36,6 +36,7 @@ export async function GET(req) {
          p.size_value,
          p.size_unit,
          p.status,
+         p.is_hidden,
          p.submitted_at,
          p.approved_by,
          p.approved_at,

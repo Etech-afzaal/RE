@@ -10,6 +10,7 @@ export default function AgentPropertyActionModals({
   propertyToDelete,
   propertyToCancelApproval,
   propertyStatusChange,
+  propertyVisibilityChange,
   propertyForLinks,
   busyId,
   onCloseDelete,
@@ -18,6 +19,8 @@ export default function AgentPropertyActionModals({
   onConfirmCancelApproval,
   onClosePropertyStatusChange,
   onConfirmPropertyStatusChange,
+  onClosePropertyVisibilityChange,
+  onConfirmPropertyVisibilityChange,
   onCloseLinks,
 }) {
   const successMessage =
@@ -125,10 +128,6 @@ export default function AgentPropertyActionModals({
             <h2 id="property-status-change-title" className={ui.dialogTitle}>
               {propertyStatusChange.status === "under_contract"
                 ? "Mark as Under Contract?"
-                : propertyStatusChange.status === "hidden"
-                  ? "Remove from Public Listing?"
-                  : propertyStatusChange.property.status === "hidden"
-                    ? "Make Available on Public Listing?"
                 : propertyStatusChange.property.status === "sold"
                   ? "Mark as Unsold?"
                 : "Mark as Published?"}
@@ -136,10 +135,6 @@ export default function AgentPropertyActionModals({
             <p className={ui.dialogText}>
               {propertyStatusChange.status === "under_contract"
                 ? "This property will be marked as Under Contract and will no longer appear as an available property."
-                : propertyStatusChange.status === "hidden"
-                  ? "This property will no longer appear on your public website."
-                  : propertyStatusChange.property.status === "hidden"
-                    ? "This property will be published and appear on your public website."
                 : propertyStatusChange.property.status === "sold"
                   ? "This property will return to the active market as Published."
                 : "This property will return to the active market as Published."}
@@ -151,13 +146,52 @@ export default function AgentPropertyActionModals({
                   ? "Updating…"
                   : propertyStatusChange.status === "under_contract"
                     ? "Mark as Under Contract"
-                    : propertyStatusChange.status === "hidden"
-                      ? "Remove from Public Listing"
-                      : propertyStatusChange.property.status === "hidden"
-                        ? "Make Available"
                     : propertyStatusChange.property.status === "sold"
                       ? "Mark as Unsold"
                     : "Mark as Published"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {propertyVisibilityChange ? (
+        <div className={ui.dialogBackdrop} role="presentation">
+          <div
+            className={ui.dialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="property-visibility-title"
+            aria-describedby="property-visibility-description"
+          >
+            <h2 id="property-visibility-title" className={ui.dialogTitle}>
+              {propertyVisibilityChange.isHidden ? "Hide from Listing?" : "Unhide Property?"}
+            </h2>
+            <p id="property-visibility-description" className={ui.dialogText}>
+              {propertyVisibilityChange.isHidden
+                ? "This property will be hidden from public listings. Its current status will remain unchanged."
+                : "This property will become visible on your public listings again. Its current status will remain unchanged."}
+            </p>
+            <div className={ui.dialogActions}>
+              <button
+                type="button"
+                className={ui.btnGhost}
+                disabled={busyId === propertyVisibilityChange.property.id}
+                onClick={onClosePropertyVisibilityChange}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={ui.btnPrimary}
+                disabled={busyId === propertyVisibilityChange.property.id}
+                onClick={onConfirmPropertyVisibilityChange}
+              >
+                {busyId === propertyVisibilityChange.property.id
+                  ? "Updating…"
+                  : propertyVisibilityChange.isHidden
+                    ? "Hide from Listing"
+                    : "Unhide"}
               </button>
             </div>
           </div>

@@ -184,7 +184,7 @@
 }
 
 .contactButton:hover {
-  background: var(--gold-deep);
+  background: var(--brass);
   transform: translateY(-1px);
 }
 

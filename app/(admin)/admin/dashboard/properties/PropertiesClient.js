@@ -4,7 +4,7 @@ import ClearableSearchInput from "@/components/ClearableSearchInput";
 
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Archive, CircleCheck } from "lucide-react";
+import { Archive, CircleCheck, Eye, EyeOff } from "lucide-react";
 import ActionMenu from "@/components/ActionMenu";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Pagination from "@/components/Pagination";
@@ -29,7 +29,6 @@ const statusClass = {
   pending_approval: "badgePending",
   rejected: "badgeDanger",
   under_contract: "badgePending",
-  hidden: "badgeMuted",
 };
 
 const STATUS_FILTER_OPTIONS = [
@@ -157,8 +156,10 @@ export default function AdminPropertiesPage() {
   const filtered = useMemo(() => {
     let next = [...properties];
     if (statusFilter !== "all") {
-      next = next.filter(
-        (p) => normalizePropertyStatus(p.status) === statusFilter,
+      next = next.filter((p) =>
+        statusFilter === "hidden"
+          ? Boolean(p.is_hidden)
+          : normalizePropertyStatus(p.status) === statusFilter,
       );
     }
     if (agentFilter) {
@@ -206,6 +207,30 @@ export default function AdminPropertiesPage() {
       );
     } catch {
       setError("Could not update listing.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function updateVisibility(property, isHidden) {
+    setBusyId(property.id);
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/properties/${property.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_hidden: isHidden }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Could not update listing visibility.");
+        return;
+      }
+      setProperties((prev) =>
+        prev.map((p) => (p.id === property.id ? { ...p, is_hidden: isHidden } : p)),
+      );
+    } catch {
+      setError("Could not update listing visibility.");
     } finally {
       setBusyId(null);
     }
@@ -407,6 +432,11 @@ export default function AdminPropertiesPage() {
                       >
                         {statusLabel(property.status)}
                       </span>
+                      {property.is_hidden ? (
+                        <span className={`${styles.badge} ${styles.badgeMuted}`}>
+                          Hidden
+                        </span>
+                      ) : null}
                     </td>
                     <td data-label="Updated">
                       {new Date(
@@ -458,6 +488,12 @@ export default function AdminPropertiesPage() {
                                 ...(property.status !== "draft"
                                   ? [{ label: "Unpublish", icon: Archive, destructive: true, disabled: busyId === property.id, onSelect: () => updateStatus(property, "draft") }]
                                   : [{ label: "Publish", icon: CircleCheck, disabled: busyId === property.id, onSelect: () => updateStatus(property, "active") }]),
+                                {
+                                  label: property.is_hidden ? "Unhide" : "Hide from Listing",
+                                  icon: property.is_hidden ? Eye : EyeOff,
+                                  disabled: busyId === property.id,
+                                  onSelect: () => updateVisibility(property, !property.is_hidden),
+                                },
                               ]
                         }
                       />

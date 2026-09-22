@@ -25,6 +25,7 @@ export async function GET(req) {
   const agentId = Number(session.user.agent_id || session.user.id);
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
+  const visibility = searchParams.get("visibility");
   const featured = searchParams.get("featured") === "1";
   const search = sanitizeSearchInput(searchParams.get("search")).value;
   const page = searchParams.get("page");
@@ -33,11 +34,15 @@ export async function GET(req) {
   if (status && status !== "all" && !PROPERTY_DB_STATUSES.has(status)) {
     return NextResponse.json({ error: "Unknown property status filter." }, { status: 400 });
   }
+  if (visibility && !["visible", "hidden"].includes(visibility)) {
+    return NextResponse.json({ error: "Unknown property visibility filter." }, { status: 400 });
+  }
 
   const payload = await getManagedPropertiesPageByAgent(agentId, {
     page,
     pageSize: 10,
     status,
+    visibility,
     featured,
     search,
   });

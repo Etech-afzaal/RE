@@ -7,6 +7,7 @@ export function useAgentPropertyActions({ onReload, getReloadPage }) {
   const [propertyToDelete, setPropertyToDelete] = useState(null);
   const [propertyToCancelApproval, setPropertyToCancelApproval] = useState(null);
   const [propertyStatusChange, setPropertyStatusChange] = useState(null);
+  const [propertyVisibilityChange, setPropertyVisibilityChange] = useState(null);
   const [propertyForLinks, setPropertyForLinks] = useState(null);
   const [error, setError] = useState("");
   const [errorDetails, setErrorDetails] = useState([]);
@@ -70,17 +71,40 @@ export function useAgentPropertyActions({ onReload, getReloadPage }) {
       setSuccessPopup(
         status === "under_contract"
           ? "Property marked as Under Contract."
-          : status === "hidden"
-            ? "Property removed from public listings."
-          : property.status === "hidden"
-            ? "Property made available on public listings."
           : property.status === "sold"
             ? "Property marked as Unsold and Published."
-          : "Property marked as Published.",
+            : "Property marked as Published.",
       );
       await onReload?.();
     } catch {
       setError("Could not update this property status.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function confirmPropertyVisibilityChange() {
+    if (!propertyVisibilityChange) return;
+
+    const { property, isHidden } = propertyVisibilityChange;
+    setBusyId(property.id);
+    clearMessages();
+    try {
+      const res = await fetch(`/api/properties/${property.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_hidden: isHidden }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Could not update this property's visibility.");
+        return;
+      }
+      setPropertyVisibilityChange(null);
+      setSuccessPopup(isHidden ? "Property hidden from public listings." : "Property visible on public listings.");
+      await onReload?.();
+    } catch {
+      setError("Could not update this property's visibility.");
     } finally {
       setBusyId(null);
     }
@@ -227,11 +251,17 @@ export function useAgentPropertyActions({ onReload, getReloadPage }) {
     setPropertyStatusChange({ property, status });
   }
 
+  function openPropertyVisibilityChange(property, isHidden) {
+    clearMessages();
+    setPropertyVisibilityChange({ property, isHidden });
+  }
+
   return {
     busyId,
     propertyToDelete,
     propertyToCancelApproval,
     propertyStatusChange,
+    propertyVisibilityChange,
     propertyForLinks,
     error,
     errorDetails,
@@ -240,9 +270,11 @@ export function useAgentPropertyActions({ onReload, getReloadPage }) {
     setPropertyToDelete,
     setPropertyToCancelApproval,
     setPropertyStatusChange,
+    setPropertyVisibilityChange,
     setPropertyForLinks,
     markAsSold,
     confirmPropertyStatusChange,
+    confirmPropertyVisibilityChange,
     submitForApproval,
     cancelApprovalRequest,
     addToFeatured,
@@ -252,5 +284,6 @@ export function useAgentPropertyActions({ onReload, getReloadPage }) {
     openDelete,
     openCancelApproval,
     openPropertyStatusChange,
+    openPropertyVisibilityChange,
   };
 }
