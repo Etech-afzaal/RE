@@ -278,7 +278,7 @@ export default function AgentPropertiesPage() {
                   const isRejected = property.status === "rejected";
                   const isUnderContract = property.status === "under_contract";
                   const featured = isFeaturedProperty(property);
-                  const linksToEdit = isApproved || isRejected || isUnderContract;
+                  const linksToEdit = isApproved || isRejected || isUnderContract || property.status === "draft";
                   const note = statusNote(property.status, property.is_hidden);
                   const addedOn = formatAddedDate(property.created_at);
                   return (
