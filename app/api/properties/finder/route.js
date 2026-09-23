@@ -1,24 +1,84 @@
 import { NextResponse } from "next/server";
 import { requireAgent } from "@/lib/adminAuth";
-import { getPublishedPropertiesPage } from "@/lib/queries";
+import {
+  getAgentFinderLocationContext,
+  getPublishedPropertiesPage,
+  searchLiveAgentsForFinder,
+} from "@/lib/queries";
 import { sanitizeSearchInput } from "@/lib/validators/common";
 
+function agentIdFromSession(session) {
+  return Number(session.user.agent_id || session.user.id);
+}
+
+function parseOptionalNumber(raw) {
+  const text = String(raw ?? "").trim();
+  if (!text) return null;
+  const value = Number(text);
+  return Number.isFinite(value) ? value : null;
+}
+
 export async function GET(req) {
-  const { error } = await requireAgent();
+  const { session, error } = await requireAgent();
   if (error) return error;
 
   const { searchParams } = new URL(req.url);
-  const search = sanitizeSearchInput(searchParams.get("search")).value;
-  const propertyType = searchParams.get("type") || "all";
-  const city = searchParams.get("city") || "";
+
+  // Agent dropdown suggestions for the finder filter.
+  if (searchParams.get("mode") === "agents") {
+    const q = sanitizeSearchInput(searchParams.get("q") || "").value;
+    const agents = await searchLiveAgentsForFinder(q, 12);
+    return NextResponse.json({
+      agents: agents.map((agent) => ({
+        id: agent.id,
+        name: agent.full_name || agent.company_name || agent.estate_name || "Agent",
+        company: agent.company_name || agent.estate_name || "",
+        username: agent.username || "",
+      })),
+    });
+  }
+
   const page = searchParams.get("page") || "1";
+  const city = sanitizeSearchInput(searchParams.get("city") || "").value;
+  const area = sanitizeSearchInput(searchParams.get("area") || "").value;
+  const propertySubtype = String(searchParams.get("subtype") || "all").trim();
+  const agentId = searchParams.get("agentId") || "";
+  const minPrice = parseOptionalNumber(searchParams.get("minPrice"));
+  const maxPrice = parseOptionalNumber(searchParams.get("maxPrice"));
+  const minSize = parseOptionalNumber(searchParams.get("minSize"));
+  const maxSize = parseOptionalNumber(searchParams.get("maxSize"));
+
+  const hasExplicitFilters = Boolean(
+    city ||
+      area ||
+      minSize != null ||
+      maxSize != null ||
+      minPrice != null ||
+      maxPrice != null ||
+      (propertySubtype && propertySubtype !== "all") ||
+      agentId,
+  );
+
+  let nearbyTerms = [];
+  if (!hasExplicitFilters) {
+    const location = await getAgentFinderLocationContext(
+      agentIdFromSession(session),
+    );
+    nearbyTerms = location.terms || [];
+  }
 
   const payload = await getPublishedPropertiesPage({
     page,
     pageSize: 20,
-    search,
-    propertyType,
     city,
+    area,
+    minSize,
+    maxSize,
+    minPrice,
+    maxPrice,
+    propertySubtype,
+    agentId,
+    nearbyTerms,
   });
 
   return NextResponse.json(payload);

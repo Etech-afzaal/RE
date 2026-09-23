@@ -1,39 +1,177 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { ChevronDown, Eye, Phone, X } from "lucide-react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Pagination from "@/components/Pagination";
-import FilePropertyPlaceholder from "@/components/FilePropertyPlaceholder";
-import PlotPropertyPlaceholder from "@/components/PlotPropertyPlaceholder";
-import ClearableSearchInput from "@/components/ClearableSearchInput";
+import LocationAutocomplete from "@/components/agent-portal/LocationAutocomplete";
+import AgentInquiryForm from "@/components/AgentInquiryForm";
 import { getPropertyUrl } from "@/lib/propertySlug";
-import { formatPropertyLocation } from "@/lib/propertyLocation";
 import { formatPropertyPrice } from "@/lib/formatPrice";
-import { propertySubtypeLabel } from "@/lib/propertyTaxonomy";
-import { normalizePropertySubtype } from "@/lib/propertyTaxonomy";
-import { formatAddedDate } from "@/lib/agentPropertyListingHelpers";
-import {
-  isFileProperty,
-  publicPropertyCardTypeLabel,
-} from "@/lib/publicPropertyData";
 import { sanitizeSearchInput } from "@/lib/validators/common";
 import ui from "@/components/agent-portal/portal.module.css";
 import styles from "./page.module.css";
 
-const TYPE_FILTERS = [
-  { value: "all", label: "All Types" },
-  { value: "sale", label: "For Sale" },
-  { value: "rent", label: "For Rent" },
-  { value: "plot", label: "Plots" },
+const SUBTYPE_OPTIONS = [
+  { value: "all", label: "All" },
+  { value: "house", label: "House" },
+  { value: "apartment", label: "Apartment" },
+  { value: "plot", label: "Plot" },
+  { value: "shop", label: "Shop" },
+  { value: "commercial", label: "Commercial" },
 ];
+
+function dash(value) {
+  const text = String(value || "").trim();
+  return text || "—";
+}
 
 function formatPrice(value, currency) {
   return formatPropertyPrice(value, currency, { fallback: "—" });
+}
+
+function agentDisplayName(property) {
+  return (
+    String(property?.agent_name || "").trim() ||
+    String(property?.company_name || "").trim() ||
+    String(property?.estate_name || "").trim() ||
+    "Agent"
+  );
+}
+
+function formatRangeLabel(min, max, emptyLabel, unitSuffix = "") {
+  const hasMin = String(min || "").trim() !== "";
+  const hasMax = String(max || "").trim() !== "";
+  if (!hasMin && !hasMax) return emptyLabel;
+  const suffix = unitSuffix ? ` ${unitSuffix}` : "";
+  if (hasMin && hasMax) return `${min} – ${max}${suffix}`;
+  if (hasMin) return `From ${min}${suffix}`;
+  return `Up to ${max}${suffix}`;
+}
+
+function RangeFilterDropdown({
+  label,
+  emptyLabel,
+  unitHint,
+  appliedMin,
+  appliedMax,
+  onApply,
+  onReset,
+}) {
+  const wrapRef = useRef(null);
+  const [open, setOpen] = useState(false);
+  const [draftMin, setDraftMin] = useState(appliedMin);
+  const [draftMax, setDraftMax] = useState(appliedMax);
+
+  useEffect(() => {
+    if (!open) return;
+    setDraftMin(appliedMin);
+    setDraftMax(appliedMax);
+  }, [open, appliedMin, appliedMax]);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(event) {
+      if (wrapRef.current && !wrapRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  const summary = formatRangeLabel(
+    appliedMin,
+    appliedMax,
+    emptyLabel,
+    unitHint,
+  );
+  const active = String(appliedMin || "").trim() || String(appliedMax || "").trim();
+
+  function handleDone() {
+    onApply(String(draftMin || "").trim(), String(draftMax || "").trim());
+    setOpen(false);
+  }
+
+  function handleReset() {
+    setDraftMin("");
+    setDraftMax("");
+    onReset();
+    setOpen(false);
+  }
+
+  return (
+    <div className={styles.filterField} ref={wrapRef}>
+      <span className={styles.filterLabel}>{label}</span>
+      <div className={styles.rangeControl}>
+        <button
+          type="button"
+          className={`${styles.rangeTrigger} ${active ? styles.rangeTriggerActive : ""}`}
+          aria-expanded={open}
+          aria-haspopup="dialog"
+          onClick={() => setOpen((prev) => !prev)}
+        >
+          <span className={styles.rangeTriggerText}>{summary}</span>
+          <ChevronDown size={16} aria-hidden="true" />
+        </button>
+        {open ? (
+          <div className={styles.rangePanel} role="dialog" aria-label={label}>
+            <div className={styles.rangeInputs}>
+              <label className={styles.rangeInputField}>
+                <span>Min</span>
+                <input
+                  className={ui.input}
+                  type="number"
+                  min="0"
+                  step="any"
+                  inputMode="decimal"
+                  placeholder="Min"
+                  value={draftMin}
+                  onChange={(e) => setDraftMin(e.target.value)}
+                />
+              </label>
+              <label className={styles.rangeInputField}>
+                <span>Max</span>
+                <input
+                  className={ui.input}
+                  type="number"
+                  min="0"
+                  step="any"
+                  inputMode="decimal"
+                  placeholder="Max"
+                  value={draftMax}
+                  onChange={(e) => setDraftMax(e.target.value)}
+                />
+              </label>
+            </div>
+            {unitHint ? (
+              <p className={styles.rangeHint}>Values in {unitHint}</p>
+            ) : null}
+            <div className={styles.rangeActions}>
+              <button
+                type="button"
+                className={ui.btnGhost}
+                onClick={handleReset}
+              >
+                Reset
+              </button>
+              <button
+                type="button"
+                className={ui.btnPrimary}
+                onClick={handleDone}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
 }
 
 export default function PropertyFinderPage() {
@@ -47,12 +185,42 @@ export default function PropertyFinderPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProperties, setTotalProperties] = useState(0);
-  const [search, setSearch] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [copiedId, setCopiedId] = useState(null);
+  const [nearbyApplied, setNearbyApplied] = useState(false);
+
+  const [city, setCity] = useState("");
+  const [area, setArea] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [minSize, setMinSize] = useState("");
+  const [maxSize, setMaxSize] = useState("");
+  const [subtype, setSubtype] = useState("all");
+  const [agentId, setAgentId] = useState("");
+  const [agentLabel, setAgentLabel] = useState("");
+  const [agentQuery, setAgentQuery] = useState("");
+  const [agentOptions, setAgentOptions] = useState([]);
+  const [agentMenuOpen, setAgentMenuOpen] = useState(false);
+
+  const [contactTarget, setContactTarget] = useState(null);
+
   const shouldScrollRef = useRef(false);
   const debounceRef = useRef(null);
+  const agentDebounceRef = useRef(null);
+  const agentWrapRef = useRef(null);
+  const listSectionRef = useRef(null);
+
+  const filters = useMemo(
+    () => ({
+      city: sanitizeSearchInput(city).value,
+      area: sanitizeSearchInput(area).value,
+      minPrice: String(minPrice || "").trim(),
+      maxPrice: String(maxPrice || "").trim(),
+      minSize: String(minSize || "").trim(),
+      maxSize: String(maxSize || "").trim(),
+      subtype,
+      agentId,
+    }),
+    [city, area, minPrice, maxPrice, minSize, maxSize, subtype, agentId],
+  );
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -60,75 +228,144 @@ export default function PropertyFinderPage() {
     }
   }, [status, router]);
 
-  const load = useCallback(async (page, opts = {}) => {
+  const load = useCallback(async (page, activeFilters) => {
     setLoading(true);
     try {
       const qs = new URLSearchParams();
       qs.set("page", String(page));
-      if (opts.search) qs.set("search", opts.search);
-      if (opts.type && opts.type !== "all") qs.set("type", opts.type);
+      if (activeFilters.city) qs.set("city", activeFilters.city);
+      if (activeFilters.area) qs.set("area", activeFilters.area);
+      if (activeFilters.minPrice) qs.set("minPrice", activeFilters.minPrice);
+      if (activeFilters.maxPrice) qs.set("maxPrice", activeFilters.maxPrice);
+      if (activeFilters.minSize) qs.set("minSize", activeFilters.minSize);
+      if (activeFilters.maxSize) qs.set("maxSize", activeFilters.maxSize);
+      if (activeFilters.subtype && activeFilters.subtype !== "all") {
+        qs.set("subtype", activeFilters.subtype);
+      }
+      if (activeFilters.agentId) qs.set("agentId", activeFilters.agentId);
+
       const res = await fetch(`/api/properties/finder?${qs}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setResults([]);
         setTotalPages(1);
         setTotalProperties(0);
+        setNearbyApplied(false);
         return;
       }
-      setResults(data.properties || []);
+      setResults(Array.isArray(data.properties) ? data.properties : []);
       setCurrentPage(data.currentPage || 1);
       setTotalPages(data.totalPages || 1);
       setTotalProperties(data.totalProperties || 0);
+      setNearbyApplied(Boolean(data.nearbyApplied));
     } catch {
       setResults([]);
       setTotalPages(1);
       setTotalProperties(0);
+      setNearbyApplied(false);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    load(1, { search, type: typeFilter });
-  }, [load, search, typeFilter]);
-
-  useEffect(() => {
+    if (status !== "authenticated") return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      shouldScrollRef.current = false;
+      load(1, filters);
+    }, 280);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
+  }, [status, filters, load]);
+
+  useEffect(() => {
+    if (!loading && shouldScrollRef.current) {
+      listSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+      shouldScrollRef.current = false;
+    }
+  }, [loading, currentPage]);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        agentWrapRef.current &&
+        !agentWrapRef.current.contains(event.target)
+      ) {
+        setAgentMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  function handleSearchChange(value) {
-    setSearchInput(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setSearch(sanitizeSearchInput(value).value);
-    }, 300);
-  }
+  useEffect(() => {
+    if (!agentMenuOpen) return;
+    if (agentDebounceRef.current) clearTimeout(agentDebounceRef.current);
+    agentDebounceRef.current = setTimeout(async () => {
+      try {
+        const qs = new URLSearchParams({
+          mode: "agents",
+          q: sanitizeSearchInput(agentQuery).value,
+        });
+        const res = await fetch(`/api/properties/finder?${qs}`);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setAgentOptions([]);
+          return;
+        }
+        setAgentOptions(Array.isArray(data.agents) ? data.agents : []);
+      } catch {
+        setAgentOptions([]);
+      }
+    }, 200);
+    return () => {
+      if (agentDebounceRef.current) clearTimeout(agentDebounceRef.current);
+    };
+  }, [agentMenuOpen, agentQuery]);
 
   function handlePageChange(page) {
     shouldScrollRef.current = true;
-    load(page, { search, type: typeFilter });
+    load(page, filters);
   }
 
-  function copyLink(property) {
-    const url = `${window.location.origin}${getPropertyUrl(property)}`;
-    navigator.clipboard.writeText(url).then(() => {
-      setCopiedId(property.id);
-      setTimeout(() => setCopiedId(null), 1800);
-    }).catch(() => {});
+  function clearFilters() {
+    setCity("");
+    setArea("");
+    setMinPrice("");
+    setMaxPrice("");
+    setMinSize("");
+    setMaxSize("");
+    setSubtype("all");
+    setAgentId("");
+    setAgentLabel("");
+    setAgentQuery("");
+  }
+
+  function selectAgent(agent) {
+    setAgentId(String(agent.id));
+    setAgentLabel(agent.name);
+    setAgentQuery(agent.name);
+    setAgentMenuOpen(false);
+  }
+
+  function clearAgent() {
+    setAgentId("");
+    setAgentLabel("");
+    setAgentQuery("");
   }
 
   if (status === "loading" || status === "unauthenticated") {
     return (
-      <AgentPortalShell
-        username={username}
-        agentName={session?.user?.name}
-        title="Property Finder"
-        subtitle="Discover properties across the platform"
-      >
-        <LoadingSpinner fullPage label="Loading" hint="Preparing Property Finder…" />
-      </AgentPortalShell>
+      <LoadingSpinner
+        fullPage
+        label="Loading"
+        hint="Opening Property Finder…"
+      />
     );
   }
 
@@ -137,142 +374,306 @@ export default function PropertyFinderPage() {
       username={username}
       agentName={session?.user?.name}
       title="Property Finder"
-      subtitle="Discover properties across the platform"
+      subtitle="Discover platform-wide listings with marketplace filters."
     >
-      <div className={styles.page}>
-        <div className={styles.toolbar}>
-          <div className={styles.searchWrap}>
-            <ClearableSearchInput
-              type="search"
-              value={searchInput}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="Search by title, area, city, or agent name"
-              aria-label="Search properties"
+      <section className={styles.filtersCard} aria-label="Property filters">
+        <div className={styles.filtersRow}>
+          <label className={styles.filterField}>
+            <span className={styles.filterLabel}>City</span>
+            <LocationAutocomplete
+              className={ui.input}
+              value={city}
+              onChange={(e) => {
+                setCity(e.target.value);
+                setArea("");
+              }}
+              placeholder="Search city"
+              types={["(cities)"]}
+              country="pk"
             />
+          </label>
+
+          <label className={styles.filterField}>
+            <span className={styles.filterLabel}>Area</span>
+            <LocationAutocomplete
+              className={ui.input}
+              value={area}
+              onChange={(e) => setArea(e.target.value)}
+              placeholder={city ? "Search area" : "Select city first"}
+              types={["geocode"]}
+              country="pk"
+              locationBias={city || null}
+              disabled={!city.trim()}
+            />
+          </label>
+
+          <RangeFilterDropdown
+            label="Size"
+            emptyLabel="Any size"
+            unitHint="Marla"
+            appliedMin={minSize}
+            appliedMax={maxSize}
+            onApply={(nextMin, nextMax) => {
+              setMinSize(nextMin);
+              setMaxSize(nextMax);
+            }}
+            onReset={() => {
+              setMinSize("");
+              setMaxSize("");
+            }}
+          />
+
+          <RangeFilterDropdown
+            label="Price"
+            emptyLabel="Any price"
+            appliedMin={minPrice}
+            appliedMax={maxPrice}
+            onApply={(nextMin, nextMax) => {
+              setMinPrice(nextMin);
+              setMaxPrice(nextMax);
+            }}
+            onReset={() => {
+              setMinPrice("");
+              setMaxPrice("");
+            }}
+          />
+
+          <label className={styles.filterField}>
+            <span className={styles.filterLabel}>Property Type</span>
+            <select
+              className={ui.select}
+              value={subtype}
+              onChange={(e) => setSubtype(e.target.value)}
+            >
+              {SUBTYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className={styles.filterField} ref={agentWrapRef}>
+            <span className={styles.filterLabel}>Agent</span>
+            <div className={styles.agentControl}>
+              <input
+                className={ui.input}
+                value={agentQuery}
+                placeholder="Search agent"
+                onFocus={() => setAgentMenuOpen(true)}
+                onChange={(e) => {
+                  setAgentQuery(e.target.value);
+                  setAgentMenuOpen(true);
+                  if (agentId) {
+                    setAgentId("");
+                    setAgentLabel("");
+                  }
+                }}
+                autoComplete="off"
+              />
+              {agentId ? (
+                <button
+                  type="button"
+                  className={styles.clearAgentBtn}
+                  aria-label="Clear agent filter"
+                  onClick={clearAgent}
+                >
+                  <X size={14} />
+                </button>
+              ) : null}
+              {agentMenuOpen ? (
+                <ul className={styles.agentDropdown} role="listbox">
+                  {agentOptions.length === 0 ? (
+                    <li className={styles.agentEmpty}>No agents found</li>
+                  ) : (
+                    agentOptions.map((agent) => (
+                      <li key={agent.id}>
+                        <button
+                          type="button"
+                          className={styles.agentOption}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            selectAgent(agent);
+                          }}
+                        >
+                          <span className={styles.agentOptionName}>
+                            {agent.name}
+                          </span>
+                          {agent.company ? (
+                            <span className={styles.agentOptionMeta}>
+                              {agent.company}
+                            </span>
+                          ) : null}
+                        </button>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              ) : null}
+            </div>
+            {agentLabel ? (
+              <p className={styles.selectedAgent}>Selected: {agentLabel}</p>
+            ) : null}
           </div>
-          <select
-            className={styles.filterSelect}
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            aria-label="Filter by type"
-          >
-            {TYPE_FILTERS.map((t) => (
-              <option key={t.value} value={t.value}>{t.label}</option>
-            ))}
-          </select>
+        </div>
+
+        <div className={styles.filterActions}>
+          <button type="button" className={ui.btnGhost} onClick={clearFilters}>
+            Clear filters
+          </button>
+        </div>
+      </section>
+
+      <section ref={listSectionRef} className={ui.panel}>
+        <div className={styles.resultsHeader}>
+          <div>
+            <h2 className={styles.resultsTitle}>Property Results</h2>
+            <p className={ui.paginationCount}>
+              {loading
+                ? "Loading…"
+                : `${totalProperties} ${
+                    totalProperties === 1 ? "property" : "properties"
+                  }`}
+              {!loading && nearbyApplied
+                ? " · Nearby based on your location"
+                : ""}
+            </p>
+          </div>
         </div>
 
         {loading ? (
-          <p className={styles.loadingText}>Loading properties…</p>
+          <LoadingSpinner
+            fullPage={false}
+            label="Loading"
+            hint="Fetching marketplace listings…"
+          />
         ) : results.length === 0 ? (
-          <div className={styles.empty}>No properties found.</div>
+          <p className={styles.empty}>
+            No properties match these filters. Try adjusting city, area, or
+            price.
+          </p>
         ) : (
-          <>
-            <p className={styles.resultCount}>
-              {totalProperties} {totalProperties === 1 ? "property" : "properties"} found
-            </p>
-            <div className={styles.grid}>
-              {results.map((property) => (
-                <FinderCard
-                  key={property.id}
-                  property={property}
-                  onCopy={copyLink}
-                  copied={copiedId === property.id}
-                />
-              ))}
-            </div>
+          <div className={ui.tableWrap}>
+            <table className={ui.table}>
+              <thead>
+                <tr>
+                  <th>City</th>
+                  <th>Area</th>
+                  <th>Phase</th>
+                  <th>Block/Sector</th>
+                  <th>Property/Plot No</th>
+                  <th>Price</th>
+                  <th>Offered By</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.map((property) => {
+                  const viewHref = getPropertyUrl(property);
+                  return (
+                    <tr key={property.id}>
+                      <td data-label="City">{dash(property.city)}</td>
+                      <td data-label="Area">{dash(property.area)}</td>
+                      <td data-label="Phase">{dash(property.phase)}</td>
+                      <td data-label="Block/Sector">—</td>
+                      <td data-label="Property/Plot No">
+                        {dash(property.address)}
+                      </td>
+                      <td data-label="Price">
+                        {formatPrice(property.price, property.price_currency)}
+                      </td>
+                      <td data-label="Offered By">
+                        {agentDisplayName(property)}
+                      </td>
+                      <td data-label="Action">
+                        <div className={styles.actionRow}>
+                          <button
+                            type="button"
+                            className={styles.iconBtn}
+                            aria-label={`Contact ${agentDisplayName(property)}`}
+                            title="Contact Agent"
+                            onClick={() => setContactTarget(property)}
+                          >
+                            <Phone size={16} />
+                          </button>
+                          <Link
+                            href={viewHref}
+                            className={styles.iconBtn}
+                            aria-label={`View ${property.title || "property"}`}
+                            title="View Property"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Eye size={16} />
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {!loading && totalPages > 1 ? (
+          <div className={styles.paginationWrap}>
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={handlePageChange}
-              ariaLabel="Property Finder pagination"
+              ariaLabel="Property finder pagination"
             />
-          </>
-        )}
-      </div>
-    </AgentPortalShell>
-  );
-}
+          </div>
+        ) : null}
+      </section>
 
-function FinderCard({ property, onCopy, copied }) {
-  const location = formatPropertyLocation(property) || "";
-  const title = property.title || location || "Property";
-  const propertyUrl = getPropertyUrl(property);
-  const agentUrl = `/re/${encodeURIComponent(property.username || property.estate_name || "")}`;
-  const agentName = property.agent_name || property.company_name || property.estate_name || "Agent";
-  const company = property.company_name || property.estate_name || "";
-  const listedAt = formatAddedDate(property.created_at);
-  const subtypeLabel = propertySubtypeLabel(normalizePropertySubtype(property.property_subtype));
-  const cardTypeLabel = publicPropertyCardTypeLabel(property, subtypeLabel);
-
-  return (
-    <div className={styles.card}>
-      <div className={styles.cardLeft}>
-        <Link href={propertyUrl} className={styles.cardLink}>
-          <div className={styles.media}>
-            {property.status === "sold" || property.status === "under_contract" ? (
-              <span className={`${styles.statusBadge} ${property.status === "sold" ? styles.statusBadgeSold : styles.statusBadgeUnderContract}`}>
-                {property.status === "sold" ? "Sold" : "Under Contract"}
-              </span>
+      {contactTarget ? (
+        <div className={ui.dialogBackdrop} role="presentation">
+          <div
+            className={`${ui.dialog} ${ui.dialogWide}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="finder-contact-title"
+          >
+            <div className={styles.contactHeader}>
+              <div>
+                <p className={styles.contactKicker}>Contact Agent</p>
+                <h3 id="finder-contact-title" className={ui.dialogTitle}>
+                  {agentDisplayName(contactTarget)}
+                </h3>
+                {contactTarget.title ? (
+                  <p className={styles.contactProperty}>
+                    About: {contactTarget.title}
+                  </p>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                className={ui.btnGhost}
+                onClick={() => setContactTarget(null)}
+              >
+                Close
+              </button>
+            </div>
+            {contactTarget.agent_phone ? (
+              <a
+                className={styles.callLink}
+                href={`tel:${String(contactTarget.agent_phone).replace(/\s/g, "")}`}
+              >
+                Call {contactTarget.agent_phone}
+              </a>
             ) : null}
-            {property.featuredImage ? (
-              <Image
-                src={property.featuredImage.image_url}
-                alt={title}
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className={styles.image}
-              />
-            ) : (
-              isFileProperty(property) ? <FilePropertyPlaceholder fill /> :
-              property.property_type === "plot" ? <PlotPropertyPlaceholder fill /> :
-              <div className={styles.fallback} />
-            )}
+            <AgentInquiryForm
+              agentId={contactTarget.agent_id}
+              propertyId={contactTarget.id}
+              variant="website"
+              kicker="Send a message"
+              heading={`Message ${agentDisplayName(contactTarget)}`}
+            />
           </div>
-        </Link>
-        <div className={styles.cardInfo}>
-          <Link href={propertyUrl} className={styles.cardLink}>
-            <h3 className={styles.title}>{title}</h3>
-          </Link>
-          {location ? <p className={styles.location}>{location}</p> : null}
-          <div className={styles.attrs}>
-            {cardTypeLabel ? <span className={styles.attr}>{cardTypeLabel}</span> : null}
-            {property.property_type ? <span className={styles.attr}>{property.property_type === "sale" ? "For Sale" : property.property_type === "rent" ? "For Rent" : "Plot"}</span> : null}
-            {listedAt ? <span className={styles.attr}>Listed {listedAt}</span> : null}
-          </div>
-          <p className={styles.price}>{formatPrice(property.price, property.price_currency)}</p>
         </div>
-      </div>
-      <div className={styles.cardRight}>
-        <p className={styles.listedLabel}>Listed By</p>
-        {property.profile_image ? (
-          <Image
-            src={property.profile_image}
-            alt={agentName}
-            width={40}
-            height={40}
-            className={styles.agentAvatar}
-          />
-        ) : (
-          <span className={styles.agentAvatarFallback}>{agentName.charAt(0)}</span>
-        )}
-        <p className={styles.agentName}>{agentName}</p>
-        {company ? <p className={styles.agentCompany}>{company}</p> : null}
-        {property.office_address ? <p className={styles.agentLocation}>{property.office_address}</p> : null}
-        <Link href={agentUrl} className={styles.profileLink} target="_blank" rel="noopener noreferrer">
-          View Profile
-        </Link>
-        <Link href={propertyUrl} className={styles.viewBtn}>
-          View Property
-        </Link>
-        <button
-          type="button"
-          className={styles.copyBtn}
-          onClick={() => onCopy(property)}
-        >
-          {copied ? "Copied!" : "Copy Link"}
-        </button>
-      </div>
-    </div>
+      ) : null}
+    </AgentPortalShell>
   );
 }
