@@ -93,7 +93,7 @@ export async function POST(req) {
       : AUDIT_ACTIONS.FILES_UPDATE_UPDATED,
     entityType: AUDIT_ENTITY_TYPES.FILES_UPDATE,
     entityId: result.id,
-    description: `${actorName} ${result.created ? "created" : "updated"} files update "${validated.data.title}"`,
+    description: `${actorName} ${result.created ? "created" : "updated"} files rates "${validated.data.title}"`,
     metadata: {
       files_update_title: validated.data.title,
       actor_name: actorName,
@@ -118,7 +118,7 @@ export async function DELETE(req) {
   const agentId = agentIdFrom(session);
   const existing = await getFilesUpdateForAgent(agentId);
   if (!existing) {
-    return NextResponse.json({ error: "Files update not found." }, { status: 404 });
+    return NextResponse.json({ error: "Files rates not found." }, { status: 404 });
   }
 
   await deleteFilesUpdate(agentId);
@@ -130,7 +130,7 @@ export async function DELETE(req) {
     action: AUDIT_ACTIONS.FILES_UPDATE_DELETED,
     entityType: AUDIT_ENTITY_TYPES.FILES_UPDATE,
     entityId: existing.id,
-    description: `${actorName} deleted files update "${existing.title}"`,
+    description: `${actorName} deleted files rates "${existing.title}"`,
     metadata: {
       files_update_title: existing.title,
       actor_name: actorName,

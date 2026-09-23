@@ -62,10 +62,16 @@
   margin: 0.35rem 0 1rem;
 }
 
-.contentTextarea {
-  min-height: 320px;
-  resize: vertical;
-  line-height: 1.6;
+.contentField {
+  margin-bottom: 1.25rem;
+}
+
+.contentLabel {
+  display: block;
+  margin: 0 0 0.45rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--ink, #1a1a1a);
 }
 
 .statusRow {

@@ -80,7 +80,7 @@ function navItems(base) {
     },
     {
       href: `${base}/files-updates`,
-      label: "Files Updates",
+      label: "Files Rates",
       icon: (
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path

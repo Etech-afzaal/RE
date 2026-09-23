@@ -29,7 +29,7 @@ export default function AgentFilesUpdatesPage() {
         const res = await fetch("/api/files-updates");
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          setLoadError(data.error || "Could not load files update.");
+          setLoadError(data.error || "Could not load files rates.");
           return;
         }
         setFilesUpdate(data.filesUpdate || null);
@@ -46,13 +46,13 @@ export default function AgentFilesUpdatesPage() {
       <AgentPortalShell
         username={username}
         agentName={session?.user?.name || "Agent"}
-        title="Files Updates"
+        title="Files Rates"
         subtitle="Your single live market update page"
       >
         <LoadingSpinner
           fullPage={false}
           label="Loading"
-          hint="Loading files update…"
+          hint="Loading files rates…"
         />
       </AgentPortalShell>
     );
@@ -63,7 +63,7 @@ export default function AgentFilesUpdatesPage() {
       <AgentPortalShell
         username={username}
         agentName={session?.user?.name}
-        title="Files Updates"
+        title="Files Rates"
         subtitle="Your single live market update page"
       >
         <p className={ui.error}>{loadError}</p>
@@ -77,7 +77,7 @@ export default function AgentFilesUpdatesPage() {
     <AgentPortalShell
       username={username}
       agentName={session?.user?.name}
-      title="Files Updates"
+      title="Files Rates"
       subtitle={
         isEditing
           ? "Edit your live market update page"

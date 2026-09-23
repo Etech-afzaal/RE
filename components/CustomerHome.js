@@ -486,26 +486,6 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
             />
           </div>
           <label className={styles.selectField}>
-            <span className={styles.srOnly}>Area</span>
-            <select
-              value={area}
-              onChange={(e) => {
-                setArea(e.target.value);
-                setDetectedArea(null);
-                setNoMatchArea(null);
-                setLocationFilterActive(false);
-              }}
-              aria-label="Filter by area"
-            >
-              <option value="all">All areas</option>
-              {areas.map((item) => (
-                <option key={item.name} value={item.name}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className={styles.selectField}>
             <span className={styles.srOnly}>City</span>
             <select
               value={city}
@@ -519,6 +499,26 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
             >
               <option value="all">All cities</option>
               {cities.map((item) => (
+                <option key={item.name} value={item.name}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={styles.selectField}>
+            <span className={styles.srOnly}>Area</span>
+            <select
+              value={area}
+              onChange={(e) => {
+                setArea(e.target.value);
+                setDetectedArea(null);
+                setNoMatchArea(null);
+                setLocationFilterActive(false);
+              }}
+              aria-label="Filter by area"
+            >
+              <option value="all">All areas</option>
+              {areas.map((item) => (
                 <option key={item.name} value={item.name}>
                   {item.name}
                 </option>

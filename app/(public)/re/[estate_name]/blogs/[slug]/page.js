@@ -12,10 +12,34 @@ import AgentWhatsAppFab from "@/components/AgentWhatsAppFab";
 import { agentPhoneEntries } from "@/lib/agentContact";
 import { resolveAgentWhatsAppNumber, agentWebsiteWhatsAppMessage } from "@/lib/whatsapp";
 import { formatAddedDate } from "@/lib/agentPropertyListingHelpers";
+import { sanitizeRichHtml } from "@/lib/sanitizeHtml";
 import styles from "./page.module.css";
 import "@/app/agent-public-theme.css";
 
 export const revalidate = 60;
+
+function escapeHtml(text) {
+  return String(text || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Render stored blog body — rich HTML from the editor, or legacy plain text. */
+function blogContentHtml(content) {
+  const raw = String(content || "").trim();
+  if (!raw) return "";
+  if (/<[a-z][\s\S]*>/i.test(raw)) {
+    return sanitizeRichHtml(raw);
+  }
+  return raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => `<p>${escapeHtml(line)}</p>`)
+    .join("");
+}
 
 export async function generateMetadata({ params }) {
   const agent = await getAgentByUsername(params.estate_name);
@@ -53,6 +77,8 @@ export default async function BlogDetailPage({ params }) {
     agent.company_name && String(agent.company_name).trim()
       ? String(agent.company_name).trim()
       : agent.estate_name || "Agency";
+
+  const contentHtml = blogContentHtml(blog.content);
 
   return (
     <div className={`agent-public-theme ${styles.wrapper}`}>
@@ -102,25 +128,11 @@ export default async function BlogDetailPage({ params }) {
             </div>
           ) : null}
 
-          {blog.content ? (
-            <div className={styles.content}>
-              {blog.content.split("\n").map((line, index) => {
-                const trimmed = line.trim();
-                if (!trimmed) return null;
-                if (trimmed.length <= 120 && /^[A-Z0-9].*$/.test(trimmed)) {
-                  return (
-                    <h2 key={index} className={styles.subheading}>
-                      {trimmed}
-                    </h2>
-                  );
-                }
-                return (
-                  <p key={index} className={styles.paragraph}>
-                    {trimmed}
-                  </p>
-                );
-              })}
-            </div>
+          {contentHtml ? (
+            <div
+              className={styles.content}
+              dangerouslySetInnerHTML={{ __html: contentHtml }}
+            />
           ) : (
             <p className={styles.empty}>This article has no content yet.</p>
           )}

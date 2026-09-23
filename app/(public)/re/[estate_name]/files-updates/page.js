@@ -65,7 +65,7 @@ export default async function FilesUpdatesPage({ params }) {
     return { label: item.label, href: item.href };
   });
   const filesUpdateLink = {
-    label: "Files Updates",
+    label: "Files Rates",
     href: `${agentHomeHref}/files-updates`,
   };
   const areasIndex = navLinks.findIndex((item) => item.label === "Search Areas");

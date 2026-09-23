@@ -82,7 +82,7 @@ export default function PublicPropertyWebsite({
   const baseNavLinks = (() => {
     if (viewMode === "flat") {
       // Flat view: replace For Sale / For Rent / Plots with a single Properties link.
-      // Keep Home and Search Areas; Files Updates is injected below.
+      // Keep Home and Search Areas; Files Rates is injected below.
       return AGENT_PUBLIC_NAV.filter(
         (item) => !item.type,
       ).map((item) =>
@@ -97,7 +97,7 @@ export default function PublicPropertyWebsite({
   const navLinks = (() => {
     if (!filesUpdate) return baseNavLinks;
     const filesUpdateLink = {
-      label: "Files Updates",
+      label: "Files Rates",
       href: `/re/${encodeURIComponent(agentHandle)}/files-updates`,
     };
     const areasIndex = baseNavLinks.findIndex(

@@ -14,9 +14,11 @@ import {
   BLOG_CONTENT_MAX,
   BLOG_SHORT_DESCRIPTION_MAX,
   BLOG_TITLE_MAX,
+  isBlankBlogContent,
 } from "@/lib/validators/blogValidator";
 import ui from "@/components/agent-portal/portal.module.css";
 import AgentMessagePopup from "@/components/agent-portal/AgentMessagePopup";
+import RichContentEditor from "@/components/agent-portal/RichContentEditor";
 import styles from "./BlogForm.module.css";
 
 const EMPTY_FORM = {
@@ -26,6 +28,27 @@ const EMPTY_FORM = {
   status: "draft",
 };
 
+/** Convert legacy plain-text blogs into simple HTML for the rich editor. */
+function escapePlainText(text) {
+  return String(text || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function toEditorHtml(content) {
+  const raw = String(content || "");
+  if (!raw.trim()) return "";
+  if (/<[a-z][\s\S]*>/i.test(raw)) return raw;
+  return raw
+    .split("\n")
+    .map((line) =>
+      line.trim() ? `<p>${escapePlainText(line)}</p>` : "<p><br></p>",
+    )
+    .join("");
+}
+
 export default function BlogForm({ mode, blogId, initial, base, username, agentName }) {
   const router = useRouter();
   const isEdit = mode === "edit";
@@ -34,7 +57,7 @@ export default function BlogForm({ mode, blogId, initial, base, username, agentN
       ? {
           title: initial.title || "",
           short_description: initial.short_description || "",
-          content: initial.content || "",
+          content: toEditorHtml(initial.content || ""),
           status: initial.status || "draft",
         }
       : EMPTY_FORM,
@@ -135,7 +158,7 @@ export default function BlogForm({ mode, blogId, initial, base, username, agentN
       setError("Short description must be at least 10 characters.");
       return;
     }
-    if (requestedStatus === "published" && !form.content.trim()) {
+    if (requestedStatus === "published" && isBlankBlogContent(form.content)) {
       setSaving(false);
       setError("Content is required to publish a blog.");
       return;
@@ -305,17 +328,21 @@ export default function BlogForm({ mode, blogId, initial, base, username, agentN
         />
       </label>
 
-      <label className={ui.field}>
-        <span className={ui.label}>Content</span>
-        <textarea
-          className={`${ui.textarea} ${styles.contentTextarea}`}
+      <div className={styles.contentField}>
+        <span className={styles.contentLabel}>
+          Content
+        </span>
+        <RichContentEditor
           value={form.content}
-          onChange={(e) => setForm({ ...form, content: e.target.value })}
-          placeholder="Write your article here…"
-          maxLength={BLOG_CONTENT_MAX}
-          rows={16}
+          onChange={(html) => setForm((prev) => ({ ...prev, content: html }))}
+          placeholder="Write your article here. Use the toolbar for bold, size, headings, lists, tables, and images."
+          imageUploadUrl="/api/blogs/content-image"
         />
-      </label>
+        <p className={ui.propMeta}>
+          Tip: Select text to apply bold, underline, or size. Use headings for
+          section titles and the table button for structured content.
+        </p>
+      </div>
 
       <div className={ui.formActions}>
         {isEdit ? (

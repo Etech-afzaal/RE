@@ -15,6 +15,9 @@ import {
 } from "@/lib/agentPublicListingSections";
 import styles from "./SiteHeader.module.css";
 
+/** Survives SiteHeader remount when navigating Files Rates → home #section. */
+let pendingSectionScrollId = null;
+
 const DEFAULT_NAV_LINKS = [
   { label: "Home", href: "/" },
   {
@@ -58,12 +61,33 @@ function getAgentHomeHref(pathname) {
   return `/re/${decodeURIComponent(match[1])}`;
 }
 
+/** Split `/re/foo#areas` or `#areas` into path + hash (hash includes `#`). */
+function splitHref(href) {
+  const raw = String(href || "");
+  const hashIndex = raw.indexOf("#");
+  if (hashIndex === -1) return { path: raw, hash: "" };
+  return {
+    path: raw.slice(0, hashIndex),
+    hash: raw.slice(hashIndex),
+  };
+}
+
+/** True for in-page section links, including cross-page `/re/{handle}#section`. */
+function isSectionHref(href, homeHref) {
+  const { path, hash } = splitHref(href);
+  if (!hash || hash === "#") return false;
+  if (!path) return true;
+  return path === homeHref || path === "/";
+}
+
 function getNavSections(navLinks) {
   return navLinks
-    .filter((link) => link.href.startsWith("#"))
+    .filter((link) => link.href.includes("#"))
     .map((link) => {
-      const element = document.getElementById(link.href.slice(1));
-      return element ? { href: link.href, element } : null;
+      const { hash } = splitHref(link.href);
+      if (!hash || hash === "#") return null;
+      const element = document.getElementById(hash.slice(1));
+      return element ? { href: hash, element } : null;
     })
     .filter(Boolean);
 }
@@ -262,11 +286,12 @@ export default function SiteHeader({
           continue;
         }
 
-        if (link.href.startsWith("#")) {
-          const el = document.getElementById(link.href.slice(1));
+        if (link.href.startsWith("#") || isSectionHref(link.href, homeHref)) {
+          const { hash } = splitHref(link.href);
+          const el = document.getElementById(hash.slice(1));
           if (el) {
             targets.push({
-              href: link.href,
+              href: hash,
               type: null,
               subtype: null,
               element: el,
@@ -351,18 +376,69 @@ export default function SiteHeader({
     };
   }, [resolvedNavLinks, homeHref, isAgentPublicSite]);
 
-  const isActiveLink = (href) => href === activeHref;
+  // After cross-page nav (e.g. Files Rates → Search Areas), App Router keeps the
+  // hash but does not scroll. Land on the target section once the home DOM is ready.
+  useEffect(() => {
+    if (!isAgentPublicSite) return;
+    if (typeof window === "undefined") return;
+    if (pathname !== homeHref) return;
+
+    const hashId =
+      pendingSectionScrollId ||
+      (window.location.hash && window.location.hash !== "#"
+        ? decodeURIComponent(window.location.hash.slice(1))
+        : "");
+    if (!hashId) return;
+    pendingSectionScrollId = null;
+
+    const hash = `#${hashId}`;
+    let cancelled = false;
+
+    const tryScroll = () => {
+      if (cancelled) return false;
+      const el = document.getElementById(hashId);
+      if (!el) return false;
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      setActiveHref(hash);
+      lockedHrefRef.current = hash;
+      window.clearTimeout(lockTimerRef.current);
+      lockTimerRef.current = window.setTimeout(() => {
+        lockedHrefRef.current = null;
+      }, 1200);
+      return true;
+    };
+
+    if (tryScroll()) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const retryIds = [50, 150, 400, 800, 1500].map((ms) =>
+      window.setTimeout(tryScroll, ms),
+    );
+    return () => {
+      cancelled = true;
+      retryIds.forEach((timerId) => window.clearTimeout(timerId));
+    };
+  }, [pathname, homeHref, isAgentPublicSite]);
+
+  const isActiveLink = (href) => {
+    if (href === activeHref) return true;
+    const { hash } = splitHref(href);
+    return Boolean(hash && hash === activeHref);
+  };
 
   /** Main nav active: scroll section or listing area (agent public). */
   const isNavLinkActive = (link) => {
-    // Full-path nav links (e.g. Files Updates page): active when pathname matches.
+    // Full-path nav links (e.g. Files Rates page): active when pathname matches.
     if (
       isAgentPublicSite &&
-      !link.href.startsWith("#") &&
+      !isSectionHref(link.href, homeHref) &&
       link.href !== homeHref &&
       pathname === link.href
     ) return true;
-    // Home link: not active when on a sub-page (e.g. Files Updates).
+    // Home link: not active when on a sub-page (e.g. Files Rates).
     if (isAgentPublicSite && link.href === homeHref && pathname !== homeHref) return false;
     if (isActiveLink(link.href)) return true;
     if (isAgentPublicSite && link.type && activeType === link.type) return true;
@@ -459,7 +535,7 @@ export default function SiteHeader({
     setActiveHref("/");
   };
 
-  const handleSectionClick = (event, href, filter = null) => {
+  const handleSectionClick = async (event, href, filter = null) => {
     event.preventDefault();
     setActiveDropdown(null);
     setHoverArmed(false);
@@ -467,7 +543,9 @@ export default function SiteHeader({
       document.activeElement.blur();
     }
 
-    let scrollTargetId = href.slice(1);
+    const { path, hash: hrefHash } = splitHref(href);
+    const sectionHash = hrefHash || (String(href).startsWith("#") ? href : "");
+    let scrollTargetId = sectionHash ? sectionHash.slice(1) : "";
     let nextType = null;
     let nextSubtype = null;
 
@@ -477,24 +555,39 @@ export default function SiteHeader({
       scrollTargetId = listingScrollTargetId(nextType, nextSubtype);
     } else if (isAgentPublicSite) {
       nextType = normalizePropertyType(
-        href === "#for-sale"
+        sectionHash === "#for-sale"
           ? "sale"
-          : href === "#for-rent"
+          : sectionHash === "#for-rent"
             ? "rent"
-            : href === "#plots"
+            : sectionHash === "#plots"
               ? "plot"
               : null,
       );
     }
 
-    const element = document.getElementById(scrollTargetId);
-    lockedHrefRef.current = href;
-    setActiveHref(href);
+    const element = scrollTargetId
+      ? document.getElementById(scrollTargetId)
+      : null;
+    const activeSectionHref = scrollTargetId
+      ? `#${scrollTargetId}`
+      : sectionHash;
+    lockedHrefRef.current = activeSectionHref;
+    setActiveHref(activeSectionHref);
     setMenuOpen(false);
     window.clearTimeout(lockTimerRef.current);
     lockTimerRef.current = window.setTimeout(() => {
       lockedHrefRef.current = null;
     }, 1200);
+
+    // Off-page section link (e.g. Files Rates → /re/{handle}#areas).
+    if (!element && sectionHash) {
+      const destPath = path || (isAgentPublicSite ? homeHref : "");
+      if (destPath && destPath !== pathname) {
+        pendingSectionScrollId = scrollTargetId || sectionHash.slice(1);
+        await router.push(`${destPath}${sectionHash}`, { scroll: false });
+        return;
+      }
+    }
 
     if (isAgentPublicSite) {
       if (nextType) {
@@ -505,16 +598,19 @@ export default function SiteHeader({
         setActiveSubtype(null);
       }
       element?.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (element && sectionHash && window.location.hash !== sectionHash) {
+        window.history.pushState(null, "", sectionHash);
+      }
       return;
     }
 
     if (filter?.clear) {
-      applyListingFilter({ type: null, subtype: null, hash: href });
+      applyListingFilter({ type: null, subtype: null, hash: sectionHash });
     } else if (filter?.type || filter?.subtype) {
       applyListingFilter({
         type: filter.type || null,
         subtype: filter.subtype || null,
-        hash: href,
+        hash: sectionHash,
       });
     }
 
@@ -524,8 +620,8 @@ export default function SiteHeader({
 
     element.scrollIntoView({ behavior: "smooth", block: "start" });
     if (!filter?.type && !filter?.subtype && !filter?.clear) {
-      if (window.location.hash !== href) {
-        window.history.pushState(null, "", href);
+      if (window.location.hash !== sectionHash) {
+        window.history.pushState(null, "", sectionHash);
       }
     }
   };
@@ -534,7 +630,7 @@ export default function SiteHeader({
 
   const renderDesktopLink = (link) => {
     const active = isNavLinkActive(link);
-    const isHash = link.href.startsWith("#");
+    const isHash = isSectionHref(link.href, homeHref);
     const hasChildren = Array.isArray(link.children) && link.children.length > 0;
 
     if (!hasChildren) {
@@ -634,7 +730,7 @@ export default function SiteHeader({
 
   const renderMobileLink = (link, index) => {
     const active = isNavLinkActive(link);
-    const isHash = link.href.startsWith("#");
+    const isHash = isSectionHref(link.href, homeHref);
     const hasChildren = Array.isArray(link.children) && link.children.length > 0;
     const groupOpen = openMobileGroup === link.label;
 
@@ -773,7 +869,7 @@ export default function SiteHeader({
               href={ctaHref}
               className={styles.agentButton}
               onClick={
-                ctaHref.startsWith("#")
+                isSectionHref(ctaHref, homeHref)
                   ? (event) => handleSectionClick(event, ctaHref)
                   : undefined
               }
@@ -840,7 +936,7 @@ export default function SiteHeader({
             style={{ "--stagger": `${resolvedNavLinks.length * 50}ms` }}
             tabIndex={menuEntered ? 0 : -1}
             onClick={(event) => {
-              if (ctaHref.startsWith("#")) {
+              if (isSectionHref(ctaHref, homeHref)) {
                 handleSectionClick(event, ctaHref);
                 return;
               }

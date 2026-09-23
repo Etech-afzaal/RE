@@ -10,6 +10,11 @@ const TOOLBAR_GROUPS = [
     { cmd: "underline", label: "U", title: "Underline", className: styles.underlineBtn },
   ],
   [
+    { action: "fontSize", value: "0.875em", label: "S", title: "Small text" },
+    { action: "fontSize", value: "1em", label: "M", title: "Normal text" },
+    { action: "fontSize", value: "1.25em", label: "L", title: "Large text" },
+  ],
+  [
     { block: "H1", label: "H1", title: "Heading 1" },
     { block: "H2", label: "H2", title: "Heading 2" },
     { block: "H3", label: "H3", title: "Heading 3" },
@@ -54,12 +59,14 @@ const TYPING_SNAPSHOT_MS = 800;
  * @param {(html: string) => void} props.onChange - Called with current HTML on input
  * @param {string} [props.placeholder]
  * @param {string} [props.id]
+ * @param {string} [props.imageUploadUrl] - POST endpoint that returns `{ url }` for inline images
  */
 export default function RichContentEditor({
   value,
   onChange,
   placeholder = "Start writing your content here…",
   id,
+  imageUploadUrl = "/api/files-updates/content-image",
 }) {
   const editorRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -164,6 +171,32 @@ export default function RichContentEditor({
 
   function execBlock(tagName) {
     exec("formatBlock", tagName.toLowerCase());
+  }
+
+  function applyFontSize(size) {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+      return;
+    }
+    pushUndo();
+    focusEditor();
+    const range = selection.getRangeAt(0);
+    const span = document.createElement("span");
+    span.style.fontSize = size;
+    try {
+      range.surroundContents(span);
+    } catch {
+      // Selection spans partial elements — fall back to insertHTML
+      const fragment = range.extractContents();
+      span.appendChild(fragment);
+      range.insertNode(span);
+    }
+    selection.removeAllRanges();
+    const next = document.createRange();
+    next.selectNodeContents(span);
+    next.collapse(false);
+    selection.addRange(next);
+    syncHtml();
   }
 
   function ensureColgroup(table) {
@@ -345,7 +378,7 @@ export default function RichContentEditor({
     try {
       const fd = new FormData();
       fd.append("image", file);
-      const res = await fetch("/api/files-updates/content-image", {
+      const res = await fetch(imageUploadUrl, {
         method: "POST",
         body: fd,
       });
@@ -392,6 +425,8 @@ export default function RichContentEditor({
       removeTable();
     } else if (item.action === "insertImage") {
       triggerImagePicker();
+    } else if (item.action === "fontSize") {
+      applyFontSize(item.value);
     } else if (item.action === "removeFormat") {
       exec("removeFormat");
       exec("formatBlock", "p");

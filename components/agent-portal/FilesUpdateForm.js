@@ -48,16 +48,16 @@ export default function FilesUpdateForm({ initial, base, username, agentName }) 
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.error || "Could not save files update.");
+        throw new Error(data.error || "Could not save files rates.");
       }
 
       if (status === "published") {
-        setSuccess("Files update published. Your public page is live.");
+        setSuccess("Files rates published. Your public page is live.");
       } else {
         setSuccess("Draft saved. Not visible on your public website yet.");
       }
     } catch (err) {
-      setError(err.message || "Could not save files update.");
+      setError(err.message || "Could not save files rates.");
     } finally {
       setSaving(false);
     }
@@ -65,7 +65,7 @@ export default function FilesUpdateForm({ initial, base, username, agentName }) 
 
   async function handleDelete() {
     if (!isEditing) return;
-    if (!confirm("Delete your Files Updates page permanently? This cannot be undone.")) return;
+    if (!confirm("Delete your Files Rates page permanently? This cannot be undone.")) return;
     setSaving(true);
     setError("");
     try {
