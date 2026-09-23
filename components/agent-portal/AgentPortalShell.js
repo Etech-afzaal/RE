@@ -264,6 +264,31 @@ function navItems(base) {
       ),
     },
     {
+      href: `${base}/publish-ads`,
+      label: "Publish Ads",
+      icon: (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect
+            x="3"
+            y="5"
+            width="18"
+            height="14"
+            rx="2.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+          />
+          <path
+            d="M7 9.5h6M7 12.5h10M7 15.5h4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+        </svg>
+      ),
+    },
+    {
       href: `${base}/settings`,
       label: "Settings",
       icon: (
