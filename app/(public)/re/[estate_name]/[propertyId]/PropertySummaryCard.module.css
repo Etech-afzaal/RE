@@ -33,6 +33,31 @@
   background: var(--gold-tint);
 }
 
+.statusBadge {
+  position: absolute;
+  z-index: 2;
+  top: 0.85rem;
+  left: 0.85rem;
+  padding: 0.7rem 1.15rem;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  box-shadow: 0 3px 12px rgba(26, 26, 26, 0.25);
+}
+
+.statusBadgeSold {
+  background: #5b616b;
+  padding: 0.8rem 1.3rem;
+  font-size: 1.22rem;
+}
+
+.statusBadgeUnderContract {
+  background: #a68134;
+}
+
 .mediaImage {
   object-fit: cover;
   object-position: center;

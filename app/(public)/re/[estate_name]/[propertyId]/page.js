@@ -724,6 +724,7 @@ export default async function PropertyDetailPage({ params, searchParams }) {
               description={attrs.overview}
               propertyType={propertyTypeLabel}
               status={statusLabel}
+              listingStatus={property.status}
               sizeLabel={sizeLabel}
               bedrooms={attrs.beds}
               bathrooms={attrs.baths}

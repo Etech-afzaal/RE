@@ -91,8 +91,8 @@ export default function PricingPlansPage() {
               <span className={styles.currentStatus}>✓ Active</span>
             </div>
             <div className={styles.currentDuration}>
-              <p className={styles.durationLabel}>Duration</p>
-              <p className={styles.durationValue}>1 Year</p>
+              <p className={styles.durationLabel}>Expiration Date</p>
+              <p className={styles.durationValue}>1 December 2027</p>
             </div>
           </div>
         </section>

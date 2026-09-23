@@ -214,6 +214,7 @@ export default function PropertySummaryCard({
   description,
   propertyType,
   status,
+  listingStatus,
   sizeLabel,
   bedrooms,
   bathrooms,
@@ -232,6 +233,8 @@ export default function PropertySummaryCard({
   const plotPropertyType = /^(residential|commercial)\s+plot$/i.exec(
     String(propertyType || "").trim(),
   );
+  const showStatusBadge =
+    listingStatus === "sold" || listingStatus === "under_contract";
 
   const stats = [
     sizeLabel ? { label: "Size", value: sizeLabel, Icon: SizeIcon } : null,
@@ -261,6 +264,17 @@ export default function PropertySummaryCard({
     >
       <div className={styles.main}>
         <div className={styles.media}>
+          {showStatusBadge ? (
+            <span
+              className={`${styles.statusBadge} ${
+                listingStatus === "sold"
+                  ? styles.statusBadgeSold
+                  : styles.statusBadgeUnderContract
+              }`}
+            >
+              {listingStatus === "sold" ? "Sold" : "Under Contract"}
+            </span>
+          ) : null}
           {imageUrl ? (
             <Image
               src={imageUrl}

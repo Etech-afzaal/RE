@@ -126,17 +126,22 @@
 .statusBadge {
   position: absolute;
   z-index: 2;
-  top: 0.6rem;
-  left: 0.6rem;
-  padding: 0.28rem 0.55rem;
+  top: 0.55rem;
+  left: 0.55rem;
+  padding: 0.55rem 0.9rem;
   border-radius: var(--radius-full);
   color: #fff;
-  font-size: 0.68rem;
+  font-size: 0.92rem;
   font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 8px rgba(26, 26, 26, 0.2);
 }
 
 .statusBadgeSold {
   background: #5b616b;
+  padding: 0.62rem 1.05rem;
+  font-size: 1.02rem;
 }
 
 .statusBadgeUnderContract {
