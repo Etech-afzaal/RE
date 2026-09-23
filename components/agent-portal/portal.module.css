@@ -679,7 +679,7 @@
   margin-bottom: 0.6rem;
 }
 
-.prefRadio:last-child {
+.prefRadio:last-of-type {
   margin-bottom: 0;
 }
 
@@ -702,6 +702,64 @@
   font-weight: 400;
   font-size: 0.82rem;
   color: var(--muted);
+}
+
+.prefPageSize {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line-soft);
+}
+
+.prefPageSizeTitle {
+  margin: 0 0 0.25rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.prefPageSizeHint {
+  margin: 0 0 0.65rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.prefPageSizeOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.prefPageSizeOption {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
+  user-select: none;
+}
+
+.prefPageSizeOption input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.prefPageSizeOption:has(input:checked) {
+  border-color: var(--gold-deep, #8b6f3f);
+  background: color-mix(in srgb, var(--gold, #c8a45d) 18%, #fff);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold, #c8a45d) 35%, transparent);
+}
+
+.prefPageSizeOption:hover {
+  border-color: color-mix(in srgb, var(--gold, #c8a45d) 55%, var(--line-soft));
 }
 
 .steps {

@@ -24,7 +24,7 @@ import {
   listingSubsectionCountLabel,
   listingSubsectionTitle,
 } from "@/lib/agentPublicListingSections";
-import { filterListingGroupsByPreferences } from "@/lib/websiteListingPreferences";
+import { filterListingGroupsByPreferences, getFlatPageSize } from "@/lib/websiteListingPreferences";
 import { formatAddedDate } from "@/lib/agentPropertyListingHelpers";
 import { isFileProperty, publicListingSubtype, publicPropertyCardTypeLabel, apartmentCoveredAreaLabel } from "@/lib/publicPropertyData";
 import styles from "./HomeListings.module.css";
@@ -707,7 +707,12 @@ export default function HomeListings({
   viewMode = "categorized",
 }) {
   const isMobile = useIsMobile(768);
-  const pageSize = isMobile ? MOBILE_PAGE_SIZE : DESKTOP_PAGE_SIZE;
+  const flatPageSize = getFlatPageSize(listingPreferences);
+  const pageSize = isMobile
+    ? MOBILE_PAGE_SIZE
+    : viewMode === "flat"
+      ? flatPageSize
+      : DESKTOP_PAGE_SIZE;
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("all");
   const [sort, setSort] = useState("newest");

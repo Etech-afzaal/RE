@@ -81,14 +81,12 @@ export default function PublicPropertyWebsite({
 
   const baseNavLinks = (() => {
     if (viewMode === "flat") {
-      // Flat view: replace For Sale / For Rent / Plots with a single Properties link.
-      // Keep Home and Search Areas; Files Rates is injected below.
-      return AGENT_PUBLIC_NAV.filter(
-        (item) => !item.type,
-      ).map((item) =>
-        item.label === "Search Areas"
-          ? { label: "Properties", href: "#properties" }
-          : item,
+      // Flat view: one Properties link instead of Sale / Rent / Plots.
+      // Keep Home and Search Areas; insert Properties after Home.
+      return AGENT_PUBLIC_NAV.filter((item) => !item.type).flatMap((item) =>
+        item.label === "Home"
+          ? [item, { label: "Properties", href: "#properties" }]
+          : [item],
       );
     }
     return filterNavLinksByPreferences(AGENT_PUBLIC_NAV, listingPreferences);
@@ -162,7 +160,7 @@ export default function PublicPropertyWebsite({
                   <h2 className={styles.sectionTitle}>Browse by location</h2>
                 </div>
                 <a
-                  href="#for-sale"
+                  href={viewMode === "flat" ? "#properties" : "#for-sale"}
                   className={styles.textLink}
                   data-view-all-homes
                 >
@@ -471,6 +469,9 @@ export default function PublicPropertyWebsite({
                   ) : null}
                 </>
               )}
+              {locations.length > 0 ? (
+                <Link href="#areas">Search Areas</Link>
+              ) : null}
               <Link href="#why-us">How It Works</Link>
             </div>
 

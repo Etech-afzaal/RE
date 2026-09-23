@@ -46,12 +46,11 @@ export default async function FilesUpdatesPage({ params }) {
 
   const filteredNav = (() => {
     if (viewMode === "flat") {
-      return AGENT_PUBLIC_NAV.filter(
-        (item) => !item.type,
-      ).map((item) =>
-        item.label === "Search Areas"
-          ? { label: "Properties", href: "#properties" }
-          : item,
+      // Flat view: Properties instead of Sale / Rent / Plots; keep Search Areas.
+      return AGENT_PUBLIC_NAV.filter((item) => !item.type).flatMap((item) =>
+        item.label === "Home"
+          ? [item, { label: "Properties", href: "#properties" }]
+          : [item],
       );
     }
     return filterNavLinksByPreferences(AGENT_PUBLIC_NAV, listingPreferences);

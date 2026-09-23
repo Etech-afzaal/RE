@@ -13,6 +13,8 @@ import {
   defaultWebsiteListingPreferences,
   WEBSITE_LISTING_PREF_OPTIONS,
   PROPERTY_VIEW_MODES,
+  FLAT_PAGE_SIZES,
+  DEFAULT_FLAT_PAGE_SIZE,
 } from "@/lib/websiteListingPreferences";
 
 export default function AgentSettingsPage() {
@@ -39,8 +41,17 @@ export default function AgentSettingsPage() {
     ? prefs.property_view_mode
     : "categorized";
 
+  const flatPageSize = FLAT_PAGE_SIZES.includes(Number(prefs.flat_page_size))
+    ? Number(prefs.flat_page_size)
+    : DEFAULT_FLAT_PAGE_SIZE;
+
   function setViewMode(mode) {
     setPrefs((prev) => ({ ...prev, property_view_mode: mode }));
+    setPrefsSuccess("");
+  }
+
+  function setFlatPageSize(size) {
+    setPrefs((prev) => ({ ...prev, flat_page_size: size }));
     setPrefsSuccess("");
   }
 
@@ -330,6 +341,31 @@ export default function AgentSettingsPage() {
                     </span>
                   </span>
                 </label>
+
+                {viewMode === "flat" ? (
+                  <div className={ui.prefPageSize}>
+                    <h4 className={ui.prefPageSizeTitle}>
+                      Properties per page
+                    </h4>
+                    <p className={ui.prefPageSizeHint}>
+                      How many listings to show at once on your website
+                    </p>
+                    <div className={ui.prefPageSizeOptions} role="radiogroup" aria-label="Properties per page">
+                      {FLAT_PAGE_SIZES.map((size) => (
+                        <label key={size} className={ui.prefPageSizeOption}>
+                          <input
+                            type="radio"
+                            name="flat_page_size"
+                            value={size}
+                            checked={flatPageSize === size}
+                            onChange={() => setFlatPageSize(size)}
+                          />
+                          <span>{size}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
 
               {viewMode === "categorized" ? (
