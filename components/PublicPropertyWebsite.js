@@ -21,6 +21,7 @@ import {
   isFilesRatesNavEnabled,
   normalizeWebsiteListingPreferences,
 } from "@/lib/websiteListingPreferences";
+import { formatAddedDate } from "@/lib/agentPropertyListingHelpers";
 import styles from "@/app/page.module.css";
 import "@/app/agent-public-theme.css";
 
@@ -356,6 +357,7 @@ export default function PublicPropertyWebsite({
               <div className={styles.blogGrid}>
                 {blogs.map((blog) => {
                   const blogHref = `/re/${encodeURIComponent(agent?.username || agent?.estate_name || "")}/blogs/${encodeURIComponent(blog.slug)}`;
+                  const postedAt = formatAddedDate(blog.created_at);
                   return (
                     <Link key={blog.id} href={blogHref} className={styles.blogCard}>
                       {blog.cover_image ? (
@@ -374,6 +376,11 @@ export default function PublicPropertyWebsite({
                         </div>
                       )}
                       <div className={styles.blogBody}>
+                        {postedAt ? (
+                          <time className={styles.blogPostedAt} dateTime={blog.created_at}>
+                            Posted At: {postedAt}
+                          </time>
+                        ) : null}
                         <h3 className={styles.blogTitle}>{blog.title}</h3>
                         {blog.short_description ? (
                           <p className={styles.blogExcerpt}>
@@ -400,6 +407,7 @@ export default function PublicPropertyWebsite({
 
               <div className={styles.videoPostGrid}>
                 {videoPosts.map((videoPost) => {
+                  const postedAt = formatAddedDate(videoPost.created_at);
                   return (
                     <article key={videoPost.id} className={styles.videoPostCard}>
                       <div className={styles.videoPostMedia}>
@@ -414,6 +422,14 @@ export default function PublicPropertyWebsite({
                         )}
                       </div>
                       <div className={styles.videoPostBody}>
+                        {postedAt ? (
+                          <time
+                            className={styles.videoPostPostedAt}
+                            dateTime={videoPost.created_at}
+                          >
+                            Posted At: {postedAt}
+                          </time>
+                        ) : null}
                         <h3 className={styles.videoPostTitle}>{videoPost.title}</h3>
                         {videoPost.description ? (
                           <p className={styles.videoPostExcerpt}>

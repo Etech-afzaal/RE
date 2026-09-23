@@ -840,6 +840,14 @@
   flex: 1;
 }
 
+.blogPostedAt {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft, #737373);
+}
+
 .blogTitle {
   margin: 0;
   font-size: 1.05rem;
@@ -942,6 +950,14 @@
   gap: 0.65rem;
   padding: 1.15rem 1.2rem 1.25rem;
   flex: 1;
+}
+
+.videoPostPostedAt {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft, #737373);
 }
 
 .videoPostTitle {
