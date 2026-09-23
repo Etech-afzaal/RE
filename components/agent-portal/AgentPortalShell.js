@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -69,39 +69,6 @@ function navItems(base) {
       ),
     },
     {
-      href: `${base}/finder`,
-      label: "Property Finder",
-      icon: (
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
-          <path d="M16 16 21 21" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        </svg>
-      ),
-    },
-    {
-      href: `${base}/files-updates`,
-      label: "Files Rates",
-      icon: (
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M6 3h7l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M13 3v5h5M8 13h8M8 16.5h8M8 9.5h3"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      ),
-    },
-    {
       href: `${base}/subagents`,
       label: "Subagents",
       icon: (
@@ -119,58 +86,19 @@ function navItems(base) {
       ),
     },
     {
-      href: `${base}/profile`,
-      label: "My Profile",
-      icon: (
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="8" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.8" />
-          <path
-            d="M5 19.5c1.8-3.2 4.1-4.8 7-4.8s5.2 1.6 7 4.8"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-        </svg>
-      ),
-    },
-    {
-      href: `${base}/company-branding`,
-      label: "Company Branding",
+      href: `${base}/files-updates`,
+      label: "Files Rates",
       icon: (
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path
-            d="M4 7.5h16v12H4v-12Z"
+            d="M6 3h7l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.8"
             strokeLinejoin="round"
           />
           <path
-            d="M7 7.5 8.5 4h7L17 7.5M8 11h8M8 14.5h5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      ),
-    },
-    {
-      href: `${base}/pricing-plans`,
-      label: "Pricing & Plans",
-      icon: (
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M12 2 3 6.5v6C3 15.5 6.5 19.5 12 22c5.5-2.5 9-6.5 9-9.5v-6L12 2Z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M8.5 12.5 11 15l4.5-5"
+            d="M13 3v5h5M8 13h8M8 16.5h8M8 9.5h3"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.8"
@@ -220,24 +148,91 @@ function navItems(base) {
       ),
     },
     {
-      href: `${base}/marketing`,
-      label: "Marketing",
+      href: `${base}/company-branding`,
+      label: "Company Branding",
       icon: (
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path
-            d="M3 10v4a1 1 0 0 0 1 1h2.5l4 3.5V6.5L6.5 10H4a1 1 0 0 0-1 1Z"
+            d="M4 7.5h16v12H4v-12Z"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.8"
             strokeLinejoin="round"
           />
           <path
-            d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7 7 0 0 1 0 11"
+            d="M7 7.5 8.5 4h7L17 7.5M8 11h8M8 14.5h5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ),
+    },
+    {
+      href: `${base}/profile`,
+      label: "My Profile",
+      icon: (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="8" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <path
+            d="M5 19.5c1.8-3.2 4.1-4.8 7-4.8s5.2 1.6 7 4.8"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.8"
             strokeLinecap="round"
           />
+        </svg>
+      ),
+    },
+    {
+      href: `${base}/settings`,
+      label: "Settings",
+      icon: (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <path
+            d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9c.2.6.7 1 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ),
+    },
+    {
+      href: `${base}/pricing-plans`,
+      label: "Pricing & Billing",
+      sectionStart: true,
+      icon: (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M12 2 3 6.5v6C3 15.5 6.5 19.5 12 22c5.5-2.5 9-6.5 9-9.5v-6L12 2Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M8.5 12.5 11 15l4.5-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ),
+    },
+    {
+      href: `${base}/finder`,
+      label: "Property Finder",
+      icon: (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M16 16 21 21" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
       ),
     },
@@ -255,6 +250,28 @@ function navItems(base) {
           />
           <path
             d="M10 18.5a2 2 0 0 0 4 0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+        </svg>
+      ),
+    },
+    {
+      href: `${base}/marketing`,
+      label: "Marketing",
+      icon: (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M3 10v4a1 1 0 0 0 1 1h2.5l4 3.5V6.5L6.5 10H4a1 1 0 0 0-1 1Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7 7 0 0 1 0 11"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.8"
@@ -284,22 +301,6 @@ function navItems(base) {
             stroke="currentColor"
             strokeWidth="1.8"
             strokeLinecap="round"
-          />
-        </svg>
-      ),
-    },
-    {
-      href: `${base}/settings`,
-      label: "Settings",
-      icon: (
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1.8" />
-          <path
-            d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9c.2.6.7 1 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.4"
-            strokeLinejoin="round"
           />
         </svg>
       ),
@@ -379,11 +380,25 @@ export default function AgentPortalShell({
   const pathname = usePathname();
   const { headerRef, compact, spacerHeight } = useCompactDashboardHeader();
   const [open, setOpen] = useState(false);
+  const [navScrolling, setNavScrolling] = useState(false);
+  const navScrollHideTimerRef = useRef(0);
   const { collapsed, toggleCollapsed } = useAgentSidebar();
   const { tip, tipHandlers, hideTooltip } = useSidebarTooltip(collapsed);
   const base = `/re/${encodeURIComponent(username)}/dashboard`;
   const items = useMemo(() => navItems(base), [base]);
   const activeItem = items.find((item) => isActive(pathname, item));
+
+  useEffect(() => {
+    return () => window.clearTimeout(navScrollHideTimerRef.current);
+  }, []);
+
+  function revealNavScrollbar() {
+    setNavScrolling(true);
+    window.clearTimeout(navScrollHideTimerRef.current);
+    navScrollHideTimerRef.current = window.setTimeout(() => {
+      setNavScrolling(false);
+    }, 900);
+  }
 
   return (
     <div className={styles.shell}>
@@ -401,42 +416,53 @@ export default function AgentPortalShell({
           collapsed ? styles.sidebarCollapsed : ""
         }`}
       >
-        <div className={styles.brand}>
-          <span className={styles.brandMark}>D</span>
-          <div className={styles.brandText}>
-            <p className={styles.brandName}>Dhalahore</p>
-            <p className={styles.brandSub}>Agent Portal</p>
+        <div className={styles.sidebarHeader}>
+          <div className={styles.brand}>
+            <span className={styles.brandMark}>D</span>
+            <div className={styles.brandText}>
+              <p className={styles.brandName}>Dhalahore</p>
+              <p className={styles.brandSub}>Agent Portal</p>
+            </div>
+            <button
+              type="button"
+              className={styles.collapseBtn}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              onClick={toggleCollapsed}
+              {...tipHandlers(
+                collapsed ? "Expand sidebar" : "Collapse sidebar",
+              )}
+            >
+              <CollapseIcon collapsed={collapsed} />
+            </button>
           </div>
-          <button
-            type="button"
-            className={styles.collapseBtn}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            onClick={toggleCollapsed}
-            {...tipHandlers(
-              collapsed ? "Expand sidebar" : "Collapse sidebar",
-            )}
-          >
-            <CollapseIcon collapsed={collapsed} />
-          </button>
         </div>
 
-        <nav className={styles.nav} aria-label="Agent portal">
+        <nav
+          className={`${styles.nav} ${navScrolling ? styles.navScrolling : ""}`}
+          aria-label="Agent portal"
+          onScroll={revealNavScrollbar}
+          onWheel={revealNavScrollbar}
+        >
           {items.map((item) => {
             const active = isActive(pathname, item);
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`}
-                onClick={() => {
-                  hideTooltip();
-                  setOpen(false);
-                }}
-                {...tipHandlers(item.label)}
-              >
-                <span className={styles.navIcon}>{item.icon}</span>
-                <span className={styles.navLabel}>{item.label}</span>
-              </Link>
+              <div key={item.href} className={styles.navItem}>
+                {item.sectionStart ? (
+                  <div className={styles.navSectionDivider} aria-hidden="true" />
+                ) : null}
+                <Link
+                  href={item.href}
+                  className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`}
+                  onClick={() => {
+                    hideTooltip();
+                    setOpen(false);
+                  }}
+                  {...tipHandlers(item.label)}
+                >
+                  <span className={styles.navIcon}>{item.icon}</span>
+                  <span className={styles.navLabel}>{item.label}</span>
+                </Link>
+              </div>
             );
           })}
         </nav>

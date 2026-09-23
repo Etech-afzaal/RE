@@ -40,8 +40,7 @@
   flex-direction: column;
   width: 260px;
   height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
   overscroll-behavior: contain;
   padding: 1.35rem 1rem 1.25rem;
   background: #2a2418;
@@ -57,6 +56,10 @@
   width: 80px;
   padding-left: 0.7rem;
   padding-right: 0.7rem;
+}
+
+.sidebarHeader {
+  flex-shrink: 0;
 }
 
 .brand {
@@ -127,6 +130,63 @@
   flex-direction: column;
   gap: 0.15rem;
   flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 0.15rem;
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
+}
+
+.nav:hover,
+.nav:focus-within,
+.navScrolling {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 240, 230, 0.35) transparent;
+}
+
+.nav::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.nav:hover::-webkit-scrollbar,
+.nav:focus-within::-webkit-scrollbar,
+.navScrolling::-webkit-scrollbar {
+  width: 6px;
+}
+
+.nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nav::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+}
+
+.nav:hover::-webkit-scrollbar-thumb,
+.nav:focus-within::-webkit-scrollbar-thumb,
+.navScrolling::-webkit-scrollbar-thumb {
+  background: rgba(245, 240, 230, 0.35);
+}
+
+.navItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.navSectionDivider {
+  height: 1px;
+  margin: 0.85rem 0.55rem 0.7rem;
+  background: rgba(255, 255, 255, 0.16);
+  flex-shrink: 0;
+}
+
+.sidebarCollapsed .navSectionDivider {
+  margin-left: 0.35rem;
+  margin-right: 0.35rem;
 }
 
 .navLink {
@@ -190,6 +250,7 @@
 .sidebarFooter {
   display: grid;
   gap: 0.45rem;
+  flex-shrink: 0;
   padding-top: 0.6rem;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
