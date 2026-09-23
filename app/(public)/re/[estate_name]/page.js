@@ -9,7 +9,6 @@ import {
 } from "@/lib/queries";
 import { getPublishedBlogsByAgent } from "@/lib/blogs";
 import { getPublishedVideoPostsByAgent } from "@/lib/videoPosts";
-import { getPublishedFilesUpdateByAgent } from "@/lib/filesUpdates";
 import { agentPublicUsername } from "@/lib/propertySlug";
 import PublicPropertyWebsite from "@/components/PublicPropertyWebsite";
 
@@ -42,7 +41,6 @@ export default async function AgentPublicWebsitePage({ params }) {
     agentStats,
     blogs,
     videoPosts,
-    filesUpdate,
   ] = await Promise.all([
     getApprovedPropertiesByAgent(agent.id),
     getHeroSlidesForAgent(agent.id, 5),
@@ -51,7 +49,6 @@ export default async function AgentPublicWebsitePage({ params }) {
     getAgentBrandStats(agent.id),
     getPublishedBlogsByAgent(agent.id, { limit: 6 }),
     getPublishedVideoPostsByAgent(agent.id, { limit: 6 }),
-    getPublishedFilesUpdateByAgent(agent.id),
   ]);
 
   return (
@@ -64,7 +61,6 @@ export default async function AgentPublicWebsitePage({ params }) {
       agentStats={agentStats}
       blogs={blogs}
       videoPosts={videoPosts}
-      filesUpdate={filesUpdate}
     />
   );
 }

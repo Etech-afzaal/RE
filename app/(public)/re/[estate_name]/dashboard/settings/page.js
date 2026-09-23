@@ -182,6 +182,14 @@ export default function AgentSettingsPage() {
     setPrefsSuccess("");
   }
 
+  function toggleFilesRates(enabled) {
+    setPrefs((prev) => ({
+      ...prev,
+      show_files_rates: enabled,
+    }));
+    setPrefsSuccess("");
+  }
+
   async function saveListingPreferences(e) {
     e.preventDefault();
     setPrefsError("");
@@ -416,6 +424,22 @@ export default function AgentSettingsPage() {
               })}
               </div>
               ) : null}
+
+              <div className={`${ui.prefGroups} ${ui.prefFilesRates}`}>
+                <div className={ui.prefGroup}>
+                  <label className={ui.prefParent}>
+                    <input
+                      type="checkbox"
+                      checked={prefs.show_files_rates !== false}
+                      onChange={(e) => toggleFilesRates(e.target.checked)}
+                    />
+                    <span>Files Rates</span>
+                  </label>
+                  <p className={ui.prefRadioHint} style={{ margin: "0.35rem 0 0 1.6rem" }}>
+                    Show Files Rates in the public website navbar
+                  </p>
+                </div>
+              </div>
             </>
           )}
 

@@ -18,6 +18,7 @@ import {
   filterNavLinksByPreferences,
   getPropertyViewMode,
   isCategoryEnabled,
+  isFilesRatesNavEnabled,
   normalizeWebsiteListingPreferences,
 } from "@/lib/websiteListingPreferences";
 import styles from "@/app/page.module.css";
@@ -70,7 +71,6 @@ export default function PublicPropertyWebsite({
   agentStats = null,
   blogs = [],
   videoPosts = [],
-  filesUpdate = null,
 }) {
   const listingPreferences = normalizeWebsiteListingPreferences(
     agent?.website_listing_preferences,
@@ -93,7 +93,7 @@ export default function PublicPropertyWebsite({
   })();
 
   const navLinks = (() => {
-    if (!filesUpdate) return baseNavLinks;
+    if (!isFilesRatesNavEnabled(listingPreferences)) return baseNavLinks;
     const filesUpdateLink = {
       label: "Files Rates",
       href: `/re/${encodeURIComponent(agentHandle)}/files-updates`,

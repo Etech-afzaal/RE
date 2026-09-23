@@ -600,6 +600,10 @@
   gap: 1rem;
 }
 
+.prefFilesRates {
+  margin-top: 1.25rem;
+}
+
 .prefGroup {
   padding: 0.85rem 1rem;
   border: 1px solid var(--line-soft);

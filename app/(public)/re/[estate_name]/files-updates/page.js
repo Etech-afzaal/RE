@@ -8,6 +8,7 @@ import { AGENT_PUBLIC_NAV } from "@/components/PublicPropertyWebsite";
 import {
   filterNavLinksByPreferences,
   getPropertyViewMode,
+  isFilesRatesNavEnabled,
   normalizeWebsiteListingPreferences,
 } from "@/lib/websiteListingPreferences";
 import AgentWhatsAppFab from "@/components/AgentWhatsAppFab";
@@ -18,35 +19,11 @@ import "@/app/agent-public-theme.css";
 
 export const revalidate = 60;
 
-export async function generateMetadata({ params }) {
-  const agent = await getAgentByUsername(params.estate_name);
-  if (!agent) return {};
-  const filesUpdate = await getPublishedFilesUpdateByAgent(agent.id);
-  if (!filesUpdate) return {};
-  return {
-    title: `${filesUpdate.title} | ${agent.full_name} — Dhalahore Properties`,
-    description: `Latest file prices and market updates from ${agent.full_name}.`,
-  };
-}
-
-export default async function FilesUpdatesPage({ params }) {
-  const agent = await getAgentByUsername(params.estate_name);
-  if (!agent) return notFound();
-
-  const filesUpdate = await getPublishedFilesUpdateByAgent(agent.id);
-  if (!filesUpdate) return notFound();
-
-  const agentHandle = agentPublicUsername(agent);
-  const agentHomeHref = `/re/${encodeURIComponent(agentHandle)}`;
-
-  const listingPreferences = normalizeWebsiteListingPreferences(
-    agent?.website_listing_preferences,
-  );
+function buildAgentNavLinks({ agent, agentHomeHref, listingPreferences, includeFilesRates }) {
   const viewMode = getPropertyViewMode(listingPreferences);
 
   const filteredNav = (() => {
     if (viewMode === "flat") {
-      // Flat view: Properties instead of Sale / Rent / Plots; keep Search Areas.
       return AGENT_PUBLIC_NAV.filter((item) => !item.type).flatMap((item) =>
         item.label === "Home"
           ? [item, { label: "Properties", href: "#properties" }]
@@ -63,16 +40,64 @@ export default async function FilesUpdatesPage({ params }) {
     }
     return { label: item.label, href: item.href };
   });
-  const filesUpdateLink = {
-    label: "Files Rates",
-    href: `${agentHomeHref}/files-updates`,
-  };
-  const areasIndex = navLinks.findIndex((item) => item.label === "Search Areas");
-  if (areasIndex === -1) {
-    navLinks.push(filesUpdateLink);
-  } else {
-    navLinks.splice(areasIndex, 0, filesUpdateLink);
+
+  if (includeFilesRates) {
+    const filesUpdateLink = {
+      label: "Files Rates",
+      href: `${agentHomeHref}/files-updates`,
+    };
+    const areasIndex = navLinks.findIndex((item) => item.label === "Search Areas");
+    if (areasIndex === -1) {
+      navLinks.push(filesUpdateLink);
+    } else {
+      navLinks.splice(areasIndex, 0, filesUpdateLink);
+    }
   }
+
+  return navLinks;
+}
+
+export async function generateMetadata({ params }) {
+  const agent = await getAgentByUsername(params.estate_name);
+  if (!agent) return {};
+
+  const listingPreferences = normalizeWebsiteListingPreferences(
+    agent?.website_listing_preferences,
+  );
+  if (!isFilesRatesNavEnabled(listingPreferences)) return {};
+
+  const filesUpdate = await getPublishedFilesUpdateByAgent(agent.id);
+  if (!filesUpdate) {
+    return {
+      title: `Files Rates | ${agent.full_name} — Dhalahore Properties`,
+      description: `File prices and market updates from ${agent.full_name}.`,
+    };
+  }
+  return {
+    title: `${filesUpdate.title} | ${agent.full_name} — Dhalahore Properties`,
+    description: `Latest file prices and market updates from ${agent.full_name}.`,
+  };
+}
+
+export default async function FilesUpdatesPage({ params }) {
+  const agent = await getAgentByUsername(params.estate_name);
+  if (!agent) return notFound();
+
+  const listingPreferences = normalizeWebsiteListingPreferences(
+    agent?.website_listing_preferences,
+  );
+  if (!isFilesRatesNavEnabled(listingPreferences)) return notFound();
+
+  const filesUpdate = await getPublishedFilesUpdateByAgent(agent.id);
+
+  const agentHandle = agentPublicUsername(agent);
+  const agentHomeHref = `/re/${encodeURIComponent(agentHandle)}`;
+  const navLinks = buildAgentNavLinks({
+    agent,
+    agentHomeHref,
+    listingPreferences,
+    includeFilesRates: true,
+  });
 
   const phoneEntries = agent ? agentPhoneEntries(agent) : [];
   const waNumber = agent ? resolveAgentWhatsAppNumber(agent) : null;
@@ -85,11 +110,13 @@ export default async function FilesUpdatesPage({ params }) {
       ? String(agent.company_name).trim()
       : agent.estate_name || "Agency";
 
-  const lastUpdated = new Date(filesUpdate.updated_at).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const lastUpdated = filesUpdate
+    ? new Date(filesUpdate.updated_at).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : null;
 
   return (
     <div className={`agent-public-theme ${styles.wrapper}`}>
@@ -107,27 +134,37 @@ export default async function FilesUpdatesPage({ params }) {
             ← Back to home
           </Link>
 
-          <header className={styles.header}>
-            <p className={styles.kicker}>Market Update</p>
-            <h1 className={styles.title}>{filesUpdate.title}</h1>
-            <div className={styles.meta}>
-              <span className={styles.author}>
-                By {agent.full_name || companyName}
-              </span>
-              <span className={styles.dot} aria-hidden="true">·</span>
-              <span className={styles.lastUpdated}>
-                Last Updated: {lastUpdated}
-              </span>
-            </div>
-          </header>
+          {filesUpdate ? (
+            <>
+              <header className={styles.header}>
+                <p className={styles.kicker}>Market Update</p>
+                <h1 className={styles.title}>{filesUpdate.title}</h1>
+                <div className={styles.meta}>
+                  <span className={styles.author}>
+                    By {agent.full_name || companyName}
+                  </span>
+                  <span className={styles.dot} aria-hidden="true">·</span>
+                  <span className={styles.lastUpdated}>
+                    Last Updated: {lastUpdated}
+                  </span>
+                </div>
+              </header>
 
-          {filesUpdate.content ? (
-            <div
-              className={styles.content}
-              dangerouslySetInnerHTML={{ __html: filesUpdate.content }}
-            />
+              {filesUpdate.content ? (
+                <div
+                  className={styles.content}
+                  dangerouslySetInnerHTML={{ __html: filesUpdate.content }}
+                />
+              ) : (
+                <p className={styles.empty}>This update has no content yet.</p>
+              )}
+            </>
           ) : (
-            <p className={styles.empty}>This update has no content yet.</p>
+            <header className={styles.header}>
+              <p className={styles.kicker}>Market Update</p>
+              <h1 className={styles.title}>Files Rates</h1>
+              <p className={styles.empty}>Files rates are not available yet.</p>
+            </header>
           )}
 
           <section id="contact" className={styles.contactSection}>
