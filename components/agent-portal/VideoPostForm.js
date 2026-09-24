@@ -12,6 +12,7 @@ import {
   VIDEO_POST_DESCRIPTION_MAX,
   VIDEO_POST_TITLE_MAX,
 } from "@/lib/validators/videoPostValidator";
+import { parseYouTubeUrl, youtubeThumbnailUrl, VIDEO_SOURCE_UPLOAD, VIDEO_SOURCE_YOUTUBE } from "@/lib/youtube";
 import ui from "@/components/agent-portal/portal.module.css";
 import AgentMessagePopup from "@/components/agent-portal/AgentMessagePopup";
 import styles from "./VideoPostForm.module.css";
@@ -20,6 +21,8 @@ const EMPTY_FORM = {
   title: "",
   description: "",
   status: "draft",
+  video_source: VIDEO_SOURCE_UPLOAD,
+  youtube_url: "",
 };
 
 function formatBytes(bytes) {
@@ -44,11 +47,15 @@ export default function VideoPostForm({
           title: initial.title || "",
           description: initial.description || "",
           status: initial.status || "draft",
+          video_source: initial.video_source || (initial.youtube_video_id ? VIDEO_SOURCE_YOUTUBE : VIDEO_SOURCE_UPLOAD),
+          youtube_url: initial.youtube_video_id
+            ? `https://www.youtube.com/watch?v=${initial.youtube_video_id}`
+            : "",
         }
       : EMPTY_FORM,
   );
-  const [videoUrl, setVideoUrl] = useState(initial?.video_url || null);
-  const [thumbnailUrl, setThumbnailUrl] = useState(initial?.thumbnail_url || null);
+  const [videoUrl, setVideoUrl] = useState(initial?.video_source === VIDEO_SOURCE_YOUTUBE ? null : initial?.video_url || null);
+  const [thumbnailUrl, setThumbnailUrl] = useState(initial?.video_source === VIDEO_SOURCE_YOUTUBE ? null : initial?.thumbnail_url || null);
   const [selectedVideoPreview, setSelectedVideoPreview] = useState(null);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -58,6 +65,11 @@ export default function VideoPostForm({
   const [submitIntent, setSubmitIntent] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const isYouTube = form.video_source === VIDEO_SOURCE_YOUTUBE;
+  const youtubeCheck = isYouTube ? parseYouTubeUrl(form.youtube_url) : null;
+  const youtubeThumbnail = youtubeCheck?.ok
+    ? youtubeCheck.thumbnailUrl || youtubeThumbnailUrl(youtubeCheck.videoId)
+    : null;
 
   useEffect(() => {
     if (!selectedVideo) {
@@ -167,7 +179,12 @@ export default function VideoPostForm({
       setError(`Description must be ${VIDEO_POST_DESCRIPTION_MAX} characters or fewer.`);
       return;
     }
-    if (requestedStatus === "published" && !videoUrl && !selectedVideo) {
+    if (isYouTube && !youtubeCheck?.ok) {
+      setSaving(false);
+      setError(youtubeCheck?.error || "Please enter a valid YouTube video URL.");
+      return;
+    }
+    if (!isYouTube && requestedStatus === "published" && !videoUrl && !selectedVideo) {
       setSaving(false);
       setError("A video file is required to publish a video post.");
       return;
@@ -183,7 +200,7 @@ export default function VideoPostForm({
         const res = await fetch(`/api/video-posts/${videoPostId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...form, status: saveStatus }),
+          body: JSON.stringify({ ...form, status: saveStatus, hasVideo: Boolean(videoUrl || selectedVideo) }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
@@ -193,7 +210,7 @@ export default function VideoPostForm({
         const res = await fetch("/api/video-posts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...form, status: saveStatus }),
+          body: JSON.stringify({ ...form, status: saveStatus, hasVideo: Boolean(videoUrl || selectedVideo) }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
@@ -202,7 +219,7 @@ export default function VideoPostForm({
         resultId = data.id;
       }
 
-      if (selectedVideo && resultId) {
+      if (!isYouTube && selectedVideo && resultId) {
         await uploadVideo(resultId);
       }
 
@@ -246,7 +263,57 @@ export default function VideoPostForm({
       />
       <form className={ui.formCard} onSubmit={submit}>
 
-      <div className={styles.videoSection}>
+      <fieldset className={styles.sourceSelector} disabled={saving || uploading}>
+        <legend className={ui.label}>Video Source</legend>
+        <label className={styles.sourceOption}>
+          <input
+            type="radio"
+            name="video_source"
+            value={VIDEO_SOURCE_UPLOAD}
+            checked={!isYouTube}
+            onChange={() => setForm({ ...form, video_source: VIDEO_SOURCE_UPLOAD })}
+          />
+          Upload Video
+        </label>
+        <label className={styles.sourceOption}>
+          <input
+            type="radio"
+            name="video_source"
+            value={VIDEO_SOURCE_YOUTUBE}
+            checked={isYouTube}
+            onChange={() => setForm({ ...form, video_source: VIDEO_SOURCE_YOUTUBE })}
+          />
+          Paste YouTube URL
+        </label>
+      </fieldset>
+
+      {isYouTube ? (
+        <div className={styles.youtubeSource}>
+          <label className={ui.field}>
+            <span className={ui.label}>Paste YouTube URL <span className={ui.requiredMark}>*</span></span>
+            <input
+              className={ui.input}
+              type="url"
+              value={form.youtube_url}
+              onChange={(e) => setForm({ ...form, youtube_url: e.target.value })}
+              placeholder="https://www.youtube.com/watch?v=..."
+              disabled={saving || uploading}
+            />
+          </label>
+          <div className={styles.videoSection}>
+            <div className={styles.videoPreview}>
+              {youtubeThumbnail ? (
+                <div className={styles.videoThumbWrap}>
+                  <img src={youtubeThumbnail} alt="YouTube video thumbnail" className={styles.videoThumb} />
+                  <span className={styles.playBadge} aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M8 5v14l11-7L8 5Z" fill="white" /></svg>
+                  </span>
+                </div>
+              ) : <div className={styles.videoFallback}>Enter a valid YouTube URL</div>}
+            </div>
+          </div>
+        </div>
+      ) : <div className={styles.videoSection}>
         <div className={styles.videoPreview}>
           {showVideoPreview ? (
             thumbnailUrl ? (
@@ -330,18 +397,20 @@ export default function VideoPostForm({
             </button>
           ) : null}
         </div>
-      </div>
+      </div>}
 
-      {selectedVideo ? (
+      {!isYouTube && selectedVideo ? (
         <p className={`${ui.propMeta} ${styles.videoMeta}`}>
           {selectedVideo.name} ({formatBytes(selectedVideo.size)})
           {uploading ? ` — ${uploadProgress}` : ""}
         </p>
       ) : null}
-      <p className={`${ui.propMeta} ${styles.videoHint}`}>
-        MP4, WebM, or MOV. Maximum size 100 MB. Video is processed server-side
-        (compressed to H.264 MP4 with a generated thumbnail).
-      </p>
+      {!isYouTube ? (
+        <p className={`${ui.propMeta} ${styles.videoHint}`}>
+          MP4, WebM, or MOV. Maximum size 100 MB. Video is processed server-side
+          (compressed to H.264 MP4 with a generated thumbnail).
+        </p>
+      ) : null}
 
       <label className={ui.field}>
         <span className={ui.label}>

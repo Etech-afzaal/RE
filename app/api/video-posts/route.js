@@ -86,8 +86,10 @@ export async function POST(req) {
     title: validated.data.title,
     slug,
     description: validated.data.description,
+    video_source: validated.data.video_source,
     video_url: null,
-    thumbnail_url: null,
+    youtube_video_id: validated.data.youtube_video_id || null,
+    thumbnail_url: validated.data.thumbnail_url || null,
     status: nextStatus,
   });
 

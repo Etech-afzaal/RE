@@ -411,9 +411,10 @@ export default function PublicPropertyWebsite({
                   return (
                     <article key={videoPost.id} className={styles.videoPostCard}>
                       <div className={styles.videoPostMedia}>
-                        {videoPost.video_url ? (
+                        {videoPost.video_url || (videoPost.video_source === "YOUTUBE" && videoPost.youtube_video_id) ? (
                           <LazyVideoPlayer
                             videoUrl={videoPost.video_url}
+                            youtubeVideoId={videoPost.video_source === "YOUTUBE" ? videoPost.youtube_video_id : null}
                             thumbnailUrl={videoPost.thumbnail_url}
                             title={videoPost.title}
                           />

@@ -9,6 +9,36 @@
   text-decoration: none;
 }
 
+.sourceSelector {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  border: 0;
+}
+
+.sourceSelector legend {
+  margin-right: 0.25rem;
+}
+
+.sourceOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--ink, #1a1a1a);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.youtubeSource {
+  margin-bottom: 1rem;
+}
+
+.youtubeSource .videoSection {
+  margin-bottom: 0;
+}
+
 .backLink:hover {
   color: var(--gold-deep);
 }
@@ -90,6 +120,12 @@
 }
 
 @media (max-width: 768px) {
+  .sourceSelector {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
   .videoSection {
     flex-direction: column;
   }

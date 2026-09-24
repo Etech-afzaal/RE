@@ -9,7 +9,13 @@ const nextConfig = {
   images: {
     // Allows <Image> to render files served from /public/uploads.
     // If you move to S3/R2 in production, add that domain here instead.
-    remotePatterns: [],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "img.youtube.com",
+        pathname: "/vi/**",
+      },
+    ],
   },
   async redirects() {
     return [

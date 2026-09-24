@@ -44,6 +44,7 @@
     "migrate:property-json": "node scripts/migrate-property-json.cjs",
     "migrate:agent-blogs": "node scripts/migrate-agent-blogs.js",
     "migrate:agent-video-posts": "node scripts/migrate-agent-video-posts.js",
+    "migrate:agent-video-posts-youtube": "node scripts/migrate-agent-video-posts-youtube.js",
     "migrate:files-updates": "node scripts/migrate-files-updates.js",
     "migrate:property-under-contract": "node scripts/migrate-property-under-contract.js"
   },

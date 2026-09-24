@@ -100,6 +100,9 @@ export async function PATCH(req, { params }) {
       title: existing.title,
       slug: existing.slug,
       description: existing.description,
+      video_source: existing.video_source,
+      youtube_video_id: existing.youtube_video_id,
+      thumbnail_url: existing.thumbnail_url,
       status: nextStatus,
     });
     if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
@@ -146,6 +149,14 @@ export async function PATCH(req, { params }) {
     title: validated.data.title,
     slug,
     description: validated.data.description,
+    video_source: validated.data.video_source,
+    youtube_video_id: validated.data.youtube_video_id || null,
+    thumbnail_url:
+      validated.data.video_source === "YOUTUBE"
+        ? validated.data.thumbnail_url
+        : existing.video_source === "YOUTUBE"
+          ? null
+          : undefined,
     status: nextStatus,
   });
 

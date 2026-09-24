@@ -92,6 +92,15 @@ export default async function VideoPostDetailPage({ params }) {
             <div className={styles.player}>
               <LazyVideoPlayer
                 videoUrl={videoPost.video_url}
+                youtubeVideoId={videoPost.video_source === "YOUTUBE" ? videoPost.youtube_video_id : null}
+                thumbnailUrl={videoPost.thumbnail_url}
+                title={videoPost.title}
+              />
+            </div>
+          ) : videoPost.video_source === "YOUTUBE" && videoPost.youtube_video_id ? (
+            <div className={styles.player}>
+              <LazyVideoPlayer
+                youtubeVideoId={videoPost.youtube_video_id}
                 thumbnailUrl={videoPost.thumbnail_url}
                 title={videoPost.title}
               />

@@ -1,27 +1,41 @@
 "use client";
 
 import { useState } from "react";
+import { youtubeEmbedUrl } from "@/lib/youtube";
 
-export default function LazyVideoPlayer({ videoUrl, thumbnailUrl, title }) {
+export default function LazyVideoPlayer({ videoUrl, youtubeVideoId, thumbnailUrl, title }) {
   const [isActivated, setIsActivated] = useState(false);
 
   if (isActivated) {
     return (
-      <div className="lazyPlayer">
-        <video
-          controls
-          autoPlay
-          preload="metadata"
-          poster={thumbnailUrl || undefined}
-          aria-label={title || "Video"}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "contain",
-          }}
-        >
-          <source src={videoUrl} type="video/mp4" />
-        </video>
+      <div
+        className="lazyPlayer"
+        style={{ width: "100%", height: "100%", background: "#000" }}
+      >
+        {youtubeVideoId ? (
+          <iframe
+            title={title || "YouTube video"}
+            src={youtubeEmbedUrl(youtubeVideoId)}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            style={{ display: "block", width: "100%", height: "100%", border: 0 }}
+          />
+        ) : (
+          <video
+            controls
+            autoPlay
+            preload="metadata"
+            poster={thumbnailUrl || undefined}
+            aria-label={title || "Video"}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+            }}
+          >
+            <source src={videoUrl} type="video/mp4" />
+          </video>
+        )}
       </div>
     );
   }

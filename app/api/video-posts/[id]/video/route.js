@@ -102,7 +102,7 @@ export async function POST(req, { params }) {
     const thumbnailUrl = `/uploads/agents/${agentId}/video-posts/${thumbFilename}`;
 
     await query(
-      "UPDATE video_posts SET video_url = ?, thumbnail_url = ? WHERE id = ? AND agent_id = ?",
+      "UPDATE video_posts SET video_source = 'UPLOAD', video_url = ?, youtube_video_id = NULL, thumbnail_url = ? WHERE id = ? AND agent_id = ?",
       [videoUrl, thumbnailUrl, videoPostId, agentId],
     );
 
@@ -159,7 +159,7 @@ export async function DELETE(_req, { params }) {
   }
 
   await query(
-    "UPDATE video_posts SET video_url = NULL, thumbnail_url = NULL WHERE id = ? AND agent_id = ?",
+    "UPDATE video_posts SET video_source = 'UPLOAD', video_url = NULL, youtube_video_id = NULL, thumbnail_url = NULL WHERE id = ? AND agent_id = ?",
     [videoPostId, agentId],
   );
 
