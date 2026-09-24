@@ -20,17 +20,110 @@
   margin-bottom: 0.85rem;
 }
 
-.typeControls {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 0.4rem;
-}
-
 .filterField {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
   min-width: 0;
+}
+
+.propertyTypeControl {
+  position: relative;
+}
+
+.propertyTypePanel {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  width: min(31rem, calc(100vw - 2rem));
+  padding: 0.75rem;
+  background: #fff;
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  box-shadow: 0 14px 30px rgba(26, 26, 26, 0.12);
+}
+
+.propertyTypeTabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.2rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.propertyTypeTab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.65rem 0.4rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.propertyTypeTab::after {
+  position: absolute;
+  right: 0.25rem;
+  bottom: -1px;
+  left: 0.25rem;
+  height: 2px;
+  background: transparent;
+  content: "";
+}
+
+.propertyTypeTab:hover,
+.propertyTypeTabActive {
+  color: var(--gold-deep);
+}
+
+.propertyTypeTabActive::after {
+  background: var(--gold);
+}
+
+.propertyTypeOptions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  padding-top: 0.75rem;
+}
+
+.propertyTypeOption {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.propertyTypeOption:hover,
+.propertyTypeOptionSelected {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 10%, #fff);
+  color: var(--gold-deep);
+}
+
+.propertyTypeOption span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .filterLabel {
@@ -39,6 +132,10 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.statusSelect {
+  padding-right: 2rem;
 }
 
 .filterActions {
@@ -367,6 +464,15 @@
   .rangePanel {
     right: auto;
     width: min(100vw - 2rem, 280px);
+  }
+
+  .propertyTypePanel {
+    right: 0;
+    left: auto;
+  }
+
+  .propertyTypeOptions {
+    grid-template-columns: 1fr;
   }
 
   .resultsHeader {

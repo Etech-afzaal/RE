@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { ChevronDown, Eye, Phone, X } from "lucide-react";
+import { Building2, ChevronDown, Eye, Home, MapPinned, Phone, X } from "lucide-react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Pagination from "@/components/Pagination";
@@ -18,17 +18,44 @@ import { sanitizeSearchInput } from "@/lib/validators/common";
 import ui from "@/components/agent-portal/portal.module.css";
 import styles from "./page.module.css";
 
-const PROPERTY_CATEGORIES = [
-  { value: "", label: "All property types" },
-  { value: "homes", label: "Homes" },
-  { value: "plots", label: "Plots" },
-  { value: "commercial", label: "Commercial" },
+const PROPERTY_TYPE_TABS = [
+  {
+    value: "homes",
+    label: "Homes",
+    allLabel: "All Homes",
+    icon: Home,
+    options: [
+      { value: "all", label: "All Homes", icon: Home },
+      { value: "house", label: "House", icon: Home },
+      { value: "apartment", label: "Apartment", icon: Building2 },
+    ],
+  },
+  {
+    value: "plots",
+    label: "Plots",
+    allLabel: "All Plots",
+    icon: MapPinned,
+    options: [
+      { value: "all", label: "All Plots", icon: MapPinned },
+      { value: "residential_plot", label: "Residential Plot", icon: MapPinned },
+      { value: "commercial_plot", label: "Commercial Plot", icon: MapPinned },
+      { value: "file", label: "Plot File", icon: MapPinned },
+    ],
+  },
+  {
+    value: "commercial",
+    label: "Commercial",
+    allLabel: "All Commercial",
+    icon: Building2,
+    options: [
+      { value: "all", label: "All Commercial", icon: Building2 },
+      { value: "shop", label: "Shop", icon: Building2 },
+      { value: "commercial", label: "Plaza", icon: Building2 },
+      { value: "commercial", label: "Office", icon: Building2 },
+      { value: "commercial", label: "Other Commercial", icon: Building2 },
+    ],
+  },
 ];
-const SUBTYPE_OPTIONS = {
-  homes: ["house", "apartment"],
-  plots: ["residential_plot", "commercial_plot", "file"],
-  commercial: ["shop", "commercial"],
-};
 
 function dash(value) {
   const text = String(value || "").trim();
@@ -205,13 +232,16 @@ export default function PropertyFinderPage() {
   const [block, setBlock] = useState("");
   const [propertyNumber, setPropertyNumber] = useState("");
   const [statusFilter, setStatusFilter] = useState("sale");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState("homes");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [minSize, setMinSize] = useState("");
   const [maxSize, setMaxSize] = useState("");
   const [sizeUnit, setSizeUnit] = useState("Marla");
   const [subtype, setSubtype] = useState("all");
+  const [propertyTypeTab, setPropertyTypeTab] = useState("homes");
+  const [propertyTypeSelection, setPropertyTypeSelection] = useState("All Homes");
+  const [propertyTypeOpen, setPropertyTypeOpen] = useState(false);
   const [agentId, setAgentId] = useState("");
   const [agentLabel, setAgentLabel] = useState("");
   const [agentQuery, setAgentQuery] = useState("");
@@ -224,6 +254,7 @@ export default function PropertyFinderPage() {
   const debounceRef = useRef(null);
   const agentDebounceRef = useRef(null);
   const agentWrapRef = useRef(null);
+  const propertyTypeWrapRef = useRef(null);
   const listSectionRef = useRef(null);
 
   const filters = useMemo(
@@ -297,6 +328,19 @@ export default function PropertyFinderPage() {
   }, []);
 
   useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        propertyTypeWrapRef.current &&
+        !propertyTypeWrapRef.current.contains(event.target)
+      ) {
+        setPropertyTypeOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
     if (status !== "authenticated") return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
@@ -367,13 +411,16 @@ export default function PropertyFinderPage() {
     setBlock("");
     setPropertyNumber("");
     setStatusFilter("sale");
-    setCategory("");
+    setCategory("homes");
     setMinPrice("");
     setMaxPrice("");
     setMinSize("");
     setMaxSize("");
     setSizeUnit("Marla");
     setSubtype("all");
+    setPropertyTypeTab("homes");
+    setPropertyTypeSelection("All Homes");
+    setPropertyTypeOpen(false);
     setAgentId("");
     setAgentLabel("");
     setAgentQuery("");
@@ -390,6 +437,19 @@ export default function PropertyFinderPage() {
     setAgentId("");
     setAgentLabel("");
     setAgentQuery("");
+  }
+
+  const activePropertyTypeTab =
+    PROPERTY_TYPE_TABS.find((tab) => tab.value === propertyTypeTab) ||
+    PROPERTY_TYPE_TABS[0];
+  const propertyTypeLabel = propertyTypeSelection;
+
+  function selectPropertyType(option) {
+    const isAll = option.value === "all";
+    setCategory(isAll ? activePropertyTypeTab.value : "");
+    setSubtype(option.value);
+    setPropertyTypeSelection(option.label);
+    setPropertyTypeOpen(false);
   }
 
   if (status === "loading" || status === "unauthenticated") {
@@ -413,23 +473,64 @@ export default function PropertyFinderPage() {
         <div className={`${styles.filtersRow} ${styles.filtersRowPrimary}`}>
           <label className={styles.filterField}>
             <span className={styles.filterLabel}>Status</span>
-            <select className={ui.select} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <select className={`${ui.select} ${styles.statusSelect}`} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="sale">For Sale</option>
               <option value="rent">For Rent</option>
             </select>
           </label>
 
-          <div className={styles.filterField}>
+          <div className={styles.filterField} ref={propertyTypeWrapRef}>
             <span className={styles.filterLabel}>Property Type</span>
-            <div className={styles.typeControls}>
-              <select className={ui.select} value={category} onChange={(e) => { setCategory(e.target.value); setSubtype("all"); }}>
-                {PROPERTY_CATEGORIES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-              </select>
-              {category ? (
-                <select className={ui.select} value={subtype} onChange={(e) => setSubtype(e.target.value)}>
-                  <option value="all">All types</option>
-                  {SUBTYPE_OPTIONS[category].map((value) => <option key={value} value={value}>{propertySubtypeLabel(value) || value}</option>)}
-                </select>
+            <div className={styles.propertyTypeControl}>
+              <button
+                type="button"
+                className={`${styles.rangeTrigger} ${propertyTypeOpen ? styles.rangeTriggerActive : ""}`}
+                aria-expanded={propertyTypeOpen}
+                aria-haspopup="dialog"
+                onClick={() => setPropertyTypeOpen((previous) => !previous)}
+              >
+                <span className={styles.rangeTriggerText}>{propertyTypeLabel}</span>
+                <ChevronDown size={16} aria-hidden="true" />
+              </button>
+              {propertyTypeOpen ? (
+                <div className={styles.propertyTypePanel} role="dialog" aria-label="Property Type">
+                  <div className={styles.propertyTypeTabs} role="tablist" aria-label="Property categories">
+                    {PROPERTY_TYPE_TABS.map((tab) => {
+                      const TabIcon = tab.icon;
+                      return (
+                        <button
+                          key={tab.value}
+                          type="button"
+                          role="tab"
+                          aria-selected={propertyTypeTab === tab.value}
+                          className={`${styles.propertyTypeTab} ${propertyTypeTab === tab.value ? styles.propertyTypeTabActive : ""}`}
+                          onClick={() => setPropertyTypeTab(tab.value)}
+                        >
+                          <TabIcon size={15} aria-hidden="true" />
+                          {tab.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className={styles.propertyTypeOptions} role="tabpanel">
+                    {activePropertyTypeTab.options.map((option) => {
+                      const OptionIcon = option.icon;
+                      const selected = propertyTypeSelection === option.label;
+                      return (
+                        <button
+                          key={`${activePropertyTypeTab.value}-${option.label}`}
+                          type="button"
+                          className={`${styles.propertyTypeOption} ${selected ? styles.propertyTypeOptionSelected : ""}`}
+                          aria-pressed={selected}
+                          onClick={() => selectPropertyType(option)}
+                        >
+                          <OptionIcon size={17} aria-hidden="true" />
+                          <span>{option.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               ) : null}
             </div>
           </div>
