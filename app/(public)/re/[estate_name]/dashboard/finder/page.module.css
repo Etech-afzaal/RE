@@ -197,6 +197,11 @@
   box-shadow: 0 14px 30px rgba(26, 26, 26, 0.12);
 }
 
+.rangePanelRight {
+  right: 0;
+  left: auto;
+}
+
 .rangeInputs {
   display: grid;
   grid-template-columns: 1fr 1fr;

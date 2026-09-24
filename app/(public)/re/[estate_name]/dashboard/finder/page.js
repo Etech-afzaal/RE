@@ -75,14 +75,29 @@ function agentDisplayName(property) {
   );
 }
 
-function formatRangeLabel(min, max, emptyLabel, unitSuffix = "") {
+function formatSizeValue(value) {
+  const text = String(value ?? "").trim();
+  if (!text) return "";
+  const number = Number(text);
+  if (!Number.isFinite(number)) return text;
+  return String(number);
+}
+
+function formatSizeUnit(value) {
+  const unit = String(value || "marla").trim().toLowerCase();
+  return unit === "sqft" ? "Sqft" : unit ? unit[0].toUpperCase() + unit.slice(1) : "Marla";
+}
+
+function formatRangeLabel(min, max, emptyLabel, unitSuffix = "", valueFormatter = (value) => value) {
   const hasMin = String(min || "").trim() !== "";
   const hasMax = String(max || "").trim() !== "";
   if (!hasMin && !hasMax) return emptyLabel;
   const suffix = unitSuffix ? ` ${unitSuffix}` : "";
-  if (hasMin && hasMax) return `${min} – ${max}${suffix}`;
-  if (hasMin) return `From ${min}${suffix}`;
-  return `Up to ${max}${suffix}`;
+  const formattedMin = valueFormatter(min);
+  const formattedMax = valueFormatter(max);
+  if (hasMin && hasMax) return `${formattedMin} – ${formattedMax}${suffix}`;
+  if (hasMin) return `From ${formattedMin}${suffix}`;
+  return `Up to ${formattedMax}${suffix}`;
 }
 
 function RangeFilterDropdown({
@@ -94,17 +109,19 @@ function RangeFilterDropdown({
   unit,
   units,
   onUnitChange,
+  valueFormatter,
+  alignRight = false,
   onApply,
   onReset,
 }) {
   const wrapRef = useRef(null);
   const [open, setOpen] = useState(false);
-  const [draftMin, setDraftMin] = useState(appliedMin);
+  const [draftMin, setDraftMin] = useState(appliedMin || "0");
   const [draftMax, setDraftMax] = useState(appliedMax);
 
   useEffect(() => {
     if (!open) return;
-    setDraftMin(appliedMin);
+    setDraftMin(appliedMin || "0");
     setDraftMax(appliedMax);
   }, [open, appliedMin, appliedMax]);
 
@@ -124,11 +141,12 @@ function RangeFilterDropdown({
     appliedMax,
     emptyLabel,
     unit,
+    valueFormatter,
   );
   const active = String(appliedMin || "").trim() || String(appliedMax || "").trim();
 
   function handleDone() {
-    onApply(String(draftMin || "").trim(), String(draftMax || "").trim());
+    onApply(String(draftMin || "0").trim(), String(draftMax || "").trim());
     setOpen(false);
   }
 
@@ -154,7 +172,7 @@ function RangeFilterDropdown({
           <ChevronDown size={16} aria-hidden="true" />
         </button>
         {open ? (
-          <div className={styles.rangePanel} role="dialog" aria-label={label}>
+          <div className={`${styles.rangePanel} ${alignRight ? styles.rangePanelRight : ""}`} role="dialog" aria-label={label}>
             <div className={styles.rangeInputs}>
               <label className={styles.rangeInputField}>
                 <span>Min</span>
@@ -164,7 +182,7 @@ function RangeFilterDropdown({
                   min="0"
                   step="any"
                   inputMode="decimal"
-                  placeholder="Min"
+                  placeholder="0"
                   value={draftMin}
                   onChange={(e) => setDraftMin(e.target.value)}
                 />
@@ -177,7 +195,7 @@ function RangeFilterDropdown({
                   min="0"
                   step="any"
                   inputMode="decimal"
-                  placeholder="Max"
+                  placeholder="Any"
                   value={draftMax}
                   onChange={(e) => setDraftMax(e.target.value)}
                 />
@@ -269,6 +287,7 @@ export default function PropertyFinderPage() {
       maxPrice: String(maxPrice || "").trim(),
       minSize: String(minSize || "").trim(),
       maxSize: String(maxSize || "").trim(),
+      sizeUnit,
       subtype,
       agentId,
     }),
@@ -604,6 +623,7 @@ export default function PropertyFinderPage() {
             unit={sizeUnit}
             units={["Marla", "Kanal", "Sqft"]}
             onUnitChange={setSizeUnit}
+            valueFormatter={formatSizeValue}
             appliedMin={minSize}
             appliedMax={maxSize}
             onApply={(nextMin, nextMax) => {
@@ -619,6 +639,7 @@ export default function PropertyFinderPage() {
           <RangeFilterDropdown
             label="Price"
             emptyLabel="Any price"
+            alignRight
             appliedMin={minPrice}
             appliedMax={maxPrice}
             onApply={(nextMin, nextMax) => {
@@ -696,7 +717,7 @@ export default function PropertyFinderPage() {
                   );
                   const sizeLabel = property.size_value == null
                     ? "—"
-                    : `${property.size_value} ${String(property.size_unit || "marla").toUpperCase() === "SQFT" ? "Sqft" : property.size_unit || "Marla"}`;
+                    : `${formatSizeValue(property.size_value)} ${formatSizeUnit(property.size_unit)}`;
                   function openProperty() {
                     if (viewHref !== "#") window.open(viewHref, "_blank", "noopener,noreferrer");
                   }
