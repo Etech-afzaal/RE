@@ -78,7 +78,7 @@ export async function GET(req) {
 
   const payload = await getPublishedPropertiesPage({
     page,
-    pageSize: 20,
+    pageSize: 15,
     city,
     area,
     block,
