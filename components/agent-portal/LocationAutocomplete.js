@@ -102,7 +102,13 @@ export default function LocationAutocomplete({
             setSuggestions([]);
             return;
           }
-          setSuggestions(predictions.slice(0, 6));
+          const cityTerm = String(locationBias || "").trim().toLowerCase();
+          const filtered = cityTerm
+            ? predictions.filter((prediction) =>
+                String(prediction.description || "").toLowerCase().includes(cityTerm),
+              )
+            : predictions;
+          setSuggestions(filtered.slice(0, 6));
         },
       );
     }, 120);

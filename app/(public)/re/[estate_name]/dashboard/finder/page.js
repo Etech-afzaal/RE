@@ -12,18 +12,23 @@ import LocationAutocomplete from "@/components/agent-portal/LocationAutocomplete
 import AgentInquiryForm from "@/components/AgentInquiryForm";
 import { getPropertyUrl } from "@/lib/propertySlug";
 import { formatPropertyPrice } from "@/lib/formatPrice";
+import { propertySubtypeLabel } from "@/lib/propertyTaxonomy";
+import { publicPropertyCardTypeLabel } from "@/lib/publicPropertyData";
 import { sanitizeSearchInput } from "@/lib/validators/common";
 import ui from "@/components/agent-portal/portal.module.css";
 import styles from "./page.module.css";
 
-const SUBTYPE_OPTIONS = [
-  { value: "all", label: "All" },
-  { value: "house", label: "House" },
-  { value: "apartment", label: "Apartment" },
-  { value: "plot", label: "Plot" },
-  { value: "shop", label: "Shop" },
+const PROPERTY_CATEGORIES = [
+  { value: "", label: "All property types" },
+  { value: "homes", label: "Homes" },
+  { value: "plots", label: "Plots" },
   { value: "commercial", label: "Commercial" },
 ];
+const SUBTYPE_OPTIONS = {
+  homes: ["house", "apartment"],
+  plots: ["residential_plot", "commercial_plot", "file"],
+  commercial: ["shop", "commercial"],
+};
 
 function dash(value) {
   const text = String(value || "").trim();
@@ -59,6 +64,9 @@ function RangeFilterDropdown({
   unitHint,
   appliedMin,
   appliedMax,
+  unit,
+  units,
+  onUnitChange,
   onApply,
   onReset,
 }) {
@@ -88,7 +96,7 @@ function RangeFilterDropdown({
     appliedMin,
     appliedMax,
     emptyLabel,
-    unitHint,
+    unit,
   );
   const active = String(appliedMin || "").trim() || String(appliedMax || "").trim();
 
@@ -148,9 +156,14 @@ function RangeFilterDropdown({
                 />
               </label>
             </div>
-            {unitHint ? (
-              <p className={styles.rangeHint}>Values in {unitHint}</p>
-            ) : null}
+            {units?.length ? (
+              <label className={styles.rangeUnit}>
+                <span>Unit</span>
+                <select className={ui.select} value={unit} onChange={(e) => onUnitChange?.(e.target.value)}>
+                  {units.map((option) => <option key={option} value={option}>{option}</option>)}
+                </select>
+              </label>
+            ) : unitHint ? <p className={styles.rangeHint}>Values in {unitHint}</p> : null}
             <div className={styles.rangeActions}>
               <button
                 type="button"
@@ -189,10 +202,15 @@ export default function PropertyFinderPage() {
 
   const [city, setCity] = useState("");
   const [area, setArea] = useState("");
+  const [block, setBlock] = useState("");
+  const [propertyNumber, setPropertyNumber] = useState("");
+  const [statusFilter, setStatusFilter] = useState("sale");
+  const [category, setCategory] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [minSize, setMinSize] = useState("");
   const [maxSize, setMaxSize] = useState("");
+  const [sizeUnit, setSizeUnit] = useState("Marla");
   const [subtype, setSubtype] = useState("all");
   const [agentId, setAgentId] = useState("");
   const [agentLabel, setAgentLabel] = useState("");
@@ -212,6 +230,10 @@ export default function PropertyFinderPage() {
     () => ({
       city: sanitizeSearchInput(city).value,
       area: sanitizeSearchInput(area).value,
+      block: sanitizeSearchInput(block).value,
+      propertyNumber: sanitizeSearchInput(propertyNumber).value,
+      status: statusFilter,
+      category,
       minPrice: String(minPrice || "").trim(),
       maxPrice: String(maxPrice || "").trim(),
       minSize: String(minSize || "").trim(),
@@ -219,7 +241,7 @@ export default function PropertyFinderPage() {
       subtype,
       agentId,
     }),
-    [city, area, minPrice, maxPrice, minSize, maxSize, subtype, agentId],
+    [city, area, block, propertyNumber, statusFilter, category, minPrice, maxPrice, minSize, maxSize, sizeUnit, subtype, agentId],
   );
 
   useEffect(() => {
@@ -235,10 +257,15 @@ export default function PropertyFinderPage() {
       qs.set("page", String(page));
       if (activeFilters.city) qs.set("city", activeFilters.city);
       if (activeFilters.area) qs.set("area", activeFilters.area);
+      if (activeFilters.block) qs.set("block", activeFilters.block);
+      if (activeFilters.propertyNumber) qs.set("propertyNumber", activeFilters.propertyNumber);
+      qs.set("status", activeFilters.status);
+      if (activeFilters.category) qs.set("category", activeFilters.category);
       if (activeFilters.minPrice) qs.set("minPrice", activeFilters.minPrice);
       if (activeFilters.maxPrice) qs.set("maxPrice", activeFilters.maxPrice);
       if (activeFilters.minSize) qs.set("minSize", activeFilters.minSize);
       if (activeFilters.maxSize) qs.set("maxSize", activeFilters.maxSize);
+      qs.set("sizeUnit", activeFilters.sizeUnit);
       if (activeFilters.subtype && activeFilters.subtype !== "all") {
         qs.set("subtype", activeFilters.subtype);
       }
@@ -258,6 +285,7 @@ export default function PropertyFinderPage() {
       setTotalPages(data.totalPages || 1);
       setTotalProperties(data.totalProperties || 0);
       setNearbyApplied(Boolean(data.nearbyApplied));
+      if (!city && data.defaultCity) setCity(data.defaultCity);
     } catch {
       setResults([]);
       setTotalPages(1);
@@ -336,10 +364,15 @@ export default function PropertyFinderPage() {
   function clearFilters() {
     setCity("");
     setArea("");
+    setBlock("");
+    setPropertyNumber("");
+    setStatusFilter("sale");
+    setCategory("");
     setMinPrice("");
     setMaxPrice("");
     setMinSize("");
     setMaxSize("");
+    setSizeUnit("Marla");
     setSubtype("all");
     setAgentId("");
     setAgentLabel("");
@@ -377,6 +410,52 @@ export default function PropertyFinderPage() {
       subtitle="Discover platform-wide listings with marketplace filters."
     >
       <section className={styles.filtersCard} aria-label="Property filters">
+        <div className={`${styles.filtersRow} ${styles.filtersRowPrimary}`}>
+          <label className={styles.filterField}>
+            <span className={styles.filterLabel}>Status</span>
+            <select className={ui.select} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <option value="sale">For Sale</option>
+              <option value="rent">For Rent</option>
+            </select>
+          </label>
+
+          <div className={styles.filterField}>
+            <span className={styles.filterLabel}>Property Type</span>
+            <div className={styles.typeControls}>
+              <select className={ui.select} value={category} onChange={(e) => { setCategory(e.target.value); setSubtype("all"); }}>
+                {PROPERTY_CATEGORIES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+              {category ? (
+                <select className={ui.select} value={subtype} onChange={(e) => setSubtype(e.target.value)}>
+                  <option value="all">All types</option>
+                  {SUBTYPE_OPTIONS[category].map((value) => <option key={value} value={value}>{propertySubtypeLabel(value) || value}</option>)}
+                </select>
+              ) : null}
+            </div>
+          </div>
+
+          <div className={styles.filterField} ref={agentWrapRef}>
+            <span className={styles.filterLabel}>Agent</span>
+            <div className={styles.agentControl}>
+              <input
+                className={ui.input}
+                value={agentQuery}
+                placeholder="Search agent"
+                onFocus={() => setAgentMenuOpen(true)}
+                onChange={(e) => { setAgentQuery(e.target.value); setAgentMenuOpen(true); if (agentId) { setAgentId(""); setAgentLabel(""); } }}
+                autoComplete="off"
+              />
+              {agentId ? <button type="button" className={styles.clearAgentBtn} aria-label="Clear agent filter" onClick={clearAgent}><X size={14} /></button> : null}
+              {agentMenuOpen ? (
+                <ul className={styles.agentDropdown} role="listbox">
+                  {agentOptions.length === 0 ? <li className={styles.agentEmpty}>No agents found</li> : agentOptions.map((agent) => <li key={agent.id}><button type="button" className={styles.agentOption} onMouseDown={(e) => { e.preventDefault(); selectAgent(agent); }}><span className={styles.agentOptionName}>{agent.name}</span>{agent.company ? <span className={styles.agentOptionMeta}>{agent.company}</span> : null}</button></li>)}
+                </ul>
+              ) : null}
+            </div>
+            {agentLabel ? <p className={styles.selectedAgent}>Selected: {agentLabel}</p> : null}
+          </div>
+        </div>
+
         <div className={styles.filtersRow}>
           <label className={styles.filterField}>
             <span className={styles.filterLabel}>City</span>
@@ -407,10 +486,23 @@ export default function PropertyFinderPage() {
             />
           </label>
 
+          <label className={styles.filterField}>
+            <span className={styles.filterLabel}>Block/Sector</span>
+            <input className={ui.input} value={block} onChange={(e) => setBlock(e.target.value)} placeholder={area ? "Search block/sector" : "Select area first"} disabled={!area.trim()} />
+          </label>
+
+          <label className={styles.filterField}>
+            <span className={styles.filterLabel}>Property/Plot No</span>
+            <input className={ui.input} value={propertyNumber} onChange={(e) => setPropertyNumber(e.target.value)} placeholder="e.g. 123" />
+          </label>
+
           <RangeFilterDropdown
             label="Size"
             emptyLabel="Any size"
             unitHint="Marla"
+            unit={sizeUnit}
+            units={["Marla", "Kanal", "Sqft"]}
+            onUnitChange={setSizeUnit}
             appliedMin={minSize}
             appliedMax={maxSize}
             onApply={(nextMin, nextMax) => {
@@ -438,83 +530,6 @@ export default function PropertyFinderPage() {
             }}
           />
 
-          <label className={styles.filterField}>
-            <span className={styles.filterLabel}>Property Type</span>
-            <select
-              className={ui.select}
-              value={subtype}
-              onChange={(e) => setSubtype(e.target.value)}
-            >
-              {SUBTYPE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div className={styles.filterField} ref={agentWrapRef}>
-            <span className={styles.filterLabel}>Agent</span>
-            <div className={styles.agentControl}>
-              <input
-                className={ui.input}
-                value={agentQuery}
-                placeholder="Search agent"
-                onFocus={() => setAgentMenuOpen(true)}
-                onChange={(e) => {
-                  setAgentQuery(e.target.value);
-                  setAgentMenuOpen(true);
-                  if (agentId) {
-                    setAgentId("");
-                    setAgentLabel("");
-                  }
-                }}
-                autoComplete="off"
-              />
-              {agentId ? (
-                <button
-                  type="button"
-                  className={styles.clearAgentBtn}
-                  aria-label="Clear agent filter"
-                  onClick={clearAgent}
-                >
-                  <X size={14} />
-                </button>
-              ) : null}
-              {agentMenuOpen ? (
-                <ul className={styles.agentDropdown} role="listbox">
-                  {agentOptions.length === 0 ? (
-                    <li className={styles.agentEmpty}>No agents found</li>
-                  ) : (
-                    agentOptions.map((agent) => (
-                      <li key={agent.id}>
-                        <button
-                          type="button"
-                          className={styles.agentOption}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            selectAgent(agent);
-                          }}
-                        >
-                          <span className={styles.agentOptionName}>
-                            {agent.name}
-                          </span>
-                          {agent.company ? (
-                            <span className={styles.agentOptionMeta}>
-                              {agent.company}
-                            </span>
-                          ) : null}
-                        </button>
-                      </li>
-                    ))
-                  )}
-                </ul>
-              ) : null}
-            </div>
-            {agentLabel ? (
-              <p className={styles.selectedAgent}>Selected: {agentLabel}</p>
-            ) : null}
-          </div>
         </div>
 
         <div className={styles.filterActions}>
@@ -559,9 +574,10 @@ export default function PropertyFinderPage() {
                 <tr>
                   <th>City</th>
                   <th>Area</th>
-                  <th>Phase</th>
                   <th>Block/Sector</th>
                   <th>Property/Plot No</th>
+                  <th>Property Type</th>
+                  <th>Size</th>
                   <th>Price</th>
                   <th>Offered By</th>
                   <th>Action</th>
@@ -570,20 +586,32 @@ export default function PropertyFinderPage() {
               <tbody>
                 {results.map((property) => {
                   const viewHref = getPropertyUrl(property);
+                  const agentHref = property.username || property.estate_name
+                    ? `/re/${encodeURIComponent(property.username || property.estate_name)}`
+                    : "#";
+                  const propertyType = publicPropertyCardTypeLabel(
+                    property,
+                    propertySubtypeLabel(property.property_subtype) || dash(property.property_subtype),
+                  );
+                  const sizeLabel = property.size_value == null
+                    ? "—"
+                    : `${property.size_value} ${String(property.size_unit || "marla").toUpperCase() === "SQFT" ? "Sqft" : property.size_unit || "Marla"}`;
+                  function openProperty() {
+                    if (viewHref !== "#") window.open(viewHref, "_blank", "noopener,noreferrer");
+                  }
                   return (
                     <tr key={property.id}>
-                      <td data-label="City">{dash(property.city)}</td>
-                      <td data-label="Area">{dash(property.area)}</td>
-                      <td data-label="Phase">{dash(property.phase)}</td>
-                      <td data-label="Block/Sector">—</td>
-                      <td data-label="Property/Plot No">
-                        {dash(property.address)}
-                      </td>
-                      <td data-label="Price">
+                      <td data-label="City" onClick={openProperty} className={styles.clickableCell}>{dash(property.city)}</td>
+                      <td data-label="Area" onClick={openProperty} className={styles.clickableCell}>{dash(property.area)}</td>
+                      <td data-label="Block/Sector" onClick={openProperty} className={styles.clickableCell}>{dash(property.phase)}</td>
+                      <td data-label="Property/Plot No" onClick={openProperty} className={styles.clickableCell}>{dash(property.address)}</td>
+                      <td data-label="Property Type" onClick={openProperty} className={styles.clickableCell}>{propertyType}</td>
+                      <td data-label="Size" onClick={openProperty} className={styles.clickableCell}>{sizeLabel}</td>
+                      <td data-label="Price" onClick={openProperty} className={styles.clickableCell}>
                         {formatPrice(property.price, property.price_currency)}
                       </td>
                       <td data-label="Offered By">
-                        {agentDisplayName(property)}
+                        {agentHref !== "#" ? <a href={agentHref} target="_blank" rel="noopener noreferrer" onClick={(event) => event.stopPropagation()}>{agentDisplayName(property)}</a> : agentDisplayName(property)}
                       </td>
                       <td data-label="Action">
                         <div className={styles.actionRow}>
@@ -592,7 +620,7 @@ export default function PropertyFinderPage() {
                             className={styles.iconBtn}
                             aria-label={`Contact ${agentDisplayName(property)}`}
                             title="Contact Agent"
-                            onClick={() => setContactTarget(property)}
+                            onClick={(event) => { event.stopPropagation(); setContactTarget(property); }}
                           >
                             <Phone size={16} />
                           </button>
@@ -603,6 +631,7 @@ export default function PropertyFinderPage() {
                             title="View Property"
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={(event) => event.stopPropagation()}
                           >
                             <Eye size={16} />
                           </Link>

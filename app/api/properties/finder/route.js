@@ -41,16 +41,23 @@ export async function GET(req) {
   const page = searchParams.get("page") || "1";
   const city = sanitizeSearchInput(searchParams.get("city") || "").value;
   const area = sanitizeSearchInput(searchParams.get("area") || "").value;
+  const block = sanitizeSearchInput(searchParams.get("block") || "").value;
+  const propertyNumber = sanitizeSearchInput(searchParams.get("propertyNumber") || "").value;
+  const listingType = String(searchParams.get("status") || "sale").trim().toLowerCase();
+  const propertyCategory = String(searchParams.get("category") || "").trim().toLowerCase();
   const propertySubtype = String(searchParams.get("subtype") || "all").trim();
   const agentId = searchParams.get("agentId") || "";
   const minPrice = parseOptionalNumber(searchParams.get("minPrice"));
   const maxPrice = parseOptionalNumber(searchParams.get("maxPrice"));
   const minSize = parseOptionalNumber(searchParams.get("minSize"));
   const maxSize = parseOptionalNumber(searchParams.get("maxSize"));
+  const sizeUnit = String(searchParams.get("sizeUnit") || "marla").trim().toLowerCase();
 
   const hasExplicitFilters = Boolean(
     city ||
       area ||
+    block ||
+    propertyNumber ||
       minSize != null ||
       maxSize != null ||
       minPrice != null ||
@@ -60,11 +67,13 @@ export async function GET(req) {
   );
 
   let nearbyTerms = [];
+  let defaultCity = "";
   if (!hasExplicitFilters) {
     const location = await getAgentFinderLocationContext(
       agentIdFromSession(session),
     );
     nearbyTerms = location.terms || [];
+    defaultCity = location.city || "";
   }
 
   const payload = await getPublishedPropertiesPage({
@@ -72,8 +81,13 @@ export async function GET(req) {
     pageSize: 20,
     city,
     area,
+    block,
+    propertyNumber,
+    listingType,
+    propertyCategory,
     minSize,
     maxSize,
+    sizeUnit,
     minPrice,
     maxPrice,
     propertySubtype,
@@ -81,5 +95,5 @@ export async function GET(req) {
     nearbyTerms,
   });
 
-  return NextResponse.json(payload);
+  return NextResponse.json({ ...payload, defaultCity });
 }
