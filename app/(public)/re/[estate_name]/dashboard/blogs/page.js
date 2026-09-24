@@ -7,11 +7,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { FilePenLine, Send, Trash2, Undo2 } from "lucide-react";
+import { Send, SquarePen, Undo2 } from "lucide-react";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import Pagination from "@/components/Pagination";
 import AgentMessagePopup from "@/components/agent-portal/AgentMessagePopup";
+import PropertyQuickAction from "@/components/agent-portal/PropertyQuickAction";
+import quickActionStyles from "@/components/agent-portal/PropertyQuickActions.module.css";
+import ActionMenu from "@/components/ActionMenu";
 import ui from "@/components/agent-portal/portal.module.css";
 import styles from "./page.module.css";
 
@@ -338,34 +341,22 @@ export default function AgentBlogsPage() {
                           {formatBlogDate(blog.updated_at) || "—"}
                         </td>
                         <td data-label="Actions">
-                          <div className={styles.rowActions}>
-                            <Link
-                              href={editHref}
-                              className={`${ui.btnGhost} ${styles.actionButton}`}
-                            >
-                              <FilePenLine size={16} aria-hidden="true" />
-                              Edit
-                            </Link>
-                            <button
-                              type="button"
-                              className={`${ui.btnGhost} ${styles.actionButton}`}
-                              onClick={() => updateStatus(blog, isPublished ? "draft" : "published")}
-                            >
-                              {isPublished ? (
-                                <Undo2 size={16} aria-hidden="true" />
-                              ) : (
-                                <Send size={16} aria-hidden="true" />
-                              )}
-                              {isPublished ? "Unpublish" : "Publish"}
-                            </button>
-                            <button
-                              type="button"
-                              className={`${ui.btnDanger} ${styles.actionButton}`}
-                              onClick={() => setDeleteTarget(blog)}
-                            >
-                              <Trash2 size={16} aria-hidden="true" />
-                              Delete
-                            </button>
+                          <div className={quickActionStyles.actionGroup}>
+                            <PropertyQuickAction
+                              icon={SquarePen}
+                              tooltip="Edit Blog"
+                              onClick={() => router.push(editHref)}
+                            />
+                            <ActionMenu
+                              ariaLabel={`More actions for ${blog.title}`}
+                              triggerTooltip="More Actions"
+                              onDelete={() => setDeleteTarget(blog)}
+                              additionalActions={[{
+                                label: isPublished ? "Unpublish" : "Publish",
+                                icon: isPublished ? Undo2 : Send,
+                                onSelect: () => updateStatus(blog, isPublished ? "draft" : "published"),
+                              }]}
+                            />
                           </div>
                         </td>
                       </tr>
