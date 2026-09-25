@@ -97,7 +97,10 @@ Then `POST /api/ads/impression` with `{"token": ad.impressionToken}` when it's s
   `imageUrl` is the property's photo (render a card: photo + headline + price + CTA).
   `components/ads/AdSlot.js` does both.
 - `property` is `null` for image-only ads. `clickUrl` is `null` if the ad has no destination.
-- `label` is `"Featured"` for paid ads and `null` for free ones.
+- `label` is `"Featured"` for paid ads and `null` for free ones — free ads show no label.
+  `AdSlot` shows it as a small badge in the image's top-left corner.
+- `ctaText` is the admin's button text (property ads default to "View property"). `AdSlot`
+  shows it as a button in the banner's bottom-right corner; the whole banner is the link.
 - `imageUrl` may be at 2× the format size (for retina) — always render at `format.width/height`.
 - Uploaded banners always have the format's exact shape: admins can upload any image and it is
   fitted automatically — "Crop to fill" (smart crop) or "Show whole image" (blurred edges fill
@@ -105,6 +108,17 @@ Then `POST /api/ads/impression` with `{"token": ad.impressionToken}` when it's s
 - Several slots on one page: pass the ids already shown in `exclude`.
 - Load ads client-side. Server pages here are cached (e.g. the home page revalidates every
   60s), so a server-rendered ad would be frozen for everyone and wouldn't rotate.
+
+### Slots already on the site
+
+| Page | Placement | Desktop format | Phone format (≤768px) |
+|---|---|---|---|
+| `/` above the hero | `home_above_hero` | `billboard_970x250` | `mobile_banner_320x100` |
+| `/` agents section, top | `home_agents_top` | `leaderboard_728x90` | `mobile_banner_320x100` |
+| `/` agents grid (after the 3rd agent) | `home_agents_grid` | `native_card_400x300` | `native_card_400x300` |
+
+An ad only appears in a slot that requests its format — e.g. a Billboard ad shows above the
+hero on desktop, while phones need a Mobile banner ad.
 
 ### Seeded formats
 

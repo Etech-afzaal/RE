@@ -1,19 +1,32 @@
 /* Customer-site ad slots. Colours come from the site tokens in globals.css. */
 
+/* "Featured" (paid ads only). Sentence case everywhere. */
 .label {
-  position: absolute;
-  top: 0.6rem;
-  left: 0.6rem;
-  z-index: 1;
-  padding: 0.22rem 0.55rem;
+  display: inline-block;
+  padding: 0.18rem 0.55rem;
   border-radius: 999px;
-  background: var(--gold);
-  color: #1a1a1a;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  background: var(--gold-tint);
+  border: 1px solid rgba(242, 187, 70, 0.45);
+  color: var(--gold-deep);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* Same label as a small overlay in the top-left corner of an image. */
+.badge {
+  position: absolute;
+  top: 0.55rem;
+  left: 0.55rem;
+  z-index: 1;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.62);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.4;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
 }
 
 .cta {
@@ -39,21 +52,6 @@
   margin: 0 0 1.5rem;
 }
 
-.bannerFrame {
-  width: 100%;
-}
-
-.bannerCaption {
-  display: block;
-  margin-bottom: 0.35rem;
-  text-align: right;
-  color: var(--muted);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .bannerImageLink {
   position: relative;
   display: block;
@@ -67,6 +65,28 @@
   display: block;
   width: 100%;
   height: auto;
+}
+
+/* Button text on an uploaded banner, bottom-right. The whole banner is the link. */
+.bannerCta {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 1;
+  padding: 0.55rem 1.1rem;
+  border-radius: 10px;
+  background: var(--gold);
+  color: #1a1a1a;
+  font-size: 0.9rem;
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+  transition: background 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.bannerImageLink:hover .bannerCta {
+  background: var(--gold-soft);
+  transform: translateY(-1px);
 }
 
 .composedBanner {
@@ -117,9 +137,7 @@
 
 /* In the composed banner the label sits inline above the title. */
 .composedBody .label {
-  position: static;
   align-self: flex-start;
-  box-shadow: none;
 }
 
 .composedTitle {
@@ -208,6 +226,7 @@
 }
 
 .cardMedia {
+  position: relative;
   display: block;
   width: 104px;
   height: 104px;
@@ -228,7 +247,23 @@
   margin: 0 1.2rem 1.2rem;
 }
 
+/* Small banners (e.g. 320×100 on phones): shrink the overlays. */
 @media (max-width: 600px) {
+  .badge {
+    top: 0.35rem;
+    left: 0.35rem;
+    padding: 0.1rem 0.45rem;
+    font-size: 0.65rem;
+  }
+
+  .bannerCta {
+    right: 0.4rem;
+    bottom: 0.4rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+  }
+
   .composedBanner {
     gap: 0.75rem;
     padding: 0.6rem;

@@ -81,21 +81,24 @@ function AdBanner({ ad, innerRef, className }) {
         className={`${styles.bannerSlot} ${className}`}
         aria-label={ad.isFeatured ? "Featured listing" : "Promotion"}
       >
-        {/* The label sits above the artwork so it never covers the banner's own text. */}
-        <div className={styles.bannerFrame} style={{ maxWidth: width }}>
-          {ad.label && <span className={styles.bannerCaption}>{ad.label}</span>}
-          <a {...linkProps(ad)} className={styles.bannerImageLink}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={ad.imageUrl}
-              alt={ad.altText}
-              width={width}
-              height={height}
-              className={styles.bannerImage}
-              loading="lazy"
-            />
-          </a>
-        </div>
+        <a {...linkProps(ad)} className={styles.bannerImageLink} style={{ maxWidth: width }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={ad.imageUrl}
+            alt={ad.altText}
+            width={width}
+            height={height}
+            className={styles.bannerImage}
+            loading="lazy"
+          />
+          {/* Small corner overlays so they don't cover the middle of the artwork. */}
+          {ad.label && <span className={styles.badge}>{ad.label}</span>}
+          {ad.ctaText && (
+            <span className={styles.bannerCta} aria-hidden="true">
+              {ad.ctaText}
+            </span>
+          )}
+        </a>
       </aside>
     );
   }
@@ -143,10 +146,9 @@ function AdCard({ ad, innerRef, className }) {
     >
       <span className={styles.cardContent}>
         <span className={styles.cardBody}>
-          <span className={styles.cardKicker}>
-            {ad.label || "Promoted"}
-            {ad.property?.agentName ? ` · ${ad.property.agentName}` : ""}
-          </span>
+          {ad.property?.agentName && (
+            <span className={styles.cardKicker}>{ad.property.agentName}</span>
+          )}
           <span className={styles.cardTitle}>{ad.headline}</span>
           {meta && <span className={styles.cardMeta}>{meta}</span>}
           {amount && <span className={styles.cardPrice}>{amount}</span>}
@@ -156,6 +158,7 @@ function AdCard({ ad, innerRef, className }) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={ad.imageUrl} alt={ad.altText} className={styles.cardImage} loading="lazy" />
           )}
+          {ad.label && <span className={styles.badge}>{ad.label}</span>}
         </span>
       </span>
       {ad.ctaText && <span className={`${styles.cta} ${styles.cardCta}`}>{ad.ctaText}</span>}

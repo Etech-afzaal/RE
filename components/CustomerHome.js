@@ -542,6 +542,14 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
         </div>
       </div>
 
+      {/* Top-of-page ad; the wrapper collapses to nothing when no ad is live. */}
+      <div className={styles.heroAd}>
+        <AdSlot
+          placement="home_above_hero"
+          formats={{ desktop: "billboard_970x250", mobile: "mobile_banner_320x100" }}
+        />
+      </div>
+
       <section className={styles.hero} aria-label="Find agents">
         <div className={styles.heroMedia} aria-hidden="true">
           <Image
