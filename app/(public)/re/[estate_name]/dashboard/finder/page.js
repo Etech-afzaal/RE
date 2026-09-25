@@ -637,7 +637,7 @@ export default function PropertyFinderPage() {
           />
 
           <RangeFilterDropdown
-            label="Price"
+            label="Price (PKR)"
             emptyLabel="Any price"
             alignRight
             appliedMin={minPrice}
