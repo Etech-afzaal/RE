@@ -388,6 +388,29 @@
   padding-top: 0.35rem;
 }
 
+.topbarAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-left: auto;
+  align-self: center;
+  padding: 0.7rem 1.15rem;
+  border-radius: 10px;
+  background: var(--gold-deep);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(201, 150, 31, 0.28);
+  transition: background var(--transition-base), transform var(--transition-base);
+}
+
+.topbarAction:hover {
+  background: #b5861a;
+  transform: translateY(-1px);
+}
+
 .rolePill {
   display: inline-flex;
   align-items: center;
@@ -487,7 +510,30 @@
   }
 
   /* Role is already in the title kicker; hide redundant badge on mobile/tablet */
-  .rolePill {
+  .topbarAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-left: auto;
+  align-self: center;
+  padding: 0.7rem 1.15rem;
+  border-radius: 10px;
+  background: var(--gold-deep);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(201, 150, 31, 0.28);
+  transition: background var(--transition-base), transform var(--transition-base);
+}
+
+.topbarAction:hover {
+  background: #b5861a;
+  transform: translateY(-1px);
+}
+
+.rolePill {
     display: none;
   }
 

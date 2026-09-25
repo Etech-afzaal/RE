@@ -2,10 +2,11 @@
 
 import ClearableSearchInput from "@/components/ClearableSearchInput";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import AgentAvatar from "@/components/AgentAvatar";
+import AdSlot from "@/components/ads/AdSlot";
 import SiteHeader from "@/components/SiteHeader";
 import { useIsMobile } from "@/lib/useIsMobile";
 import { useLocationDetection } from "@/lib/useLocationDetection";
@@ -14,6 +15,8 @@ import { sanitizeSearchInput } from "@/lib/validators/common";
 import styles from "./CustomerHome.module.css";
 
 const DESKTOP_AGENT_PAGE_SIZE = 9;
+// The sponsored card is slotted in after this many agent cards.
+const GRID_AD_POSITION = 3;
 const MOBILE_AGENT_PAGE_SIZE = 10;
 const CUSTOMER_NAV = [
   { label: "Home", href: "/" },
@@ -580,6 +583,11 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
               </div>
             </div>
 
+            <AdSlot
+              placement="home_agents_top"
+              formats={{ desktop: "leaderboard_728x90", mobile: "mobile_banner_320x100" }}
+            />
+
             {filtered.length === 0 ? (
               <div className={styles.empty}>
                 {locationFilterActive && (detectedArea || noMatchArea) ? (
@@ -615,8 +623,17 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
             ) : (
               <>
                 <div id="agent-grid" className={styles.agentGrid}>
-                  {pageItems.map((agent) => (
-                    <AgentCard key={agent.id} agent={agent} />
+                  {pageItems.map((agent, index) => (
+                    <Fragment key={agent.id}>
+                      <AgentCard agent={agent} />
+                      {index === Math.min(GRID_AD_POSITION, pageItems.length) - 1 && (
+                        <AdSlot
+                          placement="home_agents_grid"
+                          formats="native_card_400x300"
+                          variant="card"
+                        />
+                      )}
+                    </Fragment>
                   ))}
                 </div>
                 {totalPages > 1 ? (

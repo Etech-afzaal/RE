@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useCompactDashboardHeader } from "@/lib/useCompactDashboardHeader";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Plus } from "lucide-react";
 import { signOut } from "next-auth/react";
 import LogoutButton from "@/components/LogoutButton";
 import {
@@ -119,6 +120,45 @@ const NAV = [
     ),
   },
   {
+    href: "/admin/dashboard/ads",
+    label: "Ads",
+    subtitle: "Paid/featured ads serve first; free ads fill slots when no paid ad is live.",
+    // Primary button shown in the top bar on the section's main page only.
+    action: { href: "/admin/dashboard/ads/new", label: "New ad" },
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M4 10v4a1 1 0 0 0 1 1h2l5 4V5L7 9H5a1 1 0 0 0-1 1Z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+      </svg>
+    ),
+  },
+  {
+    href: "/admin/dashboard/ad-formats",
+    label: "Ad Formats",
+    subtitle: "Sizes the site can request ads in, and how often each slot is filled.",
+    // ?new=1 opens the "New format" dialog on the page.
+    action: { href: "/admin/dashboard/ad-formats?new=1", label: "New format" },
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3.5" y="4" width="17" height="6" rx="1" fill="none" stroke="currentColor" strokeWidth="1.8" />
+        <rect x="3.5" y="13" width="7" height="7" rx="1" fill="none" stroke="currentColor" strokeWidth="1.8" />
+        <rect x="13.5" y="13" width="7" height="7" rx="1" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      </svg>
+    ),
+  },
+  {
     href: "/admin/dashboard/logs",
     label: "Logs",
     subtitle: "Audit trail of important actions across the platform.",
@@ -186,6 +226,7 @@ export default function AdminShell({ children }) {
   const activeItem = NAV.find((item) => isActive(pathname, item));
   const pageTitle = activeItem?.label || "Admin";
   const pageSubtitle = activeItem?.subtitle || "";
+  const pageAction = activeItem?.action && pathname === activeItem.href ? activeItem.action : null;
 
   return (
     <div className={styles.shell}>
@@ -352,6 +393,12 @@ export default function AdminShell({ children }) {
               ) : null}
             </div>
           </div>
+          {pageAction ? (
+            <Link href={pageAction.href} className={styles.topbarAction}>
+              <Plus size={18} strokeWidth={2.4} aria-hidden="true" />
+              {pageAction.label}
+            </Link>
+          ) : null}
           <div className={styles.topbarRight}>
             <span className={styles.rolePill}>Superadmin</span>
           </div>
