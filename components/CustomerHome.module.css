@@ -56,6 +56,12 @@
 }
 
 /* Hero — same width/radius language as HeroSlider on agent sites */
+/* Same width as the hero so the billboard lines up with it. */
+.heroAd {
+  width: min(1240px, calc(100% - 2rem));
+  margin: 0 auto;
+}
+
 .hero {
   position: relative;
   width: min(1240px, calc(100% - 2rem));

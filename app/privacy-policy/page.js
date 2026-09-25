@@ -1,5 +1,7 @@
 import Link from "next/link";
 import styles from "./page.module.css";
+import AdSlot from "@/components/ads/AdSlot";
+import { BANNER_FORMATS } from "@/components/ads/adFormats";
 
 export const metadata = {
   title: "Privacy Policy — Dhalahore Properties",
@@ -199,6 +201,8 @@ export default function PrivacyPolicyPage({ searchParams }) {
               <li>Office: 12 Garden Town, Lahore</li>
             </ul>
           </section>
+
+          <AdSlot placement="privacy_policy" formats={BANNER_FORMATS} spacing="section" />
 
           <p className={styles.backRow}>
             <Link href={backHref} className={styles.backLink}>

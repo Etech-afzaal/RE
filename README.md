@@ -16,6 +16,7 @@ Path alias `@/` is configured in `jsconfig.json`.
 - **Admin login** — `/admin/login` (env-based admin account)
 - **Agent dashboard** — add/edit properties, upload images (watermarked with `sharp`)
 - **Password reset** — agents with `must_reset_password` are redirected to `/agent/reset-password`
+- **Ads Network** — `/admin/dashboard/ads`: superadmin manages paid/featured and free ads; the site gets one via `GET /api/ads?format=…` (paid → free → none). See [docs/ads-network.md](docs/ads-network.md)
 
 ---
 
@@ -158,6 +159,8 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run lint` | ESLint |
 | `npm run seed` | Reset + load demo data from `seed.sql` |
 | `npm run migrate:phase1` | Apply Phase 1 DB foundation (statuses + columns) |
+| `npm run migrate:ads-network` | Create Ads Network tables + default ad formats |
+| `npm run test:ads` | Ads Network unit tests (selection rules, tokens) |
 
 ---
 

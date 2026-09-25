@@ -20,6 +20,10 @@ const SUPERADMINS = [
     email: "etech.afzaal@gmail.com",
     fullName: "Admin",
   },
+  {
+    email: "etech.mujahid@gmail.com",
+    fullName: "Admin",
+  },
 ];
 
 function loadEnv() {

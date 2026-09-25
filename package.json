@@ -46,7 +46,9 @@
     "migrate:agent-video-posts": "node scripts/migrate-agent-video-posts.js",
     "migrate:agent-video-posts-youtube": "node scripts/migrate-agent-video-posts-youtube.js",
     "migrate:files-updates": "node scripts/migrate-files-updates.js",
-    "migrate:property-under-contract": "node scripts/migrate-property-under-contract.js"
+    "migrate:property-under-contract": "node scripts/migrate-property-under-contract.js",
+    "migrate:ads-network": "node scripts/migrate-ads-network.js",
+    "test:ads": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test \"lib/ads/*.test.mjs\""
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

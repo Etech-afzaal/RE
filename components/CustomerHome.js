@@ -2,10 +2,12 @@
 
 import ClearableSearchInput from "@/components/ClearableSearchInput";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import AgentAvatar from "@/components/AgentAvatar";
+import AdSlot from "@/components/ads/AdSlot";
+import { BANNER_FORMATS, BILLBOARD_FORMATS, GRID_CARD_FORMAT } from "@/components/ads/adFormats";
 import SiteHeader from "@/components/SiteHeader";
 import { useIsMobile } from "@/lib/useIsMobile";
 import { useLocationDetection } from "@/lib/useLocationDetection";
@@ -14,6 +16,8 @@ import { sanitizeSearchInput } from "@/lib/validators/common";
 import styles from "./CustomerHome.module.css";
 
 const DESKTOP_AGENT_PAGE_SIZE = 9;
+// The sponsored card is slotted in after this many agent cards.
+const GRID_AD_POSITION = 3;
 const MOBILE_AGENT_PAGE_SIZE = 10;
 const CUSTOMER_NAV = [
   { label: "Home", href: "/" },
@@ -539,6 +543,14 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
         </div>
       </div>
 
+      {/* Top-of-page ad; the wrapper collapses to nothing when no ad is live. */}
+      <div className={styles.heroAd}>
+        <AdSlot
+          placement="home_above_hero"
+          formats={BILLBOARD_FORMATS}
+        />
+      </div>
+
       <section className={styles.hero} aria-label="Find agents">
         <div className={styles.heroMedia} aria-hidden="true">
           <Image
@@ -580,6 +592,11 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
               </div>
             </div>
 
+            <AdSlot
+              placement="home_agents_top"
+              formats={BANNER_FORMATS}
+            />
+
             {filtered.length === 0 ? (
               <div className={styles.empty}>
                 {locationFilterActive && (detectedArea || noMatchArea) ? (
@@ -615,8 +632,17 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
             ) : (
               <>
                 <div id="agent-grid" className={styles.agentGrid}>
-                  {pageItems.map((agent) => (
-                    <AgentCard key={agent.id} agent={agent} />
+                  {pageItems.map((agent, index) => (
+                    <Fragment key={agent.id}>
+                      <AgentCard agent={agent} />
+                      {index === Math.min(GRID_AD_POSITION, pageItems.length) - 1 && (
+                        <AdSlot
+                          placement="home_agents_grid"
+                          formats={GRID_CARD_FORMAT}
+                          variant="card"
+                        />
+                      )}
+                    </Fragment>
                   ))}
                 </div>
                 {totalPages > 1 ? (
