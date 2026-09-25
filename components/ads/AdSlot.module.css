@@ -52,6 +52,11 @@
   margin: 0 0 1.5rem;
 }
 
+/* spacing="section": room above and below when a slot sits between sections. */
+.spaceSection {
+  margin: 2rem 0;
+}
+
 .bannerImageLink {
   position: relative;
   display: block;

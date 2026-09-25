@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import AgentAvatar from "@/components/AgentAvatar";
 import AdSlot from "@/components/ads/AdSlot";
+import { BANNER_FORMATS, BILLBOARD_FORMATS, GRID_CARD_FORMAT } from "@/components/ads/adFormats";
 import SiteHeader from "@/components/SiteHeader";
 import { useIsMobile } from "@/lib/useIsMobile";
 import { useLocationDetection } from "@/lib/useLocationDetection";
@@ -546,7 +547,7 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
       <div className={styles.heroAd}>
         <AdSlot
           placement="home_above_hero"
-          formats={{ desktop: "billboard_970x250", mobile: "mobile_banner_320x100" }}
+          formats={BILLBOARD_FORMATS}
         />
       </div>
 
@@ -593,7 +594,7 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
 
             <AdSlot
               placement="home_agents_top"
-              formats={{ desktop: "leaderboard_728x90", mobile: "mobile_banner_320x100" }}
+              formats={BANNER_FORMATS}
             />
 
             {filtered.length === 0 ? (
@@ -637,7 +638,7 @@ export default function CustomerHome({ agents = [], areas = [], cities = [] }) {
                       {index === Math.min(GRID_AD_POSITION, pageItems.length) - 1 && (
                         <AdSlot
                           placement="home_agents_grid"
-                          formats="native_card_400x300"
+                          formats={GRID_CARD_FORMAT}
                           variant="card"
                         />
                       )}

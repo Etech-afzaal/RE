@@ -111,11 +111,25 @@ Then `POST /api/ads/impression` with `{"token": ad.impressionToken}` when it's s
 
 ### Slots already on the site
 
-| Page | Placement | Desktop format | Phone format (≤768px) |
+Format pairs come from `components/ads/adFormats.js` (`BANNER_FORMATS` = leaderboard on desktop,
+mobile banner on phones; `BILLBOARD_FORMATS` = billboard / mobile banner).
+
+| Page | Placement | Where | Formats |
 |---|---|---|---|
-| `/` above the hero | `home_above_hero` | `billboard_970x250` | `mobile_banner_320x100` |
-| `/` agents section, top | `home_agents_top` | `leaderboard_728x90` | `mobile_banner_320x100` |
-| `/` agents grid (after the 3rd agent) | `home_agents_grid` | `native_card_400x300` | `native_card_400x300` |
+| `/` | `home_above_hero` | Between the search bar and the hero | Billboard / Mobile banner |
+| `/` | `home_agents_top` | Top of the agents section | Leaderboard / Mobile banner |
+| `/` | `home_agents_grid` | Card in the agents grid, after the 3rd agent | Native card |
+| `/re/[handle]` (agent site) | `agent_site` | After the listings, before the trust stats | Leaderboard / Mobile banner |
+| `/re/[handle]/[property]` | `property_detail` | After the details + contact card, before the gallery | Leaderboard / Mobile banner |
+| `/re/[handle]/blogs/[slug]` | `blog_post` | After the post, before the contact section | Leaderboard / Mobile banner |
+| `/re/[handle]/videos/[slug]` | `video_post` | After the video, before the contact section | Leaderboard / Mobile banner |
+| `/re/[handle]/files-updates` | `files_updates` | After the updates, before the contact section | Leaderboard / Mobile banner |
+| `/become-an-agent` | `become_agent` | Before the closing call-to-action | Leaderboard / Mobile banner |
+| `/privacy-policy` | `privacy_policy` | End of the policy | Leaderboard / Mobile banner |
+| `/re/[handle]/dashboard/*` (agent portal) | `agent_dashboard` | Bottom of every dashboard page | Leaderboard / Mobile banner |
+
+No ads on: super admin pages, login / signup / password pages, and the legacy
+`/agent/dashboard` fallback. Each placement name shows up in the ad's "By placement" stats.
 
 An ad only appears in a slot that requests its format — e.g. a Billboard ad shows above the
 hero on desktop, while phones need a Mobile banner ad.

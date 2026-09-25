@@ -13,6 +13,8 @@ import { agentPhoneEntries } from "@/lib/agentContact";
 import { resolveAgentWhatsAppNumber, agentWebsiteWhatsAppMessage } from "@/lib/whatsapp";
 import { formatAddedDate } from "@/lib/agentPropertyListingHelpers";
 import styles from "./page.module.css";
+import AdSlot from "@/components/ads/AdSlot";
+import { BANNER_FORMATS } from "@/components/ads/adFormats";
 import "@/app/agent-public-theme.css";
 
 export const revalidate = 60;
@@ -124,6 +126,8 @@ export default async function BlogDetailPage({ params }) {
           ) : (
             <p className={styles.empty}>This article has no content yet.</p>
           )}
+
+          <AdSlot placement="blog_post" formats={BANNER_FORMATS} spacing="section" />
 
           <section id="contact" className={styles.contactSection}>
             <div className={styles.contactCard}>

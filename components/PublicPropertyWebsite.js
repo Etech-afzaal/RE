@@ -5,6 +5,8 @@ import { PUBLIC_SITE_LOGO_DIMENSIONS } from "@/components/publicSiteLogo";
 import SiteHeader from "@/components/SiteHeader";
 import HeroSlider from "@/components/HeroSlider";
 import AgentBrandProfile from "@/components/AgentBrandProfile/AgentBrandProfile";
+import AdSlot from "@/components/ads/AdSlot";
+import { BANNER_FORMATS } from "@/components/ads/adFormats";
 import HomeListings from "@/components/HomeListings";
 import TrustStats from "@/components/TrustStats";
 import LocationCarousel from "@/components/LocationCarousel";
@@ -152,6 +154,7 @@ export default function PublicPropertyWebsite({
 
       <main className={styles.main}>
         <div className={styles.container}>
+          <AdSlot placement="agent_site" formats={BANNER_FORMATS} spacing="section" />
           <TrustStats stats={stats} backgroundImage={trustBackground} />
 
           {locations.length > 0 ? (

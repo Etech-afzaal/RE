@@ -11,6 +11,10 @@ import styles from "./AdSlot.module.css";
  *   <AdSlot placement="home_agents_top"
  *           formats={{ desktop: "leaderboard_728x90", mobile: "mobile_banner_320x100" }} />
  *   <AdSlot placement="home_agents_grid" formats="native_card_400x300" variant="card" />
+ *   <AdSlot placement="blog_post" formats={BANNER_FORMATS} spacing="section" />
+ *
+ * Format pairs live in components/ads/adFormats.js.
+ * spacing="section" – adds room above and below (for slots between page sections).
  *
  * variant="banner" – a strip sized to the format (uploaded banners show as-is,
  *                    property ads become a compact photo + text banner).
@@ -21,6 +25,7 @@ export default function AdSlot({
   placement,
   variant = "banner",
   mobileMaxWidth = 768,
+  spacing = "default",
   className = "",
 }) {
   const format = useResponsiveFormat(formats, mobileMaxWidth);
@@ -29,7 +34,8 @@ export default function AdSlot({
   if (!ad) return null;
 
   const Body = variant === "card" ? AdCard : AdBanner;
-  return <Body ad={ad} innerRef={ref} className={className} />;
+  const spacingClass = spacing === "section" ? styles.spaceSection : "";
+  return <Body ad={ad} innerRef={ref} className={`${spacingClass} ${className}`.trim()} />;
 }
 
 // Waits until the viewport is known, so phones don't fetch a desktop ad first.

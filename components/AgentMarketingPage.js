@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, Building2, Clock3, Contact, GalleryHorizontalEnd, Globe2, House, Images, LayoutDashboard, MessageCircle, Play, ShieldCheck } from "lucide-react";
 import styles from "./AgentMarketingPage.module.css";
+import AdSlot from "@/components/ads/AdSlot";
+import { BANNER_FORMATS } from "@/components/ads/adFormats";
 
 function CustomDomainIcon({ size = 24, ...props }) {
   const renderedSize = Number(size) + 4;
@@ -122,6 +124,8 @@ export default function AgentMarketingPage() {
             ))}
           </div>
           </section>
+
+          <AdSlot placement="become_agent" formats={BANNER_FORMATS} spacing="section" />
 
           <section className={styles.closing} aria-labelledby="cta-heading">
             <h2 id="cta-heading">

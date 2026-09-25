@@ -14,6 +14,8 @@ import AgentWhatsAppFab from "@/components/AgentWhatsAppFab";
 import { agentPhoneEntries } from "@/lib/agentContact";
 import { resolveAgentWhatsAppNumber, agentWebsiteWhatsAppMessage } from "@/lib/whatsapp";
 import styles from "./page.module.css";
+import AdSlot from "@/components/ads/AdSlot";
+import { BANNER_FORMATS } from "@/components/ads/adFormats";
 import "@/app/agent-public-theme.css";
 
 export const revalidate = 60;
@@ -130,6 +132,8 @@ export default async function FilesUpdatesPage({ params }) {
           ) : (
             <p className={styles.empty}>This update has no content yet.</p>
           )}
+
+          <AdSlot placement="files_updates" formats={BANNER_FORMATS} spacing="section" />
 
           <section id="contact" className={styles.contactSection}>
             <div className={styles.contactCard}>
