@@ -41,7 +41,7 @@ import {
 } from "@/lib/propertyTaxonomy";
 import styles from "./page.module.css";
 import AdSlot from "@/components/ads/AdSlot";
-import { BANNER_FORMATS } from "@/components/ads/adFormats";
+import { BILLBOARD_FORMATS } from "@/components/ads/adFormats";
 import { publicPropertyDetails, publicPropertyInsight, apartmentCoveredAreaLabel } from "@/lib/publicPropertyData";
 import "@/app/agent-public-theme.css";
 
@@ -949,7 +949,7 @@ export default async function PropertyDetailPage({ params, searchParams }) {
           </aside>
         </section>
 
-        <AdSlot placement="property_detail" formats={BANNER_FORMATS} spacing="section" />
+        <AdSlot placement="property_detail" formats={BILLBOARD_FORMATS} spacing="section" />
 
         {/* Explore every space */}
         <GalleryCarousel slides={spaceSlides} title={property.title} />

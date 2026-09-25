@@ -12,7 +12,7 @@ import { useAgentSidebar } from "./AgentSidebarProvider";
 import { useCompactDashboardHeader } from "@/lib/useCompactDashboardHeader";
 import styles from "./AgentPortalShell.module.css";
 import AdSlot from "@/components/ads/AdSlot";
-import { BANNER_FORMATS } from "@/components/ads/adFormats";
+import { BILLBOARD_FORMATS } from "@/components/ads/adFormats";
 
 function navItems(base) {
   return [
@@ -576,7 +576,7 @@ export default function AgentPortalShell({
         <div aria-hidden="true" style={{ height: spacerHeight, flexShrink: 0 }} />
         <div className={styles.content}>
           {children}
-          <AdSlot placement="agent_dashboard" formats={BANNER_FORMATS} spacing="section" />
+          <AdSlot placement="agent_dashboard" formats={BILLBOARD_FORMATS} spacing="section" />
         </div>
       </div>
     </div>
