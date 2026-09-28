@@ -21,6 +21,7 @@ import {
   getPropertyViewMode,
   isCategoryEnabled,
   isFilesRatesNavEnabled,
+  isSearchAreasNavEnabled,
   normalizeWebsiteListingPreferences,
 } from "@/lib/websiteListingPreferences";
 import { formatAddedDate } from "@/lib/agentPropertyListingHelpers";
@@ -85,17 +86,26 @@ export default function PublicPropertyWebsite({
   const themeId = String(agent?.theme_id || "default");
   const themeStyle = resolveAgentThemeStyle(agent);
 
+  const searchAreasEnabled = isSearchAreasNavEnabled(listingPreferences);
+
   const baseNavLinks = (() => {
+    let links;
     if (viewMode === "flat") {
       // Flat view: one Properties link instead of Sale / Rent / Plots.
       // Keep Home and Search Areas; insert Properties after Home.
-      return AGENT_PUBLIC_NAV.filter((item) => !item.type).flatMap((item) =>
+      links = AGENT_PUBLIC_NAV.filter((item) => !item.type).flatMap((item) =>
         item.label === "Home"
           ? [item, { label: "Properties", href: "#properties" }]
           : [item],
       );
+    } else {
+      links = filterNavLinksByPreferences(AGENT_PUBLIC_NAV, listingPreferences);
     }
-    return filterNavLinksByPreferences(AGENT_PUBLIC_NAV, listingPreferences);
+    // Remove "Search Areas" when the agent has disabled it.
+    if (!searchAreasEnabled) {
+      links = links.filter((item) => item.label !== "Search Areas");
+    }
+    return links;
   })();
 
   const navLinks = (() => {
@@ -159,7 +169,7 @@ export default function PublicPropertyWebsite({
           <AdSlot placement="agent_site" formats={BILLBOARD_FORMATS} spacing="section" />
           <TrustStats stats={stats} backgroundImage={trustBackground} />
 
-          {locations.length > 0 ? (
+          {locations.length > 0 && searchAreasEnabled ? (
             <section id="areas" className={styles.section}>
               <div className={styles.sectionHeader}>
                 <div>
@@ -492,7 +502,7 @@ export default function PublicPropertyWebsite({
                   ) : null}
                 </>
               )}
-              {locations.length > 0 ? (
+              {locations.length > 0 && searchAreasEnabled ? (
                 <Link href="#areas">Search Areas</Link>
               ) : null}
               <Link href="#why-us">How It Works</Link>

@@ -9,6 +9,7 @@ import {
   filterNavLinksByPreferences,
   getPropertyViewMode,
   isFilesRatesNavEnabled,
+  isSearchAreasNavEnabled,
   normalizeWebsiteListingPreferences,
 } from "@/lib/websiteListingPreferences";
 import AgentWhatsAppFab from "@/components/AgentWhatsAppFab";
@@ -24,16 +25,23 @@ export const revalidate = 60;
 
 function buildAgentNavLinks({ agent, agentHomeHref, listingPreferences, includeFilesRates }) {
   const viewMode = getPropertyViewMode(listingPreferences);
+  const searchAreasEnabled = isSearchAreasNavEnabled(listingPreferences);
 
   const filteredNav = (() => {
+    let links;
     if (viewMode === "flat") {
-      return AGENT_PUBLIC_NAV.filter((item) => !item.type).flatMap((item) =>
+      links = AGENT_PUBLIC_NAV.filter((item) => !item.type).flatMap((item) =>
         item.label === "Home"
           ? [item, { label: "Properties", href: "#properties" }]
           : [item],
       );
+    } else {
+      links = filterNavLinksByPreferences(AGENT_PUBLIC_NAV, listingPreferences);
     }
-    return filterNavLinksByPreferences(AGENT_PUBLIC_NAV, listingPreferences);
+    if (!searchAreasEnabled) {
+      links = links.filter((item) => item.label !== "Search Areas");
+    }
+    return links;
   })();
 
   const navLinks = filteredNav.map((item) => {

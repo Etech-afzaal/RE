@@ -345,6 +345,14 @@ export default function AgentSettingsPage() {
     setPrefsSuccess("");
   }
 
+  function toggleSearchAreas(enabled) {
+    setPrefs((prev) => ({
+      ...prev,
+      show_search_areas: enabled,
+    }));
+    setPrefsSuccess("");
+  }
+
   async function saveListingPreferences(e) {
     e.preventDefault();
     setPrefsError("");
@@ -592,6 +600,19 @@ export default function AgentSettingsPage() {
                   </label>
                   <p className={ui.prefRadioHint} style={{ margin: "0.35rem 0 0 1.6rem" }}>
                     Show Files Rates in the public website navbar
+                  </p>
+                </div>
+                <div className={ui.prefGroup}>
+                  <label className={ui.prefParent}>
+                    <input
+                      type="checkbox"
+                      checked={prefs.show_search_areas !== false}
+                      onChange={(e) => toggleSearchAreas(e.target.checked)}
+                    />
+                    <span>Search Areas</span>
+                  </label>
+                  <p className={ui.prefRadioHint} style={{ margin: "0.35rem 0 0 1.6rem" }}>
+                    Show Search Areas in the navbar and the location section
                   </p>
                 </div>
               </div>
