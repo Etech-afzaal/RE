@@ -121,10 +121,11 @@ export default function AdsListPage() {
     }
   }
 
+  // Every size used by the loaded ads, for the size filter.
   const formats = useMemo(() => {
     const seen = new Map();
-    ads.forEach((ad) => seen.set(ad.format_code, ad));
-    return [...seen.values()];
+    ads.forEach((ad) => ad.creatives.forEach((size) => seen.set(size.format_code, size)));
+    return [...seen.values()].sort((a, b) => b.width * b.height - a.width * a.height);
   }, [ads]);
 
   const filtered = useMemo(() => {
@@ -133,7 +134,9 @@ export default function AdsListPage() {
       .filter((ad) => {
         if (tier !== "all" && ad.tier !== tier) return false;
         if (state !== "all" && ad.display_state !== state) return false;
-        if (formatCode !== "all" && ad.format_code !== formatCode) return false;
+        if (formatCode !== "all" && !ad.creatives.some((size) => size.format_code === formatCode)) {
+          return false;
+        }
         if (adType === "property" && !ad.property_id) return false;
         if (adType === "image" && ad.property_id) return false;
         if (!term) return true;
@@ -216,12 +219,12 @@ export default function AdsListPage() {
             className={styles.select}
             value={formatCode}
             onChange={(e) => setFormatCode(e.target.value)}
-            aria-label="Format"
+            aria-label="Size"
           >
-            <option value="all">All formats</option>
-            {formats.map((ad) => (
-              <option key={ad.format_code} value={ad.format_code}>
-                {ad.format_name} ({ad.format_width}×{ad.format_height})
+            <option value="all">All sizes</option>
+            {formats.map((size) => (
+              <option key={size.format_code} value={size.format_code}>
+                {size.format_name} ({size.width}×{size.height})
               </option>
             ))}
           </select>
@@ -306,7 +309,7 @@ export default function AdsListPage() {
                     <th>On</th>
                     <th>Ad</th>
                     <th>Tier</th>
-                    <th>Format</th>
+                    <th>Sizes</th>
                     <th>State</th>
                     <th>Schedule</th>
                     <th className={styles.center}>Priority</th>
@@ -399,7 +402,8 @@ function StatCard({ icon: Icon, value, label }) {
 function AdRow({ ad, busy, onStatus, onArchive }) {
   const isOn = ad.status === "active";
   const archived = ad.status === "archived";
-  const thumb = ad.image_url || ad.property_image;
+  const thumb = ad.creatives.find((size) => size.image_url)?.image_url || ad.property_image;
+  const hasImages = ad.creatives.some((size) => size.image_url);
 
   return (
     <tr>
@@ -433,7 +437,7 @@ function AdRow({ ad, busy, onStatus, onArchive }) {
               {ad.title}
             </Link>
             <span className={styles.sub}>
-              {ad.property_title || (ad.image_url ? "Image ad" : "No image yet")}
+              {ad.property_title || (hasImages ? "Image ad" : "No image yet")}
               {ad.advertiser_name ? ` · ${ad.advertiser_name}` : ""}
             </span>
           </div>
@@ -444,10 +448,17 @@ function AdRow({ ad, busy, onStatus, onArchive }) {
           {ad.tier === "paid" ? "Paid" : "Free"}
         </span>
       </td>
-      <td className={styles.nowrap}>
-        {ad.format_name}
-        <span className={styles.sub}>
-          {ad.format_width}×{ad.format_height}
+      <td>
+        <span className={styles.sizeList}>
+          {ad.creatives.map((size) => (
+            <span
+              key={size.format_id}
+              className={`${styles.sizeChip} ${size.format_is_active ? "" : styles.sizeChipOff}`}
+              title={`${size.format_name}${size.format_is_active ? "" : " (format turned off)"}`}
+            >
+              {size.width}×{size.height}
+            </span>
+          ))}
         </span>
       </td>
       <td>

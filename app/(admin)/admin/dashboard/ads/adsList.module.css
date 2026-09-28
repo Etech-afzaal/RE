@@ -312,6 +312,28 @@
   white-space: nowrap;
 }
 
+.sizeList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  max-width: 11rem;
+}
+
+.sizeChip {
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  background: var(--surface-sunken);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.sizeChipOff {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
 .pill {
   display: inline-block;
   padding: 0.28rem 0.6rem;

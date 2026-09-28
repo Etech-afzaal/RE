@@ -48,6 +48,7 @@
     "migrate:files-updates": "node scripts/migrate-files-updates.js",
     "migrate:property-under-contract": "node scripts/migrate-property-under-contract.js",
     "migrate:ads-network": "node scripts/migrate-ads-network.js",
+    "migrate:ad-variants": "node scripts/migrate-ad-variants.js",
     "test:ads": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test \"lib/ads/*.test.mjs\""
   },
   "dependencies": {
