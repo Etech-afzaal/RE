@@ -226,6 +226,23 @@ CREATE TABLE IF NOT EXISTS agent_files_updates (
 
 CREATE INDEX idx_agent_files_updates_status ON agent_files_updates(status);
 
+-- Tracks images embedded in an agent's Files Rates rich-content editor.
+-- Each upload via /api/files-updates/content-image is recorded here (mirrors
+-- how property images are tracked in property_images). files_update_id is
+-- nullable because content images may be added before the record is saved.
+CREATE TABLE IF NOT EXISTS agent_files_update_images (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  agent_id INT NOT NULL,
+  files_update_id INT NULL,
+  image_url VARCHAR(500) NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (agent_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (files_update_id) REFERENCES agent_files_updates(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_agent_files_update_images_agent ON agent_files_update_images(agent_id);
+CREATE INDEX idx_agent_files_update_images_record ON agent_files_update_images(files_update_id);
+
 -- ---------------------------------------------------------------
 -- Subagents & property marketing links (migrations 027–029)
 -- Subagents are an agent's team members. Each gets a unique tracked link per

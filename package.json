@@ -50,6 +50,7 @@
     "migrate:ads-network": "node scripts/migrate-ads-network.js",
     "migrate:ad-variants": "node scripts/migrate-ad-variants.js",
     "migrate:agent-website-theme": "node scripts/migrate-agent-website-theme.js",
+    "migrate:files-update-images": "node scripts/migrate-files-update-images.js",
     "test:ads": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test \"lib/ads/*.test.mjs\""
   },
   "dependencies": {
