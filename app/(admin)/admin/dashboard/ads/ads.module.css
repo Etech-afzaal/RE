@@ -440,37 +440,6 @@
   font-size: 0.95rem;
 }
 
-.tierChoice {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-md);
-}
-
-.tierOption {
-  display: flex;
-  gap: var(--space-md);
-  align-items: flex-start;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  cursor: pointer;
-  background: var(--surface);
-}
-
-.tierOption input {
-  width: auto;
-  margin-top: 4px;
-}
-
-.tierOptionActive {
-  border-color: var(--brass);
-  background: var(--brass-tint);
-}
-
-.tierOptionTitle {
-  font-weight: 700;
-}
-
 /* property picker */
 
 .pickerResults {
@@ -567,194 +536,7 @@
   object-fit: contain;
 }
 
-.fitWarning {
-  font-size: 0.82rem;
-  color: #92400e;
-}
-
-/* sizes & images */
-
-.presetGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: var(--space-sm);
-}
-
-.presetOption {
-  display: flex;
-  gap: var(--space-sm);
-  align-items: flex-start;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  padding: var(--space-md);
-  cursor: pointer;
-  background: var(--surface);
-}
-
-.presetOption input {
-  width: auto;
-  margin-top: 4px;
-}
-
-.presetOptionActive {
-  border-color: var(--brass);
-  background: var(--brass-tint);
-}
-
-.presetOptionDisabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.presetName {
-  display: block;
-  font-weight: 700;
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 6px;
-}
-
-.chip {
-  display: inline-flex;
-  gap: 4px;
-  align-items: baseline;
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  background: var(--surface-sunken);
-  color: var(--ink-soft);
-  font-size: 0.75rem;
-  white-space: nowrap;
-}
-
-.chip strong {
-  font-family: var(--font-mono);
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.sizeChecks {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: var(--space-sm);
-  margin-top: var(--space-sm);
-}
-
-.sizeCheck {
-  display: flex;
-  gap: var(--space-sm);
-  align-items: flex-start;
-  padding: var(--space-sm) var(--space-md);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.sizeCheck input {
-  width: auto;
-  margin-top: 3px;
-}
-
-.sizeCheckActive {
-  border-color: var(--gold);
-  background: var(--gold-tint);
-}
-
-.mainImage {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-md);
-  align-items: center;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  padding: var(--space-md);
-  background: var(--surface-secondary);
-}
-
-.mainThumb {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 128px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: var(--radius-sm);
-  background: var(--surface-sunken);
-  color: var(--muted);
-  font-size: 0.8rem;
-  flex-shrink: 0;
-}
-
-.mainInfo {
-  display: grid;
-  gap: var(--space-sm);
-  flex: 1;
-  min-width: 200px;
-}
-
-.fileButton {
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.fileButton input {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.fileButton:focus-within {
-  outline: 2px solid var(--brass);
-  outline-offset: 2px;
-}
-
-.sizeGrid {
-  min-width: 0; /* let the previews shrink instead of widening the form */
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
-  gap: var(--space-md);
-}
-
-.sizeCard {
-  display: grid;
-  /* minmax(0, …) so a wide preview can't stretch the card past its column */
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-sm);
-  align-content: start;
-  min-width: 0;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  padding: var(--space-md);
-  background: var(--surface);
-}
-
-.sizeCardHead {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-xs) var(--space-sm);
-}
-
-.sizeName {
-  font-weight: 700;
-}
-
-.sizeStatus {
-  padding: 2px var(--space-sm);
-  border-radius: var(--radius-full);
-  font-size: 0.72rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-/* Fills the card; the image inside keeps its shape and never grows past its real size. */
+/* Size previews (SizesPanel.js): fill the card; the image inside keeps its shape and never grows past its real size. */
 .sizePreview {
   display: block;
   width: 100%;
@@ -762,41 +544,11 @@
   box-sizing: border-box;
 }
 
-.fitToggle {
-  display: inline-flex;
-  justify-self: start;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-}
-
-.fitToggle button {
-  padding: 4px 12px;
-  border: 0;
-  border-radius: 0;
-  background: var(--surface);
-  color: var(--ink-soft);
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.fitToggle .fitToggleOn {
-  background: var(--ink);
-  color: var(--surface);
-}
-
-/* size chips in the list and detail pages */
-
-.sizeList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
 .previewPlaceholder {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   max-width: 100%;
   color: var(--muted);
   font-family: var(--font-mono);
@@ -848,81 +600,12 @@
   gap: 0.35rem;
 }
 
-/* ---------- required markers + checklist ---------- */
-
-.required {
-  color: var(--danger);
-  margin-left: 2px;
-}
-
-.checklistGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-lg);
-}
-
-.checklistHeading {
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-  margin-bottom: var(--space-sm);
-}
-
-.checklist {
-  list-style: none;
-  display: grid;
-  gap: var(--space-sm);
-}
-
-.checkItem {
-  display: flex;
-  gap: var(--space-sm);
-  align-items: flex-start;
-  font-size: 0.92rem;
-  color: var(--ink-soft);
-}
-
-.checkIcon {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 800;
-  border: 2px solid var(--line);
-  color: transparent;
-  margin-top: 1px;
-}
-
-.checkDone {
-  color: var(--ink);
-}
-
-.checkDone .checkIcon {
-  background: var(--success);
-  border-color: var(--success);
-  color: #fff;
-}
-
-.checkHint {
-  display: block;
-  color: var(--muted);
-  font-size: 0.8rem;
-}
-
 @media (max-width: 800px) {
-  .checklistGrid,
   .filters,
   .grid2,
   .grid3,
   .grid4,
-  .statGrid,
-  .tierChoice {
+  .statGrid {
     grid-template-columns: minmax(0, 1fr);
   }
 

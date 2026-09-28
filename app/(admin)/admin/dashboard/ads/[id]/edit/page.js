@@ -10,32 +10,37 @@ export default async function EditAdPage({ params, searchParams }) {
   const ad = await getAdById(params.id);
   if (!ad) notFound();
 
-  return (
-    <div className={styles.page}>
-      <div className={`${styles.shell} ${styles.narrow}`}>
-        <Link href={`/admin/dashboard/ads/${ad.id}`} className={styles.backLink}>
-          ← Back to ad
-        </Link>
-        <div className={styles.header}>
-          <div>
-            <p className={styles.kicker}>Ads network · #{ad.id}</p>
-            <h1 className={styles.title}>Edit “{ad.title}”</h1>
-            <p className={styles.subtitle}>
-              {ad.status === "active"
-                ? "This ad is ON. Changes go live as soon as you save."
-                : "This ad is OFF. Save, or save and turn it ON."}
-            </p>
-          </div>
-        </div>
-
-        {ad.status === "archived" ? (
+  if (ad.status === "archived") {
+    return (
+      <div className={styles.page}>
+        <div className={`${styles.shell} ${styles.narrow}`}>
+          <Link href={`/admin/dashboard/ads/${ad.id}`} className={styles.backLink}>
+            ← Back to ad
+          </Link>
+          <h1 className={styles.title}>Edit “{ad.title}”</h1>
           <div className={styles.warning}>
             Archived ads are read-only. Restore it from the ads list to edit.
           </div>
-        ) : (
-          <AdForm ad={ad} initialError={searchParams?.error || ""} />
-        )}
+        </div>
       </div>
+    );
+  }
+
+  return (
+    <div className={styles.page}>
+      <AdForm
+        ad={ad}
+        initialError={searchParams?.error || ""}
+        header={{
+          backHref: `/admin/dashboard/ads/${ad.id}`,
+          backLabel: "Back to ad",
+          title: `Edit “${ad.title}”`,
+          subtitle:
+            ad.status === "active"
+              ? "This ad is ON. Changes go live as soon as you save."
+              : "This ad is OFF. Save it, or save and turn it ON.",
+        }}
+      />
     </div>
   );
 }

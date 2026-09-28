@@ -1,12 +1,43 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  ArrowUpWideNarrow,
+  Banknote,
+  Building2,
+  CalendarClock,
+  CalendarDays,
+  Check,
+  ChevronDown,
+  Circle,
+  CircleCheck,
+  Crown,
+  Eye,
+  Gift,
+  House,
+  Images,
+  Link2,
+  ListChecks,
+  Megaphone,
+  MousePointerClick,
+  Phone,
+  Power,
+  Receipt,
+  Save,
+  Shuffle,
+  Type,
+  UserRound,
+  Wallet,
+} from "lucide-react";
 import { getFormatSet } from "@/lib/ads/formatSets";
 import AdsDialog from "./AdsDialog";
 import SizesPanel, { readImageFile, resolveSizes, sizeText } from "./SizesPanel";
 import { formatPrice, fromLocalInput, toLocalInput } from "./adUi";
 import styles from "./ads.module.css";
+import f from "./adForm.module.css";
 
 const EMPTY = {
   title: "",
@@ -77,7 +108,8 @@ async function send(url, options) {
   return data;
 }
 
-export default function AdForm({ ad = null, initialError = "" }) {
+// header: { backHref, backLabel, title, subtitle } — the page title row, with the save buttons.
+export default function AdForm({ ad = null, initialError = "", header = null }) {
   const router = useRouter();
   const isEdit = Boolean(ad);
   const [form, setForm] = useState(() => toForm(ad));
@@ -414,13 +446,40 @@ export default function AdForm({ ad = null, initialError = "" }) {
     router.refresh();
   }
 
-  const fieldError = (key) =>
-    fieldErrors[key] ? <p className={styles.fieldError}>{fieldErrors[key]}</p> : null;
-
   const defaultDestination = property?.url || "https://… or /some/page";
+  const canTurnOn = ad?.status !== "active";
+
+  // Save buttons, shown in the header and again under the checklist.
+  const actions = (withCancel) => (
+    <>
+      {withCancel && (
+        <button type="button" className={f.btnQuiet} onClick={() => router.back()} disabled={saving}>
+          Cancel
+        </button>
+      )}
+      <button type="submit" className={canTurnOn ? f.btnSecondary : f.btnPrimary} disabled={saving}>
+        <Save size={16} aria-hidden="true" />
+        {saving ? "Saving…" : isEdit ? "Save changes" : "Save as draft"}
+      </button>
+      {canTurnOn && (
+        <button type="button" className={f.btnPrimary} disabled={saving} onClick={() => trySubmit(true)}>
+          <Power size={16} aria-hidden="true" />
+          {saving ? "Saving…" : "Save & turn ON"}
+        </button>
+      )}
+    </>
+  );
+
+  const text = (key, props = {}) => ({
+    id: key,
+    value: form[key],
+    onChange: (e) => update(key, e.target.value),
+    ...props,
+  });
 
   return (
     <form
+      className={f.form}
       onSubmit={(e) => {
         e.preventDefault();
         trySubmit(false);
@@ -438,55 +497,52 @@ export default function AdForm({ ad = null, initialError = "" }) {
         />
       )}
 
-      {/* ------------------------------------------------ basics */}
-      <section className={styles.card}>
-        <h2 className={styles.cardTitle}>Ad type</h2>
-        <p className={styles.cardHint}>Who pays decides the priority on the customer site.</p>
-
-        <div className={styles.stack}>
-          <div className={styles.tierChoice} role="radiogroup" aria-label="Tier">
-            <TierOption
-              value="paid"
-              checked={form.tier === "paid"}
-              onChange={() => update("tier", "paid")}
-              title="Paid / Featured"
-              text="Always shown before free ads. Needs an end date (flat fee per period)."
-            />
-            <TierOption
-              value="free"
-              checked={form.tier === "free"}
-              onChange={() => update("tier", "free")}
-              title="Free"
-              text="House ads or free boosts. Shown only when no paid ad is live for that size."
-            />
+      {header && (
+        <header className={f.header}>
+          <div className={f.headerText}>
+            <Link href={header.backHref} className={f.back}>
+              <ArrowLeft size={16} aria-hidden="true" /> {header.backLabel}
+            </Link>
+            <h1 className={f.title}>{header.title}</h1>
+            <p className={f.subtitle}>{header.subtitle}</p>
           </div>
+          <div className={f.actions}>{actions(false)}</div>
+        </header>
+      )}
 
-          <div className={styles.grid2}>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="title">
-                Internal title
-                <Required />
-              </label>
-              <input
-                id="title"
-                value={form.title}
-                onChange={(e) => update("title", e.target.value)}
-                placeholder="e.g. DHA Phase 6 house — October feature"
-              />
-              <span className={styles.help}>Only admins see this.</span>
-              {fieldError("title")}
-            </div>
-          </div>
+      {/* ------------------------------------------------ ad type */}
+      <Section icon={Megaphone} title="Ad type" hint="Who pays decides the priority on the customer site.">
+        <div className={f.choiceGrid} role="radiogroup" aria-label="Ad type">
+          <ChoiceCard
+            icon={Crown}
+            name="tier"
+            checked={form.tier === "paid"}
+            onChange={() => update("tier", "paid")}
+            title="Paid / Featured"
+            text="Always shown before free ads. Needs an end date (flat fee per period)."
+          />
+          <ChoiceCard
+            icon={Gift}
+            name="tier"
+            checked={form.tier === "free"}
+            onChange={() => update("tier", "free")}
+            title="Free"
+            text="House ads or free boosts. Shown only when no paid ad is live for that size."
+          />
         </div>
-      </section>
+        <div className={f.half}>
+          <Field id="title" label="Internal title" required help="Only admins see this." error={fieldErrors.title}>
+            <input {...text("title")} placeholder="e.g. DHA Phase 6 house — October feature" />
+          </Field>
+        </div>
+      </Section>
 
       {/* ------------------------------------------------ sizes */}
-      <section className={styles.card}>
-        <h2 className={styles.cardTitle}>Sizes &amp; images</h2>
-        <p className={styles.cardHint}>
-          One ad, every screen. Pick the sizes, upload one main image and each size is cropped
-          from it automatically. Give any size its own design with a custom image.
-        </p>
+      <Section
+        icon={Images}
+        title="Sizes & images"
+        hint="One ad, every screen. Pick the sizes, upload one main image and each size is cropped from it automatically."
+      >
         <SizesPanel
           formats={formats}
           sizeIds={sizeIds}
@@ -505,322 +561,191 @@ export default function AdForm({ ad = null, initialError = "" }) {
           }}
           onUndoRemoveMain={() => setRemoveMain(false)}
           onSizeEdit={editSize}
-          error={fieldError("format_ids")}
+          error={fieldErrors.format_ids && <p className={f.error}>{fieldErrors.format_ids}</p>}
         />
-      </section>
+      </Section>
 
       {/* ------------------------------------------------ content */}
-      <section className={styles.card}>
-        <h2 className={styles.cardTitle}>Content</h2>
-        <p className={styles.cardHint}>
-          The text and link are shared by every size. Linking a property also lets sizes
-          without an image use the property&apos;s photo.
-        </p>
-
-        <div className={styles.stack}>
+      <Section
+        icon={Type}
+        title="Content"
+        hint="Text and link are shared by every size. Linking a property also lets sizes without an image use its photo."
+      >
+        <div>
           <PropertyPicker value={property} onChange={setProperty} />
-          {fieldError("property_id")}
-
-          <div className={styles.grid2}>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="headline">
-                Headline <span className={styles.optional}>(optional)</span>
-              </label>
-              <input
-                id="headline"
-                value={form.headline}
-                maxLength={120}
-                onChange={(e) => update("headline", e.target.value)}
-                placeholder={property?.title || "Shown on native/text layouts"}
-              />
-              {fieldError("headline")}
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="cta_text">
-                Button text <span className={styles.optional}>(optional)</span>
-              </label>
-              <input
-                id="cta_text"
-                value={form.cta_text}
-                maxLength={40}
-                onChange={(e) => update("cta_text", e.target.value)}
-                placeholder={property ? "View property" : "Learn more"}
-              />
-              {fieldError("cta_text")}
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="alt_text">
-                Image alt text <span className={styles.optional}>(accessibility)</span>
-              </label>
-              <input
-                id="alt_text"
-                value={form.alt_text}
-                maxLength={255}
-                onChange={(e) => update("alt_text", e.target.value)}
-                placeholder="Describe the banner for screen readers"
-              />
-              {fieldError("alt_text")}
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="click_url">
-                Click destination <span className={styles.optional}>(optional)</span>
-              </label>
-              <input
-                id="click_url"
-                value={form.click_url}
-                onChange={(e) => update("click_url", e.target.value)}
-                placeholder={defaultDestination}
-              />
-              <span className={styles.help}>
-                Leave empty to open the linked property. Site paths or https:// links only.
-              </span>
-              {fieldError("click_url")}
-            </div>
-          </div>
+          {fieldErrors.property_id && <p className={f.error}>{fieldErrors.property_id}</p>}
         </div>
-      </section>
+
+        <div className={f.cols2}>
+          <Field id="headline" label="Headline" note="optional" count={form.headline.length} max={120} error={fieldErrors.headline}>
+            <input {...text("headline")} maxLength={120} placeholder={property?.title || "Shown on native/text layouts"} />
+          </Field>
+          <Field id="cta_text" label="Button text" note="optional" count={form.cta_text.length} max={40} error={fieldErrors.cta_text}>
+            <input {...text("cta_text")} maxLength={40} placeholder={property ? "View property" : "Learn more"} />
+          </Field>
+          <Field id="alt_text" label="Image alt text" note="accessibility" count={form.alt_text.length} max={255} error={fieldErrors.alt_text}>
+            <input {...text("alt_text")} maxLength={255} placeholder="Describe the banner for screen readers" />
+          </Field>
+          <Field
+            id="click_url"
+            label="Click destination"
+            note="optional"
+            help="Leave empty to open the linked property. Site paths or https:// links only."
+            error={fieldErrors.click_url}
+          >
+            <IconInput icon={Link2}>
+              <input {...text("click_url")} placeholder={defaultDestination} />
+            </IconInput>
+          </Field>
+        </div>
+      </Section>
 
       {/* ------------------------------------------------ schedule */}
-      <section className={styles.card}>
-        <h2 className={styles.cardTitle}>Schedule &amp; delivery</h2>
-        <p className={styles.cardHint}>
-          When the ad can appear, and how often it&apos;s picked. Paid always beats free; then
-          the higher priority wins; ads with equal priority take turns by weight. Empty limits
-          mean unlimited.
-        </p>
-
-        <div className={styles.stack}>
-          <div className={styles.grid2}>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="start_at">
-                Starts
-                <Required />
-              </label>
-              <input
-                id="start_at"
-                type="datetime-local"
-                value={form.start_at}
-                onChange={(e) => update("start_at", e.target.value)}
-                aria-describedby="start_at-help"
-              />
-              <span id="start_at-help" className={styles.help}>
-                Not shown before this time. A future date shows as Scheduled and goes live on its
-                own.
-              </span>
-              {fieldError("start_at")}
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="end_at">
-                Ends
-                {isPaid && <Required />}{" "}
-                <span className={styles.optional}>
-                  {isPaid ? "(required for paid ads)" : "(optional)"}
-                </span>
-              </label>
-              <input
-                id="end_at"
-                type="datetime-local"
-                value={form.end_at}
-                onChange={(e) => update("end_at", e.target.value)}
-                aria-describedby="end_at-help"
-              />
-              <span id="end_at-help" className={styles.help}>
-                {isPaid
-                  ? "Stops showing after this time (Expired). Paid ads cover a fixed period."
-                  : "Stops showing after this time (Expired). Leave empty to run with no end."}
-              </span>
-              <div className={styles.buttonRow} style={{ gap: 4 }}>
+      <Section
+        icon={CalendarClock}
+        title="Schedule & delivery"
+        hint="When the ad can appear, and how often it's picked."
+      >
+        <Group title="When it runs">
+          <div className={f.cols2}>
+            <Field
+              id="start_at"
+              label="Starts"
+              required
+              help="Not shown before this time. A future date shows as Scheduled and goes live on its own."
+              error={fieldErrors.start_at}
+            >
+              <IconInput icon={CalendarDays}>
+                <input {...text("start_at")} type="datetime-local" />
+              </IconInput>
+            </Field>
+            <Field
+              id="end_at"
+              label="Ends"
+              required={isPaid}
+              note={isPaid ? "required for paid ads" : "optional"}
+              help={
+                isPaid
+                  ? "Stops showing after this time. Paid ads cover a fixed period."
+                  : "Stops showing after this time. Leave empty to run with no end."
+              }
+              error={fieldErrors.end_at}
+            >
+              <IconInput icon={CalendarDays}>
+                <input {...text("end_at")} type="datetime-local" />
+              </IconInput>
+              <div className={f.quickPicks}>
                 {[7, 15, 30, 90].map((days) => (
-                  <button
-                    key={days}
-                    type="button"
-                    className={styles.buttonGhost}
-                    onClick={() => setEndInDays(days)}
-                  >
+                  <button key={days} type="button" className={f.quickPick} onClick={() => setEndInDays(days)}>
                     +{days} days
                   </button>
                 ))}
               </div>
-              {fieldError("end_at")}
-            </div>
+            </Field>
           </div>
+        </Group>
 
-          <div className={styles.grid2}>
-            <NumberField
-              id="priority"
-              label="Priority (1–10)"
-              value={form.priority}
-              onChange={update}
-              min={1}
-              max={10}
-              help="Within the same tier, the highest number always wins. Use 9–10 for the top spot."
-              error={fieldError("priority")}
-            />
-            <NumberField
-              id="weight"
-              label="Rotation weight (1–1000)"
-              value={form.weight}
-              onChange={update}
-              min={1}
-              max={1000}
-              help="Only between ads with the same priority: they take turns by weight (200 vs 100 ≈ 67% / 33%)."
-              error={fieldError("weight")}
-            />
+        <Group
+          title="Rotation"
+          hint="Paid always beats free; then the higher priority wins; equal priorities take turns by weight."
+        >
+          <div className={f.cols2}>
+            <Field id="priority" label="Priority" note="1–10" help="Highest number wins within the tier. Use 9–10 for the top spot." error={fieldErrors.priority}>
+              <IconInput icon={ArrowUpWideNarrow}>
+                <input {...text("priority")} type="number" min={1} max={10} step={1} />
+              </IconInput>
+            </Field>
+            <Field id="weight" label="Rotation weight" note="1–1000" help="Share among equal priorities: 200 vs 100 ≈ 67% / 33%." error={fieldErrors.weight}>
+              <IconInput icon={Shuffle}>
+                <input {...text("weight")} type="number" min={1} max={1000} step={1} />
+              </IconInput>
+            </Field>
           </div>
+        </Group>
 
-          <div className={styles.grid2}>
-            <NumberField
-              id="max_impressions"
-              label="Max impressions"
-              value={form.max_impressions}
-              onChange={update}
-              placeholder="Unlimited"
-              help="Total views for the whole campaign. A view counts when the ad is half on screen for 1 second."
-              error={fieldError("max_impressions")}
-            />
-            <NumberField
-              id="max_clicks"
-              label="Max clicks"
-              value={form.max_clicks}
-              onChange={update}
-              placeholder="Unlimited"
-              help="Total clicks for the whole campaign. The ad stops when this is reached."
-              error={fieldError("max_clicks")}
-            />
-            <NumberField
-              id="daily_impression_cap"
-              label="Impressions / day"
-              value={form.daily_impression_cap}
-              onChange={update}
-              placeholder="Unlimited"
-              help="Spreads the campaign over days. Pauses for the rest of the day, resumes tomorrow (Pakistan time)."
-              error={fieldError("daily_impression_cap")}
-            />
-            <NumberField
-              id="viewer_cap_24h"
-              label="Per visitor / 24h"
-              value={form.viewer_cap_24h}
-              onChange={update}
-              placeholder="Unlimited"
-              help="Max times one visitor sees this ad in 24 hours. After that they get the next ad."
-              error={fieldError("viewer_cap_24h")}
-            />
+        <Group title="Limits" hint="Empty means unlimited. All sizes count together.">
+          <div className={f.cols4}>
+            <Field id="max_impressions" label="Max impressions" help="Views for the whole campaign (half on screen for 1s)." error={fieldErrors.max_impressions}>
+              <IconInput icon={Eye}>
+                <input {...text("max_impressions")} type="number" min={1} step={1} placeholder="Unlimited" />
+              </IconInput>
+            </Field>
+            <Field id="max_clicks" label="Max clicks" help="Clicks for the whole campaign." error={fieldErrors.max_clicks}>
+              <IconInput icon={MousePointerClick}>
+                <input {...text("max_clicks")} type="number" min={1} step={1} placeholder="Unlimited" />
+              </IconInput>
+            </Field>
+            <Field id="daily_impression_cap" label="Impressions / day" help="Pauses for the rest of the day (Pakistan time)." error={fieldErrors.daily_impression_cap}>
+              <IconInput icon={CalendarClock}>
+                <input {...text("daily_impression_cap")} type="number" min={1} step={1} placeholder="Unlimited" />
+              </IconInput>
+            </Field>
+            <Field id="viewer_cap_24h" label="Per visitor / 24h" help="After this a visitor gets the next ad." error={fieldErrors.viewer_cap_24h}>
+              <IconInput icon={UserRound}>
+                <input {...text("viewer_cap_24h")} type="number" min={1} step={1} placeholder="Unlimited" />
+              </IconInput>
+            </Field>
           </div>
-        </div>
-      </section>
+        </Group>
+      </Section>
 
       {/* ------------------------------------------------ advertiser */}
-      <section className={styles.card}>
-        <h2 className={styles.cardTitle}>
-          {form.tier === "paid" ? "Advertiser & payment" : "Advertiser"}
-        </h2>
-        <p className={styles.cardHint}>
-          For your records only. Payments are handled manually — nothing here charges anyone.
-        </p>
+      <Section
+        icon={Wallet}
+        title={isPaid ? "Advertiser & payment" : "Advertiser"}
+        hint="For your records only. Payments are handled manually — nothing here charges anyone."
+      >
+        <div className={f.cols2}>
+          <Field id="advertiser_name" label="Advertiser" note="optional">
+            <IconInput icon={Building2}>
+              <input {...text("advertiser_name")} placeholder={property?.agent_name || "Agent, developer, bank…"} />
+            </IconInput>
+          </Field>
+          <Field id="advertiser_contact" label="Contact" note="optional">
+            <IconInput icon={Phone}>
+              <input {...text("advertiser_contact")} placeholder="Phone or email" />
+            </IconInput>
+          </Field>
+          {isPaid && (
+            <>
+              <Field id="amount_paid" label="Amount paid (PKR)" note="optional" error={fieldErrors.amount_paid}>
+                <IconInput icon={Banknote}>
+                  <input {...text("amount_paid")} type="number" min={0} step="0.01" placeholder="0" />
+                </IconInput>
+              </Field>
+              <Field id="payment_ref" label="Payment reference" note="optional">
+                <IconInput icon={Receipt}>
+                  <input {...text("payment_ref")} placeholder="Receipt / transaction no." />
+                </IconInput>
+              </Field>
+            </>
+          )}
+        </div>
+        <Field id="notes" label="Notes" note="optional">
+          <textarea id="notes" rows={3} value={form.notes} onChange={(e) => update("notes", e.target.value)} />
+        </Field>
+      </Section>
 
-        <div className={styles.stack}>
-          <div className={styles.grid2}>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="advertiser_name">
-                Advertiser <span className={styles.optional}>(optional)</span>
-              </label>
-              <input
-                id="advertiser_name"
-                value={form.advertiser_name}
-                onChange={(e) => update("advertiser_name", e.target.value)}
-                placeholder={property?.agent_name || "Agent, developer, bank…"}
-              />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="advertiser_contact">
-                Contact <span className={styles.optional}>(optional)</span>
-              </label>
-              <input
-                id="advertiser_contact"
-                value={form.advertiser_contact}
-                onChange={(e) => update("advertiser_contact", e.target.value)}
-                placeholder="Phone or email"
-              />
-            </div>
-            {form.tier === "paid" && (
-              <>
-                <div className={styles.field}>
-                  <label className={styles.label} htmlFor="amount_paid">
-                    Amount paid (PKR) <span className={styles.optional}>(optional)</span>
-                  </label>
-                  <input
-                    id="amount_paid"
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={form.amount_paid}
-                    onChange={(e) => update("amount_paid", e.target.value)}
-                  />
-                  {fieldError("amount_paid")}
-                </div>
-                <div className={styles.field}>
-                  <label className={styles.label} htmlFor="payment_ref">
-                    Payment reference <span className={styles.optional}>(optional)</span>
-                  </label>
-                  <input
-                    id="payment_ref"
-                    value={form.payment_ref}
-                    onChange={(e) => update("payment_ref", e.target.value)}
-                    placeholder="Receipt / transaction no."
-                  />
-                </div>
-              </>
-            )}
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="notes">
-              Notes <span className={styles.optional}>(optional)</span>
-            </label>
-            <textarea
-              id="notes"
-              rows={3}
-              value={form.notes}
-              onChange={(e) => update("notes", e.target.value)}
-            />
+      {/* ------------------------------------------------ checklist */}
+      <section className={f.section} aria-label="Checklist">
+        <div className={f.sectionHead}>
+          <span className={f.sectionIcon}>
+            <ListChecks size={20} aria-hidden="true" />
+          </span>
+          <div>
+            <h2 className={f.sectionTitle}>Checklist</h2>
+            <p className={f.sectionHint}>
+              Fields marked <span className={f.required}>*</span> are required. Items tick
+              themselves off as you fill the form.
+            </p>
           </div>
         </div>
-      </section>
-
-      <section className={styles.card} aria-label="Checklist">
-        <h2 className={styles.cardTitle}>Checklist</h2>
-        <p className={styles.cardHint}>
-          Fields marked <Required /> are required. Items tick themselves off as you fill the
-          form.
-        </p>
-        <div className={styles.checklistGrid}>
+        <div className={f.checklistGrid}>
           <Checklist heading="Required to save" checks={saveChecks} />
           <Checklist heading="Required to turn ON" checks={turnOnChecks} />
         </div>
+        <div className={f.footer}>{actions(true)}</div>
       </section>
-
-      <div className={styles.buttonRow} style={{ justifyContent: "flex-end" }}>
-        <button
-          type="button"
-          className={styles.buttonSecondary}
-          onClick={() => router.back()}
-          disabled={saving}
-        >
-          Cancel
-        </button>
-        <button type="submit" className={styles.buttonSecondary} disabled={saving}>
-          {saving ? "Saving…" : isEdit ? "Save changes" : "Save as draft (OFF)"}
-        </button>
-        {ad?.status !== "active" && (
-          <button
-            type="button"
-            className={styles.button}
-            disabled={saving}
-            onClick={() => trySubmit(true)}
-          >
-            {saving ? "Saving…" : "Save & turn ON"}
-          </button>
-        )}
-      </div>
     </form>
   );
 }
@@ -834,86 +759,118 @@ function readImageUrl(url) {
   });
 }
 
-function Required() {
+function Section({ icon: Icon, title, hint, children }) {
   return (
-    <span className={styles.required} aria-label="required" title="Required">
-      *
-    </span>
+    <section className={f.section}>
+      <div className={f.sectionHead}>
+        <span className={f.sectionIcon}>
+          <Icon size={20} aria-hidden="true" />
+        </span>
+        <div>
+          <h2 className={f.sectionTitle}>{title}</h2>
+          {hint && <p className={f.sectionHint}>{hint}</p>}
+        </div>
+      </div>
+      <div className={f.sectionBody}>{children}</div>
+    </section>
   );
 }
 
-function Checklist({ heading, checks }) {
-  const doneCount = checks.filter((check) => check.done).length;
+function Group({ title, hint, children }) {
   return (
-    <div>
-      <p className={styles.checklistHeading}>
-        {heading} · {doneCount}/{checks.length}
-      </p>
-      <ul className={styles.checklist}>
-        {checks.map((check) => (
-          <li
-            key={check.key}
-            className={`${styles.checkItem} ${check.done ? styles.checkDone : ""}`}
-          >
-            <span className={styles.checkIcon} aria-hidden="true">
-              ✓
-            </span>
-            <span>
-              {check.label}
-              <span className="sr-only">{check.done ? " (done)" : " (not done)"}</span>
-              {!check.done && check.hint && <span className={styles.checkHint}>{check.hint}</span>}
-            </span>
-          </li>
-        ))}
-      </ul>
+    <div className={f.group}>
+      <div className={f.groupHead}>
+        <span className={f.groupTitle}>{title}</span>
+        {hint && <span className={f.groupHint}>{hint}</span>}
+      </div>
+      {children}
     </div>
   );
 }
 
-function TierOption({ value, checked, onChange, title, text }) {
+// Label row (required marker, note, character counter) + input + help + error.
+function Field({ id, label, required = false, note, count, max, help, error, children }) {
   return (
-    <label className={`${styles.tierOption} ${checked ? styles.tierOptionActive : ""}`}>
-      <input
-        type="radio"
-        name="tier"
-        value={value}
-        checked={checked}
-        onChange={onChange}
-        aria-label={title}
-      />
-      <span>
-        <span className={styles.tierOptionTitle}>{title}</span>
-        <span className={styles.help} style={{ display: "block" }}>
-          {text}
-        </span>
+    <div className={f.field}>
+      <div className={f.labelRow}>
+        <label className={f.label} htmlFor={id}>
+          {label}
+          {required && (
+            <span className={f.required} aria-label="required" title="Required">
+              *
+            </span>
+          )}
+          {note && <span className={f.note}> ({note})</span>}
+        </label>
+        {max != null && (
+          <span className={`${f.counter} ${count >= max ? f.counterFull : ""}`} aria-live="polite">
+            {count}/{max}
+          </span>
+        )}
+      </div>
+      {children}
+      {help && <span className={f.help}>{help}</span>}
+      {error && <p className={f.error}>{error}</p>}
+    </div>
+  );
+}
+
+function IconInput({ icon: Icon, children }) {
+  return (
+    <div className={f.withIcon}>
+      <Icon size={16} aria-hidden="true" />
+      {children}
+    </div>
+  );
+}
+
+function ChoiceCard({ icon: Icon, name, checked, onChange, title, text }) {
+  return (
+    <label className={`${f.choice} ${checked ? f.choiceActive : ""}`}>
+      <input type="radio" name={name} checked={checked} onChange={onChange} />
+      <span className={f.choiceIcon}>
+        <Icon size={22} aria-hidden="true" />
+      </span>
+      <span className={f.choiceBody}>
+        <span className={f.choiceTitle}>{title}</span>
+        <span className={f.choiceText}>{text}</span>
+      </span>
+      <span className={f.marker} aria-hidden="true">
+        {checked && <Check size={13} strokeWidth={3.5} />}
       </span>
     </label>
   );
 }
 
-function NumberField({ id, label, value, onChange, min = 1, max, placeholder, help, error }) {
+function Checklist({ heading, checks }) {
+  const doneCount = checks.filter((check) => check.done).length;
+  const complete = doneCount === checks.length;
   return (
-    <div className={styles.field}>
-      <label className={styles.label} htmlFor={id}>
-        {label}
-      </label>
-      <input
-        id={id}
-        type="number"
-        min={min}
-        max={max}
-        step={1}
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(id, e.target.value)}
-        aria-describedby={help ? `${id}-help` : undefined}
-      />
-      {help && (
-        <span id={`${id}-help`} className={styles.help}>
-          {help}
+    <div>
+      <p className={f.checklistHead}>
+        <span>{heading}</span>
+        <span>
+          {doneCount}/{checks.length}
         </span>
-      )}
-      {error}
+      </p>
+      <div className={f.progress} aria-hidden="true">
+        <div
+          className={`${f.progressBar} ${complete ? f.progressDone : ""}`}
+          style={{ width: `${checks.length ? (doneCount / checks.length) * 100 : 100}%` }}
+        />
+      </div>
+      <ul className={f.checklist}>
+        {checks.map((check) => (
+          <li key={check.key} className={`${f.checkItem} ${check.done ? f.checkDone : ""}`}>
+            {check.done ? <CircleCheck size={18} aria-hidden="true" /> : <Circle size={18} aria-hidden="true" />}
+            <span>
+              {check.label}
+              <span className="sr-only">{check.done ? " (done)" : " (not done)"}</span>
+              {!check.done && check.hint && <span className={f.checkHint}>{check.hint}</span>}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -947,7 +904,7 @@ function PropertyPicker({ value, onChange }) {
     const inactive = !value.is_public;
     return (
       <div className={styles.field}>
-        <span className={styles.label}>Linked property</span>
+        <span className={f.label}>Linked property</span>
         <div className={styles.propertyCard}>
           {value.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -990,8 +947,8 @@ function PropertyPicker({ value, onChange }) {
 
   return (
     <div className={styles.field}>
-      <label className={styles.label} htmlFor="property-search">
-        Linked property <span className={styles.optional}>(optional)</span>
+      <label className={f.label} htmlFor="property-search">
+        Linked property <span className={f.note}>(optional)</span>
       </label>
       {open ? (
         <>
@@ -1056,8 +1013,10 @@ function PropertyPicker({ value, onChange }) {
         </>
       ) : (
         <div>
-          <button type="button" className={styles.buttonSecondary} onClick={() => setOpen(true)}>
-            Choose a property…
+          <button type="button" className={f.pickerButton} onClick={() => setOpen(true)}>
+            <House size={16} aria-hidden="true" />
+            <span>Choose a property…</span>
+            <ChevronDown size={16} aria-hidden="true" />
           </button>
         </div>
       )}
