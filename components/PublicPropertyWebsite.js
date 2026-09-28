@@ -24,6 +24,7 @@ import {
   normalizeWebsiteListingPreferences,
 } from "@/lib/websiteListingPreferences";
 import { formatAddedDate } from "@/lib/agentPropertyListingHelpers";
+import { resolveAgentThemeStyle } from "@/lib/agentTheme";
 import styles from "@/app/page.module.css";
 import "@/app/agent-public-theme.css";
 
@@ -81,6 +82,8 @@ export default function PublicPropertyWebsite({
   const viewMode = getPropertyViewMode(listingPreferences);
   const agentHandle =
     agent?.username || agent?.estate_name || "";
+  const themeId = String(agent?.theme_id || "default");
+  const themeStyle = resolveAgentThemeStyle(agent);
 
   const baseNavLinks = (() => {
     if (viewMode === "flat") {
@@ -128,7 +131,7 @@ export default function PublicPropertyWebsite({
     agent?.office_address || "12 Garden Town, Lahore";
 
   return (
-    <div className={`agent-public-theme ${styles.wrapper}`}>
+    <div className={`agent-public-theme ${styles.wrapper}`} data-theme={themeId} style={themeStyle}>
       <SiteHeader
         navLinks={navLinks}
         ctaLabel="Sell Your Property"

@@ -16,6 +16,16 @@ import {
   FLAT_PAGE_SIZES,
   DEFAULT_FLAT_PAGE_SIZE,
 } from "@/lib/websiteListingPreferences";
+import {
+  THEMES_FOR_UI,
+  CUSTOM_THEME_ID,
+  DEFAULT_THEME_ID,
+  CUSTOM_PALETTE_FIELDS,
+  normalizeCustomPalette,
+  paletteToCssVars,
+  normalizeHex,
+} from "@/lib/agentTheme";
+import { DEFAULT_THEME, getThemeDefinition } from "@/themes";
 
 export default function AgentSettingsPage() {
   const params = useParams();
@@ -36,6 +46,31 @@ export default function AgentSettingsPage() {
   const [prefsSaving, setPrefsSaving] = useState(false);
   const [prefsError, setPrefsError] = useState("");
   const [prefsSuccess, setPrefsSuccess] = useState("");
+
+  // Website theme state
+  const [themeLoading, setThemeLoading] = useState(true);
+  const [themeSaving, setThemeSaving] = useState(false);
+  const [themeError, setThemeError] = useState("");
+  const [themeSuccess, setThemeSuccess] = useState("");
+  const [themeId, setThemeId] = useState(DEFAULT_THEME_ID);
+  const [savedThemeId, setSavedThemeId] = useState(DEFAULT_THEME_ID);
+  const [draftCustom, setDraftCustom] = useState(defaultCustomPalette);
+
+  function defaultCustomPalette() {
+    const p = DEFAULT_THEME.palette;
+    return {
+      primary: p.primary,
+      secondary: p.secondary,
+      accent: p.accent,
+      background: p.background,
+      surface: p.surface,
+      text: p.text,
+    };
+  }
+
+  function themeFieldLabel(field) {
+    return field.charAt(0).toUpperCase() + field.slice(1);
+  }
 
   const viewMode = PROPERTY_VIEW_MODES.includes(prefs.property_view_mode)
     ? prefs.property_view_mode
@@ -103,6 +138,126 @@ export default function AgentSettingsPage() {
       loadPreferences();
     }
   }, [status, loadPreferences]);
+
+  const loadTheme = useCallback(async () => {
+    setThemeLoading(true);
+    setThemeError("");
+    try {
+      const res = await fetch("/api/agent/theme");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setThemeError(data.error || "Could not load theme.");
+        return;
+      }
+      const summary = data.theme || {};
+      const id = summary.theme_id || DEFAULT_THEME_ID;
+      setThemeId(id);
+      setSavedThemeId(id);
+      if (summary.custom_palette) {
+        setDraftCustom(summary.custom_palette);
+      } else {
+        setDraftCustom(defaultCustomPalette());
+      }
+    } catch {
+      setThemeError("Network error. Please try again.");
+    } finally {
+      setThemeLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      loadTheme();
+    }
+  }, [status, loadTheme]);
+
+  function updateDraftColor(field, value) {
+    setDraftCustom((prev) => ({ ...prev, [field]: value }));
+    setThemeSuccess("");
+  }
+
+  async function selectTheme(id) {
+    setThemeError("");
+    setThemeSuccess("");
+    if (id === CUSTOM_THEME_ID) {
+      setThemeId(CUSTOM_THEME_ID);
+      return; // custom palette is saved via the editor's Save button
+    }
+    if (id === savedThemeId) {
+      setThemeId(id);
+      return;
+    }
+    setThemeId(id);
+    setThemeSaving(true);
+    try {
+      const res = await fetch("/api/agent/theme", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme_id: id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setThemeError(data.error || "Could not save theme.");
+        setThemeId(savedThemeId);
+        return;
+      }
+      setSavedThemeId(id);
+      setThemeSuccess("Theme saved. Your website has been updated.");
+    } catch {
+      setThemeError("Network error. Please try again.");
+      setThemeId(savedThemeId);
+    } finally {
+      setThemeSaving(false);
+    }
+  }
+
+  async function saveCustomTheme() {
+    setThemeError("");
+    setThemeSuccess("");
+    const normalized = {};
+    for (const field of CUSTOM_PALETTE_FIELDS) {
+      const hex = normalizeHex(draftCustom[field]);
+      if (!hex) {
+        setThemeError(`Invalid color for ${themeFieldLabel(field)}.`);
+        return;
+      }
+      normalized[field] = hex;
+    }
+    setThemeSaving(true);
+    try {
+      const res = await fetch("/api/agent/theme", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          theme_id: CUSTOM_THEME_ID,
+          theme_settings: normalized,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setThemeError(data.error || "Could not save theme.");
+        return;
+      }
+      setDraftCustom(normalized);
+      setSavedThemeId(CUSTOM_THEME_ID);
+      setThemeSuccess("Custom theme saved. Your website has been updated.");
+    } catch {
+      setThemeError("Network error. Please try again.");
+    } finally {
+      setThemeSaving(false);
+    }
+  }
+
+  const previewPalette = (() => {
+    if (themeId === CUSTOM_THEME_ID) {
+      return normalizeCustomPalette(draftCustom) || DEFAULT_THEME.palette;
+    }
+    if (themeId === DEFAULT_THEME_ID) return DEFAULT_THEME.palette;
+    const definition = getThemeDefinition(themeId);
+    return definition ? definition.palette : DEFAULT_THEME.palette;
+  })();
+
+  const previewStyle = paletteToCssVars(previewPalette);
 
   if (status === "loading" || status === "unauthenticated") {
     return (
@@ -453,6 +608,137 @@ export default function AgentSettingsPage() {
             </button>
           </div>
         </form>
+
+        <section className={ui.formCard}>
+          <h2 className={ui.panelTitle} style={{ marginBottom: "0.35rem" }}>
+            Website Theme
+          </h2>
+          <p className={ui.settingsLead}>
+            Choose how your public website and property pages look. Classic
+            Luxury matches your current site.
+          </p>
+          {themeError ? <p className={ui.error}>{themeError}</p> : null}
+          {themeSuccess ? <p className={ui.success}>{themeSuccess}</p> : null}
+
+          {themeLoading ? (
+            <p className={ui.settingsMuted}>Loading theme…</p>
+          ) : (
+            <>
+              <div
+                className={ui.themeGrid}
+                role="radiogroup"
+                aria-label="Website theme"
+              >
+                {THEMES_FOR_UI.map((theme) => {
+                  const active = themeId === theme.id;
+                  const isSavingThis = themeSaving && active;
+                  return (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      className={`${ui.themeCard}${
+                        active ? ` ${ui.themeCardActive}` : ""
+                      }`}
+                      onClick={() => selectTheme(theme.id)}
+                      disabled={themeSaving}
+                    >
+                      {active ? (
+                        <span className={ui.themeSelected}>
+                          <Check size={12} strokeWidth={3} />
+                          {isSavingThis ? "Saving" : "Selected"}
+                        </span>
+                      ) : null}
+                      <span className={ui.themeSwatches} aria-hidden="true">
+                        {theme.swatches.map((color, i) => (
+                          <span
+                            key={i}
+                            className={ui.themeSwatch}
+                            style={{ background: color }}
+                          />
+                        ))}
+                      </span>
+                      <span className={ui.themeCardName}>{theme.name}</span>
+                      <span className={ui.themeCardDesc}>{theme.description}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {themeId === CUSTOM_THEME_ID ? (
+                <div className={ui.themeEditor}>
+                  <h3 className={ui.themeEditorTitle}>Custom palette</h3>
+                  <p className={ui.themeEditorHint}>
+                    Pick your own colors. Changes apply when you save.
+                  </p>
+                  <div className={ui.themeColorGrid}>
+                    {CUSTOM_PALETTE_FIELDS.map((field) => (
+                      <label key={field} className={ui.themeColorField}>
+                        <span className={ui.themeColorLabel}>
+                          {themeFieldLabel(field)} Color
+                        </span>
+                        <span className={ui.themeColorRow}>
+                          <input
+                            type="color"
+                            className={ui.themeColorInput}
+                            value={normalizeHex(draftCustom[field]) || "#000000"}
+                            onChange={(e) =>
+                              updateDraftColor(field, e.target.value)
+                            }
+                            aria-label={`${themeFieldLabel(field)} color picker`}
+                          />
+                          <input
+                            type="text"
+                            className={ui.themeHexInput}
+                            value={draftCustom[field] || ""}
+                            onChange={(e) =>
+                              updateDraftColor(field, e.target.value)
+                            }
+                            placeholder="#000000"
+                            maxLength={7}
+                            aria-label={`${themeFieldLabel(field)} hex code`}
+                          />
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className={ui.themeEditorActions}>
+                    <button
+                      type="button"
+                      className={ui.btnPrimary}
+                      onClick={saveCustomTheme}
+                      disabled={themeSaving}
+                    >
+                      {themeSaving ? "Saving…" : "Save Theme"}
+                    </button>
+                    <span className={ui.settingsMuted} style={{ margin: 0 }}>
+                      Preview updates live as you pick colors.
+                    </span>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className={ui.themePreview} style={previewStyle}>
+                <p className={ui.themePreviewKicker}>Preview</p>
+                <h4 className={ui.themePreviewTitle}>Your website heading</h4>
+                <div className={ui.themePreviewCard}>
+                  <span className={ui.themePreviewCardLabel}>Property price</span>
+                  <span className={ui.themePreviewCardValue}>PKR 2.5 Cr</span>
+                </div>
+                <div className={ui.themePreviewActions}>
+                  <span className={ui.themePreviewBtn}>Contact Agent</span>
+                  <span
+                    className={`${ui.themePreviewBtn} ${ui.themePreviewBtnSecondary}`}
+                  >
+                    View Details
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
+        </section>
       </div>
     </AgentPortalShell>
   );

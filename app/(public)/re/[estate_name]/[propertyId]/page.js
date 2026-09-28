@@ -43,6 +43,7 @@ import styles from "./page.module.css";
 import AdSlot from "@/components/ads/AdSlot";
 import { BILLBOARD_FORMATS } from "@/components/ads/adFormats";
 import { publicPropertyDetails, publicPropertyInsight, apartmentCoveredAreaLabel } from "@/lib/publicPropertyData";
+import { resolveAgentThemeStyle } from "@/lib/agentTheme";
 import "@/app/agent-public-theme.css";
 
 const formatPrice = (price, currency) =>
@@ -585,6 +586,9 @@ export default async function PropertyDetailPage({ params, searchParams }) {
   );
   const agentProfileHref = `/re/${encodeURIComponent(agentHandle)}`;
 
+  const themeId = String(agent.theme_id || "default");
+  const themeStyle = resolveAgentThemeStyle(agent);
+
   // Agent-edited marketing sections take priority. Fields that were never set
   // (existing properties) fall back to the existing generated content; a saved
   // empty array intentionally hides the section.
@@ -644,7 +648,7 @@ export default async function PropertyDetailPage({ params, searchParams }) {
   }));
 
   return (
-    <div className={`agent-public-theme ${styles.page}`}>
+    <div className={`agent-public-theme ${styles.page}`} data-theme={themeId} style={themeStyle}>
       {trackingRef ? (
         <PropertyReferralTracker
           refCode={trackingRef}

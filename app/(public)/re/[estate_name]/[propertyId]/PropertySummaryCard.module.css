@@ -6,7 +6,7 @@
   flex-direction: column;
   gap: 0;
   padding: 1.35rem;
-  background: #fff;
+  background: var(--surface, #fff);
   border: 1px solid rgba(26, 26, 26, 0.06);
   border-radius: 20px;
   box-shadow: var(--shadow-md);

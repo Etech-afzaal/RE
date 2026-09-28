@@ -48,6 +48,8 @@ CREATE TABLE IF NOT EXISTS users (
   office_address VARCHAR(500) NULL,                -- Company branding
   social_links VARCHAR(1000) NULL,                 -- Company branding (URLs)
   website_listing_preferences JSON NULL,           -- Agent public website category visibility
+  theme_id VARCHAR(30) NOT NULL DEFAULT 'default',  -- Agent public website theme (default = current look)
+  theme_settings JSON NULL,                        -- Custom palette colors (only when theme_id = 'custom')
   password_hash VARCHAR(255) NOT NULL,
   user_type ENUM('superadmin','agent') NOT NULL DEFAULT 'agent',
   must_reset_password BOOLEAN DEFAULT TRUE,

@@ -13,6 +13,7 @@ import { agentPhoneEntries } from "@/lib/agentContact";
 import { resolveAgentWhatsAppNumber, agentWebsiteWhatsAppMessage } from "@/lib/whatsapp";
 import { formatAddedDate } from "@/lib/agentPropertyListingHelpers";
 import { sanitizeRichHtml } from "@/lib/sanitizeHtml";
+import { resolveAgentThemeStyle } from "@/lib/agentTheme";
 import styles from "./page.module.css";
 import AdSlot from "@/components/ads/AdSlot";
 import { BANNER_FORMATS } from "@/components/ads/adFormats";
@@ -82,8 +83,11 @@ export default async function BlogDetailPage({ params }) {
 
   const contentHtml = blogContentHtml(blog.content);
 
+  const themeId = String(agent.theme_id || "default");
+  const themeStyle = resolveAgentThemeStyle(agent);
+
   return (
-    <div className={`agent-public-theme ${styles.wrapper}`}>
+    <div className={`agent-public-theme ${styles.wrapper}`} data-theme={themeId} style={themeStyle}>
       <SiteHeader
         navLinks={[]}
         ctaLabel="Contact"

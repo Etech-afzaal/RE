@@ -5,7 +5,7 @@
 
 .card {
   padding: 2rem 1.85rem;
-  background: #fff;
+  background: var(--surface, #fff);
   border: 1px solid rgba(26, 26, 26, 0.08);
   border-radius: var(--radius-xl, 28px);
   box-shadow: var(--shadow-md, 0 18px 40px rgba(26, 26, 26, 0.05));
@@ -195,7 +195,7 @@
   padding: 0.35rem 1.15rem 0.35rem 1.25rem;
   display: grid;
   width: 100%;
-  background: #fff;
+  background: var(--surface, #fff);
   border: 1px solid rgba(26, 26, 26, 0.06);
   border-left: 3px solid var(--gold, #f2bb46);
   border-radius: 14px;

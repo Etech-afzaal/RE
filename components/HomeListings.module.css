@@ -28,7 +28,7 @@
   align-items: center;
   padding: 0.9rem;
   margin: 0;
-  background: #fff;
+  background: var(--surface, #fff);
   border: 1px solid color-mix(in srgb, var(--gold) 28%, transparent);
   border-radius: 18px;
   box-shadow:
@@ -241,7 +241,7 @@
   padding: 0 0.8rem;
   border: 1px solid rgba(26, 26, 26, 0.1);
   border-radius: 999px;
-  background: #fff;
+  background: var(--surface, #fff);
   color: #1a1a1a;
   font-weight: 700;
   cursor: pointer;
@@ -261,13 +261,13 @@
 .pageButtonActive {
   border-color: var(--gold);
   background: var(--gold);
-  color: #111111;
+  color: var(--agent-black, #111111);
 }
 
 .card {
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--surface, #fff);
   border-radius: 20px;
   overflow: hidden;
   text-decoration: none;
@@ -457,7 +457,7 @@
   border-radius: 18px;
   border: 1px dashed color-mix(in srgb, var(--gold) 45%, transparent);
   color: #737373;
-  background: #fff;
+  background: var(--surface, #fff);
 }
 
 .empty a {
