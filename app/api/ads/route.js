@@ -5,7 +5,9 @@ import { BOT_PATTERN, getAd } from "@/lib/ads/serve";
 import { placementSchema } from "@/lib/ads/validation";
 
 // Public "Get Ad" endpoint for the customer site.
-//   GET /api/ads?format=leaderboard_728x90&placement=home_top&exclude=4,9
+//   GET /api/ads?format=leaderboard_728x90&also=mobile_banner_320x100&placement=home_top&exclude=4,9
+//   format = the size for the current screen; also = other sizes the slot
+//   may switch to (returned in ad.variants when the ad has them)
 //   → { ad: {...} }  paid/featured ad, else a free ad
 //   → { ad: null }   nothing eligible — hide the slot
 // See docs/ads-network.md for the full response shape.
@@ -14,8 +16,19 @@ export const dynamic = "force-dynamic";
 
 const VIEWER_COOKIE = "ad_vid";
 
+const FORMAT_CODE = /^[a-z0-9_]{2,50}$/;
+
 const paramsSchema = z.object({
-  format: z.string().regex(/^[a-z0-9_]{2,50}$/, "format must be an ad format code"),
+  format: z.string().regex(FORMAT_CODE, "format must be an ad format code"),
+  also: z
+    .string()
+    .optional()
+    .transform((value) =>
+      (value || "")
+        .split(",")
+        .filter((code) => FORMAT_CODE.test(code))
+        .slice(0, 5),
+    ),
   placement: placementSchema,
   exclude: z
     .string()
@@ -33,6 +46,7 @@ export async function GET(req) {
   const search = req.nextUrl.searchParams;
   const parsed = paramsSchema.safeParse({
     format: search.get("format") ?? "",
+    also: search.get("also") ?? undefined,
     placement: search.get("placement") ?? undefined,
     exclude: search.get("exclude") ?? undefined,
   });

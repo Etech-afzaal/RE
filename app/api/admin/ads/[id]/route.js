@@ -8,6 +8,7 @@ import {
   setAdStatus,
   updateAd,
 } from "@/lib/ads/queries";
+import { generateSizes, removeCreativeFiles } from "@/lib/ads/images";
 import { adInputSchema, fieldErrors, firstError } from "@/lib/ads/validation";
 
 export async function GET(req, { params }) {
@@ -43,24 +44,20 @@ export async function PUT(req, { params }) {
     );
   }
 
-  // An uploaded image was sized for the old format, so it can't carry over.
-  if (existing.image_url && parsed.data.format_id !== existing.format_id) {
-    return NextResponse.json(
-      {
-        error: "Remove the uploaded image before changing the format — it was sized for the current format.",
-        fields: { format_id: "Remove the image first." },
-      },
-      { status: 400 },
-    );
-  }
-
   const referenceError = await checkAdReferences(parsed.data);
   if (referenceError) {
     return NextResponse.json({ error: referenceError }, { status: 400 });
   }
 
-  await updateAd(existing.id, parsed.data);
+  // Removed sizes lose their images; new sizes are made from the main image.
+  const { added, removed } = await updateAd(existing.id, parsed.data);
+  await removeCreativeFiles(removed);
   let ad = await getAdById(existing.id);
+  const imageWarnings = [];
+  if (added.length > 0 && ad.master_image_url) {
+    imageWarnings.push(...(await generateSizes(ad, added)));
+    ad = await getAdById(ad.id);
+  }
 
   // A live ad must stay servable. If the edit broke that (e.g. linked a sold
   // property), keep the edit but switch the ad OFF and say why.
@@ -74,7 +71,7 @@ export async function PUT(req, { params }) {
     }
   }
 
-  return NextResponse.json({ success: true, ad, warning });
+  return NextResponse.json({ success: true, ad, warning, imageWarnings });
 }
 
 // Ads are archived, not deleted, so their stats and payment notes are kept.

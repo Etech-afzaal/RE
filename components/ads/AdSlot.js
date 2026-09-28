@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useAd } from "@/lib/ads/client";
+import {
+  SCREEN_BREAKPOINTS,
+  formatCodes,
+  formatForScreen,
+  screenForWidth,
+} from "@/lib/ads/formatSets";
 import { formatPropertyPrice } from "@/lib/formatPrice";
 import styles from "./AdSlot.module.css";
 
@@ -9,11 +15,16 @@ import styles from "./AdSlot.module.css";
  * Drop-in ad slot for the customer site. Renders nothing when there is no ad.
  *
  *   <AdSlot placement="home_agents_top"
- *           formats={{ desktop: "leaderboard_728x90", mobile: "mobile_banner_320x100" }} />
+ *           formats={{ desktop: "leaderboard_728x90", tablet: "leaderboard_728x90",
+ *                      mobile: "mobile_banner_320x100" }} />
  *   <AdSlot placement="home_agents_grid" formats="native_card_400x300" variant="card" />
  *   <AdSlot placement="blog_post" formats={BANNER_FORMATS} spacing="section" />
  *
- * Format pairs live in components/ads/adFormats.js.
+ * Size sets live in components/ads/adFormats.js. The slot shows the size for
+ * the screen: desktop ≥1024px, tablet 768–1023px, mobile ≤767px (a missing
+ * tablet size uses desktop). Ads compete only if they have that size. On
+ * resize/rotation the same ad switches to its other size without a new
+ * request or a second impression.
  * spacing="section" – adds room above and below (for slots between page sections).
  *
  * variant="banner" – a strip sized to the format (uploaded banners show as-is,
@@ -24,12 +35,17 @@ export default function AdSlot({
   formats,
   placement,
   variant = "banner",
-  mobileMaxWidth = 768,
+  mobileMaxWidth = SCREEN_BREAKPOINTS.mobileMax,
+  tabletMaxWidth = SCREEN_BREAKPOINTS.tabletMax,
   spacing = "default",
   className = "",
 }) {
-  const format = useResponsiveFormat(formats, mobileMaxWidth);
-  const { ad, ref } = useAd(format, { placement, enabled: Boolean(format) });
+  const format = useResponsiveFormat(formats, mobileMaxWidth, tabletMaxWidth);
+  const { ad, ref } = useAd(format, {
+    placement,
+    also: formatCodes(formats),
+    enabled: Boolean(format),
+  });
 
   if (!ad) return null;
 
@@ -39,18 +55,22 @@ export default function AdSlot({
 }
 
 // Waits until the viewport is known, so phones don't fetch a desktop ad first.
-function useResponsiveFormat(formats, mobileMaxWidth) {
+function useResponsiveFormat(formats, mobileMax, tabletMax) {
   const [format, setFormat] = useState(null);
-  const desktop = typeof formats === "string" ? formats : formats?.desktop;
-  const mobile = typeof formats === "string" ? formats : formats?.mobile || desktop;
+  const single = typeof formats === "string" ? formats : null;
+  const desktop = single || formats?.desktop;
+  const tablet = single || formats?.tablet;
+  const mobile = single || formats?.mobile;
 
   useEffect(() => {
-    const query = window.matchMedia(`(max-width: ${mobileMaxWidth}px)`);
-    const sync = () => setFormat(query.matches ? mobile : desktop);
+    const sizes = { desktop, tablet, mobile };
+    const queries = [mobileMax, tabletMax].map((max) => window.matchMedia(`(max-width: ${max}px)`));
+    const sync = () =>
+      setFormat(formatForScreen(sizes, screenForWidth(window.innerWidth, { mobileMax, tabletMax })));
     sync();
-    query.addEventListener("change", sync);
-    return () => query.removeEventListener("change", sync);
-  }, [desktop, mobile, mobileMaxWidth]);
+    queries.forEach((query) => query.addEventListener("change", sync));
+    return () => queries.forEach((query) => query.removeEventListener("change", sync));
+  }, [desktop, tablet, mobile, mobileMax, tabletMax]);
 
   return format;
 }

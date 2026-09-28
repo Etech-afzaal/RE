@@ -2,14 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getFormatSet } from "@/lib/ads/formatSets";
 import AdsDialog from "./AdsDialog";
+import SizesPanel, { readImageFile, resolveSizes, sizeText } from "./SizesPanel";
 import { formatPrice, fromLocalInput, toLocalInput } from "./adUi";
 import styles from "./ads.module.css";
 
 const EMPTY = {
   title: "",
   tier: "paid",
-  format_id: "",
   headline: "",
   alt_text: "",
   cta_text: "",
@@ -58,11 +59,15 @@ function propertyFromAd(ad) {
 }
 
 async function sendJson(url, method, body) {
-  const res = await fetch(url, {
+  return send(url, {
     method,
     headers: { "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
   });
+}
+
+async function send(url, options) {
+  const res = await fetch(url, options);
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const error = new Error(data.error || "Request failed.");
@@ -78,11 +83,14 @@ export default function AdForm({ ad = null, initialError = "" }) {
   const [form, setForm] = useState(() => toForm(ad));
   const [property, setProperty] = useState(() => propertyFromAd(ad));
   const [formats, setFormats] = useState([]);
-  const [file, setFile] = useState(null);
-  const [filePreview, setFilePreview] = useState(null);
-  const [fileSize, setFileSize] = useState(null); // natural { width, height } of the picked file
-  const [fit, setFit] = useState("cover"); // how the server fits it: "cover" | "contain"
-  const [removeImage, setRemoveImage] = useState(false);
+  const [sizeIds, setSizeIds] = useState(() => (ad?.creatives || []).map((c) => c.format_id));
+  const [showCustomSizes, setShowCustomSizes] = useState(false);
+  // A newly picked main image { file, preview, dims }, or null.
+  const [newMain, setNewMain] = useState(null);
+  const [removeMain, setRemoveMain] = useState(false);
+  const [savedMainDims, setSavedMainDims] = useState(null);
+  // Per-size changes: { [formatId]: { file, preview, dims, fit, dropCustom } }.
+  const [sizeEdits, setSizeEdits] = useState({});
   // Every error is shown in a modal: { title, message, items?, action? }.
   const [dialog, setDialog] = useState(() =>
     initialError ? { title: "Ad saved as a draft (OFF)", message: initialError } : null,
@@ -93,7 +101,16 @@ export default function AdForm({ ad = null, initialError = "" }) {
   useEffect(() => {
     fetch("/api/admin/ad-formats")
       .then((res) => res.json())
-      .then((data) => setFormats(data.formats || []))
+      .then((data) => {
+        const list = data.formats || [];
+        setFormats(list);
+        // New ads start with the banner set (desktop, tablet and mobile).
+        if (!ad) {
+          const codes = Object.values(getFormatSet("banner").screens);
+          const ids = list.filter((f) => f.is_active && codes.includes(f.code)).map((f) => f.id);
+          setSizeIds((current) => (current.length > 0 ? current : ids));
+        }
+      })
       .catch(() =>
         setDialog({
           title: "Couldn't load ad formats",
@@ -102,55 +119,70 @@ export default function AdForm({ ad = null, initialError = "" }) {
       );
   }, []);
 
-  const format = useMemo(
-    () => formats.find((item) => String(item.id) === String(form.format_id)) || null,
-    [formats, form.format_id],
-  );
-
-  const currentImage = removeImage ? null : ad?.image_url || null;
-  const lockFormat = Boolean(ad?.image_url && !removeImage);
-
-  // Read the picked file's size so the form can explain how it will be fitted.
-  // Any image is accepted — the server resizes it to the format (see image route).
+  // Natural size of the saved main image, for the per-size shape warnings.
   useEffect(() => {
-    if (!file) {
-      setFilePreview(null);
-      setFileSize(null);
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    setFilePreview(url);
-    const img = new window.Image();
-    img.onload = () => setFileSize({ width: img.naturalWidth, height: img.naturalHeight });
-    img.src = url;
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
+    if (!ad?.master_image_url) return;
+    readImageUrl(ad.master_image_url).then(setSavedMainDims);
+  }, [ad?.master_image_url]);
 
-  const fitInfo = useMemo(() => {
-    if (!fileSize || !format) return null;
-    const ratioOff =
-      Math.abs(fileSize.width / fileSize.height - format.width / format.height) /
-      (format.width / format.height);
-    const shapeMatches = ratioOff <= 0.02;
-    const enlarged =
-      fit === "contain" && !shapeMatches
-        ? fileSize.width < format.width && fileSize.height < format.height
-        : fileSize.width < format.width || fileSize.height < format.height;
-    return { shapeMatches, enlarged };
-  }, [fileSize, format, fit]);
+  // Free the preview URLs of picked files when they're replaced.
+  useEffect(() => () => newMain && URL.revokeObjectURL(newMain.preview), [newMain]);
+
+  const main = newMain
+    ? { src: newMain.preview, dims: newMain.dims, isNew: true, removed: false }
+    : ad?.master_image_url && !removeMain
+      ? { src: ad.master_image_url, dims: savedMainDims, isNew: false, removed: false }
+      : { src: null, dims: null, isNew: false, removed: Boolean(ad?.master_image_url && removeMain) };
 
   const isPaid = form.tier === "paid";
   const startMs = form.start_at ? new Date(form.start_at).getTime() : NaN;
   const endMs = form.end_at ? new Date(form.end_at).getTime() : null;
   const propertyUsable =
     Boolean(property) && property.is_public !== false && property.agent_is_live !== false;
-  const hasBanner = Boolean(file) || Boolean(currentImage);
   const hasPropertyPhoto = propertyUsable && Boolean(property.image_url);
+
+  const sizeViews = useMemo(
+    () =>
+      resolveSizes({
+        formats,
+        sizeIds,
+        creatives: ad?.creatives,
+        sizeEdits,
+        main,
+        propertyPhoto: hasPropertyPhoto ? property.image_url : null,
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [formats, sizeIds, ad?.creatives, sizeEdits, main.src, main.dims, main.isNew, hasPropertyPhoto, property?.image_url],
+  );
+  const liveSizes = sizeViews.filter((view) => view.format.is_active);
+  const missingSizes = liveSizes.filter((view) => view.kind === "missing");
+
+  function editSize(formatId, patch) {
+    if (patch.file) {
+      readImageFile(patch.file).then((picked) =>
+        setSizeEdits((current) => ({
+          ...current,
+          [formatId]: { ...current[formatId], ...patch, ...picked },
+        })),
+      );
+      return;
+    }
+    setSizeEdits((current) => {
+      const next = { ...current[formatId], ...patch };
+      if (patch.file === null) Object.assign(next, { preview: null, dims: null });
+      return { ...current, [formatId]: next };
+    });
+  }
+
+  function changeSizes(ids) {
+    setSizeIds(ids);
+    setFieldErrors((current) => ({ ...current, format_ids: undefined }));
+  }
 
   // Needed for any save (mirrors the server's validation).
   const saveChecks = [
     { key: "title", label: "Internal title", done: form.title.trim().length > 0 },
-    { key: "format_id", label: "Format & size", done: Boolean(form.format_id) },
+    { key: "format_ids", label: "At least one size", done: sizeIds.length > 0 },
     { key: "start_at", label: "Start date", done: Number.isFinite(startMs) },
     isPaid
       ? {
@@ -169,16 +201,21 @@ export default function AdForm({ ad = null, initialError = "" }) {
   const turnOnChecks = [
     {
       key: "image",
-      label: "An image: upload a banner, or link a property that has photos",
-      hint: propertyUsable && !property.image_url ? "The linked property has no photos." : null,
-      done: hasBanner || hasPropertyPhoto,
+      label: "Every size has an image (main image, custom image, or a property with photos)",
+      hint:
+        missingSizes.length > 0
+          ? `Missing: ${missingSizes.map((view) => sizeText(view.format)).join(", ")}.`
+          : propertyUsable && !property.image_url
+            ? "The linked property has no photos."
+            : null,
+      done: sizeIds.length > 0 && missingSizes.length === 0,
     },
     { key: "end_future", label: "End date is in the future", done: endMs === null || endMs > Date.now() },
     ...(property && !propertyUsable
       ? [{ key: "property_public", label: "Linked property is published and not hidden", done: false }]
       : []),
-    ...(format && !format.is_active
-      ? [{ key: "format_on", label: "Selected format is turned on (Ad Formats page)", done: false }]
+    ...(sizeViews.length > 0 && liveSizes.length === 0
+      ? [{ key: "format_on", label: "At least one size is turned on (Ad Formats page)", done: false }]
       : []),
   ];
 
@@ -199,6 +236,7 @@ export default function AdForm({ ad = null, initialError = "" }) {
     }
 
     const missingToTurnOn = missing(turnOnChecks);
+    const isOn = ad?.status === "active";
     if (missingToTurnOn.length > 0 && activate) {
       setDialog({
         title: "This ad can't be turned ON yet",
@@ -214,7 +252,7 @@ export default function AdForm({ ad = null, initialError = "" }) {
       });
       return;
     }
-    if (missingToTurnOn.length > 0 && ad?.status === "active") {
+    if (missingToTurnOn.length > 0 && isOn) {
       setDialog({
         title: "Saving will turn this ad OFF",
         message: "The ad is ON, but with these changes it can't be shown:",
@@ -223,14 +261,15 @@ export default function AdForm({ ad = null, initialError = "" }) {
           label: "Save and turn OFF",
           onClick: () => {
             setDialog(null);
-            handleSubmit(false);
+            handleSubmit(false, { turnOff: true });
           },
         },
       });
       return;
     }
 
-    handleSubmit(activate);
+    // An ON ad stays ON: it's switched back on after the new images are in.
+    handleSubmit(activate || isOn);
   }
 
   function update(key, value) {
@@ -243,13 +282,70 @@ export default function AdForm({ ad = null, initialError = "" }) {
     update("end_at", toLocalInput(new Date(start.getTime() + days * 86_400_000).toISOString()));
   }
 
-  async function handleSubmit(activate) {
+  // Sends the main image and per-size changes after the ad itself is saved.
+  // Returns the image warnings.
+  async function saveImages(savedAd) {
+    const base = `/api/admin/ads/${savedAd.id}`;
+    const warnings = [];
+    const saved = new Map(savedAd.creatives.map((creative) => [creative.format_id, creative]));
+    const ids = [...saved.keys()];
+    const editOf = (id) => sizeEdits[id] || {};
+    const fitFor = (id) => editOf(id).fit || saved.get(id).fit || "cover";
+    const mainAfter = Boolean(newMain) || (Boolean(savedAd.master_image_url) && !removeMain);
+
+    if (removeMain && !newMain && savedAd.master_image_url) {
+      await sendJson(`${base}/image`, "DELETE");
+    }
+
+    if (newMain) {
+      const body = new FormData();
+      body.append("image", newMain.file);
+      body.append("fits", JSON.stringify(Object.fromEntries(ids.map((id) => [id, fitFor(id)]))));
+      body.append("replace", JSON.stringify(ids.filter((id) => editOf(id).dropCustom)));
+      const data = await send(`${base}/image`, { method: "POST", body }).catch((err) => {
+        throw new Error(`Main image not saved: ${err.message}`);
+      });
+      warnings.push(...(data.warnings || []));
+    } else if (mainAfter) {
+      // Remake sizes whose fit changed, that have no image yet, or that
+      // switch from a custom image back to the main one.
+      for (const id of ids) {
+        const creative = saved.get(id);
+        const edit = editOf(id);
+        if (edit.file) continue;
+        if (creative.source === "upload" && !edit.dropCustom) continue;
+        if (edit.dropCustom || !creative.image_url || fitFor(id) !== creative.fit) {
+          const data = await sendJson(`${base}/sizes/${id}`, "PATCH", { fit: fitFor(id) });
+          if (data.warning) warnings.push(data.warning);
+        }
+      }
+    }
+
+    for (const id of ids) {
+      const edit = editOf(id);
+      if (edit.file) {
+        const body = new FormData();
+        body.append("image", edit.file);
+        body.append("fit", fitFor(id));
+        const data = await send(`${base}/sizes/${id}`, { method: "POST", body }).catch((err) => {
+          throw new Error(`Image for ${sizeText(saved.get(id))} not saved: ${err.message}`);
+        });
+        if (data.warning) warnings.push(data.warning);
+      } else if (edit.dropCustom && !mainAfter && saved.get(id).source === "upload") {
+        await sendJson(`${base}/sizes/${id}`, "DELETE");
+      }
+    }
+    return warnings;
+  }
+
+  async function handleSubmit(activate, { turnOff = false } = {}) {
     setSaving(true);
     setDialog(null);
     setFieldErrors({});
 
     const payload = {
       ...form,
+      format_ids: sizeIds,
       property_id: property?.id ?? null,
       start_at: fromLocalInput(form.start_at),
       end_at: fromLocalInput(form.end_at),
@@ -260,13 +356,15 @@ export default function AdForm({ ad = null, initialError = "" }) {
     }
 
     let adId = ad?.id;
-    let notice = "";
+    let savedAd = null;
+    let saveWarning = "";
     try {
       const saved = isEdit
         ? await sendJson(`/api/admin/ads/${adId}`, "PUT", payload)
         : await sendJson("/api/admin/ads", "POST", payload);
-      adId = saved.ad.id;
-      notice = saved.warning || "";
+      savedAd = saved.ad;
+      adId = savedAd.id;
+      saveWarning = saved.warning || "";
     } catch (err) {
       const fields = err.fields || {};
       setFieldErrors(fields);
@@ -280,26 +378,25 @@ export default function AdForm({ ad = null, initialError = "" }) {
     }
 
     // The ad row exists now; any later failure sends the admin to its edit page.
+    const wasOn = ad?.status === "active";
+    let notice = "";
     try {
-      if (removeImage && ad?.image_url && !file) {
-        await sendJson(`/api/admin/ads/${adId}/image`, "DELETE");
+      if (turnOff && savedAd.status === "active") {
+        await sendJson(`/api/admin/ads/${adId}/status`, "PATCH", { status: "paused" });
       }
-      if (file) {
-        const body = new FormData();
-        body.append("image", file);
-        body.append("fit", fitInfo?.shapeMatches ? "cover" : fit);
-        const res = await fetch(`/api/admin/ads/${adId}/image`, { method: "POST", body });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(`Image not saved: ${data.error || "upload failed."}`);
-        if (data.warning) notice = [notice, data.warning].filter(Boolean).join(" ");
-      }
+      const warnings = await saveImages(savedAd);
       if (activate) {
         try {
           await sendJson(`/api/admin/ads/${adId}/status`, "PATCH", { status: "active" });
         } catch (err) {
-          throw new Error(`Saved, but the ad could not be turned ON: ${err.message}`);
+          throw new Error(
+            `Saved, but the ad ${wasOn ? "was turned OFF" : "could not be turned ON"}: ${err.message}`,
+          );
         }
+      } else if (saveWarning) {
+        warnings.unshift(saveWarning);
       }
+      notice = warnings.join(" ");
     } catch (err) {
       setSaving(false);
       if (isEdit) {
@@ -360,7 +457,7 @@ export default function AdForm({ ad = null, initialError = "" }) {
               checked={form.tier === "free"}
               onChange={() => update("tier", "free")}
               title="Free"
-              text="House ads or free boosts. Shown only when no paid ad is live for the format."
+              text="House ads or free boosts. Shown only when no paid ad is live for that size."
             />
           </div>
 
@@ -379,119 +476,50 @@ export default function AdForm({ ad = null, initialError = "" }) {
               <span className={styles.help}>Only admins see this.</span>
               {fieldError("title")}
             </div>
-
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="format_id">
-                Format &amp; size
-                <Required />
-              </label>
-              <select
-                id="format_id"
-                value={form.format_id}
-                onChange={(e) => update("format_id", e.target.value)}
-                disabled={lockFormat}
-              >
-                <option value="">Choose a format…</option>
-                {formats
-                  .filter((item) => item.is_active || String(item.id) === String(form.format_id))
-                  .map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name} — {item.width}×{item.height} ({item.format_type})
-                      {item.is_active ? "" : " [off]"}
-                    </option>
-                  ))}
-              </select>
-              <span className={styles.help}>
-                {lockFormat
-                  ? "Remove the uploaded image below to change the format."
-                  : format
-                    ? `Frontend requests this with format=${format.code}`
-                    : "The frontend requests ads by format code."}
-              </span>
-              {fieldError("format_id")}
-            </div>
           </div>
         </div>
+      </section>
+
+      {/* ------------------------------------------------ sizes */}
+      <section className={styles.card}>
+        <h2 className={styles.cardTitle}>Sizes &amp; images</h2>
+        <p className={styles.cardHint}>
+          One ad, every screen. Pick the sizes, upload one main image and each size is cropped
+          from it automatically. Give any size its own design with a custom image.
+        </p>
+        <SizesPanel
+          formats={formats}
+          sizeIds={sizeIds}
+          onSizeIdsChange={changeSizes}
+          showCustom={showCustomSizes}
+          onShowCustom={setShowCustomSizes}
+          views={sizeViews}
+          main={main}
+          onMainFile={(file) => {
+            readImageFile(file).then(setNewMain);
+            setRemoveMain(false);
+          }}
+          onRemoveMain={() => {
+            if (newMain) setNewMain(null);
+            else setRemoveMain(true);
+          }}
+          onUndoRemoveMain={() => setRemoveMain(false)}
+          onSizeEdit={editSize}
+          error={fieldError("format_ids")}
+        />
       </section>
 
       {/* ------------------------------------------------ content */}
       <section className={styles.card}>
         <h2 className={styles.cardTitle}>Content</h2>
         <p className={styles.cardHint}>
-          Link a property, upload a banner, or both. Without an upload the property&apos;s main
-          photo is used.
-          <br />
-          <strong>
-            To turn the ad ON you need an image
-            <Required />
-          </strong>{" "}
-          — an uploaded banner, or a linked property with photos.
+          The text and link are shared by every size. Linking a property also lets sizes
+          without an image use the property&apos;s photo.
         </p>
 
         <div className={styles.stack}>
           <PropertyPicker value={property} onChange={setProperty} />
           {fieldError("property_id")}
-
-          <div className={styles.field}>
-            <span className={styles.label}>
-              Banner image{" "}
-              <span className={styles.optional}>
-                {format ? `— any image, automatically fitted to ${format.width}×${format.height}` : ""}
-              </span>
-            </span>
-            <CreativePreview
-              format={format}
-              src={filePreview || currentImage || property?.image_url || null}
-              fit={filePreview && fitInfo && !fitInfo.shapeMatches ? fit : "cover"}
-              fallbackNote={!filePreview && !currentImage && property?.image_url}
-            />
-            {file && fitInfo && (
-              <FitChooser
-                format={format}
-                fileSize={fileSize}
-                fitInfo={fitInfo}
-                fit={fit}
-                onChange={setFit}
-              />
-            )}
-            <div className={styles.buttonRow} style={{ marginTop: 8 }}>
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={(e) => {
-                  setFile(e.target.files?.[0] || null);
-                  setRemoveImage(false);
-                }}
-                style={{ maxWidth: 320 }}
-                aria-label="Upload banner image"
-              />
-              {(file || ad?.image_url) && !removeImage && (
-                <button
-                  type="button"
-                  className={styles.buttonDanger}
-                  onClick={() => {
-                    setFile(null);
-                    if (ad?.image_url) setRemoveImage(true);
-                  }}
-                >
-                  {file ? "Clear selection" : "Remove image"}
-                </button>
-              )}
-              {removeImage && (
-                <button
-                  type="button"
-                  className={styles.buttonSecondary}
-                  onClick={() => setRemoveImage(false)}
-                >
-                  Undo remove
-                </button>
-              )}
-            </div>
-            <span className={styles.help}>
-              JPG, PNG or WebP up to 5 MB, any size. For the sharpest result use{" "}
-              {format ? `${format.width * 2}×${format.height * 2}` : "twice the format size"}.
-            </span>
-          </div>
 
           <div className={styles.grid2}>
             <div className={styles.field}>
@@ -797,6 +825,15 @@ export default function AdForm({ ad = null, initialError = "" }) {
   );
 }
 
+function readImageUrl(url) {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
 function Required() {
   return (
     <span className={styles.required} aria-label="required" title="Required">
@@ -877,92 +914,6 @@ function NumberField({ id, label, value, onChange, min = 1, max, placeholder, he
         </span>
       )}
       {error}
-    </div>
-  );
-}
-
-// Shows the picked file the way the server will fit it (see image route).
-function CreativePreview({ format, src, fit = "cover", fallbackNote }) {
-  const width = format?.width || 300;
-  const height = format?.height || 250;
-  const box = { width, maxWidth: "100%", aspectRatio: `${width} / ${height}` };
-  return (
-    <div>
-      <div className={styles.previewFrame}>
-        {src && fit === "contain" ? (
-          <div className={styles.previewContain} style={box}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={src} alt="" aria-hidden="true" className={styles.previewBlur} />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={src} alt="Ad preview" className={styles.previewWhole} />
-          </div>
-        ) : src ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={src} alt="Ad preview" style={{ ...box, objectFit: "cover" }} />
-        ) : (
-          <div className={styles.previewPlaceholder} style={{ width, aspectRatio: `${width} / ${height}` }}>
-            {format ? `${width} × ${height}` : "Choose a format"}
-          </div>
-        )}
-      </div>
-      {fallbackNote && (
-        <p className={styles.help}>Using the property&apos;s main photo (no banner uploaded).</p>
-      )}
-    </div>
-  );
-}
-
-function FitChooser({ format, fileSize, fitInfo, fit, onChange }) {
-  const size = `${format.width}×${format.height}`;
-  const source = `${fileSize.width}×${fileSize.height}`;
-
-  return (
-    <div className={styles.fitChooser}>
-      {fitInfo.shapeMatches ? (
-        <p className={styles.fitNote}>
-          ✓ This image ({source}) already has the right shape — it will be resized to {size}.
-        </p>
-      ) : (
-        <>
-          <p className={styles.fitNote}>
-            This image is {source}, a different shape from {size}. Choose how to fit it — the
-            preview above shows the result.
-          </p>
-          <div className={styles.fitOptions} role="radiogroup" aria-label="How to fit the image">
-            <label className={`${styles.fitOption} ${fit === "cover" ? styles.fitOptionActive : ""}`}>
-              <input
-                type="radio"
-                name="image-fit"
-                value="cover"
-                checked={fit === "cover"}
-                onChange={() => onChange("cover")}
-              />
-              <span>
-                <strong>Crop to fill</strong>
-                <span className={styles.help}>Fills the whole banner; edges are trimmed.</span>
-              </span>
-            </label>
-            <label className={`${styles.fitOption} ${fit === "contain" ? styles.fitOptionActive : ""}`}>
-              <input
-                type="radio"
-                name="image-fit"
-                value="contain"
-                checked={fit === "contain"}
-                onChange={() => onChange("contain")}
-              />
-              <span>
-                <strong>Show whole image</strong>
-                <span className={styles.help}>Nothing is cut; blurred edges fill the gaps.</span>
-              </span>
-            </label>
-          </div>
-        </>
-      )}
-      {fitInfo.enlarged && (
-        <p className={styles.fitWarning}>
-          It&apos;s smaller than {size}, so it will be enlarged and may look soft.
-        </p>
-      )}
     </div>
   );
 }

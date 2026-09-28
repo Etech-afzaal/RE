@@ -1,5 +1,6 @@
 USE real_estate;
 
+DROP TABLE IF EXISTS ad_creatives; -- from 036_ad_variants
 DROP TABLE IF EXISTS ad_fill_daily;
 DROP TABLE IF EXISTS ad_events;
 DROP TABLE IF EXISTS ad_stats_daily;
