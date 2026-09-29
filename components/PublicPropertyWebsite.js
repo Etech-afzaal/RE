@@ -7,6 +7,7 @@ import HeroSlider from "@/components/HeroSlider";
 import AgentBrandProfile from "@/components/AgentBrandProfile/AgentBrandProfile";
 import AdSlot from "@/components/ads/AdSlot";
 import HomeListings from "@/components/HomeListings";
+import PaginatedGrid from "@/components/PaginatedGrid";
 import TrustStats from "@/components/TrustStats";
 import LocationCarousel from "@/components/LocationCarousel";
 import AgentInquiryForm from "@/components/AgentInquiryForm";
@@ -370,7 +371,11 @@ export default function PublicPropertyWebsite({
                 </div>
               </div>
 
-              <div className={styles.blogGrid}>
+              <PaginatedGrid
+                pageSize={3}
+                gridClassName={styles.blogGrid}
+                ariaLabel="Blog articles pagination"
+              >
                 {blogs.map((blog) => {
                   const blogHref = `/re/${encodeURIComponent(agent?.username || agent?.estate_name || "")}/blogs/${encodeURIComponent(blog.slug)}`;
                   const postedAt = formatAddedDate(blog.created_at);
@@ -408,7 +413,7 @@ export default function PublicPropertyWebsite({
                     </Link>
                   );
                 })}
-              </div>
+              </PaginatedGrid>
             </section>
           ) : null}
 
@@ -421,7 +426,11 @@ export default function PublicPropertyWebsite({
                 </div>
               </div>
 
-              <div className={styles.videoPostGrid}>
+              <PaginatedGrid
+                pageSize={3}
+                gridClassName={styles.videoPostGrid}
+                ariaLabel="Video posts pagination"
+              >
                 {videoPosts.map((videoPost) => {
                   const postedAt = formatAddedDate(videoPost.created_at);
                   return (
@@ -457,7 +466,7 @@ export default function PublicPropertyWebsite({
                     </article>
                   );
                 })}
-              </div>
+              </PaginatedGrid>
             </section>
           ) : null}
         </div>

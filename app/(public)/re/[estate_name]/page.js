@@ -47,8 +47,8 @@ export default async function AgentPublicWebsitePage({ params }) {
     getPublicStatsForAgent(agent.id),
     getPopularLocationsForAgent(agent.id, 24),
     getAgentBrandStats(agent.id),
-    getPublishedBlogsByAgent(agent.id, { limit: 6 }),
-    getPublishedVideoPostsByAgent(agent.id, { limit: 6 }),
+    getPublishedBlogsByAgent(agent.id, { limit: 50 }),
+    getPublishedVideoPostsByAgent(agent.id, { limit: 50 }),
   ]);
 
   return (
