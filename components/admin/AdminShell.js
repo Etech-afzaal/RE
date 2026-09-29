@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCompactDashboardHeader } from "@/lib/useCompactDashboardHeader";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -217,6 +217,8 @@ function CollapseIcon({ collapsed }) {
 export default function AdminShell({ children }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [navScrolling, setNavScrolling] = useState(false);
+  const navScrollHideTimerRef = useRef(0);
   const { headerRef, compact, spacerHeight } = useCompactDashboardHeader();
   const { collapsed, toggleCollapsed } = useSidebarCollapsed(
     "admin.sidebarCollapsed",
@@ -227,6 +229,18 @@ export default function AdminShell({ children }) {
   const pageTitle = activeItem?.label || "Admin";
   const pageSubtitle = activeItem?.subtitle || "";
   const pageAction = activeItem?.action && pathname === activeItem.href ? activeItem.action : null;
+
+  useEffect(() => {
+    return () => window.clearTimeout(navScrollHideTimerRef.current);
+  }, []);
+
+  function revealNavScrollbar() {
+    setNavScrolling(true);
+    window.clearTimeout(navScrollHideTimerRef.current);
+    navScrollHideTimerRef.current = window.setTimeout(() => {
+      setNavScrolling(false);
+    }, 900);
+  }
 
   return (
     <div className={styles.shell}>
@@ -244,26 +258,33 @@ export default function AdminShell({ children }) {
           collapsed ? styles.sidebarCollapsed : ""
         }`}
       >
-        <div className={styles.brand}>
-          <span className={styles.brandMark}>D</span>
-          <div className={styles.brandText}>
-            <p className={styles.brandName}>Dhalahore</p>
-            <p className={styles.brandSub}>Admin Console</p>
+        <div className={styles.sidebarHeader}>
+          <div className={styles.brand}>
+            <span className={styles.brandMark}>D</span>
+            <div className={styles.brandText}>
+              <p className={styles.brandName}>Dhalahore</p>
+              <p className={styles.brandSub}>Admin Console</p>
+            </div>
+            <button
+              type="button"
+              className={styles.collapseBtn}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              onClick={toggleCollapsed}
+              {...tipHandlers(
+                collapsed ? "Expand sidebar" : "Collapse sidebar",
+              )}
+            >
+              <CollapseIcon collapsed={collapsed} />
+            </button>
           </div>
-          <button
-            type="button"
-            className={styles.collapseBtn}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            onClick={toggleCollapsed}
-            {...tipHandlers(
-              collapsed ? "Expand sidebar" : "Collapse sidebar",
-            )}
-          >
-            <CollapseIcon collapsed={collapsed} />
-          </button>
         </div>
 
-        <nav className={styles.nav} aria-label="Admin">
+        <nav
+          className={`${styles.nav} ${navScrolling ? styles.navScrolling : ""}`}
+          aria-label="Admin"
+          onScroll={revealNavScrollbar}
+          onWheel={revealNavScrollbar}
+        >
           {NAV.map((item) => {
             const active = isActive(pathname, item);
             return (
