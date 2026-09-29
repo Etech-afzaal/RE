@@ -8,6 +8,12 @@ import {
   resolveLocationSizes,
 } from "@/lib/ads/queries";
 import { adInputSchema, fieldErrors, firstError } from "@/lib/ads/validation";
+import {
+  AUDIT_ACTIONS,
+  AUDIT_ENTITY_TYPES,
+  createAuditLog,
+  getRequestIp,
+} from "@/lib/auditLogger";
 
 export async function GET(req) {
   const { error: authError } = await requireAdmin();
@@ -21,7 +27,7 @@ export async function GET(req) {
 // Ads are always created as drafts. The admin UI uploads the image next and
 // then switches the ad ON through PATCH /api/admin/ads/[id]/status.
 export async function POST(req) {
-  const { error: authError } = await requireAdmin();
+  const { session, error: authError } = await requireAdmin();
   if (authError) return authError;
 
   const body = await req.json().catch(() => ({}));
@@ -44,5 +50,21 @@ export async function POST(req) {
   }
 
   const id = await createAd(parsed.data);
+
+  const actorName = session.user.name || "Superadmin";
+  await createAuditLog({
+    userId: Number(session.user.id),
+    action: AUDIT_ACTIONS.AD_CREATED,
+    entityType: AUDIT_ENTITY_TYPES.AD,
+    entityId: id,
+    description: `${actorName} created ad "${parsed.data.title || `Ad #${id}`}"`,
+    metadata: {
+      ad_id: id,
+      ad_title: parsed.data.title || null,
+      actor_name: actorName,
+    },
+    ipAddress: getRequestIp(req),
+  });
+
   return NextResponse.json({ success: true, ad: await getAdById(id) }, { status: 201 });
 }

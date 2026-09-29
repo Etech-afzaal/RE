@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
 import { getActivationError, getAdById, setAdStatus } from "@/lib/ads/queries";
+import {
+  AUDIT_ACTIONS,
+  AUDIT_ENTITY_TYPES,
+  createAuditLog,
+  getRequestIp,
+} from "@/lib/auditLogger";
 
 // ON/OFF toggle and archive/restore.
 //   { status: "active" }   → ON (validated first)
@@ -9,7 +15,7 @@ import { getActivationError, getAdById, setAdStatus } from "@/lib/ads/queries";
 const ALLOWED = ["active", "paused", "archived"];
 
 export async function PATCH(req, { params }) {
-  const { error: authError } = await requireAdmin();
+  const { session, error: authError } = await requireAdmin();
   if (authError) return authError;
 
   const { status } = await req.json().catch(() => ({}));
@@ -37,5 +43,39 @@ export async function PATCH(req, { params }) {
   }
 
   await setAdStatus(ad.id, status);
+
+  const actorName = session.user.name || "Superadmin";
+  const action =
+    status === "active"
+      ? AUDIT_ACTIONS.AD_STATUS_CHANGED
+      : status === "archived"
+        ? AUDIT_ACTIONS.AD_ARCHIVED
+        : ad.status === "archived"
+          ? AUDIT_ACTIONS.AD_RESTORED
+          : AUDIT_ACTIONS.AD_STATUS_CHANGED;
+  const verb =
+    status === "active"
+      ? "turned ON"
+      : status === "archived"
+        ? "archived"
+        : ad.status === "archived"
+          ? "restored"
+          : "turned OFF";
+  await createAuditLog({
+    userId: Number(session.user.id),
+    action,
+    entityType: AUDIT_ENTITY_TYPES.AD,
+    entityId: ad.id,
+    description: `${actorName} ${verb} ad "${ad.title || `Ad #${ad.id}`}"`,
+    metadata: {
+      ad_id: ad.id,
+      ad_title: ad.title || null,
+      actor_name: actorName,
+      previous_status: ad.status,
+      new_status: status,
+    },
+    ipAddress: getRequestIp(req),
+  });
+
   return NextResponse.json({ success: true, ad: await getAdById(ad.id) });
 }

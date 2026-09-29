@@ -11,6 +11,12 @@ import {
 } from "@/lib/ads/queries";
 import { generateSizes, removeCreativeFiles } from "@/lib/ads/images";
 import { adInputSchema, fieldErrors, firstError } from "@/lib/ads/validation";
+import {
+  AUDIT_ACTIONS,
+  AUDIT_ENTITY_TYPES,
+  createAuditLog,
+  getRequestIp,
+} from "@/lib/auditLogger";
 
 export async function GET(req, { params }) {
   const { error: authError } = await requireAdmin();
@@ -24,7 +30,7 @@ export async function GET(req, { params }) {
 }
 
 export async function PUT(req, { params }) {
-  const { error: authError } = await requireAdmin();
+  const { session, error: authError } = await requireAdmin();
   if (authError) return authError;
 
   const existing = await getAdById(params.id);
@@ -77,17 +83,48 @@ export async function PUT(req, { params }) {
     }
   }
 
+  const actorName = session.user.name || "Superadmin";
+  await createAuditLog({
+    userId: Number(session.user.id),
+    action: AUDIT_ACTIONS.AD_UPDATED,
+    entityType: AUDIT_ENTITY_TYPES.AD,
+    entityId: existing.id,
+    description: `${actorName} updated ad "${parsed.data.title || existing.title || `Ad #${existing.id}`}"`,
+    metadata: {
+      ad_id: existing.id,
+      ad_title: parsed.data.title || existing.title || null,
+      actor_name: actorName,
+    },
+    ipAddress: getRequestIp(req),
+  });
+
   return NextResponse.json({ success: true, ad, warning, imageWarnings });
 }
 
 // Ads are archived, not deleted, so their stats and payment notes are kept.
-export async function DELETE(_req, { params }) {
-  const { error: authError } = await requireAdmin();
+export async function DELETE(req, { params }) {
+  const { session, error: authError } = await requireAdmin();
   if (authError) return authError;
 
   const ad = await getAdById(params.id);
   if (!ad) return NextResponse.json({ error: "Ad not found." }, { status: 404 });
 
   await setAdStatus(ad.id, "archived");
+
+  const actorName = session.user.name || "Superadmin";
+  await createAuditLog({
+    userId: Number(session.user.id),
+    action: AUDIT_ACTIONS.AD_ARCHIVED,
+    entityType: AUDIT_ENTITY_TYPES.AD,
+    entityId: ad.id,
+    description: `${actorName} archived ad "${ad.title || `Ad #${ad.id}`}"`,
+    metadata: {
+      ad_id: ad.id,
+      ad_title: ad.title || null,
+      actor_name: actorName,
+    },
+    ipAddress: getRequestIp(req),
+  });
+
   return NextResponse.json({ success: true, archived: true });
 }

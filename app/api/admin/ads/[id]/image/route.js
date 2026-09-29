@@ -3,6 +3,12 @@ import { requireAdmin } from "@/lib/adminAuth";
 import { getAdById } from "@/lib/ads/queries";
 import { sizesMissingImage, sizeLabel } from "@/lib/ads/pick";
 import { AdImageError, readUpload, removeMasterImage, saveMasterImage } from "@/lib/ads/images";
+import {
+  AUDIT_ACTIONS,
+  AUDIT_ENTITY_TYPES,
+  createAuditLog,
+  getRequestIp,
+} from "@/lib/auditLogger";
 
 // The ad's main image. Every size is made from it automatically (see
 // lib/ads/images.js); sizes with a custom upload keep theirs.
@@ -34,7 +40,7 @@ const errorResponse = (err) => {
 };
 
 export async function POST(req, { params }) {
-  const { error: authError } = await requireAdmin();
+  const { session, error: authError } = await requireAdmin();
   if (authError) return authError;
 
   try {
@@ -45,6 +51,22 @@ export async function POST(req, { params }) {
       fits: parseJson(formData.get("fits"), {}),
       replace: parseJson(formData.get("replace"), []),
     });
+
+    const actorName = session.user.name || "Superadmin";
+    await createAuditLog({
+      userId: Number(session.user.id),
+      action: AUDIT_ACTIONS.AD_IMAGE_UPLOADED,
+      entityType: AUDIT_ENTITY_TYPES.AD,
+      entityId: ad.id,
+      description: `${actorName} uploaded image for ad "${ad.title || `Ad #${ad.id}`}"`,
+      metadata: {
+        ad_id: ad.id,
+        ad_title: ad.title || null,
+        actor_name: actorName,
+      },
+      ipAddress: getRequestIp(req),
+    });
+
     return NextResponse.json({
       success: true,
       ad: await getAdById(ad.id),
@@ -56,8 +78,8 @@ export async function POST(req, { params }) {
   }
 }
 
-export async function DELETE(_req, { params }) {
-  const { error: authError } = await requireAdmin();
+export async function DELETE(req, { params }) {
+  const { session, error: authError } = await requireAdmin();
   if (authError) return authError;
 
   try {
@@ -81,6 +103,22 @@ export async function DELETE(_req, { params }) {
       }
     }
     await removeMasterImage(ad);
+
+    const actorName = session.user.name || "Superadmin";
+    await createAuditLog({
+      userId: Number(session.user.id),
+      action: AUDIT_ACTIONS.AD_IMAGE_REMOVED,
+      entityType: AUDIT_ENTITY_TYPES.AD,
+      entityId: ad.id,
+      description: `${actorName} removed image from ad "${ad.title || `Ad #${ad.id}`}"`,
+      metadata: {
+        ad_id: ad.id,
+        ad_title: ad.title || null,
+        actor_name: actorName,
+      },
+      ipAddress: getRequestIp(req),
+    });
+
     return NextResponse.json({ success: true, ad: await getAdById(ad.id) });
   } catch (err) {
     return errorResponse(err);

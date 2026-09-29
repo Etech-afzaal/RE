@@ -11,6 +11,7 @@ const TYPE_OPTIONS = [
   { value: "all", label: "All" },
   { value: "properties", label: "Properties" },
   { value: "agents", label: "Agents" },
+  { value: "ads", label: "Ads" },
   { value: "authentication", label: "Authentication" },
   { value: "system", label: "System" },
 ];

@@ -9,6 +9,12 @@ import {
   removeSizeImage,
   saveCustomSize,
 } from "@/lib/ads/images";
+import {
+  AUDIT_ACTIONS,
+  AUDIT_ENTITY_TYPES,
+  createAuditLog,
+  getRequestIp,
+} from "@/lib/auditLogger";
 
 // One size of an ad.
 //   POST   multipart { image, fit } — a custom image for this size only
