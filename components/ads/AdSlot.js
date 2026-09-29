@@ -289,6 +289,23 @@ function ImageBanner({ ad, tabIndex }) {
       {ad.ctaText && (
         <span className={styles.bannerCta} aria-hidden="true">
           {ad.ctaText}
+          {ad.isFeatured && (
+            <span
+              style={{
+                position: "absolute",
+                top: "100%",
+                left: 0,
+                marginTop: "0.01rem",
+                color: "#000103",
+                fontSize: "0.6rem",
+                lineHeight: 1.2,
+                whiteSpace: "nowrap",
+                textAlign: "left",
+              }}
+            >
+              Sponsored Ad
+            </span>
+          )}
         </span>
       )}
     </a>
@@ -316,7 +333,28 @@ function PropertyBanner({ ad, tabIndex }) {
           <span className={styles.composedMeta}>{[meta, amount].filter(Boolean).join(" · ")}</span>
         )}
       </span>
-      {ad.ctaText && <span className={styles.cta}>{ad.ctaText}</span>}
+      {ad.ctaText && (
+        <span className={styles.cta} style={{ position: "relative" }}>
+          {ad.ctaText}
+          {ad.isFeatured && (
+            <span
+              style={{
+                position: "absolute",
+                top: "100%",
+                left: 0,
+                marginTop: "0.2rem",
+                color: "#6b7280",
+                fontSize: "0.7rem",
+                lineHeight: 1.2,
+                whiteSpace: "nowrap",
+                textAlign: "left",
+              }}
+            >
+              Sponsored Ad
+            </span>
+          )}
+        </span>
+      )}
     </a>
   );
 }
