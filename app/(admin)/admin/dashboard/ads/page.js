@@ -12,6 +12,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { AD_LOCATIONS, LOCATION_PAGES, getLocation } from "@/lib/ads/locations";
 import AdsDialog from "./AdsDialog";
 import AdsPager from "./AdsPager";
 import {
@@ -69,7 +70,7 @@ export default function AdsListPage() {
   const [search, setSearch] = useState("");
   const [tier, setTier] = useState("all");
   const [state, setState] = useState("all");
-  const [formatCode, setFormatCode] = useState("all");
+  const [locationKey, setLocationKey] = useState("all");
   const [showMore, setShowMore] = useState(false);
   const [adType, setAdType] = useState("all");
   const [sort, setSort] = useState("newest");
@@ -121,22 +122,13 @@ export default function AdsListPage() {
     }
   }
 
-  // Every size used by the loaded ads, for the size filter.
-  const formats = useMemo(() => {
-    const seen = new Map();
-    ads.forEach((ad) => ad.creatives.forEach((size) => seen.set(size.format_code, size)));
-    return [...seen.values()].sort((a, b) => b.width * b.height - a.width * a.height);
-  }, [ads]);
-
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return ads
       .filter((ad) => {
         if (tier !== "all" && ad.tier !== tier) return false;
         if (state !== "all" && ad.display_state !== state) return false;
-        if (formatCode !== "all" && !ad.creatives.some((size) => size.format_code === formatCode)) {
-          return false;
-        }
+        if (locationKey !== "all" && !ad.locations.includes(locationKey)) return false;
         if (adType === "property" && !ad.property_id) return false;
         if (adType === "image" && ad.property_id) return false;
         if (!term) return true;
@@ -145,12 +137,12 @@ export default function AdsListPage() {
           .some((value) => value.toLowerCase().includes(term));
       })
       .sort(SORTS[sort].compare);
-  }, [ads, search, tier, state, formatCode, adType, sort]);
+  }, [ads, search, tier, state, locationKey, adType, sort]);
 
   // Back to page 1 whenever the result set changes shape.
   useEffect(() => {
     setPage(1);
-  }, [search, tier, state, formatCode, adType, sort, showArchived]);
+  }, [search, tier, state, locationKey, adType, sort, showArchived]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -217,15 +209,19 @@ export default function AdsListPage() {
           </select>
           <select
             className={styles.select}
-            value={formatCode}
-            onChange={(e) => setFormatCode(e.target.value)}
-            aria-label="Size"
+            value={locationKey}
+            onChange={(e) => setLocationKey(e.target.value)}
+            aria-label="Location"
           >
-            <option value="all">All sizes</option>
-            {formats.map((size) => (
-              <option key={size.format_code} value={size.format_code}>
-                {size.format_name} ({size.width}×{size.height})
-              </option>
+            <option value="all">All locations</option>
+            {LOCATION_PAGES.map(({ page, locations }) => (
+              <optgroup key={page} label={page}>
+                {locations.map((location) => (
+                  <option key={location.key} value={location.key}>
+                    {location.spot}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
           <button
@@ -309,7 +305,7 @@ export default function AdsListPage() {
                     <th>On</th>
                     <th>Ad</th>
                     <th>Tier</th>
-                    <th>Sizes</th>
+                    <th>Locations</th>
                     <th>State</th>
                     <th>Schedule</th>
                     <th className={styles.center}>Priority</th>
@@ -399,6 +395,30 @@ function StatCard({ icon: Icon, value, label }) {
   );
 }
 
+// "All locations", or the pages with their spots, e.g. "Landing page: above the hero".
+function LocationList({ keys }) {
+  if (keys.length === 0) return <span className={styles.sub}>None</span>;
+  if (keys.length === AD_LOCATIONS.length) {
+    return <span className={styles.locationAll}>All locations</span>;
+  }
+  const byPage = new Map();
+  for (const key of keys) {
+    const location = getLocation(key);
+    if (!location) continue;
+    byPage.set(location.page, [...(byPage.get(location.page) || []), location.spot]);
+  }
+  return (
+    <span className={styles.locationList}>
+      {[...byPage].map(([page, spots]) => (
+        <span key={page} className={styles.locationItem} title={`${page}: ${spots.join(", ")}`}>
+          <strong>{page}</strong>
+          <span className={styles.sub}>{spots.join(" · ")}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function AdRow({ ad, busy, onStatus, onArchive }) {
   const isOn = ad.status === "active";
   const archived = ad.status === "archived";
@@ -449,17 +469,7 @@ function AdRow({ ad, busy, onStatus, onArchive }) {
         </span>
       </td>
       <td>
-        <span className={styles.sizeList}>
-          {ad.creatives.map((size) => (
-            <span
-              key={size.format_id}
-              className={`${styles.sizeChip} ${size.format_is_active ? "" : styles.sizeChipOff}`}
-              title={`${size.format_name}${size.format_is_active ? "" : " (format turned off)"}`}
-            >
-              {size.width}×{size.height}
-            </span>
-          ))}
-        </span>
+        <LocationList keys={ad.locations} />
       </td>
       <td>
         <span className={`${styles.pill} ${toneFor(ad.display_state)}`}>

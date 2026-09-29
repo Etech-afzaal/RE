@@ -21,6 +21,7 @@ import {
   Images,
   Link2,
   ListChecks,
+  MapPin,
   Megaphone,
   MousePointerClick,
   Phone,
@@ -32,8 +33,9 @@ import {
   UserRound,
   Wallet,
 } from "lucide-react";
-import { getFormatSet } from "@/lib/ads/formatSets";
+import { MAX_SLIDES, SLIDE_MS, formatCodesForLocations } from "@/lib/ads/locations";
 import AdsDialog from "./AdsDialog";
+import LocationPicker from "./LocationPicker";
 import SizesPanel, { readImageFile, resolveSizes, sizeText } from "./SizesPanel";
 import { formatPrice, fromLocalInput, toLocalInput } from "./adUi";
 import styles from "./ads.module.css";
@@ -115,8 +117,8 @@ export default function AdForm({ ad = null, initialError = "", header = null }) 
   const [form, setForm] = useState(() => toForm(ad));
   const [property, setProperty] = useState(() => propertyFromAd(ad));
   const [formats, setFormats] = useState([]);
-  const [sizeIds, setSizeIds] = useState(() => (ad?.creatives || []).map((c) => c.format_id));
-  const [showCustomSizes, setShowCustomSizes] = useState(false);
+  // Where the ad shows; its sizes follow from these (lib/ads/locations.js).
+  const [locations, setLocations] = useState(() => ad?.locations || []);
   // A newly picked main image { file, preview, dims }, or null.
   const [newMain, setNewMain] = useState(null);
   const [removeMain, setRemoveMain] = useState(false);
@@ -133,16 +135,7 @@ export default function AdForm({ ad = null, initialError = "", header = null }) 
   useEffect(() => {
     fetch("/api/admin/ad-formats")
       .then((res) => res.json())
-      .then((data) => {
-        const list = data.formats || [];
-        setFormats(list);
-        // New ads start with the banner set (desktop, tablet and mobile).
-        if (!ad) {
-          const codes = Object.values(getFormatSet("banner").screens);
-          const ids = list.filter((f) => f.is_active && codes.includes(f.code)).map((f) => f.id);
-          setSizeIds((current) => (current.length > 0 ? current : ids));
-        }
-      })
+      .then((data) => setFormats(data.formats || []))
       .catch(() =>
         setDialog({
           title: "Couldn't load ad formats",
@@ -172,6 +165,11 @@ export default function AdForm({ ad = null, initialError = "", header = null }) 
   const propertyUsable =
     Boolean(property) && property.is_public !== false && property.agent_is_live !== false;
   const hasPropertyPhoto = propertyUsable && Boolean(property.image_url);
+
+  const sizeIds = useMemo(() => {
+    const codes = formatCodesForLocations(locations);
+    return formats.filter((format) => codes.includes(format.code)).map((format) => format.id);
+  }, [formats, locations]);
 
   const sizeViews = useMemo(
     () =>
@@ -206,15 +204,15 @@ export default function AdForm({ ad = null, initialError = "", header = null }) 
     });
   }
 
-  function changeSizes(ids) {
-    setSizeIds(ids);
-    setFieldErrors((current) => ({ ...current, format_ids: undefined }));
+  function changeLocations(keys) {
+    setLocations(keys);
+    setFieldErrors((current) => ({ ...current, locations: undefined }));
   }
 
   // Needed for any save (mirrors the server's validation).
   const saveChecks = [
     { key: "title", label: "Internal title", done: form.title.trim().length > 0 },
-    { key: "format_ids", label: "At least one size", done: sizeIds.length > 0 },
+    { key: "locations", label: "At least one location", done: locations.length > 0 },
     { key: "start_at", label: "Start date", done: Number.isFinite(startMs) },
     isPaid
       ? {
@@ -377,7 +375,7 @@ export default function AdForm({ ad = null, initialError = "", header = null }) 
 
     const payload = {
       ...form,
-      format_ids: sizeIds,
+      locations,
       property_id: property?.id ?? null,
       start_at: fromLocalInput(form.start_at),
       end_at: fromLocalInput(form.end_at),
@@ -527,7 +525,7 @@ export default function AdForm({ ad = null, initialError = "", header = null }) 
             checked={form.tier === "free"}
             onChange={() => update("tier", "free")}
             title="Free"
-            text="House ads or free boosts. Shown only when no paid ad is live for that size."
+            text="House ads or free boosts. Shown after the paid ads in each location's carousel."
           />
         </div>
         <div className={f.half}>
@@ -537,18 +535,29 @@ export default function AdForm({ ad = null, initialError = "", header = null }) 
         </div>
       </Section>
 
+      {/* ------------------------------------------------ locations */}
+      <Section
+        icon={MapPin}
+        title="Location"
+        hint={`Where the ad shows. Each location shows its live ads as a carousel: paid ads first, up to ${MAX_SLIDES}, changing every ${SLIDE_MS / 1000} seconds.`}
+      >
+        <Field id="locations" label="Show this ad in" required error={fieldErrors.locations}>
+          <LocationPicker
+            id="locations"
+            value={locations}
+            onChange={changeLocations}
+            invalid={Boolean(fieldErrors.locations)}
+          />
+        </Field>
+      </Section>
+
       {/* ------------------------------------------------ sizes */}
       <Section
         icon={Images}
         title="Sizes & images"
-        hint="One ad, every screen. Pick the sizes, upload one main image and each size is cropped from it automatically."
+        hint="One ad, every screen. Upload one main image and each size is cropped from it automatically."
       >
         <SizesPanel
-          formats={formats}
-          sizeIds={sizeIds}
-          onSizeIdsChange={changeSizes}
-          showCustom={showCustomSizes}
-          onShowCustom={setShowCustomSizes}
           views={sizeViews}
           main={main}
           onMainFile={(file) => {
@@ -561,7 +570,6 @@ export default function AdForm({ ad = null, initialError = "", header = null }) 
           }}
           onUndoRemoveMain={() => setRemoveMain(false)}
           onSizeEdit={editSize}
-          error={fieldErrors.format_ids && <p className={f.error}>{fieldErrors.format_ids}</p>}
         />
       </Section>
 

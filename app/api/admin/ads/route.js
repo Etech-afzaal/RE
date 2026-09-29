@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
-import { checkAdReferences, createAd, getAdById, listAds } from "@/lib/ads/queries";
+import {
+  checkAdReferences,
+  createAd,
+  getAdById,
+  listAds,
+  resolveLocationSizes,
+} from "@/lib/ads/queries";
 import { adInputSchema, fieldErrors, firstError } from "@/lib/ads/validation";
 
 export async function GET(req) {
@@ -26,6 +32,11 @@ export async function POST(req) {
       { status: 400 },
     );
   }
+
+  // The ad's sizes follow from its locations.
+  const sizes = await resolveLocationSizes(parsed.data.locations);
+  if (sizes.error) return NextResponse.json({ error: sizes.error }, { status: 400 });
+  parsed.data.format_ids = sizes.formatIds;
 
   const referenceError = await checkAdReferences(parsed.data);
   if (referenceError) {

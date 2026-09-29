@@ -8,7 +8,12 @@ import {
   getFormatById,
   updateFormat,
 } from "@/lib/ads/queries";
+import { formatCodes } from "@/lib/ads/formatSets";
+import { LOCATION_FORMATS } from "@/lib/ads/locations";
 import { fieldErrors, firstError, formatInputSchema } from "@/lib/ads/validation";
+
+// Formats every ad location needs (lib/ads/locations.js).
+const LOCATION_CODES = formatCodes(LOCATION_FORMATS);
 
 // Inactive formats (is_active=false) stop serving immediately.
 export async function PUT(req, { params }) {
@@ -28,6 +33,15 @@ export async function PUT(req, { params }) {
   }
 
   const input = parsed.data;
+  if (input.code !== existing.code && LOCATION_CODES.includes(existing.code)) {
+    return NextResponse.json(
+      {
+        error: "Ad locations use this format's code, so it can't be changed.",
+        fields: { code: "Used by ad locations." },
+      },
+      { status: 409 },
+    );
+  }
   if (input.code !== existing.code) {
     const clash = await getFormatByCode(input.code);
     if (clash) {
@@ -60,6 +74,13 @@ export async function DELETE(_req, { params }) {
 
   const format = await getFormatById(params.id);
   if (!format) return NextResponse.json({ error: "Format not found." }, { status: 404 });
+
+  if (LOCATION_CODES.includes(format.code)) {
+    return NextResponse.json(
+      { error: "Ad locations use this format, so it can't be deleted. Turn it off instead to stop it serving." },
+      { status: 409 },
+    );
+  }
 
   const adCount = await countAllAdsForFormat(format.id);
   if (adCount > 0) {

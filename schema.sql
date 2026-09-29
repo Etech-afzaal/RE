@@ -304,7 +304,7 @@ CREATE TABLE IF NOT EXISTS property_link_insights (
 -- Demo / realistic listings live in seed.sql (agent users, sale/rent/plot properties, images).
 -- ---------------------------------------------------------------
 -- Ads Network (existing databases: npm run migrate:ads-network, then
--- npm run migrate:ad-variants)
+-- npm run migrate:ad-variants, then npm run migrate:ad-locations)
 -- All DATETIME columns on ads/ad_events are stored in UTC.
 -- ---------------------------------------------------------------
 
@@ -369,7 +369,18 @@ CREATE TABLE IF NOT EXISTS ad_creatives (
   CONSTRAINT fk_ad_creatives_format FOREIGN KEY (format_id) REFERENCES ad_formats(id)
 );
 
+-- Where each ad shows. Keys are defined in lib/ads/locations.js
+-- (e.g. home_above_hero); each location shows its ads as a carousel.
+CREATE TABLE IF NOT EXISTS ad_locations (
+  ad_id INT NOT NULL,
+  location VARCHAR(50) NOT NULL,
+  PRIMARY KEY (ad_id, location),
+  KEY idx_ad_locations_location (location),
+  CONSTRAINT fk_ad_locations_ad FOREIGN KEY (ad_id) REFERENCES ads(id) ON DELETE CASCADE
+);
+
 -- One row per ad/day/placement/size; drives reports and daily caps.
+-- placement is the location key the ad was shown in.
 CREATE TABLE IF NOT EXISTS ad_stats_daily (
   ad_id INT NOT NULL,
   stat_date DATE NOT NULL,

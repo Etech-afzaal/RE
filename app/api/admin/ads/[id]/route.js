@@ -5,6 +5,7 @@ import {
   getActivationError,
   getAdById,
   getAdStats,
+  resolveLocationSizes,
   setAdStatus,
   updateAd,
 } from "@/lib/ads/queries";
@@ -43,6 +44,11 @@ export async function PUT(req, { params }) {
       { status: 400 },
     );
   }
+
+  // The ad's sizes follow from its locations.
+  const sizes = await resolveLocationSizes(parsed.data.locations);
+  if (sizes.error) return NextResponse.json({ error: sizes.error }, { status: 400 });
+  parsed.data.format_ids = sizes.formatIds;
 
   const referenceError = await checkAdReferences(parsed.data);
   if (referenceError) {
