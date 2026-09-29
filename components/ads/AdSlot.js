@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { useAds, useImpression } from "@/lib/ads/client";
 import {
   SCREEN_BREAKPOINTS,
@@ -20,8 +19,9 @@ import styles from "./AdSlot.module.css";
  *   <AdSlot location="property_before_gallery" spacing="section" />
  *
  * `location` is a key from lib/ads/locations.js; admins assign ads to it.
- * All the location's live ads show as a carousel (paid first, up to 5, one
- * every 6 seconds); a single ad shows as a plain banner.
+ * All the location's live ads show as an automatic carousel (paid first, up
+ * to 5, one every 4 seconds, no manual controls); a single ad shows as a
+ * plain banner.
  *
  * The slot shows the size for the screen: desktop ≥1024px, tablet 768–1023px,
  * mobile ≤767px. On resize/rotation the same ads switch to their other size
@@ -100,15 +100,14 @@ function useOnScreen(ref) {
   return onScreen;
 }
 
-// Auto-advances every SLIDE_MS while on screen; pauses on hover, focus, a
-// hidden tab or the pause button. No auto-advance with reduced motion.
+// Auto-advances every SLIDE_MS while on screen; pauses on hover, focus or a
+// hidden tab. No manual controls — purely automatic sliding. No auto-advance
+// with reduced motion.
 function AdCarousel({ ads, className }) {
   const rootRef = useRef(null);
-  const touchX = useRef(null);
   const [index, setIndex] = useState(0);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
-  const [stopped, setStopped] = useState(false); // the viewer pressed pause
   const onScreen = useOnScreen(rootRef);
   const pageVisible = usePageVisible();
   const reducedMotion = useReducedMotion();
@@ -117,7 +116,7 @@ function AdCarousel({ ads, className }) {
   const adsKey = ads.map((ad) => ad.id).join(",");
   const current = Math.min(index, count - 1);
   const { width } = ads[current].format;
-  const autoplay = count > 1 && !stopped && !reducedMotion;
+  const autoplay = count > 1 && !reducedMotion;
 
   // A new set of ads starts from the first (highest ranked) one.
   useEffect(() => setIndex(0), [adsKey]);
@@ -128,36 +127,19 @@ function AdCarousel({ ads, className }) {
     return () => clearTimeout(timer);
   }, [autoplay, hovered, focused, onScreen, pageVisible, current, count]);
 
-  const go = (next) => setIndex((next + count) % count);
-  const many = count > 1;
-
   return (
     <div className={className}>
       <section
         ref={rootRef}
         className={styles.carousel}
         style={{ maxWidth: Math.max(width, 320) }}
-        aria-roledescription={many ? "carousel" : undefined}
-        aria-label={many ? "Sponsored listings" : ads[0].isFeatured ? "Featured listing" : "Promotion"}
+        aria-roledescription={count > 1 ? "carousel" : undefined}
+        aria-label={count > 1 ? "Sponsored listings" : ads[0].isFeatured ? "Featured listing" : "Promotion"}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onFocus={() => setFocused(true)}
         onBlur={(e) => {
           if (!e.currentTarget.contains(e.relatedTarget)) setFocused(false);
-        }}
-        onKeyDown={(e) => {
-          if (!many) return;
-          if (e.key === "ArrowLeft") go(current - 1);
-          if (e.key === "ArrowRight") go(current + 1);
-        }}
-        onTouchStart={(e) => {
-          touchX.current = e.touches[0].clientX;
-        }}
-        onTouchEnd={(e) => {
-          if (touchX.current == null || !many) return;
-          const dx = e.changedTouches[0].clientX - touchX.current;
-          touchX.current = null;
-          if (Math.abs(dx) > 40) go(current + (dx < 0 ? 1 : -1));
         }}
       >
         <div className={styles.stage}>
@@ -171,58 +153,12 @@ function AdCarousel({ ads, className }) {
                   key={ad.id}
                   ad={ad}
                   active={i === current}
-                  label={many ? `${i + 1} of ${count}` : undefined}
+                  label={count > 1 ? `${i + 1} of ${count}` : undefined}
                 />
               ))}
             </div>
           </div>
-
-          {many && (
-            <>
-              <button
-                type="button"
-                className={`${styles.arrow} ${styles.arrowPrev}`}
-                onClick={() => go(current - 1)}
-                aria-label="Previous ad"
-              >
-                <ChevronLeft size={18} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                className={`${styles.arrow} ${styles.arrowNext}`}
-                onClick={() => go(current + 1)}
-                aria-label="Next ad"
-              >
-                <ChevronRight size={18} aria-hidden="true" />
-              </button>
-            </>
-          )}
         </div>
-
-        {many && (
-          <div className={styles.controls}>
-            {!reducedMotion && (
-              <button
-                type="button"
-                className={styles.pause}
-                onClick={() => setStopped((value) => !value)}
-                aria-label={stopped ? "Play ads" : "Pause ads"}
-              >
-                {stopped ? <Play size={12} aria-hidden="true" /> : <Pause size={12} aria-hidden="true" />}
-              </button>
-            )}
-            {ads.map((ad, i) => (
-              <button
-                key={ad.id}
-                type="button"
-                className={`${styles.dot} ${i === current ? styles.dotActive : ""}`}
-                onClick={() => go(i)}
-                aria-label={`Show ad ${i + 1} of ${count}`}
-                aria-current={i === current ? "true" : undefined}
-              />
-            ))}
-          </div>
-        )}
       </section>
     </div>
   );
@@ -247,6 +183,7 @@ function Slide({ ad, active, label }) {
       ) : (
         <PropertyBanner ad={ad} tabIndex={tabIndex} />
       )}
+      <span className={styles.sponsoredLabel}>Sponsored</span>
     </div>
   );
 }
@@ -284,30 +221,7 @@ function ImageBanner({ ad, tabIndex }) {
         className={styles.bannerImage}
         loading="lazy"
       />
-      {/* Small corner overlays so they don't cover the middle of the artwork. */}
       {ad.label && <span className={styles.badge}>{ad.label}</span>}
-      {ad.ctaText && (
-        <span className={styles.bannerCta} aria-hidden="true">
-          {ad.ctaText}
-          {ad.isFeatured && (
-            <span
-              style={{
-                position: "absolute",
-                top: "100%",
-                left: 0,
-                marginTop: "0.01rem",
-                color: "#000103",
-                fontSize: "0.6rem",
-                lineHeight: 1.2,
-                whiteSpace: "nowrap",
-                textAlign: "left",
-              }}
-            >
-              Sponsored Ad
-            </span>
-          )}
-        </span>
-      )}
     </a>
   );
 }
@@ -333,28 +247,6 @@ function PropertyBanner({ ad, tabIndex }) {
           <span className={styles.composedMeta}>{[meta, amount].filter(Boolean).join(" · ")}</span>
         )}
       </span>
-      {ad.ctaText && (
-        <span className={styles.cta} style={{ position: "relative" }}>
-          {ad.ctaText}
-          {ad.isFeatured && (
-            <span
-              style={{
-                position: "absolute",
-                top: "100%",
-                left: 0,
-                marginTop: "0.2rem",
-                color: "#6b7280",
-                fontSize: "0.7rem",
-                lineHeight: 1.2,
-                whiteSpace: "nowrap",
-                textAlign: "left",
-              }}
-            >
-              Sponsored Ad
-            </span>
-          )}
-        </span>
-      )}
     </a>
   );
 }
