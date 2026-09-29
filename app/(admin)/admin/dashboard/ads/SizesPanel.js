@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ImageIcon, ImagePlus, Trash2, Undo2, Upload } from "lucide-react";
-import { FORMAT_SETS, SCREENS, screensForFormat } from "@/lib/ads/formatSets";
+import { ImageIcon, ImagePlus, Trash2, Undo2, Upload } from "lucide-react";
+import { SCREENS, screensForFormat } from "@/lib/ads/formatSets";
 import styles from "./ads.module.css";
 import f from "./adForm.module.css";
 
-// "Sizes & images" for the ad form: which sizes the ad has (presets from
-// lib/ads/formatSets.js, or custom), one main image every size is made from,
-// and a card per size with its preview and an optional custom image.
+// "Sizes & images" for the ad form: the sizes the ad's locations need, one
+// main image every size is made from, and a card per size with its preview
+// and an optional custom image.
 
 const SCREEN_NAMES = { desktop: "Desktop", tablet: "Tablet", mobile: "Mobile" };
 
@@ -79,143 +79,38 @@ export function resolveSizes({ formats, sizeIds, creatives, sizeEdits, main, pro
     });
 }
 
+// "Sizes & images": the sizes follow from the ad's locations (all locations
+// use the Billboard set), so this only shows them and handles the images.
 export default function SizesPanel({
-  formats,
-  sizeIds,
-  onSizeIdsChange,
-  showCustom,
-  onShowCustom,
   views,
   main,
   onMainFile,
   onRemoveMain,
   onUndoRemoveMain,
   onSizeEdit,
-  error,
 }) {
-  const byCode = new Map(formats.map((format) => [format.code, format]));
-  const selected = new Set(sizeIds);
-
-  const presets = FORMAT_SETS.map((set) => {
-    const codes = [...new Set(SCREENS.map((screen) => set.screens[screen]))];
-    const found = codes.map((code) => byCode.get(code));
-    const ids = found.filter(Boolean).map((format) => format.id);
-    const usable = found.every((format) => format && format.is_active);
-    const active =
-      ids.length === selected.size && ids.length > 0 && ids.every((id) => selected.has(id));
-    // "728×90 · Desktop & tablet"
-    const chips = codes.map((code) => ({
-      code,
-      format: byCode.get(code),
-      screens: SCREENS.filter((screen) => set.screens[screen] === code),
-    }));
-    return { ...set, ids, usable, active, chips };
-  });
-  const matchesPreset = presets.some((preset) => preset.active);
-  const customOpen = showCustom || (!matchesPreset && sizeIds.length > 0);
-
-  function toggleSize(id) {
-    onSizeIdsChange(selected.has(id) ? sizeIds.filter((item) => item !== id) : [...sizeIds, id]);
-  }
-
-  const customChoices = formats
-    .filter((format) => format.is_active || selected.has(format.id))
-    .slice()
-    .sort(bySize);
-
   return (
     <>
       <div className={f.group}>
         <div className={f.groupHead}>
-          <span className={f.groupTitle} id="sizes-label">
-            Where it runs <span className={f.required} aria-label="required">*</span>
-          </span>
+          <span className={f.groupTitle}>Sizes</span>
           <span className={f.groupHint}>
-            Each screen gets the size that fits: desktop ≥1024px, tablet 768–1023px, mobile ≤767px.
+            Set by the locations. Each screen gets the size that fits: desktop ≥1024px, tablet
+            768–1023px, mobile ≤767px.
           </span>
         </div>
-        <div className={f.optionGrid} role="radiogroup" aria-labelledby="sizes-label">
-          {presets.map((preset) => {
-            const on = preset.active && !customOpen;
-            return (
-              <label
-                key={preset.key}
-                className={`${f.choice} ${on ? f.choiceActive : ""} ${preset.usable ? "" : f.choiceDisabled}`}
-              >
-                <input
-                  type="radio"
-                  name="size-preset"
-                  checked={on}
-                  disabled={!preset.usable}
-                  onChange={() => {
-                    onShowCustom(false);
-                    onSizeIdsChange(preset.ids);
-                  }}
-                />
-                <span className={f.choiceBody}>
-                  <span className={f.choiceTitle}>{preset.name}</span>
-                  <span className={f.choiceText}>
-                    {preset.usable ? preset.hint : "A size in this set is missing or turned off."}
-                  </span>
-                  <span className={f.chips}>
-                    {preset.chips.map((chip) => (
-                      <span key={chip.code} className={f.chip}>
-                        <strong>{chip.format ? sizeText(chip.format) : chip.code}</strong>
-                        {screenText(chip.screens)}
-                      </span>
-                    ))}
-                  </span>
-                </span>
-                <Marker on={on} />
-              </label>
-            );
-          })}
-          <label className={`${f.choice} ${customOpen ? f.choiceActive : ""}`}>
-            <input
-              type="radio"
-              name="size-preset"
-              checked={customOpen}
-              onChange={() => onShowCustom(true)}
-            />
-            <span className={f.choiceBody}>
-              <span className={f.choiceTitle}>Custom sizes</span>
-              <span className={f.choiceText}>Pick any sizes, e.g. a sidebar rectangle.</span>
-            </span>
-            <Marker on={customOpen} />
-          </label>
-        </div>
-
-        {customOpen && (
-          <div className={f.optionGrid} role="group" aria-label="Sizes">
-            {customChoices.map((format) => {
-              const screens = screensForFormat(format.code);
-              const on = selected.has(format.id);
-              return (
-                <label
-                  key={format.id}
-                  className={`${f.choice} ${f.choiceCompact} ${on ? f.choiceActive : ""}`}
-                >
-                  <input type="checkbox" checked={on} onChange={() => toggleSize(format.id)} />
-                  <span className={f.choiceBody}>
-                    <span className={f.choiceTitle}>
-                      {format.name}
-                      <span className={f.mono}>{sizeText(format)}</span>
-                    </span>
-                    <span className={f.choiceText}>
-                      {screens.length > 0 ? screenText(screens) : capitalize(format.format_type)}
-                      {format.is_active ? "" : " · turned off"}
-                    </span>
-                  </span>
-                  <Marker on={on} square />
-                </label>
-              );
-            })}
+        {views.length > 0 ? (
+          <div className={f.chips}>
+            {views.map(({ format }) => (
+              <span key={format.id} className={f.chip}>
+                <strong>{sizeText(format)}</strong>
+                {screenText(screensForFormat(format.code)) || capitalize(format.format_type)}
+              </span>
+            ))}
           </div>
+        ) : (
+          <span className={f.help}>Choose a location above to see the sizes it needs.</span>
         )}
-        <span className={f.help}>
-          Every size shares this ad&apos;s schedule, limits and stats.
-        </span>
-        {error}
       </div>
 
       <div className={f.group}>
@@ -255,14 +150,6 @@ function screenText(screens) {
   return names.length > 1
     ? `${names.slice(0, -1).join(", ")} & ${names.at(-1).toLowerCase()}`
     : names[0] || "";
-}
-
-function Marker({ on, square = false }) {
-  return (
-    <span className={`${f.marker} ${square ? f.markerSquare : ""}`} aria-hidden="true">
-      {on && <Check size={13} strokeWidth={3.5} />}
-    </span>
-  );
 }
 
 // Lets a tile accept a dropped image file.

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAdById, getAdStats } from "@/lib/ads/queries";
 import { screensForFormat } from "@/lib/ads/formatSets";
+import { AD_LOCATIONS, locationLabel } from "@/lib/ads/locations";
 import AdStatusActions from "./AdStatusActions";
 import { SizePreview } from "../SizesPanel";
 import {
@@ -144,6 +145,14 @@ export default async function AdDetailPage({ params, searchParams }) {
           <section className={styles.card}>
             <h2 className={styles.cardTitle}>Delivery</h2>
             <dl className={styles.definition} style={{ marginTop: 12 }}>
+              <dt>Shows in</dt>
+              <dd>
+                {ad.locations.length === 0
+                  ? "No location — this ad doesn't show anywhere"
+                  : ad.locations.length === AD_LOCATIONS.length
+                    ? "All locations"
+                    : ad.locations.map((key) => <div key={key}>{locationLabel(key)}</div>)}
+              </dd>
               <dt>Runs</dt>
               <dd>
                 {formatDateTime(ad.start_at)} → {formatDateTime(ad.end_at)}
@@ -270,18 +279,16 @@ export default async function AdDetailPage({ params, searchParams }) {
             </section>
 
             <section className={styles.card}>
-              <h2 className={styles.cardTitle}>By placement (all time)</h2>
-              <p className={styles.cardHint}>
-                Placement is the name the frontend sends with each request, e.g. home_top.
-              </p>
+              <h2 className={styles.cardTitle}>By location (all time)</h2>
+              <p className={styles.cardHint}>Where on the site the ad was seen and clicked.</p>
               {stats.placements.length === 0 ? (
-                <p className={styles.help}>No placement data yet.</p>
+                <p className={styles.help}>No location data yet.</p>
               ) : (
                 <div className={styles.tableWrap} style={{ boxShadow: "none" }}>
                   <table className={styles.table}>
                     <thead>
                       <tr>
-                        <th>Placement</th>
+                        <th>Location</th>
                         <th className={styles.num}>Impr.</th>
                         <th className={styles.num}>Clicks</th>
                         <th className={styles.num}>CTR</th>
@@ -290,7 +297,7 @@ export default async function AdDetailPage({ params, searchParams }) {
                     <tbody>
                       {stats.placements.map((row) => (
                         <tr key={row.placement}>
-                          <td className={styles.mono}>{row.placement || "(not set)"}</td>
+                          <td>{row.placement ? locationLabel(row.placement) : "(not set)"}</td>
                           <td className={styles.num}>{formatNumber(row.impressions)}</td>
                           <td className={styles.num}>{formatNumber(row.clicks)}</td>
                           <td className={styles.num}>{formatCtr(row.impressions, row.clicks)}</td>

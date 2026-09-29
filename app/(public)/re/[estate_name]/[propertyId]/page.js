@@ -41,7 +41,6 @@ import {
 } from "@/lib/propertyTaxonomy";
 import styles from "./page.module.css";
 import AdSlot from "@/components/ads/AdSlot";
-import { BILLBOARD_FORMATS } from "@/components/ads/adFormats";
 import { publicPropertyDetails, publicPropertyInsight, apartmentCoveredAreaLabel } from "@/lib/publicPropertyData";
 import { resolveAgentThemeStyle } from "@/lib/agentTheme";
 import "@/app/agent-public-theme.css";
@@ -680,6 +679,8 @@ export default async function PropertyDetailPage({ params, searchParams }) {
         {/* 2. Hero property media — unchanged */}
         <HeroGallery images={heroImages} title={property.title} isFile={property.property_subtype === "file"} isPlot={property.property_type === "plot"} />
 
+        <AdSlot location="property_below_hero" spacing="section" />
+
         {/* 3–4. Property summary + sticky agent contact */}
         <section className={styles.overview}>
           <div className={styles.overviewMain}>
@@ -953,7 +954,7 @@ export default async function PropertyDetailPage({ params, searchParams }) {
           </aside>
         </section>
 
-        <AdSlot placement="property_detail" formats={BILLBOARD_FORMATS} spacing="section" />
+        <AdSlot location="property_before_gallery" spacing="section" />
 
         {/* Explore every space */}
         <GalleryCarousel slides={spaceSlides} title={property.title} />

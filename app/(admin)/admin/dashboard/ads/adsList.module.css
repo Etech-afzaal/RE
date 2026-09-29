@@ -312,26 +312,32 @@
   white-space: nowrap;
 }
 
-.sizeList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-  max-width: 11rem;
+.locationList {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 9rem;
+  max-width: 13rem;
 }
 
-.sizeChip {
-  padding: 0.15rem 0.45rem;
-  border-radius: 6px;
-  background: var(--surface-sunken);
-  color: var(--ink);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
+.locationItem strong {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.locationItem .sub {
+  margin-top: 0;
+}
+
+.locationAll {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--gold-tint);
+  color: var(--gold-deep);
+  font-size: 0.75rem;
+  font-weight: 700;
   white-space: nowrap;
-}
-
-.sizeChipOff {
-  color: var(--muted);
-  text-decoration: line-through;
 }
 
 .pill {

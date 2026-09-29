@@ -799,3 +799,195 @@
     justify-content: center;
   }
 }
+
+/* ---------- location picker ---------- */
+
+.locPicker {
+  position: relative;
+  display: grid;
+  gap: var(--space-sm);
+  max-width: 560px;
+}
+
+.locAnchor {
+  position: relative;
+}
+
+.locTrigger {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.93rem;
+  font-weight: 600;
+}
+
+.locTrigger:hover {
+  border-color: var(--brass);
+}
+
+.locTrigger > svg:first-child {
+  color: var(--gold-deep);
+}
+
+.locTriggerInvalid {
+  border-color: var(--danger);
+}
+
+.locValue,
+.locPlaceholder {
+  flex: 1;
+  text-align: left;
+}
+
+.locPlaceholder {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.locChevronOpen {
+  transform: rotate(180deg);
+}
+
+.locMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: grid;
+  gap: var(--space-sm);
+  max-height: min(70vh, 460px);
+  overflow-y: auto;
+  padding: var(--space-md);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.locMenuHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.locGroup {
+  display: grid;
+  gap: 2px;
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--line-soft);
+}
+
+.locGroupHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 4px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--ink-soft);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.locGroupCount {
+  color: var(--info);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.locOption {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.locOption:hover {
+  background: var(--surface-secondary);
+}
+
+.locOption:focus-within {
+  outline: 2px solid var(--brass);
+  outline-offset: -2px;
+}
+
+.locOption input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.locOptionOn .marker {
+  border-color: var(--gold-deep);
+  background: var(--gold-deep);
+}
+
+.locMenuFoot {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--line-soft);
+}
+
+.locChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.locChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  border: 1px solid rgba(242, 187, 70, 0.45);
+  border-radius: var(--radius-full);
+  background: var(--gold-tint);
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.locChip button {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(201, 150, 31, 0.15);
+  color: var(--gold-deep);
+}
+
+.locChip button:hover {
+  background: var(--gold-deep);
+  color: #fff;
+}
