@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS users (
   website_listing_preferences JSON NULL,           -- Agent public website category visibility
   theme_id VARCHAR(30) NOT NULL DEFAULT 'default',  -- Agent public website theme (default = current look)
   theme_settings JSON NULL,                        -- Custom palette colors (only when theme_id = 'custom')
+  free_ads_enabled BOOLEAN NOT NULL DEFAULT TRUE,  -- Owner-level opt-in for free property ads
   password_hash VARCHAR(255) NOT NULL,
   user_type ENUM('superadmin','agent') NOT NULL DEFAULT 'agent',
   must_reset_password BOOLEAN DEFAULT TRUE,
@@ -76,6 +77,7 @@ CREATE TABLE IF NOT EXISTS properties (
   status ENUM('draft','pending_approval','approved','rejected','under_contract','sold') NOT NULL DEFAULT 'draft',
   is_hidden BOOLEAN NOT NULL DEFAULT FALSE,        -- independent public-listing visibility
   is_featured BOOLEAN NOT NULL DEFAULT FALSE,       -- agent homepage hero (max 10 approved per agent)
+  free_ads_enabled BOOLEAN NOT NULL DEFAULT TRUE,  -- property-level opt-in for free ads
   submitted_at DATETIME NULL,                      -- set when the agent submits for review
   approved_by VARCHAR(100) NULL,                   -- admin identifier (env admin has no users row)
   approved_at DATETIME NULL,
@@ -117,6 +119,19 @@ CREATE TABLE IF NOT EXISTS property_videos (
 CREATE INDEX idx_properties_agent ON properties(agent_id);
 CREATE INDEX idx_properties_status ON properties(status);
 CREATE INDEX idx_properties_agent_featured ON properties(agent_id, is_featured, status);
+
+-- An owner can prevent their free property ads from appearing on a specific
+-- agent's public website. advertiser_agent_id is the property/ad owner;
+-- blocked_host_agent_id is the owner of the website that must not show it.
+CREATE TABLE IF NOT EXISTS agent_free_ad_blocks (
+  advertiser_agent_id INT NOT NULL,
+  blocked_host_agent_id INT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (advertiser_agent_id, blocked_host_agent_id),
+  KEY idx_agent_free_ad_blocks_host (blocked_host_agent_id),
+  FOREIGN KEY (advertiser_agent_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (blocked_host_agent_id) REFERENCES users(id) ON DELETE CASCADE
+);
 
 -- Platform audit trail (superadmin Logs page + Overview recent activities).
 CREATE TABLE IF NOT EXISTS audit_logs (
