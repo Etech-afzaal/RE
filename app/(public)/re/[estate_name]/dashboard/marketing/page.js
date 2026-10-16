@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import AgentAvatar from "@/components/AgentAvatar";
 import AgentPortalShell from "@/components/agent-portal/AgentPortalShell";
 import ui from "@/components/agent-portal/portal.module.css";
 import styles from "./page.module.css";
@@ -110,8 +111,20 @@ function ArrowIcon() {
 function WebsiteIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M3 12h18M12 3c2.5 2.5 3.8 5.8 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.8-3.8-9s1.3-6.5 3.8-9Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M3 12h18M12 3c2.5 2.5 3.8 5.8 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.8-3.8-9s1.3-6.5 3.8-9Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
     </svg>
   );
 }
@@ -119,8 +132,23 @@ function WebsiteIcon() {
 function ListingIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="4" y="5" width="16" height="14" rx="2" fill="none" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M8 9h8M8 12.5h8M8 16h5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <rect
+        x="4"
+        y="5"
+        width="16"
+        height="14"
+        rx="2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M8 9h8M8 12.5h8M8 16h5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -128,8 +156,20 @@ function ListingIcon() {
 function BlogIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5 4h9a3 3 0 0 1 3 3v13H7a2 2 0 0 1-2-2V4Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M8 8h5M8 11.5h5M8 15h3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path
+        d="M5 4h9a3 3 0 0 1 3 3v13H7a2 2 0 0 1-2-2V4Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8 8h5M8 11.5h5M8 15h3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -137,7 +177,16 @@ function BlogIcon() {
 function VideoIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="3" y="5" width="18" height="14" rx="3" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <rect
+        x="3"
+        y="5"
+        width="18"
+        height="14"
+        rx="3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
       <path d="M10.5 9.5v5l4.5-2.5-4.5-2.5Z" fill="currentColor" />
     </svg>
   );
@@ -146,10 +195,36 @@ function VideoIcon() {
 function ShareIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="6" cy="12" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
-      <circle cx="18" cy="6" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
-      <circle cx="18" cy="18" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M8.2 10.8 15.8 7.2M8.2 13.2 15.8 16.8" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <circle
+        cx="6"
+        cy="12"
+        r="2.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <circle
+        cx="18"
+        cy="6"
+        r="2.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <circle
+        cx="18"
+        cy="18"
+        r="2.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M8.2 10.8 15.8 7.2M8.2 13.2 15.8 16.8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
     </svg>
   );
 }
@@ -157,8 +232,21 @@ function ShareIcon() {
 function SeoIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M16 16 21 21" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <circle
+        cx="11"
+        cy="11"
+        r="7"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M16 16 21 21"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -166,7 +254,13 @@ function SeoIcon() {
 function SocialIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M18 4v5a2 2 0 0 1-2 2h-3l3 7-3.5-1L9 11 4 9.5 4 4h14Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path
+        d="M18 4v5a2 2 0 0 1-2 2h-3l3 7-3.5-1L9 11 4 9.5 4 4h14Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -174,9 +268,32 @@ function SocialIcon() {
 function ChecklistIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="4" y="4" width="16" height="16" rx="2" fill="none" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M7.5 10.5 10 13l5-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M7.5 17l2 2 3-3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <rect
+        x="4"
+        y="4"
+        width="16"
+        height="16"
+        rx="2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M7.5 10.5 10 13l5-5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M7.5 17l2 2 3-3"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -184,7 +301,13 @@ function ChecklistIcon() {
 function ResourceIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path
+        d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
       <path d="M5 17h14" fill="none" stroke="currentColor" strokeWidth="1.8" />
     </svg>
   );
@@ -196,6 +319,7 @@ function FreeAdsSection() {
   const [savingGlobal, setSavingGlobal] = useState(false);
   const [changingAgentId, setChangingAgentId] = useState(null);
   const [search, setSearch] = useState("");
+  const [showBlockedList, setShowBlockedList] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -203,54 +327,198 @@ function FreeAdsSection() {
       .then(async (response) => {
         const data = await response.json().catch(() => ({}));
         if (cancelled) return;
-        if (!response.ok) throw new Error(data.error || "Could not load Free Ads settings.");
+        if (!response.ok)
+          throw new Error(data.error || "Could not load Free Ads settings.");
         setSettings(data);
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message || "Could not load Free Ads settings.");
+        if (!cancelled)
+          setError(err.message || "Could not load Free Ads settings.");
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const visibleAgents = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return (settings?.agents || []).filter((agent) => !term || [agent.fullName, agent.handle]
-      .some((value) => String(value || "").toLowerCase().includes(term)));
-  }, [search, settings]);
+    return (settings?.agents || []).filter(
+      (agent) =>
+        (!showBlockedList || agent.isBlocked) &&
+        (!term ||
+          [agent.fullName, agent.handle].some((value) =>
+            String(value || "")
+              .toLowerCase()
+              .includes(term),
+          )),
+    );
+  }, [search, settings, showBlockedList]);
 
   async function saveGlobal(enabled) {
     if (!settings || savingGlobal) return;
-    setSavingGlobal(true); setError("");
+    setSavingGlobal(true);
+    setError("");
     try {
-      const response = await fetch("/api/agent/free-ads", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ freeAdsEnabled: enabled }) });
+      const response = await fetch("/api/agent/free-ads", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ freeAdsEnabled: enabled }),
+      });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "Could not save Free Ads settings.");
-      setSettings((current) => ({ ...current, freeAdsEnabled: data.freeAdsEnabled }));
-    } catch (err) { setError(err.message || "Could not save Free Ads settings."); }
-    finally { setSavingGlobal(false); }
+      if (!response.ok)
+        throw new Error(data.error || "Could not save Free Ads settings.");
+      setSettings((current) => ({
+        ...current,
+        freeAdsEnabled: data.freeAdsEnabled,
+      }));
+    } catch (err) {
+      setError(err.message || "Could not save Free Ads settings.");
+    } finally {
+      setSavingGlobal(false);
+    }
   }
 
   async function toggleBlock(agent) {
     if (changingAgentId || !settings) return;
-    setChangingAgentId(agent.id); setError("");
+    setChangingAgentId(agent.id);
+    setError("");
     try {
-      const response = await fetch(`/api/agent/free-ads/blocks/${agent.id}`, { method: agent.isBlocked ? "DELETE" : "POST" });
+      const response = await fetch(`/api/agent/free-ads/blocks/${agent.id}`, {
+        method: agent.isBlocked ? "DELETE" : "POST",
+      });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "Could not update the block list.");
-      setSettings((current) => ({ ...current, agents: current.agents.map((item) => item.id === agent.id ? { ...item, isBlocked: data.isBlocked } : item) }));
-    } catch (err) { setError(err.message || "Could not update the block list."); }
-    finally { setChangingAgentId(null); }
+      if (!response.ok)
+        throw new Error(data.error || "Could not update the block list.");
+      setSettings((current) => ({
+        ...current,
+        agents: current.agents.map((item) =>
+          item.id === agent.id ? { ...item, isBlocked: data.isBlocked } : item,
+        ),
+      }));
+    } catch (err) {
+      setError(err.message || "Could not update the block list.");
+    } finally {
+      setChangingAgentId(null);
+    }
   }
 
-  return <section className={styles.section} aria-labelledby="free-ads-heading">
-    <div className={styles.sectionHeader}><span className={styles.sectionIcon} aria-hidden="true"><ShareIcon /></span><h2 id="free-ads-heading" className={styles.sectionTitle}>Free Ads</h2></div>
-    <p className={styles.sectionLead}>Allow eligible, approved properties to be promoted for free across the RE platform. Turning this off immediately prevents all of your properties from being used in free ads.</p>
-    {error ? <p className={styles.freeAdsError} role="alert">{error}</p> : null}
-    {!settings ? <p className={styles.freeAdsMuted}>Loading Free Ads settings…</p> : <>
-      <div className={styles.freeAdsToggleRow}><div><p className={styles.freeAdsTitle}>Enable Free Ads</p><p className={styles.freeAdsMuted}>{settings.freeAdsEnabled ? "Your eligible properties may be selected for free advertising." : "Free advertising is off for every one of your properties."}</p></div><label className={styles.switch}><input type="checkbox" checked={settings.freeAdsEnabled} disabled={savingGlobal} onChange={(event) => saveGlobal(event.target.checked)} /><span className={styles.switchTrack} /><span className="sr-only">Enable Free Ads</span></label></div>
-      <div className={styles.blockAgents}><h3 className={styles.blockAgentsTitle}>Block Agents</h3><p className={styles.freeAdsMuted}>Blocking an agent prevents your free property ads from appearing on that agent’s public website, property pages, and dashboard. It does not affect other websites.</p><input className={styles.agentSearch} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search agents" aria-label="Search agents to block" /><div className={styles.agentBlockList}>{visibleAgents.length === 0 ? <p className={styles.freeAdsMuted}>No registered agents match your search.</p> : visibleAgents.map((agent) => <div key={agent.id} className={styles.agentBlockRow}><div className={styles.agentIdentity}><span className={styles.agentAvatar} aria-hidden="true">{agent.profileImage ? <img src={agent.profileImage} alt="" /> : agent.fullName?.slice(0, 1)?.toUpperCase() || "A"}</span><span><strong>{agent.fullName}</strong>{agent.handle ? <small>/{agent.handle}</small> : null}</span></div><button type="button" className={agent.isBlocked ? styles.unblockButton : styles.blockButton} disabled={changingAgentId === agent.id} onClick={() => toggleBlock(agent)}>{changingAgentId === agent.id ? "Saving…" : agent.isBlocked ? "Unblock" : "Block"}</button></div>)}</div></div>
-    </>}
-  </section>;
+  return (
+    <section className={styles.section} aria-labelledby="free-ads-heading">
+      <div className={styles.sectionHeader}>
+        <span className={styles.sectionIcon} aria-hidden="true">
+          <ShareIcon />
+        </span>
+        <h2 id="free-ads-heading" className={styles.sectionTitle}>
+          Free Ads
+        </h2>
+      </div>
+      <p className={styles.sectionLead}>
+        Allow eligible, approved properties to be promoted for free across the
+        RE platform. Turning this off immediately prevents all of your
+        properties from being used in free ads.
+      </p>
+      {error ? (
+        <p className={styles.freeAdsError} role="alert">
+          {error}
+        </p>
+      ) : null}
+      {!settings ? (
+        <p className={styles.freeAdsMuted}>Loading Free Ads settings…</p>
+      ) : (
+        <>
+          <div className={styles.freeAdsToggleRow}>
+            <div>
+              <p className={styles.freeAdsTitle}>Enable Free Ads</p>
+              <p className={styles.freeAdsMuted}>
+                {settings.freeAdsEnabled
+                  ? "Your eligible properties may be selected for free advertising."
+                  : "Free advertising is off for every one of your properties."}
+              </p>
+            </div>
+            <label className={styles.switch}>
+              <input
+                type="checkbox"
+                checked={settings.freeAdsEnabled}
+                disabled={savingGlobal}
+                onChange={(event) => saveGlobal(event.target.checked)}
+              />
+              <span className={styles.switchTrack} />
+              <span className="sr-only">Enable Free Ads</span>
+            </label>
+          </div>
+          <div className={styles.blockAgents}>
+            <div className={styles.blockAgentsHeader}>
+              <h3 className={styles.blockAgentsTitle}>Block Agents</h3>
+              <button
+                type="button"
+                className={styles.blockListToggle}
+                onClick={() => setShowBlockedList((current) => !current)}
+              >
+                {showBlockedList
+                  ? "All agents"
+                  : `Blocked list (${settings.agents.filter((agent) => agent.isBlocked).length})`}
+              </button>
+            </div>
+            <p className={styles.freeAdsMuted}>
+              Blocking an agent prevents your free property ads from appearing
+              on that agent’s public website, property pages, and dashboard. It
+              does not affect other websites.
+            </p>
+            <input
+              className={styles.agentSearch}
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={showBlockedList ? "Search blocked agents" : "Search agents"}
+              aria-label={showBlockedList ? "Search blocked agents" : "Search agents to block"}
+            />
+            <div className={styles.agentBlockList}>
+              {visibleAgents.length === 0 ? (
+                <p className={styles.freeAdsMuted}>
+                  {showBlockedList
+                    ? "You have not blocked any agents."
+                    : "No registered agents match your search."}
+                </p>
+              ) : (
+                visibleAgents.map((agent) => (
+                  <div key={agent.id} className={styles.agentBlockRow}>
+                    <div className={styles.agentIdentity}>
+                      <span className={styles.agentAvatar} aria-hidden="true">
+                        <AgentAvatar
+                          src={agent.profileImage}
+                          width={32}
+                          height={32}
+                        />
+                      </span>
+                      <span>
+                        <strong>{agent.fullName}</strong>
+                        {agent.handle ? <small>/{agent.handle}</small> : null}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className={
+                        agent.isBlocked
+                          ? styles.unblockButton
+                          : styles.blockButton
+                      }
+                      disabled={changingAgentId === agent.id}
+                      onClick={() => toggleBlock(agent)}
+                    >
+                      {changingAgentId === agent.id
+                        ? "Saving…"
+                        : agent.isBlocked
+                          ? "Unblock"
+                          : "Block"}
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </section>
+  );
 }
 
 export default function AgentMarketingPage() {
@@ -297,8 +565,8 @@ export default function AgentMarketingPage() {
           <p className={styles.heroKicker}>Agent Marketing Academy</p>
           <h1 className={styles.heroTitle}>Grow Your Real Estate Business</h1>
           <p className={styles.heroSubtitle}>
-            Learn how to market properties, attract buyers, and build your online
-            presence using our platform.
+            Learn how to market properties, attract buyers, and build your
+            online presence using our platform.
           </p>
           <div className={styles.heroPills}>
             <span className={styles.heroPill}>
@@ -316,8 +584,12 @@ export default function AgentMarketingPage() {
         {/* Section 1 — Digital Office */}
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionIcon}><WebsiteIcon /></span>
-            <h2 className={styles.sectionTitle}>Your Website Is Your Digital Office</h2>
+            <span className={styles.sectionIcon}>
+              <WebsiteIcon />
+            </span>
+            <h2 className={styles.sectionTitle}>
+              Your Website Is Your Digital Office
+            </h2>
           </div>
           <p className={styles.sectionLead}>
             Every agent gets a professional public website where customers can
@@ -332,22 +604,32 @@ export default function AgentMarketingPage() {
               "A complete profile builds buyer trust",
             ].map((tip) => (
               <div key={tip} className={styles.tipCard}>
-                <span className={styles.tipCheck}><CheckIcon /></span>
+                <span className={styles.tipCheck}>
+                  <CheckIcon />
+                </span>
                 <span className={styles.tipBody}>{tip}</span>
               </div>
             ))}
           </div>
           <div className={styles.highlight}>
             <strong>Tip:</strong> Keep your profile updated in{" "}
-            <Link href={`${base}/profile`} className={styles.extLink}>My Profile</Link>{" "}
-            and <Link href={`${base}/company-branding`} className={styles.extLink}>Company Branding</Link>.
+            <Link href={`${base}/profile`} className={styles.extLink}>
+              My Profile
+            </Link>{" "}
+            and{" "}
+            <Link href={`${base}/company-branding`} className={styles.extLink}>
+              Company Branding
+            </Link>
+            .
           </div>
         </section>
 
         {/* Section 2 — Property Marketing */}
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionIcon}><ListingIcon /></span>
+            <span className={styles.sectionIcon}>
+              <ListingIcon />
+            </span>
             <h2 className={styles.sectionTitle}>Property Marketing</h2>
           </div>
           <p className={styles.sectionLead}>
@@ -357,30 +639,44 @@ export default function AgentMarketingPage() {
           <div className={styles.tipGrid}>
             {TIP_LIST.map((tip) => (
               <div key={tip} className={styles.tipCard}>
-                <span className={styles.tipCheck}><CheckIcon /></span>
+                <span className={styles.tipCheck}>
+                  <CheckIcon />
+                </span>
                 <span className={styles.tipBody}>{tip}</span>
               </div>
             ))}
           </div>
           <div className={styles.highlight}>
             <strong>Start now:</strong>{" "}
-            <Link href={`${base}/properties/create`} className={styles.extLink}>Add a new property</Link>{" "}
-            or <Link href={`${base}/properties`} className={styles.extLink}>edit existing listings</Link>.
+            <Link href={`${base}/properties/create`} className={styles.extLink}>
+              Add a new property
+            </Link>{" "}
+            or{" "}
+            <Link href={`${base}/properties`} className={styles.extLink}>
+              edit existing listings
+            </Link>
+            .
           </div>
         </section>
 
         {/* Section 3 — Blogs */}
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionIcon}><BlogIcon /></span>
-            <h2 className={styles.sectionTitle}>Use Blogs To Build Authority</h2>
+            <span className={styles.sectionIcon}>
+              <BlogIcon />
+            </span>
+            <h2 className={styles.sectionTitle}>
+              Use Blogs To Build Authority
+            </h2>
           </div>
           <p className={styles.sectionLead}>
             Agents can publish blog articles to share market knowledge, explain
             areas, guide buyers, and build trust — published blogs appear on
             your public website.
           </p>
-          <p className={styles.tipBody}><strong>Write about things buyers search for:</strong></p>
+          <p className={styles.tipBody}>
+            <strong>Write about things buyers search for:</strong>
+          </p>
           <div className={styles.exampleGrid}>
             {BLOG_EXAMPLES.map((ex) => (
               <div key={ex.label} className={styles.exampleCard}>
@@ -391,49 +687,70 @@ export default function AgentMarketingPage() {
           </div>
           <div className={styles.highlight}>
             <strong>Get started:</strong>{" "}
-            <Link href={`${base}/blogs/create`} className={styles.extLink}>Write your first blog</Link>.
+            <Link href={`${base}/blogs/create`} className={styles.extLink}>
+              Write your first blog
+            </Link>
+            .
           </div>
         </section>
 
         {/* Section 4 — Video Posts */}
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionIcon}><VideoIcon /></span>
+            <span className={styles.sectionIcon}>
+              <VideoIcon />
+            </span>
             <h2 className={styles.sectionTitle}>Use Video Posts</h2>
           </div>
           <p className={styles.sectionLead}>
             Videos help you showcase properties, give virtual tours, and build
-            customer confidence — especially for buyers who cannot visit in person.
+            customer confidence — especially for buyers who cannot visit in
+            person.
           </p>
           <div className={styles.tipGrid}>
             {VIDEO_IDEAS.map((idea) => (
               <div key={idea} className={styles.tipCard}>
-                <span className={styles.tipCheck}><CheckIcon /></span>
+                <span className={styles.tipCheck}>
+                  <CheckIcon />
+                </span>
                 <span className={styles.tipBody}>{idea}</span>
               </div>
             ))}
           </div>
           <div className={styles.highlight}>
             <strong>Upload now:</strong>{" "}
-            <Link href={`${base}/video-posts/create`} className={styles.extLink}>Add a video post</Link>.
+            <Link
+              href={`${base}/video-posts/create`}
+              className={styles.extLink}
+            >
+              Add a video post
+            </Link>
+            .
           </div>
         </section>
 
         {/* Section 5 — Share Links */}
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionIcon}><ShareIcon /></span>
+            <span className={styles.sectionIcon}>
+              <ShareIcon />
+            </span>
             <h2 className={styles.sectionTitle}>Share Your Property Links</h2>
           </div>
           <p className={styles.sectionLead}>
             Every property has a shareable public link. You can also create
             subagent marketing links to track where your leads come from.
           </p>
-          <p className={styles.tipBody}><strong>Share your links on:</strong></p>
+          <p className={styles.tipBody}>
+            <strong>Share your links on:</strong>
+          </p>
           <div className={styles.platformGrid}>
             {SHARE_CHANNELS.map((ch) => (
               <div key={ch.label} className={styles.platformCard}>
-                <span className={styles.platformDot} style={{ background: ch.color }} />
+                <span
+                  className={styles.platformDot}
+                  style={{ background: ch.color }}
+                />
                 {ch.label}
               </div>
             ))}
@@ -441,21 +758,28 @@ export default function AgentMarketingPage() {
           <div className={styles.highlight}>
             <strong>Tracking benefit:</strong> Subagent marketing links let you
             see which channel drives the most inquiries.{" "}
-            <Link href={`${base}/subagents`} className={styles.extLink}>Manage subagents</Link>.
+            <Link href={`${base}/subagents`} className={styles.extLink}>
+              Manage subagents
+            </Link>
+            .
           </div>
         </section>
 
         {/* Section 6 — SEO */}
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionIcon}><SeoIcon /></span>
-            <h2 className={styles.sectionTitle}>Search Engine Visibility (SEO)</h2>
+            <span className={styles.sectionIcon}>
+              <SeoIcon />
+            </span>
+            <h2 className={styles.sectionTitle}>
+              Search Engine Visibility (SEO)
+            </h2>
           </div>
           <p className={styles.sectionLead}>
-            Search engines like Google and Bing discover your properties automatically.
-            You can help them by keeping listings complete, adding descriptions, and
-            publishing useful content. Here are tools to understand and improve
-            your visibility:
+            Search engines like Google and Bing discover your properties
+            automatically. You can help them by keeping listings complete,
+            adding descriptions, and publishing useful content. Here are tools
+            to understand and improve your visibility:
           </p>
           <div className={styles.tipGrid}>
             {[
@@ -465,23 +789,51 @@ export default function AgentMarketingPage() {
               "Add your website to Google Business Profile",
             ].map((tip) => (
               <div key={tip} className={styles.tipCard}>
-                <span className={styles.tipCheck}><CheckIcon /></span>
+                <span className={styles.tipCheck}>
+                  <CheckIcon />
+                </span>
                 <span className={styles.tipBody}>{tip}</span>
               </div>
             ))}
           </div>
           <div className={styles.highlight}>
             Useful:{" "}
-            <a href="https://search.google.com/search-console" target="_blank" rel="noopener noreferrer" className={styles.extLink}>Google Search Console</a>,{" "}
-            <a href="https://www.bing.com/webmasters" target="_blank" rel="noopener noreferrer" className={styles.extLink}>Bing Webmaster Tools</a>,{" "}
-            <a href="https://www.google.com/business/" target="_blank" rel="noopener noreferrer" className={styles.extLink}>Google Business Profile</a>.
+            <a
+              href="https://search.google.com/search-console"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.extLink}
+            >
+              Google Search Console
+            </a>
+            ,{" "}
+            <a
+              href="https://www.bing.com/webmasters"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.extLink}
+            >
+              Bing Webmaster Tools
+            </a>
+            ,{" "}
+            <a
+              href="https://www.google.com/business/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.extLink}
+            >
+              Google Business Profile
+            </a>
+            .
           </div>
         </section>
 
         {/* Section 7 — Social Media */}
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionIcon}><SocialIcon /></span>
+            <span className={styles.sectionIcon}>
+              <SocialIcon />
+            </span>
             <h2 className={styles.sectionTitle}>Social Media Marketing</h2>
           </div>
           <p className={styles.sectionLead}>
@@ -492,7 +844,10 @@ export default function AgentMarketingPage() {
           <div className={styles.platformGrid}>
             {SOCIAL_PLATFORMS.map((p) => (
               <div key={p.label} className={styles.platformCard}>
-                <span className={styles.platformDot} style={{ background: p.color }} />
+                <span
+                  className={styles.platformDot}
+                  style={{ background: p.color }}
+                />
                 {p.label}
               </div>
             ))}
@@ -505,7 +860,9 @@ export default function AgentMarketingPage() {
               "Post consistently to stay visible",
             ].map((tip) => (
               <div key={tip} className={styles.tipCard}>
-                <span className={styles.tipCheck}><CheckIcon /></span>
+                <span className={styles.tipCheck}>
+                  <CheckIcon />
+                </span>
                 <span className={styles.tipBody}>{tip}</span>
               </div>
             ))}
@@ -515,12 +872,16 @@ export default function AgentMarketingPage() {
         {/* Section 8 — Checklist */}
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionIcon}><ChecklistIcon /></span>
+            <span className={styles.sectionIcon}>
+              <ChecklistIcon />
+            </span>
             <h2 className={styles.sectionTitle}>Marketing Checklist</h2>
           </div>
           <div className={styles.checklist}>
             <div className={styles.checklistBlock}>
-              <p className={styles.checklistTitle}>Before publishing a property</p>
+              <p className={styles.checklistTitle}>
+                Before publishing a property
+              </p>
               <div className={styles.checklistItems}>
                 {[
                   "Good images uploaded",
@@ -556,7 +917,9 @@ export default function AgentMarketingPage() {
         {/* Section 9 — Resources */}
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionIcon}><ResourceIcon /></span>
+            <span className={styles.sectionIcon}>
+              <ResourceIcon />
+            </span>
             <h2 className={styles.sectionTitle}>Helpful Resources</h2>
           </div>
           <p className={styles.sectionLead}>
@@ -576,7 +939,9 @@ export default function AgentMarketingPage() {
                   <span className={styles.resourceName}>{r.name}</span>
                   <span className={styles.resourceDesc}>{r.desc}</span>
                 </span>
-                <span className={styles.resourceArrow}><ArrowIcon /></span>
+                <span className={styles.resourceArrow}>
+                  <ArrowIcon />
+                </span>
               </a>
             ))}
           </div>
