@@ -45,6 +45,10 @@ Defined in `lib/ads/locations.js` (shared by the admin form, the API and the slo
 No ads anywhere else (blog, video, files-updates, become-an-agent and privacy pages, super
 admin pages, login pages). Each location shows up in the ad's "By location" stats.
 
+For agent public websites, property pages, and agent dashboards, an owner's Free Ads block
+also applies: if Agent A blocks Agent B, A's free property ads do not appear on B's surfaces.
+Paid ads are unaffected.
+
 **Adding a location:** add it to `AD_LOCATIONS` in `lib/ads/locations.js` and to the
 `LOCATION_KEYS` list in `scripts/migrate-ad-locations.js` (used for the backfill), then place
 `<AdSlot location="your_key" />` on the page. It appears in the admin dropdown automatically.

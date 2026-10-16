@@ -679,7 +679,7 @@ export default async function PropertyDetailPage({ params, searchParams }) {
         {/* 2. Hero property media — unchanged */}
         <HeroGallery images={heroImages} title={property.title} isFile={property.property_subtype === "file"} isPlot={property.property_type === "plot"} />
 
-        <AdSlot location="property_below_hero" spacing="section" />
+        <AdSlot location="property_below_hero" host={agentHandle} spacing="section" />
 
         {/* 3–4. Property summary + sticky agent contact */}
         <section className={styles.overview}>
@@ -954,7 +954,7 @@ export default async function PropertyDetailPage({ params, searchParams }) {
           </aside>
         </section>
 
-        <AdSlot location="property_before_gallery" spacing="section" />
+        <AdSlot location="property_before_gallery" host={agentHandle} spacing="section" />
 
         {/* Explore every space */}
         <GalleryCarousel slides={spaceSlides} title={property.title} />

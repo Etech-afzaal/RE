@@ -20,6 +20,13 @@ export const dynamic = "force-dynamic";
 const VIEWER_COOKIE = "ad_vid";
 
 const FORMAT_CODE = /^[a-z0-9_]{2,50}$/;
+const HOST_SCOPED_LOCATIONS = new Set([
+  "agent_site_below_hero",
+  "agent_site_after_listings",
+  "property_below_hero",
+  "property_before_gallery",
+  "agent_dashboard_top",
+]);
 
 const paramsSchema = z.object({
   format: z.string().regex(FORMAT_CODE, "format must be an ad format code"),
@@ -46,6 +53,7 @@ const paramsSchema = z.object({
         .filter((id) => Number.isInteger(id) && id > 0)
         .slice(0, 50),
     ),
+  host: z.string().trim().min(1).max(100).optional(),
 });
 
 export async function GET(req) {
@@ -56,6 +64,7 @@ export async function GET(req) {
     location: search.get("location") || undefined,
     placement: search.get("placement") ?? undefined,
     exclude: search.get("exclude") ?? undefined,
+    host: search.get("host") || undefined,
   });
   if (!parsed.success) {
     return NextResponse.json(
@@ -76,9 +85,15 @@ export async function GET(req) {
 
   let body;
   try {
-    const { location, ...options } = parsed.data;
+    const { location, host, ...options } = parsed.data;
     if (location) {
-      const ads = await getAds({ ...options, location, viewerId });
+      const ads = await getAds({
+        ...options,
+        location,
+        // Only an agent's public pages can establish this website context.
+        host: HOST_SCOPED_LOCATIONS.has(location) ? host : null,
+        viewerId,
+      });
       body = { ads, ad: ads[0] || null };
     } else {
       body = { ad: await getAd({ ...options, viewerId }) };

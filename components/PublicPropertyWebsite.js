@@ -160,14 +160,14 @@ export default function PublicPropertyWebsite({
       >
         <HeroSlider slides={heroSlides} />
         <div className={styles.container}>
-          <AdSlot location="agent_site_below_hero" spacing="section" />
+          <AdSlot location="agent_site_below_hero" host={agentHandle} spacing="section" />
           <AgentBrandProfile agent={agent} stats={agentStats} />
         </div>
       </HomeListings>
 
       <main className={styles.main}>
         <div className={styles.container}>
-          <AdSlot location="agent_site_after_listings" spacing="section" />
+          <AdSlot location="agent_site_after_listings" host={agentHandle} spacing="section" />
           <TrustStats stats={stats} backgroundImage={trustBackground} />
 
           {locations.length > 0 && searchAreasEnabled ? (

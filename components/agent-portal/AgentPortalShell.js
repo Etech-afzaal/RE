@@ -574,7 +574,7 @@ export default function AgentPortalShell({
         </header>
         <div aria-hidden="true" style={{ height: spacerHeight, flexShrink: 0 }} />
         <div className={styles.content}>
-          <AdSlot location="agent_dashboard_top" />
+          <AdSlot location="agent_dashboard_top" host={username} />
           {children}
         </div>
       </div>

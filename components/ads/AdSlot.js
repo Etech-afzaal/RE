@@ -28,11 +28,12 @@ import styles from "./AdSlot.module.css";
  * without a new request.
  * spacing="section" – adds room above and below (for slots between page sections).
  */
-export default function AdSlot({ location, spacing = "default", className = "" }) {
+export default function AdSlot({ location, host, spacing = "default", className = "" }) {
   const known = Boolean(getLocation(location));
   const format = useResponsiveFormat(LOCATION_FORMATS);
   const { ads } = useAds(location, format, {
     also: formatCodes(LOCATION_FORMATS),
+    host,
     enabled: Boolean(format) && known,
   });
 
