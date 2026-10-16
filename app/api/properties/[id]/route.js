@@ -133,7 +133,7 @@ export async function PUT(req, { params }) {
 
   const agentId = agentIdFrom(session);
   const existing = await query(
-    "SELECT id, status, approved_at, title, price_currency, property_data FROM properties WHERE id = ? AND agent_id = ?",
+    "SELECT id, status, approved_at, title, price_currency, free_ads_enabled, property_data FROM properties WHERE id = ? AND agent_id = ?",
     [propertyId, agentId],
   );
   if (existing.length === 0) {
@@ -141,6 +141,10 @@ export async function PUT(req, { params }) {
   }
 
   const current = propertyRecord(existing[0]);
+  // A legacy client may omit the field during a normal edit. Preserve the
+  // stored setting in that case; explicit false must never be coerced to true.
+  const nextFreeAdsEnabled =
+    validated.data.free_ads_enabled ?? Boolean(current.free_ads_enabled);
   if (isPropertyLockedForAgent(current.status)) {
     return NextResponse.json(
       { error: PROPERTY_LOCKED_MESSAGE },
@@ -224,11 +228,11 @@ export async function PUT(req, { params }) {
   await query(
     `UPDATE properties
      SET title = ?, description = ?, size_value = ?, size_unit = ?, price = ?,
-         price_currency = ?, location = ?, status = ?, property_data = ?
+         price_currency = ?, location = ?, status = ?, free_ads_enabled = ?, property_data = ?
      WHERE id = ? AND agent_id = ?`,
     [trimmedTitle, description || null, size_value ?? null, size_unit || "marla",
       price ?? null, nextCurrency, locationFields.location, nextStatus,
-      JSON.stringify(savedData), propertyId, agentId],
+      nextFreeAdsEnabled, JSON.stringify(savedData), propertyId, agentId],
   );
 
   const agentName = session.user.name || "Agent";
@@ -250,7 +254,11 @@ export async function PUT(req, { params }) {
     ipAddress: getRequestIp(req),
   });
 
-  return NextResponse.json({ success: true, status: nextStatus });
+  return NextResponse.json({
+    success: true,
+    status: nextStatus,
+    free_ads_enabled: nextFreeAdsEnabled,
+  });
 }
 
 export async function PATCH(req, { params }) {

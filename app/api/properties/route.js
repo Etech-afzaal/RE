@@ -81,6 +81,8 @@ export async function POST(req) {
       property_type,
       property_subtype,
     } = validated.data;
+    // New properties opt in by default. A submitted false is preserved.
+    const freeAdsEnabled = validated.data.free_ads_enabled ?? true;
     const { city, area, phase, address, location } = normalizeLocationFields({
       ...body,
       ...validated.data,
@@ -99,8 +101,8 @@ export async function POST(req) {
     const result = await query(
       `INSERT INTO properties
       (agent_id, title, description, size_value, size_unit, price, price_currency,
-       location, status, property_data)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       location, status, free_ads_enabled, property_data)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
       agentId,
       trimmedTitle,
@@ -111,6 +113,7 @@ export async function POST(req) {
       price_currency || "PKR",
       location,
       status,
+      freeAdsEnabled,
       JSON.stringify({
         ...propertyData.data,
         listing_type: nextType,
@@ -144,6 +147,7 @@ export async function POST(req) {
       success: true,
       propertyId: result.insertId,
       status,
+      free_ads_enabled: freeAdsEnabled,
     });
   } catch (err) {
     // The database driver can include SQL and connection details. Keep those
