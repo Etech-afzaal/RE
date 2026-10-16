@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -190,6 +190,69 @@ function ResourceIcon() {
   );
 }
 
+function FreeAdsSection() {
+  const [settings, setSettings] = useState(null);
+  const [error, setError] = useState("");
+  const [savingGlobal, setSavingGlobal] = useState(false);
+  const [changingAgentId, setChangingAgentId] = useState(null);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/agent/free-ads")
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (cancelled) return;
+        if (!response.ok) throw new Error(data.error || "Could not load Free Ads settings.");
+        setSettings(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message || "Could not load Free Ads settings.");
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const visibleAgents = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return (settings?.agents || []).filter((agent) => !term || [agent.fullName, agent.handle]
+      .some((value) => String(value || "").toLowerCase().includes(term)));
+  }, [search, settings]);
+
+  async function saveGlobal(enabled) {
+    if (!settings || savingGlobal) return;
+    setSavingGlobal(true); setError("");
+    try {
+      const response = await fetch("/api/agent/free-ads", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ freeAdsEnabled: enabled }) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Could not save Free Ads settings.");
+      setSettings((current) => ({ ...current, freeAdsEnabled: data.freeAdsEnabled }));
+    } catch (err) { setError(err.message || "Could not save Free Ads settings."); }
+    finally { setSavingGlobal(false); }
+  }
+
+  async function toggleBlock(agent) {
+    if (changingAgentId || !settings) return;
+    setChangingAgentId(agent.id); setError("");
+    try {
+      const response = await fetch(`/api/agent/free-ads/blocks/${agent.id}`, { method: agent.isBlocked ? "DELETE" : "POST" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Could not update the block list.");
+      setSettings((current) => ({ ...current, agents: current.agents.map((item) => item.id === agent.id ? { ...item, isBlocked: data.isBlocked } : item) }));
+    } catch (err) { setError(err.message || "Could not update the block list."); }
+    finally { setChangingAgentId(null); }
+  }
+
+  return <section className={styles.section} aria-labelledby="free-ads-heading">
+    <div className={styles.sectionHeader}><span className={styles.sectionIcon} aria-hidden="true"><ShareIcon /></span><h2 id="free-ads-heading" className={styles.sectionTitle}>Free Ads</h2></div>
+    <p className={styles.sectionLead}>Allow eligible, approved properties to be promoted for free across the RE platform. Turning this off immediately prevents all of your properties from being used in free ads.</p>
+    {error ? <p className={styles.freeAdsError} role="alert">{error}</p> : null}
+    {!settings ? <p className={styles.freeAdsMuted}>Loading Free Ads settings…</p> : <>
+      <div className={styles.freeAdsToggleRow}><div><p className={styles.freeAdsTitle}>Enable Free Ads</p><p className={styles.freeAdsMuted}>{settings.freeAdsEnabled ? "Your eligible properties may be selected for free advertising." : "Free advertising is off for every one of your properties."}</p></div><label className={styles.switch}><input type="checkbox" checked={settings.freeAdsEnabled} disabled={savingGlobal} onChange={(event) => saveGlobal(event.target.checked)} /><span className={styles.switchTrack} /><span className="sr-only">Enable Free Ads</span></label></div>
+      <div className={styles.blockAgents}><h3 className={styles.blockAgentsTitle}>Block Agents</h3><p className={styles.freeAdsMuted}>Blocking an agent prevents your free property ads from appearing on that agent’s public website. It does not affect other websites.</p><input className={styles.agentSearch} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search agents" aria-label="Search agents to block" /><div className={styles.agentBlockList}>{visibleAgents.length === 0 ? <p className={styles.freeAdsMuted}>No registered agents match your search.</p> : visibleAgents.map((agent) => <div key={agent.id} className={styles.agentBlockRow}><div className={styles.agentIdentity}><span className={styles.agentAvatar} aria-hidden="true">{agent.profileImage ? <img src={agent.profileImage} alt="" /> : agent.fullName?.slice(0, 1)?.toUpperCase() || "A"}</span><span><strong>{agent.fullName}</strong>{agent.handle ? <small>/{agent.handle}</small> : null}</span></div><button type="button" className={agent.isBlocked ? styles.unblockButton : styles.blockButton} disabled={changingAgentId === agent.id} onClick={() => toggleBlock(agent)}>{changingAgentId === agent.id ? "Saving…" : agent.isBlocked ? "Unblock" : "Block"}</button></div>)}</div></div>
+    </>}
+  </section>;
+}
+
 export default function AgentMarketingPage() {
   const params = useParams();
   const router = useRouter();
@@ -227,6 +290,8 @@ export default function AgentMarketingPage() {
       subtitle="Learn how to market properties, attract buyers, and build your online presence"
     >
       <div className={styles.page}>
+        <FreeAdsSection />
+
         {/* Hero */}
         <section className={styles.hero}>
           <p className={styles.heroKicker}>Agent Marketing Academy</p>

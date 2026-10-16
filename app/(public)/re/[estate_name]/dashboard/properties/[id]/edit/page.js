@@ -105,6 +105,7 @@ export default function EditPropertyPage() {
     size_unit: "marla",
     price: "",
     price_currency: DEFAULT_PRICE_CURRENCY,
+    free_ads_enabled: true,
     city: "",
     area: "",
     phase: "",
@@ -216,6 +217,7 @@ export default function EditPropertyPage() {
         size_unit: p.size_unit || "marla",
         price: p.price || "",
         price_currency: p.price_currency || DEFAULT_PRICE_CURRENCY,
+        free_ads_enabled: Boolean(p.free_ads_enabled),
         city,
         area,
         phase,
@@ -592,6 +594,7 @@ export default function EditPropertyPage() {
           validated.data.price_currency ||
           form.price_currency ||
           DEFAULT_PRICE_CURRENCY,
+        free_ads_enabled: form.free_ads_enabled,
         property_highlights: form.property_highlights,
         why_this_home: form.why_this_home,
         location_advantages: form.location_advantages,
@@ -1518,6 +1521,22 @@ export default function EditPropertyPage() {
               <h2 id="edit-insights" className={layout.heading}>Insights &amp; Submission</h2>
             {isPending ? null : (
               <PropertyMarketingSectionsEditor form={form} setForm={updater => setForm(previous => ({ ...(typeof updater === "function" ? updater(previous) : updater), propertyDataDirty: true }))} />
+            )}
+            {isPending ? null : (
+              <label className={ui.field} style={{ display: "flex", gap: "0.65rem", alignItems: "flex-start", marginTop: "1rem" }}>
+                <input
+                  type="checkbox"
+                  checked={form.free_ads_enabled}
+                  onChange={(event) => setForm((current) => ({ ...current, free_ads_enabled: event.target.checked }))}
+                  style={{ marginTop: "0.2rem", accentColor: "var(--gold-deep)" }}
+                />
+                <span>
+                  <strong>Allow Free Ads for this property</strong>
+                  <span className={ui.muted} style={{ display: "block", marginTop: "0.2rem" }}>
+                    This property can only be used for free advertising when your global Free Ads setting is also enabled.
+                  </span>
+                </span>
+              </label>
             )}
             <div className={ui.formActions}>
               {isPending ? null : (

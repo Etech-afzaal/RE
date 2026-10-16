@@ -234,6 +234,7 @@ export default function CreatePropertyPage() {
     parking: "No",
     price: "",
     price_currency: DEFAULT_PRICE_CURRENCY,
+    free_ads_enabled: true,
     property_highlights: [],
     why_this_home: [],
     location_advantages: [],
@@ -877,6 +878,7 @@ export default function CreatePropertyPage() {
             size_unit: form.size_unit || "marla",
             price: form.price ? Number(form.price) : null,
             price_currency: form.price_currency || DEFAULT_PRICE_CURRENCY,
+            free_ads_enabled: form.free_ads_enabled,
             property_highlights: form.property_highlights,
             why_this_home: form.why_this_home,
             location_advantages: form.location_advantages,
@@ -911,6 +913,7 @@ export default function CreatePropertyPage() {
             size_unit: form.size_unit || "marla",
             price: form.price ? Number(form.price) : null,
             price_currency: form.price_currency || DEFAULT_PRICE_CURRENCY,
+            free_ads_enabled: form.free_ads_enabled,
             property_highlights: form.property_highlights,
             why_this_home: form.why_this_home,
             location_advantages: form.location_advantages,
@@ -1637,6 +1640,20 @@ export default function CreatePropertyPage() {
               title, listing type, property type, city, area{["plots", "file"].includes(kind) ? ". Images are optional for Plot and File properties." : ", and at least one image."} Plot size and price are optional.
             </p>
             <PropertyMarketingSectionsEditor form={form} setForm={setForm} />
+            <label className={ui.field} style={{ display: "flex", gap: "0.65rem", alignItems: "flex-start", marginTop: "1rem" }}>
+              <input
+                type="checkbox"
+                checked={form.free_ads_enabled}
+                onChange={(event) => setForm((current) => ({ ...current, free_ads_enabled: event.target.checked }))}
+                style={{ marginTop: "0.2rem", accentColor: "var(--gold-deep)" }}
+              />
+              <span>
+                <strong>Allow Free Ads for this property</strong>
+                <span className={ui.muted} style={{ display: "block", marginTop: "0.2rem" }}>
+                  Keep this checked to allow this eligible property to be considered for free advertising. Your global Free Ads setting can still override it.
+                </span>
+              </span>
+            </label>
             <div className={ui.formActions}>
               <button
                 type="button"
